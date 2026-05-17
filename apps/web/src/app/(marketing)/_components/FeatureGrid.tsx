@@ -108,7 +108,7 @@ export function FeatureGrid() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="text-base md:text-lg text-white/60 leading-relaxed font-light"
-            style={{ fontFamily: "var(--font-inter, sans-serif)" }}
+            style={{ fontFamily: "var(--font-aeonik-pro, sans-serif)" }}
           >
             {t("grid.subtitle")}
           </motion.p>
@@ -149,7 +149,7 @@ export function FeatureGrid() {
               
               <p
                 className="text-sm text-white/60 leading-relaxed font-light"
-                style={{ fontFamily: "var(--font-inter, sans-serif)" }}
+                style={{ fontFamily: "var(--font-aeonik-pro, sans-serif)" }}
               >
                 {feature.description}
               </p>

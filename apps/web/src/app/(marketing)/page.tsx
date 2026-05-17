@@ -13,7 +13,7 @@ import { LanguageProvider } from "./_components/LanguageContext";
 export default function LandingPage() {
   return (
     <LanguageProvider>
-      <div className="flex min-h-screen flex-col bg-[#F8FAFC]">
+      <div className="flex min-h-screen flex-col bg-[#F8FAFC] font-aeonik-pro">
         <Header />
         <main className="flex-1">
           {/* Deep Blue/Space Gradient wrapper stretching down near half the page */}

@@ -30,7 +30,7 @@ export function CTA() {
           viewport={{ once: true }}
           transition={{ delay: 0.1 }}
           className="text-lg md:text-xl text-blue-100 mb-10 max-w-2xl mx-auto font-light"
-          style={{ fontFamily: "var(--font-inter, sans-serif)" }}
+          style={{ fontFamily: "var(--font-aeonik-pro, sans-serif)" }}
         >
           {t("cta.desc")}
         </motion.p>

@@ -4,7 +4,7 @@
 
 @font-face {
   font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-Regular.otf') format('opentype');
+  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-Regular.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -12,7 +12,7 @@
 
 @font-face {
   font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-RegularItalic.otf') format('opentype');
+  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-RegularItalic.otf') format('opentype');
   font-weight: 400;
   font-style: italic;
   font-display: swap;
@@ -20,7 +20,7 @@
 
 @font-face {
   font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-Medium.otf') format('opentype');
+  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-Medium.otf') format('opentype');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
@@ -28,7 +28,7 @@
 
 @font-face {
   font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-MediumItalic.otf') format('opentype');
+  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-MediumItalic.otf') format('opentype');
   font-weight: 500;
   font-style: italic;
   font-display: swap;
@@ -36,7 +36,7 @@
 
 @font-face {
   font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-Bold.otf') format('opentype');
+  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-Bold.otf') format('opentype');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -44,7 +44,7 @@
 
 @font-face {
   font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-BoldItalic.otf') format('opentype');
+  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-BoldItalic.otf') format('opentype');
   font-weight: 700;
   font-style: italic;
   font-display: swap;
@@ -52,7 +52,7 @@
 
 @font-face {
   font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-Light.otf') format('opentype');
+  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-Light.otf') format('opentype');
   font-weight: 300;
   font-style: normal;
   font-display: swap;
@@ -60,7 +60,7 @@
 
 @font-face {
   font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-LightItalic.otf') format('opentype');
+  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-LightItalic.otf') format('opentype');
   font-weight: 300;
   font-style: italic;
   font-display: swap;
@@ -68,7 +68,7 @@
 
 @font-face {
   font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-Thin.otf') format('opentype');
+  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-Thin.otf') format('opentype');
   font-weight: 200;
   font-style: normal;
   font-display: swap;
@@ -76,7 +76,7 @@
 
 @font-face {
   font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-ThinItalic.otf') format('opentype');
+  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-ThinItalic.otf') format('opentype');
   font-weight: 200;
   font-style: italic;
   font-display: swap;
@@ -84,7 +84,7 @@
 
 @font-face {
   font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-Black.otf') format('opentype');
+  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-Black.otf') format('opentype');
   font-weight: 900;
   font-style: normal;
   font-display: swap;
@@ -92,7 +92,7 @@
 
 @font-face {
   font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-BlackItalic.otf') format('opentype');
+  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-BlackItalic.otf') format('opentype');
   font-weight: 900;
   font-style: italic;
   font-display: swap;

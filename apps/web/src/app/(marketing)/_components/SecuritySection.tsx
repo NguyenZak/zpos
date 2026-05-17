@@ -92,7 +92,7 @@ export function SecuritySection() {
           
           <p 
             className="text-base md:text-lg text-white/60 leading-relaxed font-light"
-            style={{ fontFamily: "var(--font-inter, sans-serif)" }}
+            style={{ fontFamily: "var(--font-aeonik-pro, sans-serif)" }}
           >
             {t("sec.desc")}
           </p>
@@ -132,7 +132,7 @@ export function SecuritySection() {
               
               <p 
                 className="text-sm text-white/60 leading-relaxed font-light"
-                style={{ fontFamily: "var(--font-inter, sans-serif)" }}
+                style={{ fontFamily: "var(--font-aeonik-pro, sans-serif)" }}
               >
                 {item.desc}
               </p>
