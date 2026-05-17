@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/utils/supabase/client";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, Mail, Lock, Eye, EyeOff, Sparkles, ChevronDown, ChevronUp, Store } from "lucide-react";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Vui lòng nhập địa chỉ email hợp lệ." }),
@@ -65,6 +65,8 @@ const getSubdomain = () => {
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showDemoAccounts, setShowDemoAccounts] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -87,6 +89,15 @@ export function LoginForm() {
       remember: false,
     },
   });
+
+  const handleQuickLogin = (email: string) => {
+    form.setValue("email", email);
+    form.setValue("password", "sandbox-bypass-pass");
+    toast.info("Đang tự động đăng nhập...");
+    setTimeout(() => {
+      form.handleSubmit(onSubmit)();
+    }, 200);
+  };
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsLoading(true);
@@ -363,58 +374,97 @@ export function LoginForm() {
   return (
     <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
       {loginError && (
-        <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-200 text-xs font-mono rounded-xl flex items-start gap-2.5">
+        <div className="p-3.5 bg-rose-500/10 border border-rose-500/20 text-rose-200 text-xs font-mono rounded-xl flex items-start gap-2.5 shadow-md">
           <ShieldAlert className="size-4 text-rose-400 shrink-0 mt-0.5" />
           <div className="space-y-0.5 text-left">
-            <p className="font-extrabold uppercase tracking-wider text-[10px]">Auth Exception Caught</p>
+            <p className="font-extrabold uppercase tracking-wider text-[10px] text-rose-400">Auth Exception Caught</p>
             <p className="leading-normal">{loginError}</p>
           </div>
         </div>
       )}
+      
       <FieldGroup className="gap-4">
         <Controller
           control={form.control}
           name="email"
           render={({ field, fieldState }) => (
-            <Field className="gap-1.5" data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="login-email">Địa chỉ Email</FieldLabel>
-              <Input
-                {...field}
-                id="login-email"
-                type="email"
-                placeholder="ten@doanhnghiep.com"
-                autoComplete="email"
-                aria-invalid={fieldState.invalid}
-                disabled={isLoading}
-              />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            <Field className="gap-2" data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="login-email" className="text-white/80 font-semibold text-xs tracking-wide">
+                Địa chỉ Email
+              </FieldLabel>
+              <div className="relative group/input flex items-center w-full">
+                <div className="absolute left-3.5 text-white/40 group-focus-within/input:text-blue-400 transition-colors duration-300">
+                  <Mail size={16} strokeWidth={2} />
+                </div>
+                <Input
+                  {...field}
+                  id="login-email"
+                  type="email"
+                  placeholder="username@zpos.click"
+                  autoComplete="email"
+                  aria-invalid={fieldState.invalid}
+                  disabled={isLoading}
+                  className="h-12 pl-11 pr-4 rounded-xl border-white/10 bg-white/5 placeholder:text-white/20 text-white transition-all duration-300 focus-visible:border-blue-500/60 focus-visible:ring-4 focus-visible:ring-blue-500/10 focus-visible:bg-[#0c0822]/40"
+                />
+              </div>
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} className="text-rose-400 text-[11px] mt-0.5" />}
             </Field>
           )}
         />
+        
         <Controller
           control={form.control}
           name="password"
           render={({ field, fieldState }) => (
-            <Field className="gap-1.5" data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="login-password">Mật khẩu</FieldLabel>
-              <Input
-                {...field}
-                id="login-password"
-                type="password"
-                placeholder="••••••••"
-                autoComplete="current-password"
-                aria-invalid={fieldState.invalid}
-                disabled={isLoading}
-              />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            <Field className="gap-2" data-invalid={fieldState.invalid}>
+              <div className="flex items-center justify-between">
+                <FieldLabel htmlFor="login-password" className="text-white/80 font-semibold text-xs tracking-wide">
+                  Mật khẩu
+                </FieldLabel>
+                <a
+                  href="#forgot"
+                  className="text-[11px] font-semibold text-blue-400 hover:text-blue-300 transition-colors"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toast.info("Tính năng khôi phục mật khẩu đang được bảo trì!");
+                  }}
+                >
+                  Quên mật khẩu?
+                </a>
+              </div>
+              <div className="relative group/input flex items-center w-full">
+                <div className="absolute left-3.5 text-white/40 group-focus-within/input:text-blue-400 transition-colors duration-300">
+                  <Lock size={16} strokeWidth={2} />
+                </div>
+                <Input
+                  {...field}
+                  id="login-password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  aria-invalid={fieldState.invalid}
+                  disabled={isLoading}
+                  className="h-12 pl-11 pr-11 rounded-xl border-white/10 bg-white/5 placeholder:text-white/20 text-white transition-all duration-300 focus-visible:border-blue-500/60 focus-visible:ring-4 focus-visible:ring-blue-500/10 focus-visible:bg-[#0c0822]/40"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 text-white/40 hover:text-white transition-colors p-1 rounded-md hover:bg-white/5"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} className="text-rose-400 text-[11px] mt-0.5" />}
             </Field>
           )}
         />
+        
         <Controller
           control={form.control}
           name="remember"
           render={({ field, fieldState }) => (
-            <Field orientation="horizontal" data-invalid={fieldState.invalid}>
+            <Field orientation="horizontal" data-invalid={fieldState.invalid} className="items-center select-none py-1">
               <Checkbox
                 id="login-remember"
                 name={field.name}
@@ -422,9 +472,10 @@ export function LoginForm() {
                 onCheckedChange={(checked) => field.onChange(Boolean(checked))}
                 aria-invalid={fieldState.invalid}
                 disabled={isLoading}
+                className="size-4 rounded border-white/20 bg-white/5 text-blue-500 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 focus-visible:ring-blue-500/30"
               />
-              <FieldContent>
-                <FieldLabel htmlFor="login-remember" className="font-normal text-xs text-muted-foreground">
+              <FieldContent className="ml-2">
+                <FieldLabel htmlFor="login-remember" className="font-medium text-xs text-white/60 cursor-pointer hover:text-white/80 transition-colors">
                   Ghi nhớ đăng nhập trong 30 ngày
                 </FieldLabel>
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -433,9 +484,80 @@ export function LoginForm() {
           )}
         />
       </FieldGroup>
-      <Button className="button-primary w-full py-6 text-sm font-semibold tracking-wide cursor-pointer font-sans" type="submit" disabled={isLoading}>
-        {isLoading ? "Đang xử lý..." : "Đăng nhập"}
+      
+      <Button
+        className="relative group overflow-hidden h-12 w-full py-6 text-sm font-semibold tracking-wide cursor-pointer rounded-xl bg-gradient-to-r from-[#0093ff] to-[#0036ff] text-white shadow-[0_4px_20px_rgba(0,147,255,0.25)] hover:shadow-[0_4px_30px_rgba(0,147,255,0.45)] transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 mt-1"
+        type="submit"
+        disabled={isLoading}
+      >
+        <span className="relative z-10 flex items-center justify-center gap-2">
+          {isLoading ? (
+            <>
+              <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              <span>Đang kết nối bảo mật...</span>
+            </>
+          ) : (
+            <>
+              <span>Đăng nhập</span>
+              <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+              </svg>
+            </>
+          )}
+        </span>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#00b0ff] to-[#0056ff] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       </Button>
+
+      {/* Expandable Demo Accounts Panel */}
+      <div className="mt-2 rounded-2xl border border-white/5 bg-white/[0.02] p-3 backdrop-blur-md transition-all duration-300 hover:border-white/10">
+        <button
+          type="button"
+          onClick={() => setShowDemoAccounts(!showDemoAccounts)}
+          className="flex w-full items-center justify-between font-semibold text-xs text-white/70 hover:text-white transition-colors"
+        >
+          <span className="flex items-center gap-2">
+            <Sparkles size={14} className="text-amber-400 animate-pulse" />
+            <span>Tài khoản Demo dùng thử (Sandbox Quick Login)</span>
+          </span>
+          {showDemoAccounts ? <ChevronUp size={14} className="text-white/40" /> : <ChevronDown size={14} className="text-white/40" />}
+        </button>
+        
+        {showDemoAccounts && (
+          <div className="mt-3 grid grid-cols-1 gap-2 border-t border-white/5 pt-3 animate-fade-in max-h-56 overflow-y-auto pr-1">
+            {MOCK_USERS.map((user) => (
+              <button
+                key={user.email}
+                type="button"
+                onClick={() => handleQuickLogin(user.email)}
+                disabled={isLoading}
+                className="flex flex-col text-left p-2.5 rounded-xl border border-white/5 bg-white/[0.01] hover:bg-white/5 hover:border-white/15 transition-all duration-200 group/demo"
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-semibold text-xs text-white group-hover/demo:text-blue-400 transition-colors">
+                    {user.full_name}
+                  </span>
+                  <span className="px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-white/10 text-white/80 scale-90 group-hover/demo:bg-blue-500/20 group-hover/demo:text-blue-400 transition-all duration-300">
+                    {user.global_role === "super_admin" ? "Super Admin" : "Store Owner"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between w-full mt-1.5">
+                  <span className="text-[10px] text-white/40 font-mono">
+                    {user.email}
+                  </span>
+                  {user.associated_tenant && (
+                    <span className="text-[9px] text-blue-400 font-bold flex items-center gap-1">
+                      <Store size={10} /> {user.associated_tenant}
+                    </span>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </form>
   );
 }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { KeyRound, ShieldAlert } from "lucide-react";
+import { KeyRound, ShieldAlert, Store } from "lucide-react";
 
 import { getIsConsoleFromHost, getTenantFromHost } from "@/utils/get-tenant";
 
@@ -49,22 +49,38 @@ export default async function Login() {
   // Modern UI for tenants and root login
   return (
     <div className="flex w-full flex-col justify-center space-y-6">
+      <div className="mx-auto flex justify-center mb-1">
+        {tenant ? (
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-300 text-[11px] font-bold shadow-inner tracking-wider uppercase">
+            <Store size={12} className="text-blue-400 animate-pulse" />
+            <span>Cửa hàng: {tenant.name}</span>
+          </div>
+        ) : (
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/10 bg-white/5 text-white/70 text-[11px] font-bold shadow-inner tracking-wider uppercase">
+            <div className="w-3.5 h-3.5 rounded bg-gradient-to-br from-[#0093ff] to-[#0036ff] flex items-center justify-center text-white text-[9px] font-black">
+              Z
+            </div>
+            <span>ZPOS Cloud</span>
+          </div>
+        )}
+      </div>
+
       <div className="space-y-2 text-center">
-        <h2 className="font-extrabold text-3xl text-white tracking-tight">
-          {tenant ? `Đăng nhập ${tenant.name}` : "Chào mừng trở lại"}
+        <h2 className="font-extrabold text-3xl text-white tracking-tight bg-gradient-to-r from-white via-white to-white/75 bg-clip-text text-transparent">
+          {tenant ? `Đăng nhập hệ thống` : "Chào mừng trở lại"}
         </h2>
-        <p className="text-white/60 text-sm">
+        <p className="text-white/50 text-sm">
           {tenant ? `Nhập thông tin tài khoản cửa hàng của bạn` : "Vui lòng nhập tài khoản để tiếp tục"}
         </p>
       </div>
 
       <div className="space-y-5">
-        <GoogleButton className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-white/5 py-5 text-white/90 transition-all duration-300 hover:bg-white/10 hover:border-white/20 hover:text-white hover:scale-[1.01] active:scale-[0.99] font-medium" />
+        <GoogleButton className="flex w-full h-12 items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-white/5 text-white/90 transition-all duration-300 hover:bg-white/10 hover:border-white/20 hover:text-white hover:scale-[1.01] active:scale-[0.99] font-semibold text-sm shadow-sm" />
 
-        <div className="flex items-center gap-3 text-xs">
+        <div className="flex items-center gap-3 text-xs py-1">
           <div className="h-px flex-1 bg-white/10" />
-          <span className="text-white/40 font-mono uppercase tracking-wider text-[10px]">
-            Hoặc đăng nhập với
+          <span className="text-white/30 font-mono uppercase tracking-wider text-[9px]">
+            Hoặc đăng nhập với email
           </span>
           <div className="h-px flex-1 bg-white/10" />
         </div>
@@ -72,11 +88,11 @@ export default async function Login() {
         <LoginForm />
       </div>
 
-      <div className="border-white/10 border-t pt-4 text-center text-white/50 text-sm">
+      <div className="border-white/10 border-t pt-4 text-center text-white/40 text-sm">
         Bạn chưa có tài khoản?{" "}
         <Link
           prefetch={false}
-          className="font-semibold text-blue-400 underline-offset-4 transition-colors hover:text-blue-300 hover:underline"
+          className="font-bold text-blue-400 underline-offset-4 transition-colors hover:text-blue-300 hover:underline"
           href="/register"
         >
           Đăng ký ngay
