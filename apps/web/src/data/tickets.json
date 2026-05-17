@@ -1,0 +1,40 @@
+[
+  {
+    "id": "ticket-1779018880061-ds2v3j0d8",
+    "tenantName": "Kphone Store",
+    "tenantSlug": "kphone",
+    "title": "Tao muốn AI vào đây ",
+    "description": "Tôi muốn thêm AI",
+    "category": "Yêu cầu tính năng",
+    "priority": "Cao",
+    "contactPhone": "0388925432",
+    "status": "Đang xử lý",
+    "createdAt": "2026-05-17T11:54:40.061Z",
+    "updatedAt": "2026-05-17T12:35:39.536Z"
+  },
+  {
+    "id": "ticket-1",
+    "tenantName": "Kphone Store",
+    "tenantSlug": "kphone",
+    "title": "Không thể thêm sản phẩm biến thể mới",
+    "description": "Tôi thử thêm mẫu iPhone 15 Pro Max với dung lượng 256GB nhưng hệ thống báo lỗi không lưu được.",
+    "category": "Lỗi phần mềm",
+    "priority": "Cao",
+    "contactPhone": "0912345678",
+    "status": "Đã giải quyết",
+    "createdAt": "2026-05-16T11:30:06.737Z",
+    "updatedAt": "2026-05-17T11:33:29.076Z"
+  },
+  {
+    "id": "ticket-2",
+    "tenantName": "Cửa hàng Demo",
+    "tenantSlug": "demo",
+    "title": "Tư vấn nâng cấp lên gói Enterprise",
+    "description": "Chuỗi của tôi sắp khai trương thêm 3 chi nhánh mới tại Đà Nẵng, cần được tư vấn cấu hình đồng bộ kho đa điểm nâng cao.",
+    "category": "Hỏi đáp/Tư vấn",
+    "priority": "Trung bình",
+    "contactPhone": "0987654321",
+    "status": "Đang xử lý",
+    "createdAt": "2026-05-17T06:30:06.737Z"
+  }
+]

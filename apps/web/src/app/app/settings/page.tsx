@@ -1,0 +1,923 @@
+"use client";
+
+import React from 'react';
+import Link from 'next/link';
+import { 
+  Building2, 
+  Store, 
+  Printer, 
+  ShieldCheck, 
+  CreditCard,
+  Image as ImageIcon,
+  Save,
+  Loader2,
+  QrCode,
+  Send
+} from 'lucide-react';
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { posService } from '@/services/pos.service';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { convertToWebP } from "@/lib/image-utils";
+
+const VIETNAMESE_BANKS = [
+  { id: 'vcb', name: 'Vietcombank (VCB)' },
+  { id: 'mb', name: 'MBBank (MB)' },
+  { id: 'tcb', name: 'Techcombank (TCB)' },
+  { id: 'acb', name: 'Ngân hàng ACB' },
+  { id: 'ctg', name: 'VietinBank' },
+  { id: 'bidv', name: 'BIDV' },
+  { id: 'vpb', name: 'VPBank' },
+  { id: 'tpb', name: 'TPBank' },
+  { id: 'stb', name: 'Sacombank' },
+  { id: 'shb', name: 'SHB' },
+  { id: 'hdb', name: 'HDBank' },
+  { id: 'vib', name: 'VIB' }
+];
+
+export default function SettingsPage() {
+  const [loading, setLoading] = React.useState(false);
+  const [bankList, setBankList] = React.useState<any[]>(VIETNAMESE_BANKS);
+  const [activeTab, setActiveTab] = React.useState('business');
+
+  // Brand / Store State
+  const [bizName, setBizName] = React.useState('ZPOS Retail Store');
+  const [bizTax, setBizTax] = React.useState('');
+  const [bizAddr, setBizAddr] = React.useState('123 Đường ABC, Quận 1, TP. Hồ Chí Minh');
+  const [logoUrl, setLogoUrl] = React.useState('');
+
+  // VietQR Config State
+  const [bankId, setBankId] = React.useState('vcb');
+  const [accountNo, setAccountNo] = React.useState('0071001234567');
+  const [accountName, setAccountName] = React.useState('ZPOS RETAIL');
+  const [memoTemplate, setMemoTemplate] = React.useState('ZPOS_');
+
+  // Printer Settings State
+  const [autoPrint, setAutoPrint] = React.useState(true);
+  const [paperSize, setPaperSize] = React.useState('K80 (80mm)');
+  const [printCopies, setPrintCopies] = React.useState(1);
+  const [footerText, setFooterText] = React.useState('Cảm ơn quý khách. Hẹn gặp lại!');
+
+  // Security Settings State
+  const [enable2FA, setEnable2FA] = React.useState(false);
+  const [restrictIP, setRestrictIP] = React.useState(false);
+
+  // Telegram Settings State
+  const [telegramEnabled, setTelegramEnabled] = React.useState(false);
+  const [telegramToken, setTelegramToken] = React.useState('');
+  const [telegramChatId, setTelegramChatId] = React.useState('');
+  const [telegramNotifyOrder, setTelegramNotifyOrder] = React.useState(true);
+  const [telegramNotifyStock, setTelegramNotifyStock] = React.useState(true);
+  const [testingTelegram, setTestingTelegram] = React.useState(false);
+
+  // Branches Config State
+  const [branches, setBranches] = React.useState<any[]>([]);
+  const [branchDialogOpen, setBranchDialogOpen] = React.useState(false);
+  const [editingBranch, setEditingBranch] = React.useState<any>(null);
+  const [branchName, setBranchName] = React.useState('');
+  const [branchAddress, setBranchAddress] = React.useState('');
+
+  const loadBranchesList = async () => {
+    try {
+      const data = await posService.getBranches();
+      setBranches(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleOpenAddBranch = () => {
+    setEditingBranch(null);
+    setBranchName('');
+    setBranchAddress('');
+    setBranchDialogOpen(true);
+  };
+
+  const handleOpenEditBranch = (b: any) => {
+    setEditingBranch(b);
+    setBranchName(b.name);
+    setBranchAddress(b.address || b.addr || '');
+    setBranchDialogOpen(true);
+  };
+
+  const handleSaveBranch = async () => {
+    if (!branchName.trim()) {
+      toast.error("Tên chi nhánh không được để trống!");
+      return;
+    }
+    setLoading(true);
+    try {
+      const branchPayload = {
+        id: editingBranch?.id || undefined,
+        name: branchName,
+        address: branchAddress,
+        status: editingBranch?.status || (branches.length === 0 ? "Chính" : "Phụ")
+      };
+      await posService.saveBranch(branchPayload);
+      await loadBranchesList();
+      
+      // Fire local event to notify Sidebar switcher instantly!
+      window.dispatchEvent(new Event("zpos_branches_updated"));
+      
+      toast.success(editingBranch ? "Cập nhật chi nhánh thành công!" : "Thêm chi nhánh mới thành công!");
+      setBranchDialogOpen(false);
+    } catch (e) {
+      toast.error("Không thể lưu chi nhánh!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteBranch = async (id: string) => {
+    if (confirm("Bạn có chắc chắn muốn xóa chi nhánh này?")) {
+      setLoading(true);
+      try {
+        await posService.deleteBranch(id);
+        await loadBranchesList();
+        
+        // Fire local event to notify Sidebar switcher instantly!
+        window.dispatchEvent(new Event("zpos_branches_updated"));
+        
+        toast.success("Đã xóa chi nhánh thành công!");
+      } catch (e) {
+        toast.error("Không thể xóa chi nhánh!");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  // Load configs from localStorage
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab && ['business', 'branch', 'payment', 'printer', 'security', 'telegram'].includes(tab)) {
+        setActiveTab(tab);
+      }
+
+      setBizName(localStorage.getItem('zpos_biz_name') || 'ZPOS Retail Store');
+      setBizTax(localStorage.getItem('zpos_biz_tax') || '');
+      setBizAddr(localStorage.getItem('zpos_biz_addr') || '123 Đường ABC, Quận 1, TP. Hồ Chí Minh');
+      setLogoUrl(localStorage.getItem('zpos_biz_logo') || '');
+
+      setBankId(localStorage.getItem('zpos_qr_bank_id') || 'vcb');
+      setAccountNo(localStorage.getItem('zpos_qr_account_no') || '0071001234567');
+      setAccountName(localStorage.getItem('zpos_qr_account_name') || 'ZPOS RETAIL');
+      setMemoTemplate(localStorage.getItem('zpos_qr_memo_template') || 'ZPOS_');
+
+      setAutoPrint(localStorage.getItem('zpos_printer_auto') !== 'false');
+      setPaperSize(localStorage.getItem('zpos_printer_paper') || 'K80 (80mm)');
+      setPrintCopies(parseInt(localStorage.getItem('zpos_printer_copies') || '1'));
+      setFooterText(localStorage.getItem('zpos_printer_footer') || 'Cảm ơn quý khách. Hẹn gặp lại!');
+
+      setEnable2FA(localStorage.getItem('zpos_security_2fa') === 'true');
+      setRestrictIP(localStorage.getItem('zpos_security_ip') === 'true');
+
+      // Telegram Configurations
+      setTelegramEnabled(localStorage.getItem('zpos_telegram_enabled') === 'true');
+      setTelegramToken(localStorage.getItem('zpos_telegram_token') || '');
+      setTelegramChatId(localStorage.getItem('zpos_telegram_chat_id') || '');
+      setTelegramNotifyOrder(localStorage.getItem('zpos_telegram_notify_order') !== 'false');
+      setTelegramNotifyStock(localStorage.getItem('zpos_telegram_notify_stock') !== 'false');
+    }
+    loadBranchesList();
+
+    // Fetch live banks list from VietQR dynamic API
+    const fetchBanks = async () => {
+      try {
+        const res = await fetch("https://api.vietqr.io/v2/banks");
+        const json = await res.json();
+        if (json && json.code === "00" && Array.isArray(json.data)) {
+          const mapped = json.data.map((b: any) => ({
+            id: (b.code || b.bin).toLowerCase(),
+            name: `${b.shortName || b.short_name || b.code} - ${b.name}`
+          }));
+          setBankList(mapped);
+        }
+      } catch (e) {
+        console.warn("Lỗi khi tải danh sách ngân hàng từ VietQR, sử dụng danh sách dự phòng", e);
+      }
+    };
+    fetchBanks();
+  }, []);
+
+  const handleSave = () => {
+    setLoading(true);
+    
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('zpos_biz_name', bizName);
+      localStorage.setItem('zpos_biz_tax', bizTax);
+      localStorage.setItem('zpos_biz_addr', bizAddr);
+      localStorage.setItem('zpos_biz_logo', logoUrl);
+
+      localStorage.setItem('zpos_qr_bank_id', bankId);
+      localStorage.setItem('zpos_qr_account_no', accountNo);
+      localStorage.setItem('zpos_qr_account_name', accountName);
+      localStorage.setItem('zpos_qr_memo_template', memoTemplate);
+
+      localStorage.setItem('zpos_printer_auto', String(autoPrint));
+      localStorage.setItem('zpos_printer_paper', paperSize);
+      localStorage.setItem('zpos_printer_copies', String(printCopies));
+      localStorage.setItem('zpos_printer_footer', footerText);
+
+      localStorage.setItem('zpos_security_2fa', String(enable2FA));
+      localStorage.setItem('zpos_security_ip', String(restrictIP));
+
+      // Telegram Configurations
+      localStorage.setItem('zpos_telegram_enabled', String(telegramEnabled));
+      localStorage.setItem('zpos_telegram_token', telegramToken);
+      localStorage.setItem('zpos_telegram_chat_id', telegramChatId);
+      localStorage.setItem('zpos_telegram_notify_order', String(telegramNotifyOrder));
+      localStorage.setItem('zpos_telegram_notify_stock', String(telegramNotifyStock));
+
+      // Save to Supabase database asynchronously
+      posService.saveTelegramSettings({
+        enabled: telegramEnabled,
+        token: telegramToken,
+        chat_id: telegramChatId,
+        notify_order: telegramNotifyOrder,
+        notify_stock: telegramNotifyStock
+      }).catch(err => {
+        console.warn("Could not save Telegram settings to database:", err);
+      });
+
+      window.dispatchEvent(new Event("zpos_settings_updated"));
+    }
+
+    setTimeout(() => {
+      setLoading(false);
+      toast.success("Đã lưu cấu hình cài đặt thành công!");
+    }, 800);
+  };
+
+  const handleTestTelegram = async () => {
+    if (!telegramToken || !telegramChatId) {
+      toast.error("Vui lòng điền đủ Bot Token và Chat ID trước khi test!");
+      return;
+    }
+    
+    setTestingTelegram(true);
+    try {
+      const url = `https://api.telegram.org/bot${telegramToken}/sendMessage`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: telegramChatId,
+          text: `🔔 <b>ZPOS TELEGRAM TEST</b>\n\nChúc mừng! Kết nối từ hệ thống ZPOS đến nhóm Telegram của bạn đã thành công rực rỡ! 🎉\n\n⚡️ <i>Hệ thống đã sẵn sàng gửi thông báo!</i>`,
+          parse_mode: 'HTML',
+        }),
+      });
+      
+      const json = await res.json();
+      if (json.ok) {
+        toast.success("Gửi tin nhắn test thành công! Hãy kiểm tra Telegram.");
+      } else {
+        toast.error(`Telegram báo lỗi: ${json.description || 'Không xác định'}`);
+      }
+    } catch (e) {
+      toast.error("Lỗi mạng khi kết nối tới Telegram API!");
+    } finally {
+      setTestingTelegram(false);
+    }
+  };
+
+  const logoInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleLogoChange = () => {
+    logoInputRef.current?.click();
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    let file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Vui lòng chọn tệp tin hình ảnh hợp lệ!");
+      return;
+    }
+
+    setLoading(true);
+    const toastId = toast.loading("Đang tối ưu hóa ảnh và chuyển sang WebP...");
+    
+    try {
+      // 1. Convert to WebP client-side using built-in HTML5 Canvas
+      try {
+        const webpFile = await convertToWebP(file, 0.85);
+        console.log(`[WebP Optimizer] Dung lượng gốc: ${(file.size / 1024).toFixed(2)} KB -> WebP tối ưu: ${(webpFile.size / 1024).toFixed(2)} KB (Giảm ${(((file.size - webpFile.size) / file.size) * 100).toFixed(1)}% dung lượng)`);
+        file = webpFile;
+      } catch (convErr) {
+        console.warn("Lỗi chuyển đổi WebP, tiếp tục dùng ảnh gốc", convErr);
+      }
+
+      // Check final compressed size
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Kích thước ảnh sau tối ưu vẫn vượt quá 5MB!", { id: toastId });
+        setLoading(false);
+        return;
+      }
+
+      toast.loading("Đang tải ảnh WebP siêu nhẹ lên Cloudinary...", { id: toastId });
+
+      // 2. Upload to secure endpoint
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "Không thể upload ảnh!");
+      }
+
+      setLogoUrl(json.url);
+      toast.success("Tải logo WebP lên Cloudinary thành công!", { id: toastId });
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Tải ảnh thất bại! Hãy thử lại.", { id: toastId });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-3xl font-bold tracking-tight">Cài đặt hệ thống</h1>
+        <p className="text-muted-foreground text-sm">Quản lý cấu hình cửa hàng, thanh toán và in ấn hóa đơn.</p>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="bg-muted/50 p-1 mb-6 flex flex-wrap h-auto gap-1">
+          <TabsTrigger value="business" className="gap-2">
+            <Building2 className="w-4 h-4" />
+            Thông tin cửa hàng
+          </TabsTrigger>
+          <TabsTrigger value="branch" className="gap-2">
+            <Store className="w-4 h-4" />
+            Chi nhánh
+          </TabsTrigger>
+          <TabsTrigger value="payment" className="gap-2">
+            <QrCode className="w-4 h-4 text-violet-500" />
+            Mã QR thanh toán
+          </TabsTrigger>
+          <TabsTrigger value="printer" className="gap-2">
+            <Printer className="w-4 h-4" />
+            Máy in & Hóa đơn
+          </TabsTrigger>
+          <TabsTrigger value="security" className="gap-2">
+            <ShieldCheck className="w-4 h-4" />
+            Bảo mật
+          </TabsTrigger>
+          <TabsTrigger value="telegram" className="gap-2">
+            <Send className="w-4 h-4 text-sky-500" />
+            Thông báo Telegram
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="business" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Nhận diện thương hiệu</CardTitle>
+              <CardDescription>Cập nhật logo và thông tin cơ bản của doanh nghiệp.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <input 
+                type="file" 
+                ref={logoInputRef} 
+                onChange={handleLogoUpload} 
+                className="hidden" 
+                accept="image/*" 
+              />
+              <div className="flex items-center gap-6">
+                <div 
+                  onClick={handleLogoChange}
+                  className="w-24 h-24 rounded-2xl bg-muted flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/20 text-muted-foreground hover:bg-muted/80 cursor-pointer transition-colors overflow-hidden relative"
+                >
+                  {logoUrl ? (
+                    <img src={logoUrl} alt="Store Logo" className="w-full h-full object-cover" />
+                  ) : (
+                    <>
+                      <ImageIcon className="w-8 h-8 mb-1" />
+                      <span className="text-[10px] font-bold uppercase">Tải Logo</span>
+                    </>
+                  )}
+                </div>
+                <div className="flex-1 space-y-1">
+                  <h4 className="text-sm font-bold">Logo cửa hàng</h4>
+                  <p className="text-xs text-muted-foreground italic">Khuyên dùng định dạng PNG hoặc SVG, kích thước tối ưu 512x512px.</p>
+                  <Button variant="outline" size="sm" className="mt-2 h-8" onClick={handleLogoChange}>Thay đổi</Button>
+                </div>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="biz-name">Tên cửa hàng / Doanh nghiệp</Label>
+                  <Input 
+                    id="biz-name" 
+                    value={bizName} 
+                    onChange={(e) => setBizName(e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="biz-tax">Mã số thuế</Label>
+                  <Input 
+                    id="biz-tax" 
+                    placeholder="Nhập mã số thuế..." 
+                    value={bizTax} 
+                    onChange={(e) => setBizTax(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="biz-addr">Địa chỉ trụ sở chính</Label>
+                <Textarea 
+                  id="biz-addr" 
+                  value={bizAddr} 
+                  onChange={(e) => setBizAddr(e.target.value)}
+                />
+              </div>
+            </CardContent>
+            <CardFooter className="border-t bg-muted/20 px-6 py-4 flex justify-end">
+              <Button size="sm" onClick={handleSave} disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Save className="mr-2 h-4 w-4" />
+                Lưu cấu hình
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="branch" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Danh sách chi nhánh</CardTitle>
+                <CardDescription>Quản lý các địa điểm kinh doanh của bạn.</CardDescription>
+              </div>
+              <Button size="sm" onClick={handleOpenAddBranch}>Thêm chi nhánh</Button>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {branches.map((b, i) => (
+                  <div key={b.id || i} className="flex items-center justify-between p-4 border rounded-xl bg-card hover:bg-muted/10 transition-colors">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold">{b.name}</span>
+                        <Badge variant={b.status === "Chính" ? "default" : "secondary"} className="text-[10px]">{b.status || "Phụ"}</Badge>
+                      </div>
+                      <span className="text-xs text-muted-foreground">{b.address || b.addr || "Chưa cập nhật địa chỉ"}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={() => handleOpenEditBranch(b)}>Chỉnh sửa</Button>
+                      {branches.length > 1 && (
+                        <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10" onClick={() => handleDeleteBranch(b.id)}>Xóa</Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* VietQR Dynamic Checkout Integration */}
+        <TabsContent value="payment" className="space-y-4 animate-in fade-in duration-300">
+          <Card className="border shadow-sm overflow-hidden bg-card">
+            <CardHeader className="bg-muted/30 pb-4 border-b">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <QrCode className="w-5 h-5 text-violet-600 animate-pulse" />
+                Tạo mã QR thanh toán động (VietQR)
+              </CardTitle>
+              <CardDescription>
+                Nhập tài khoản ngân hàng của bạn. Khi bán hàng, hệ thống sẽ tự động tạo mã QR có sẵn số tiền đơn hàng và nội dung chuyển khoản để khách quét trả tiền.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="grid gap-6 lg:grid-cols-3">
+                {/* Left Side Inputs Form */}
+                <div className="lg:col-span-2 space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="grid gap-2">
+                      <Label htmlFor="qr-bank" className="font-bold text-foreground">Ngân hàng thụ hưởng</Label>
+                      <select
+                        id="qr-bank"
+                        value={bankId}
+                        onChange={(e) => setBankId(e.target.value)}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-bold"
+                      >
+                        {bankList.map((b) => (
+                          <option key={b.id} value={b.id} className="font-semibold text-foreground">
+                            {b.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="qr-no" className="font-bold text-foreground">Số tài khoản (STK)</Label>
+                      <Input
+                        id="qr-no"
+                        placeholder="Nhập số tài khoản ngân hàng..."
+                        value={accountNo}
+                        onChange={(e) => setAccountNo(e.target.value)}
+                        className="font-mono font-bold border-violet-500/10 focus-visible:ring-violet-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="grid gap-2">
+                      <Label htmlFor="qr-name" className="font-bold text-foreground">Họ và tên chủ tài khoản</Label>
+                      <Input
+                        id="qr-name"
+                        placeholder="NGUYEN VAN A..."
+                        value={accountName}
+                        onChange={(e) => setAccountName(e.target.value.toUpperCase())}
+                        className="font-bold uppercase border-violet-500/10 focus-visible:ring-violet-500"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="qr-memo" className="font-bold text-foreground">Mẫu cú pháp ghi chú (Prefix)</Label>
+                      <Input
+                        id="qr-memo"
+                        placeholder="ZPOS DH..."
+                        value={memoTemplate}
+                        onChange={(e) => setMemoTemplate(e.target.value)}
+                        className="font-bold border-violet-500/10 focus-visible:ring-violet-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bg-violet-500/5 dark:bg-violet-500/10 p-4 rounded-xl border border-violet-500/20 text-xs leading-relaxed text-muted-foreground space-y-1.5 shadow-sm">
+                    <p className="font-bold text-violet-700 dark:text-violet-400 flex items-center gap-1.5">
+                      💡 Tính năng tối ưu thanh toán tự động:
+                    </p>
+                    <p>Khi khách chọn **Chuyển khoản** lúc Checkout, màn hình sẽ hiển thị mã **VietQR** được tạo theo tiêu chuẩn Napas.</p>
+                    <p>Khách hàng quét mã bằng ứng dụng ngân hàng bất kỳ (Smart Banking) sẽ **tự động điền đúng Số tài khoản**, **đúng tên bạn**, **đúng số tiền** đơn hàng và điền sẵn nội dung chuyển khoản **"{memoTemplate}[Mã_HĐ]"** cực kỳ tiện lợi.</p>
+                  </div>
+                </div>
+
+                {/* Right Side Live Interactive Card mockup */}
+                <div className="flex flex-col items-center justify-center p-5 bg-muted/30 border border-violet-500/10 rounded-xl gap-4 shadow-inner relative overflow-hidden">
+                  <span className="text-[10px] font-black tracking-widest text-muted-foreground uppercase">Bản xem trước mã QR động</span>
+                  
+                  <div className="relative w-48 h-48 bg-white p-2.5 rounded-lg border-2 border-violet-500/20 shadow-md animate-in zoom-in-95 duration-200">
+                    <img
+                      src={`https://img.vietqr.io/image/${bankId}-${accountNo || "0000"}-compact2.png?amount=100000&addInfo=${encodeURIComponent(memoTemplate + "123")}&accountName=${encodeURIComponent(accountName || "CHU TAI KHOAN")}`}
+                      alt="VietQR Live Preview"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+
+                  <div className="text-center space-y-0.5">
+                    <p className="font-extrabold text-sm uppercase text-foreground">{bankId}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      Chủ TK: <strong className="text-foreground uppercase">{accountName || "CHƯA NHẬP"}</strong>
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">
+                      Số TK: <strong className="text-foreground font-mono">{accountNo || "CHƯA NHẬP"}</strong>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="border-t bg-muted/20 px-6 py-4 flex justify-end">
+              <Button size="sm" onClick={handleSave} disabled={loading} className="bg-violet-600 hover:bg-violet-700 text-white font-bold">
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Save className="mr-2 h-4 w-4" />
+                Lưu cấu hình
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="printer" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Cấu hình máy in & Hóa đơn</CardTitle>
+              <CardDescription>Thiết lập khổ giấy và nội dung hiển thị trên hóa đơn.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Tự động in hóa đơn</Label>
+                  <p className="text-xs text-muted-foreground italic">Máy in sẽ tự động in ngay sau khi bấm thanh toán.</p>
+                </div>
+                <Switch 
+                  checked={autoPrint} 
+                  onCheckedChange={setAutoPrint} 
+                />
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label>Khổ giấy in</Label>
+                  <select
+                    value={paperSize}
+                    onChange={(e) => setPaperSize(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-bold"
+                  >
+                    <option value="K80 (80mm)">K80 (80mm)</option>
+                    <option value="K57 (57mm)">K57 (57mm)</option>
+                    <option value="A4">Khổ A4</option>
+                    <option value="A5">Khổ A5</option>
+                  </select>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Số liên in</Label>
+                  <Input 
+                    type="number" 
+                    value={printCopies} 
+                    onChange={(e) => setPrintCopies(Math.max(1, parseInt(e.target.value) || 1))}
+                  />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label>Lời chào chân trang (Footer text)</Label>
+                <Textarea 
+                  placeholder="Cảm ơn quý khách. Hẹn gặp lại!" 
+                  value={footerText}
+                  onChange={(e) => setFooterText(e.target.value)}
+                />
+              </div>
+            </CardContent>
+            <CardFooter className="border-t bg-muted/20 px-6 py-4 flex justify-end">
+              <Button size="sm" onClick={handleSave} disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Save className="mr-2 h-4 w-4" />
+                Lưu cấu hình
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="security" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Bảo mật & Truy cập</CardTitle>
+              <CardDescription>Cấu hình xác thực hai lớp và giới hạn IP.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Xác thực 2 lớp (2FA)</Label>
+                  <p className="text-xs text-muted-foreground">Tăng cường bảo mật cho tài khoản admin.</p>
+                </div>
+                <Switch 
+                  checked={enable2FA}
+                  onCheckedChange={(val) => {
+                    setEnable2FA(val);
+                    if (val) {
+                      toast.success("Đã bật yêu cầu xác thực 2FA. Vui lòng hoàn tất cấu hình OTP.");
+                    } else {
+                      toast.warning("Đã tắt xác thực 2 lớp.");
+                    }
+                  }}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Giới hạn IP truy cập POS</Label>
+                  <p className="text-xs text-muted-foreground italic">Chỉ cho phép bán hàng từ địa chỉ IP của cửa hàng.</p>
+                </div>
+                <Switch 
+                  checked={restrictIP}
+                  onCheckedChange={(val) => {
+                    setRestrictIP(val);
+                    if (val) {
+                      toast.success("Đã kích hoạt chế độ giới hạn IP tĩnh truy cập POS!");
+                    } else {
+                      toast.warning("Đã hủy giới hạn IP.");
+                    }
+                  }}
+                />
+              </div>
+              <div className="border-t pt-6 space-y-4">
+                <div className="flex flex-col gap-1">
+                  <h4 className="text-sm font-bold flex items-center gap-1.5 text-foreground">
+                    <ShieldCheck className="w-4.5 h-4.5 text-primary" />
+                    Phân quyền vai trò & Quyền hạn nhân sự (RBAC)
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    Thiết lập ma trận quyền hạn cho các vai trò mặc định (Owner, Manager, Cashier...) và cấu hình các vai trò tùy chỉnh.
+                  </p>
+                </div>
+                <Button variant="outline" size="sm" className="h-9 gap-1.5 border-primary text-primary hover:bg-primary/5 hover:text-primary" asChild>
+                  <Link href="/settings/roles">
+                    Thiết lập vai trò & phân quyền
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+            <CardFooter className="border-t bg-muted/20 px-6 py-4 flex justify-end">
+              <Button size="sm" onClick={handleSave} disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Save className="mr-2 h-4 w-4" />
+                Lưu cấu hình
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="telegram" className="space-y-4">
+          <Card className="border shadow-sm overflow-hidden bg-card">
+            <CardHeader className="bg-muted/30 pb-4 border-b">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Send className="w-5 h-5 text-sky-500 animate-bounce" />
+                Cấu hình Thông báo Telegram
+              </CardTitle>
+              <CardDescription>
+                Nhận thông báo tự động về nhóm hoặc kênh Telegram khi có đơn hàng mới phát sinh hoặc khi hàng hóa trong kho sắp hết.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-6">
+              <div className="flex items-center justify-between border-b pb-4">
+                <div className="space-y-0.5">
+                  <Label className="text-base font-bold">Kích hoạt thông báo Telegram</Label>
+                  <p className="text-xs text-muted-foreground italic">Bật để hệ thống tự động đẩy tin nhắn về Telegram.</p>
+                </div>
+                <Switch 
+                  checked={telegramEnabled} 
+                  onCheckedChange={setTelegramEnabled} 
+                />
+              </div>
+
+              {telegramEnabled && (
+                <div className="space-y-6 animate-in slide-in-from-top-4 duration-300">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="grid gap-2">
+                      <Label htmlFor="tel-token" className="font-bold">Telegram Bot Token</Label>
+                      <Input
+                        id="tel-token"
+                        placeholder="Ví dụ: 5678901234:AAFgH-j3K..."
+                        value={telegramToken}
+                        onChange={(e) => setTelegramToken(e.target.value)}
+                        className="font-mono text-xs border-sky-500/10 focus-visible:ring-sky-500"
+                      />
+                      <p className="text-[10px] text-muted-foreground leading-normal">
+                        Lấy từ <b>@BotFather</b> khi bạn tạo bot mới bằng lệnh <code>/newbot</code>.
+                      </p>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="tel-chat" className="font-bold">Telegram Chat ID (Group/Channel)</Label>
+                      <Input
+                        id="tel-chat"
+                        placeholder="Ví dụ: -100123456789 hoặc 123456789"
+                        value={telegramChatId}
+                        onChange={(e) => setTelegramChatId(e.target.value)}
+                        className="font-mono text-xs border-sky-500/10 focus-visible:ring-sky-500"
+                      />
+                      <p className="text-[10px] text-muted-foreground leading-normal">
+                        ID của cuộc hội thoại, Nhóm hoặc Kênh nhận thông báo. Bạn có thể lấy bằng cách add bot <b>@chatIDrobot</b> vào nhóm.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 border-t pt-4">
+                    <h4 className="text-sm font-bold text-foreground">Loại thông báo muốn nhận</h4>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="flex items-center justify-between p-3 border rounded-xl bg-muted/20">
+                        <div className="space-y-0.5">
+                          <Label className="font-semibold text-sm">Đơn hàng mới hoàn tất</Label>
+                          <p className="text-[10px] text-muted-foreground">Nhận tin chi tiết mã đơn, số tiền, sản phẩm, thanh toán.</p>
+                        </div>
+                        <Switch 
+                          checked={telegramNotifyOrder} 
+                          onCheckedChange={setTelegramNotifyOrder} 
+                        />
+                      </div>
+                      <div className="flex items-center justify-between p-3 border rounded-xl bg-muted/20">
+                        <div className="space-y-0.5">
+                          <Label className="font-semibold text-sm">Cảnh báo tồn kho thấp</Label>
+                          <p className="text-[10px] text-muted-foreground">Nhận tin khi một sản phẩm bán đi khiến lượng tồn dưới 5.</p>
+                        </div>
+                        <Switch 
+                          checked={telegramNotifyStock} 
+                          onCheckedChange={setTelegramNotifyStock} 
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-sky-500/5 dark:bg-sky-500/10 p-4 rounded-xl border border-sky-500/20 text-xs leading-relaxed text-muted-foreground space-y-1.5 shadow-sm">
+                    <p className="font-bold text-sky-700 dark:text-sky-400">
+                      💡 Hướng dẫn nhanh liên kết Telegram:
+                    </p>
+                    <p>1. Chat với <b>@BotFather</b> trên Telegram, gõ lệnh <code>/newbot</code> để tạo Bot riêng, đặt tên và sao chép **Bot Token** dán vào ô phía trên.</p>
+                    <p>2. Tạo Nhóm (Group) của bạn và thêm Bot vừa tạo vào Nhóm.</p>
+                    <p>3. Thêm Bot <b>@chatIDrobot</b> vào Nhóm để lấy **Chat ID** (có dấu trừ phía trước, ví dụ: <code>-100...</code>), sao chép dán vào ô trên.</p>
+                    <p>4. Bấm nút **Gửi tin nhắn thử nghiệm** phía dưới để test kết nối!</p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+            <CardFooter className="border-t bg-muted/20 px-6 py-4 flex justify-between items-center">
+              <div>
+                {telegramEnabled && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleTestTelegram} 
+                    disabled={testingTelegram}
+                    className="border-sky-500 text-sky-500 hover:bg-sky-500/5 font-bold"
+                  >
+                    {testingTelegram && <Loader2 className="mr-2 h-4 w-4 animate-spin text-sky-500" />}
+                    Gửi tin nhắn thử nghiệm
+                  </Button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={handleSave} disabled={loading} className="bg-sky-600 hover:bg-sky-700 text-white font-bold">
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Save className="mr-2 h-4 w-4" />
+                  Lưu cấu hình
+                </Button>
+              </div>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      <Dialog open={branchDialogOpen} onOpenChange={setBranchDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">
+              {editingBranch ? "Chỉnh sửa chi nhánh" : "Thêm chi nhánh mới"}
+            </DialogTitle>
+            <DialogDescription>
+              Nhập các thông tin chi tiết cho chi nhánh kinh doanh của bạn.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="b-name" className="font-bold text-foreground">Tên chi nhánh</Label>
+              <Input
+                id="b-name"
+                placeholder="Ví dụ: Chi nhánh Quận 1, Zpos Café..."
+                value={branchName}
+                onChange={(e) => setBranchName(e.target.value)}
+                className="font-bold"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="b-address" className="font-bold text-foreground">Địa chỉ</Label>
+              <Textarea
+                id="b-address"
+                placeholder="Nhập địa chỉ đầy đủ..."
+                value={branchAddress}
+                onChange={(e) => setBranchAddress(e.target.value)}
+                className="min-h-[80px]"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBranchDialogOpen(false)} disabled={loading} className="font-bold">
+              Hủy
+            </Button>
+            <Button onClick={handleSaveBranch} disabled={loading} className="font-bold">
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Lưu lại
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function Badge({ children, className, variant = "default" }: { children: React.ReactNode, className?: string, variant?: "default" | "secondary" }) {
+  return (
+    <span className={`px-2 py-0.5 rounded-full font-bold uppercase ${variant === 'secondary' ? 'bg-muted text-muted-foreground' : 'bg-primary text-primary-foreground'} ${className}`}>
+      {children}
+    </span>
+  );
+}
