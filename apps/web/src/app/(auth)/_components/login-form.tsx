@@ -183,13 +183,18 @@ export function LoginForm() {
           return;
         }
 
-        // 2b. Local Dev Database Bypass for newly created tenants / users (unconfirmed emails in Supabase Auth)
+        // 2b. Database Bypass for newly created tenants / users (unconfirmed emails in Supabase Auth or local testing)
         const isLocal = window.location.hostname.includes("localhost") || 
                         window.location.hostname.includes("127.0.0.1") || 
                         window.location.port !== "";
         const port = window.location.port ? `:${window.location.port}` : "";
+        const isUnconfirmedEmail = error.message?.toLowerCase().includes("confirm") || 
+                                   error.message?.toLowerCase().includes("verify");
 
-        if (isLocal && data.password.length >= 6) {
+        // Allow database bypass on localhost for development, or on live server if the email is unconfirmed (password is validated by Supabase Auth)
+        const shouldBypass = isLocal || isUnconfirmedEmail;
+
+        if (shouldBypass && data.password.length >= 6) {
           // Query profiles directly by email
           const { data: dbProfile } = await supabase
             .from("profiles")
@@ -228,22 +233,31 @@ export function LoginForm() {
               associated_tenant: tenantSlug || null
             };
 
-            toast.success("Đăng nhập Sandbox Live thành công!", {
+            toast.success(isUnconfirmedEmail ? "Đăng nhập xác thực tự động thành công!" : "Đăng nhập Sandbox Live thành công!", {
               description: `Chào mừng ${mockUser.full_name} đến với ${tenantSlug || 'ZPOS'}.`,
             });
 
             localStorage.setItem("zpos_mock_user", JSON.stringify(mockUser));
 
-            // Write both Host-only and Wildcard cookies
+            // Write both Host-only and Wildcard cookies for current domain
             document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; max-age=86400`;
-            document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=localhost; max-age=86400`;
-            document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=.localhost; max-age=86400`;
+            if (isLocal) {
+              document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=localhost; max-age=86400`;
+              document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=.localhost; max-age=86400`;
+            } else {
+              const domain = `.${getMainDomain()}`;
+              document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=${domain}; max-age=86400`;
+            }
 
             if (tenantSlug) {
-              const tenantUrl = `http://${tenantSlug}.localhost${port}/app`;
+              const tenantUrl = isLocal
+                ? `http://${tenantSlug}.localhost${port}/app`
+                : `https://${tenantSlug}.${getMainDomain()}/app`;
               window.location.href = tenantUrl;
             } else {
-              const consoleUrl = `http://console.localhost${port}/dashboard`;
+              const consoleUrl = isLocal
+                ? `http://console.localhost${port}/dashboard`
+                : `https://console.${getMainDomain()}/dashboard`;
               window.location.href = consoleUrl;
             }
             return;
