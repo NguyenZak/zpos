@@ -190,7 +190,7 @@ export function AccountSwitcher({
       
       // Clear mock session cookie from all subdomains
       const isLocal = window.location.hostname.includes("localhost");
-      let cookieDomain = ".zpos.vn";
+      let cookieDomain = ".zpos.click";
       if (isLocal) {
         cookieDomain = ".localhost";
       } else if (window.location.hostname.endsWith("zpos-web.vercel.app")) {

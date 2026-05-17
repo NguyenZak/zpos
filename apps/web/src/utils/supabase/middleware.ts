@@ -7,14 +7,19 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 export const updateSession = async (request: NextRequest) => {
   const isDev = process.env.NODE_ENV === "development";
   const hostname = request.headers.get('host') || '';
-  const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'localhost:3000';
+  let mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'localhost:3000';
+  if (hostname.includes("zpos.click")) {
+    mainDomain = "zpos.click";
+  } else if (hostname.includes("zpos.vn")) {
+    mainDomain = "zpos.vn";
+  }
   
   let cookieDomain = undefined;
   if (!isDev) {
     if (hostname.endsWith(mainDomain)) {
       cookieDomain = `.${mainDomain}`;
     } else {
-      cookieDomain = ".zpos.vn";
+      cookieDomain = ".zpos.click";
     }
   }
 

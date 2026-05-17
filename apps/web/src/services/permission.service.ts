@@ -659,7 +659,7 @@ export const permissionService = {
       created_at: new Date().toISOString(),
       profile: {
         full_name: "Hệ thống",
-        email: "system@zpos.vn"
+        email: "system@zpos.click"
       }
     };
     logs.unshift(newLog);

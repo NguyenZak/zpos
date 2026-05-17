@@ -6,11 +6,11 @@ Tài liệu này tổng hợp các đường dẫn truy cập cho các phân h�
 
 | Phân hệ | Tên miền | Mô tả |
 | :--- | :--- | :--- |
-| **Website chính** | `https://zpos.vn` | Trang giới thiệu, bảng giá, liên hệ. |
-| **App khách hàng** | `https://app.zpos.vn` | Cổng đăng nhập chung cho mọi khách hàng. |
-| **App riêng từng khách** | `https://{tenant}.zpos.vn` | Giao diện POS/Admin riêng (Ví dụ: `bibomart.zpos.vn`). |
-| **Quản trị tổng** | `https://console.zpos.vn` | Quản lý Tenant, Gói cước, Hệ thống (Super Admin). |
-| **Quản trị nội dung** | `https://cms.zpos.vn` | Quản lý bài viết, Landing page, Marketing. |
+| **Website chính** | `https://zpos.click` | Trang giới thiệu, bảng giá, liên hệ. |
+| **App khách hàng** | `https://app.zpos.click` | Cổng đăng nhập chung cho mọi khách hàng. |
+| **App riêng từng khách** | `https://{tenant}.zpos.click` | Giao diện POS/Admin riêng (Ví dụ: `bibomart.zpos.click`). |
+| **Quản trị tổng** | `https://console.zpos.click` | Quản lý Tenant, Gói cước, Hệ thống (Super Admin). |
+| **Quản trị nội dung** | `https://cms.zpos.click` | Quản lý bài viết, Landing page, Marketing. |
 
 ---
 
@@ -44,10 +44,10 @@ Nếu muốn sử dụng tên miền giống hệt production để test, hãy t
 
 Hệ thống sử dụng Middleware để ánh xạ (rewrite) các subdomain vào các group route tương ứng:
 
-- `src/app/(marketing)` → Xử lý `zpos.vn`
-- `src/app/app` → Xử lý `app.zpos.vn` và `{tenant}.zpos.vn`
-- `src/app/console` → Xử lý `console.zpos.vn`
-- `src/app/cms` → Xử lý `cms.zpos.vn`
+- `src/app/(marketing)` → Xử lý `zpos.click`
+- `src/app/app` → Xử lý `app.zpos.click` và `{tenant}.zpos.click`
+- `src/app/console` → Xử lý `console.zpos.click`
+- `src/app/cms` → Xử lý `cms.zpos.click`
 
 ---
 *Cập nhật lần cuối: 17/05/2026*

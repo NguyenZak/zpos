@@ -6,7 +6,12 @@ export async function getTenantFromHost() {
   const headersList = await headers();
   const host = headersList.get("host") || "";
   
-  const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || "localhost:3000";
+  let mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || "localhost:3000";
+  if (host.includes("zpos.click")) {
+    mainDomain = "zpos.click";
+  } else if (host.includes("zpos.vn")) {
+    mainDomain = "zpos.vn";
+  }
   
   const subdomain = host.endsWith(`.${mainDomain}`)
     ? host.replace(`.${mainDomain}`, "")
@@ -32,7 +37,12 @@ export async function getIsConsoleFromHost() {
   const headersList = await headers();
   const host = headersList.get("host") || "";
   
-  const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || "localhost:3000";
+  let mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || "localhost:3000";
+  if (host.includes("zpos.click")) {
+    mainDomain = "zpos.click";
+  } else if (host.includes("zpos.vn")) {
+    mainDomain = "zpos.vn";
+  }
   
   const subdomain = host.endsWith(`.${mainDomain}`)
     ? host.replace(`.${mainDomain}`, "")

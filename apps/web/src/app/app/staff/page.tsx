@@ -114,9 +114,9 @@ export default function StaffPage() {
       setRolesList(allRoles);
       
       const defaultStaff = [
-        { id: '1', name: 'Nguyễn Quản Trị', email: 'admin@zpos.vn', phone: '0901234567', role: 'owner', status: 'active', created_at: new Date().toISOString() },
-        { id: '2', name: 'Lê Bán Hàng', email: 'sales1@zpos.vn', phone: '0902222333', role: 'manager', status: 'active', created_at: new Date().toISOString() },
-        { id: '3', name: 'Trần Thủ Kho', email: 'wh1@zpos.vn', phone: '0905555666', role: 'warehouse staff', status: 'inactive', created_at: new Date().toISOString() },
+        { id: '1', name: 'Nguyễn Quản Trị', email: 'admin@zpos.click', phone: '0901234567', role: 'owner', status: 'active', created_at: new Date().toISOString() },
+        { id: '2', name: 'Lê Bán Hàng', email: 'sales1@zpos.click', phone: '0902222333', role: 'manager', status: 'active', created_at: new Date().toISOString() },
+        { id: '3', name: 'Trần Thủ Kho', email: 'wh1@zpos.click', phone: '0905555666', role: 'warehouse staff', status: 'inactive', created_at: new Date().toISOString() },
       ];
       
       const mapped = defaultStaff.map((emp: any) => {

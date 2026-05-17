@@ -202,7 +202,7 @@ export default function NewTenantPage() {
                     className="bg-slate-950 border-slate-800 text-slate-200 rounded-r-none border-r-0 h-11"
                   />
                   <span className="bg-slate-800 border border-slate-800 text-slate-400 text-sm font-mono px-4 h-11 flex items-center rounded-r-md">
-                    .zpos.vn
+                    .zpos.click
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">Chỉ chứa ký tự thường không dấu, số và gạch ngang (-)</p>
@@ -271,7 +271,7 @@ export default function NewTenantPage() {
                   <label className="text-sm font-bold text-slate-300">Email đăng nhập <span className="text-rose-500">*</span></label>
                   <Input
                     type="email"
-                    placeholder="owner@zpos.vn"
+                    placeholder="owner@zpos.click"
                     value={newTenant.owner_email}
                     onChange={(e) => setNewTenant({ ...newTenant, owner_email: e.target.value })}
                     className="bg-slate-950 border-slate-800 text-slate-200 h-11"

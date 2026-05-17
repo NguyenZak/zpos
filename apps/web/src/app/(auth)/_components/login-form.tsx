@@ -21,7 +21,7 @@ const formSchema = z.object({
 });
 
 const MOCK_USERS = [
-  { email: "quan.tm@zpos.vn", full_name: "Trần Minh Quân", global_role: "super_admin" },
+  { email: "quan.tm@zpos.click", full_name: "Trần Minh Quân", global_role: "super_admin" },
   { email: "mai.nt@bibomart.com.vn", full_name: "Nguyễn Thị Mai", global_role: "tenant_owner", associated_tenant: "bibomart" },
   { email: "nam.lh@comnieusaigon.vn", full_name: "Lê Hoàng Nam", global_role: "tenant_owner", associated_tenant: "comnieusg" },
   { email: "dang.ph@juno.vn", full_name: "Phạm Hải Đăng", global_role: "tenant_owner", associated_tenant: "juno" },
@@ -29,11 +29,11 @@ const MOCK_USERS = [
 ];
 
 const getMainDomain = () => {
-  if (typeof window === "undefined") return "zpos.vn";
+  if (typeof window === "undefined") return "zpos.click";
   const host = window.location.hostname;
   if (host.includes("localhost") || host.includes("127.0.0.1")) return "localhost";
   if (host.endsWith("zpos-web.vercel.app")) return "zpos-web.vercel.app";
-  return "zpos.vn";
+  return "zpos.click";
 };
 
 export function LoginForm() {
@@ -268,6 +268,7 @@ export function LoginForm() {
         window.location.hostname === "console.localhost";
 
       const isSuperAdmin = 
+        data.email.toLowerCase().endsWith("@zpos.click") ||
         data.email.toLowerCase().endsWith("@zpos.vn") ||
         authData.user?.user_metadata?.role === "super_admin" ||
         isConsoleSubdomain;

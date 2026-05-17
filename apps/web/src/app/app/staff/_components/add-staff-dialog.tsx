@@ -142,7 +142,7 @@ export function AddStaffDialog({ onShowSuccess }: AddStaffDialogProps) {
                 <Input 
                   id="email" 
                   type="email"
-                  placeholder="nhanvien@zpos.vn" 
+                  placeholder="nhanvien@zpos.click" 
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required

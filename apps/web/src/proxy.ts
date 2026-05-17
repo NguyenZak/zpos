@@ -7,14 +7,19 @@ import { createServerClient } from '@supabase/ssr';
 function createProxySupabase(request: NextRequest) {
   const isDev = process.env.NODE_ENV === "development";
   const hostname = request.headers.get('host') || '';
-  const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'localhost:3000';
+  let mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'localhost:3000';
+  if (hostname.includes("zpos.click")) {
+    mainDomain = "zpos.click";
+  } else if (hostname.includes("zpos.vn")) {
+    mainDomain = "zpos.vn";
+  }
   
   let cookieDomain = undefined;
   if (!isDev) {
     if (hostname.endsWith(mainDomain)) {
       cookieDomain = `.${mainDomain}`;
     } else {
-      cookieDomain = ".zpos.vn";
+      cookieDomain = ".zpos.click";
     }
   }
 
@@ -40,7 +45,12 @@ export async function proxy(request: NextRequest) {
   const url = request.nextUrl;
   const hostname = request.headers.get('host') || '';
 
-  const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'localhost:3000';
+  let mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'localhost:3000';
+  if (hostname.includes("zpos.click")) {
+    mainDomain = "zpos.click";
+  } else if (hostname.includes("zpos.vn")) {
+    mainDomain = "zpos.vn";
+  }
   
   // Extract subdomain
   const subdomain = hostname.endsWith(`.${mainDomain}`)
@@ -145,7 +155,7 @@ export async function proxy(request: NextRequest) {
 
   // --- Subdomain Routing ---
 
-  // app.zpos.vn → /app/*
+  // app.zpos.click → /app/*
   if (subdomain === 'app') {
     // Allow auth routes to pass through
     if (isAuthRoute) return response;
@@ -170,7 +180,7 @@ export async function proxy(request: NextRequest) {
     return rewriteWithSession(`${targetPath}${url.search}`);
   }
 
-  // console.zpos.vn → /console/*
+  // console.zpos.click → /console/*
   if (subdomain === 'console') {
     // Allow auth routes to pass through
     if (isAuthRoute) return response;
@@ -184,6 +194,7 @@ export async function proxy(request: NextRequest) {
 
     // 2. Role Guard: Check if the user is a super_admin
     let isSuperAdmin = 
+      user.email?.toLowerCase().endsWith('@zpos.click') || 
       user.email?.toLowerCase().endsWith('@zpos.vn') || 
       user.user_metadata?.role === 'super_admin';
 
@@ -217,13 +228,13 @@ export async function proxy(request: NextRequest) {
     return rewriteWithSession(`/console${url.search}`);
   }
 
-  // cms.zpos.vn → /cms/*
+  // cms.zpos.click → /cms/*
   if (subdomain === 'cms') {
     // All paths rewrite to the main CMS page
     return rewriteWithSession(`/cms${url.search}`);
   }
 
-  // --- Tenant Subdomain Routing (bibomart.zpos.vn, juno.zpos.vn …) ---
+  // --- Tenant Subdomain Routing (bibomart.zpos.click, juno.zpos.click …) ---
   if (subdomain && !['www', 'app', 'console', 'cms'].includes(subdomain)) {
     // Validate tenant exists
     const { data: tenant } = await supabase

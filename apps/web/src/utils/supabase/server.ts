@@ -6,7 +6,7 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 export const createClient = (cookieStore: Awaited<ReturnType<typeof cookies>>) => {
   const isDev = process.env.NODE_ENV === "development";
-  const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'localhost:3000';
+  let mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'localhost:3000';
   
   let cookieDomain = undefined;
   if (!isDev) {
@@ -16,10 +16,16 @@ export const createClient = (cookieStore: Awaited<ReturnType<typeof cookies>>) =
       hostname = headers().get("host") || "";
     } catch (e) {}
     
+    if (hostname.includes("zpos.click")) {
+      mainDomain = "zpos.click";
+    } else if (hostname.includes("zpos.vn")) {
+      mainDomain = "zpos.vn";
+    }
+    
     if (hostname && hostname.endsWith(mainDomain)) {
       cookieDomain = `.${mainDomain}`;
     } else {
-      cookieDomain = ".zpos.vn";
+      cookieDomain = ".zpos.click";
     }
   }
 

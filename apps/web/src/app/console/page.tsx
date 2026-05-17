@@ -279,7 +279,7 @@ export default function ConsoleDashboard() {
           dbUsers = profs.map((p, idx) => ({
             id: p.id,
             full_name: p.full_name || "Thành viên ZPOS",
-            email: p.email || "user@zpos.vn",
+            email: p.email || "user@zpos.click",
             avatar_url: p.avatar_url,
             created_at: p.created_at,
             global_role: idx === 0 ? "super_admin" : "tenant_owner",
@@ -302,7 +302,7 @@ export default function ConsoleDashboard() {
             dbUsers = emps.map((e) => ({
               id: e.id,
               full_name: e.name,
-              email: e.email || "employee@zpos.vn",
+              email: e.email || "employee@zpos.click",
               created_at: e.created_at,
               global_role: e.role === "admin" ? "super_admin" : "staff",
               associated_tenant: "Mặc định (ZPOS Retail)"
@@ -1351,18 +1351,18 @@ export default function ConsoleDashboard() {
                                         href={
                                           typeof window !== "undefined" && window.location.hostname.includes("localhost")
                                             ? `http://${tenant.slug}.localhost:3000/app`
-                                            : `https://${tenant.slug}.zpos.vn/app`
+                                            : `https://${tenant.slug}.zpos.click/app`
                                         }
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="font-mono text-teal-400 hover:text-teal-300 transition-all flex items-center gap-0.5 hover:underline decoration-teal-400/30"
                                       >
-                                        <span>{tenant.slug}.zpos.vn</span>
+                                        <span>{tenant.slug}.zpos.click</span>
                                         <ArrowUpRight className="h-3.5 w-3.5 inline" />
                                       </a>
                                     ) : (
                                       <span className="font-mono text-slate-500 cursor-not-allowed select-none flex items-center gap-1.5">
-                                        <span>{tenant.slug}.zpos.vn</span>
+                                        <span>{tenant.slug}.zpos.click</span>
                                         <span className="text-[8px] tracking-wide bg-slate-900 border border-slate-800/80 text-slate-600 px-1 py-0.5 rounded font-black uppercase">Chưa Tạo</span>
                                       </span>
                                     )}
@@ -1473,7 +1473,7 @@ export default function ConsoleDashboard() {
                               className="bg-slate-900/60 border-slate-800 text-slate-400 rounded-r-none border-r-0 cursor-not-allowed h-10"
                             />
                             <span className="bg-slate-800/60 border border-slate-800 text-slate-500 text-xs font-mono px-3 h-10 flex items-center rounded-r-md">
-                              .zpos.vn
+                              .zpos.click
                             </span>
                           </div>
                           <p className="text-[9px] text-slate-500 mt-1">Không thể thay đổi subdomain để tránh đứt gãy định tuyến.</p>
@@ -1546,7 +1546,7 @@ export default function ConsoleDashboard() {
                                 <label className="text-xs font-bold text-slate-300">Email đăng nhập</label>
                                 <Input
                                   type="email"
-                                  placeholder="owner@zpos.vn"
+                                  placeholder="owner@zpos.click"
                                   value={editOwner.email}
                                   onChange={(e) => setEditOwner({ ...editOwner, email: e.target.value })}
                                   className="bg-slate-900 border-slate-800 text-slate-200 h-10"
@@ -1673,7 +1673,7 @@ export default function ConsoleDashboard() {
                           <TableCell>
                             <div>
                               <div className="font-bold text-white">{log.tenant_name}</div>
-                              <div className="text-[10px] text-slate-500 font-semibold font-mono mt-0.5">{log.tenant_slug}.zpos.vn</div>
+                              <div className="text-[10px] text-slate-500 font-semibold font-mono mt-0.5">{log.tenant_slug}.zpos.click</div>
                             </div>
                           </TableCell>
                           <TableCell className="font-semibold text-slate-300">{log.plan}</TableCell>
@@ -1862,7 +1862,7 @@ export default function ConsoleDashboard() {
                   <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800">
                     <div className="space-y-1">
                       <p className="text-xs font-bold text-white">Chế độ Đăng ký Tự do (Open Signups)</p>
-                      <p className="text-[9px] text-slate-500 leading-normal">Cho phép khách hàng tự đăng ký thử nghiệm tại app.zpos.vn</p>
+                      <p className="text-[9px] text-slate-500 leading-normal">Cho phép khách hàng tự đăng ký thử nghiệm tại app.zpos.click</p>
                     </div>
                     <Switch defaultChecked className="data-[state=checked]:bg-teal-500" />
                   </div>
@@ -1915,7 +1915,7 @@ export default function ConsoleDashboard() {
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-slate-300">Sender Email</label>
-                        <Input defaultValue="no-reply@zpos.vn" disabled={!smtpEnabled} className="bg-slate-900 border-slate-800 text-slate-200 disabled:opacity-50" />
+                        <Input defaultValue="no-reply@zpos.click" disabled={!smtpEnabled} className="bg-slate-900 border-slate-800 text-slate-200 disabled:opacity-50" />
                       </div>
                     </div>
 
@@ -1923,7 +1923,7 @@ export default function ConsoleDashboard() {
                       <Button 
                         disabled={!smtpEnabled} 
                         variant="outline" 
-                        onClick={() => toast.success("Email thử nghiệm đã được gửi tới quan.tm@zpos.vn!")}
+                        onClick={() => toast.success("Email thử nghiệm đã được gửi tới quan.tm@zpos.click!")}
                         className="flex-1 border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 hover:text-white font-bold text-xs"
                       >
                         Gửi Mail Test
