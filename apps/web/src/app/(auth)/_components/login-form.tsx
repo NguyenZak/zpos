@@ -36,6 +36,32 @@ const getMainDomain = () => {
   return "zpos.click";
 };
 
+const getSubdomain = () => {
+  if (typeof window === "undefined") return null;
+  const hostname = window.location.hostname;
+  const mainDomain = getMainDomain();
+  
+  if (hostname === mainDomain || hostname === "localhost" || hostname === "127.0.0.1") {
+    return null;
+  }
+  
+  let sub = null;
+  if (hostname.endsWith(`.${mainDomain}`)) {
+    sub = hostname.replace(`.${mainDomain}`, "");
+  } else {
+    const parts = hostname.split(".");
+    if (parts.length > 1) {
+      sub = parts[0];
+    }
+  }
+  
+  if (sub && !["www", "app", "console", "cms"].includes(sub)) {
+    return sub;
+  }
+  
+  return null;
+};
+
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -162,12 +188,32 @@ export function LoginForm() {
 
           if (dbProfile) {
             const member = dbProfile.organization_members?.[0];
-            const tenantSlug = member?.organizations?.slug;
+            let tenantSlug = member?.organizations?.slug;
+            let role = member?.role === "owner" ? "tenant_owner" : "staff";
+
+            // Robust fallback if RLS blocked organization_members join anonymously
+            if (!tenantSlug) {
+              const currentSubdomain = getSubdomain();
+              if (currentSubdomain) {
+                // Verify the subdomain exists in the organizations table
+                const { data: org } = await supabase
+                  .from("organizations")
+                  .select("slug")
+                  .eq("slug", currentSubdomain)
+                  .maybeSingle();
+                  
+                if (org) {
+                  tenantSlug = org.slug;
+                  // Default to tenant_owner for console-provisioned tenant owner
+                  role = "tenant_owner";
+                }
+              }
+            }
 
             const mockUser = {
               email: dbProfile.email,
               full_name: dbProfile.full_name || "Chủ doanh nghiệp",
-              global_role: member?.role === "owner" ? "tenant_owner" : "staff",
+              global_role: role,
               associated_tenant: tenantSlug || null
             };
 
@@ -387,7 +433,7 @@ export function LoginForm() {
           )}
         />
       </FieldGroup>
-      <Button className="w-full bg-indigo-600 hover:bg-indigo-500 font-bold" type="submit" disabled={isLoading}>
+      <Button className="button-primary w-full py-6 text-sm font-semibold tracking-wide cursor-pointer font-sans" type="submit" disabled={isLoading}>
         {isLoading ? "Đang xử lý..." : "Đăng nhập"}
       </Button>
     </form>

@@ -30,6 +30,7 @@ interface MobileDashboardProps {
   lowStockProducts?: any[];
   loading?: boolean;
   onRefresh?: () => Promise<void>;
+  tenantName?: string;
 }
 
 export function MobileDashboard({
@@ -37,7 +38,8 @@ export function MobileDashboard({
   recentSales,
   lowStockProducts = [],
   loading = false,
-  onRefresh
+  onRefresh,
+  tenantName = "ZPOS"
 }: MobileDashboardProps) {
   const [refreshing, setRefreshing] = useState(false);
 
@@ -78,7 +80,7 @@ export function MobileDashboard({
           </div>
           <div>
             <div className="flex items-center gap-1">
-              <h1 className="text-base font-bold text-foreground">Cửa hàng ZPOS</h1>
+              <h1 className="text-base font-bold text-foreground">Xin chào, {tenantName}</h1>
               <Badge variant="secondary" className="text-[9px] h-4.5 px-1 py-0 border-none font-bold uppercase tracking-wider">PRO</Badge>
             </div>
             <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider flex items-center gap-1 mt-0.5">

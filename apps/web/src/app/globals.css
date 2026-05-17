@@ -2,6 +2,102 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+@font-face {
+  font-family: 'Aeonik Pro';
+  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Aeonik Pro';
+  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-RegularItalic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Aeonik Pro';
+  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Aeonik Pro';
+  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-MediumItalic.otf') format('opentype');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Aeonik Pro';
+  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Aeonik Pro';
+  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-BoldItalic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Aeonik Pro';
+  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Aeonik Pro';
+  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-LightItalic.otf') format('opentype');
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Aeonik Pro';
+  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-Thin.otf') format('opentype');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Aeonik Pro';
+  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-ThinItalic.otf') format('opentype');
+  font-weight: 200;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Aeonik Pro';
+  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-Black.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Aeonik Pro';
+  src: url('/fonts/aeonik-pro/AeonikPro/AeonikPro-BlackItalic.otf') format('opentype');
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+}
+
 /* Theme preset styles: these override CSS variables based on the selected data-theme-preset */
 @import "../styles/presets/brutalist.css";
 @import "../styles/presets/soft-pop.css";
@@ -52,9 +148,53 @@
   --font-sans: var(--font-plus-jakarta-sans);
 }
 
+@theme {
+  --color-midnight-void: var(--color-midnight-void);
+  --color-canvas-white: var(--color-canvas-white);
+  --color-silver-mist: var(--color-silver-mist);
+  --color-ink-black: var(--color-ink-black);
+  --color-graphite: var(--color-graphite);
+  --color-cloud-gray: var(--color-cloud-gray);
+  --color-faded-white: var(--color-faded-white);
+  --color-light-steel: var(--color-light-steel);
+  --color-polar-mist: var(--color-polar-mist);
+  --color-electric-blue: var(--color-electric-blue);
+  --color-sky-blue: var(--color-sky-blue);
+  --color-ash-code: var(--color-ash-code);
+  --color-clean-white-gradient: var(--color-clean-white-gradient);
+  --color-deep-blue-gradient: var(--color-deep-blue-gradient);
+  
+  --font-inter: var(--font-inter);
+  --font-aeonik-pro: var(--font-aeonik-pro);
+  --font-geist-mono: var(--font-geist-mono);
+}
+
 /* Default theme styles (used when no data-theme-preset is set or when 'default' is selected).
 These serve as the fallback; there is no separate default.css file. */
 :root {
+  /* Colors */
+  --color-midnight-void: #05061b;
+  --color-canvas-white: #ffffff;
+  --color-silver-mist: #e5e7eb;
+  --color-ink-black: #000000;
+  --color-graphite: #141414;
+  --color-cloud-gray: #656565;
+  --color-faded-white: #e6fff7;
+  --color-light-steel: #c2c2c9;
+  --color-polar-mist: #d6d6db;
+  --color-electric-blue: #0036ff;
+  --color-sky-blue: #0093ff;
+  --color-ash-code: #384642;
+  --color-clean-white-gradient: #f7f7f7;
+  --gradient-clean-white-gradient: linear-gradient(155deg, rgb(247, 247, 247) 26.97%, rgb(214, 214, 214) 69.83%);
+  --color-deep-blue-gradient: #0f071d;
+  --gradient-deep-blue-gradient: linear-gradient(0deg, rgb(255, 255, 255), rgb(230, 244, 247) 6.29%, rgb(128, 191, 239) 15.02%, rgb(68, 164, 233) 19.39%, rgb(48, 157, 231), rgb(16, 150, 229) 21.57%, color(xyz-d65 0.241 0.261 0.773), color(xyz-d65 0.23 0.248 0.764) 22.66%, color(xyz-d65 0.21 0.222 0.745) 23.75%, color(xyz-d65 0.188 0.157 0.764) 33.2%, color(xyz-d65 0.178 0.128 0.772), rgb(16, 70, 233) 42.64%, rgb(6, 29, 182) 53.09%, rgb(7, 11, 107) 66.19%, rgb(19, 2, 58) 75.33%, rgb(15, 7, 29) 86.09%, rgb(15, 7, 29));
+
+  /* Typography — Font Families */
+  --font-inter: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-aeonik-pro: 'Aeonik Pro', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-geist-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
   --radius: 0.5rem;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -309,136 +449,174 @@ html {
 }
 
 /* ==========================================================================
-   AWESOMIC DESIGN SYSTEM TOKENS & UTILITIES (DESIGN Landing.md)
+   TODESKTOP PREMIUM SYSTEM BUTTONS & UTILITIES
    ========================================================================== */
 
-:root {
-  --color-obsidian: #09090b;
-  --color-ink: #18181b;
-  --color-graphite: #3f3f46;
-  --color-slate: #52525b;
-  --color-steel: #71717a;
-  --color-ash: #a1a1aa;
-  --color-pebble: #d4d4d8;
-  --color-fog: #ececee;
-  --color-mist: #f4f4f5;
-  --color-snow: #ffffff;
-  --color-ember: #ff5a00;
-  --color-orchid-flash: #fe45e2;
-
-  --font-cosmica: var(--font-plus-jakarta-sans), ui-sans-serif, system-ui, sans-serif;
-}
-
-/* Base Typographic Class for Awesomic */
-.font-cosmica {
-  font-family: var(--font-cosmica);
-}
-
-/* 1. Primary Pill Button - Tactical Pressed-Glass Shadow */
-.btn-primary-pill {
-  font-family: var(--font-cosmica);
-  background-color: var(--color-obsidian);
-  color: var(--color-snow);
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: 36px;
-  border: none;
-  cursor: pointer;
+.button-primary {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #0036ff;
+  color: #ffffff !important;
+  font-weight: 600;
+  border-radius: 9999px;
   box-shadow: 
-    rgba(255, 255, 255, 0.5) 0px 0.5px 0px 0px inset, 
-    rgba(117, 123, 133, 0.4) 0px 9px 14px -5px inset, 
-    rgb(44, 46, 52) 0px 0px 0px 1.5px, 
-    rgba(0, 0, 0, 0.14) 0px 4px 6px 0px;
-  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease;
-}
-.btn-primary-pill:hover {
-  transform: translateY(-1px) scale(1.02);
-}
-.btn-primary-pill:active {
-  transform: translateY(1px) scale(0.98);
+    0 1px 2px -.5px rgba(255, 255, 255, 0.12) inset,
+    0 .5px .5px rgba(255, 255, 255, 0.16) inset,
+    0 8px 24px -4px rgba(255, 255, 255, 0.16) inset,
+    0 8px 8px -3px rgba(9, 1, 20, 0.03),
+    0 5px 5px -2.5px rgba(9, 1, 20, 0.03),
+    0 3px 3px -1.5px rgba(8, 1, 20, 0.03),
+    0 2px 2px -1px rgba(8, 1, 20, 0.03),
+    0 1px 1px -.5px rgba(8, 1, 20, 0.03),
+    0 .5px .5px rgba(8, 1, 20, 0.03);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
 }
 
-/* 2. Outlined White Button - Pill Silhouette Inverted */
-.btn-outlined-white {
-  font-family: var(--font-cosmica);
-  background-color: var(--color-snow);
-  color: var(--color-graphite);
-  border: 1.5px solid var(--color-graphite);
-  border-radius: 36px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.2s ease;
+.button-primary::before {
+  content: "";
+  background: linear-gradient(to bottom, #fff, rgba(255, 255, 255, 0.5));
+  opacity: .12;
+  pointer-events: none;
+  transition-property: all;
+  transition-timing-function: cubic-bezier(.6, .6, 0, 1);
+  transition-duration: .45s;
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  border-radius: inherit;
+  z-index: 1;
 }
-.btn-outlined-white:hover {
-  background-color: var(--color-mist);
+
+.button-primary:hover::before {
+  opacity: .24;
+}
+
+.button-primary:active {
+  transform: scale(0.98);
+  box-shadow: 
+    0 1px 2px -.5px rgba(0, 27, 135, 0.16) inset,
+    0 .5px .5px rgba(0, 28, 136, 0.16) inset,
+    0 8px 24px -4px rgba(0, 28, 136, 0.16) inset,
+    0 8px 8px -3px rgba(9, 1, 20, 0.03),
+    0 5px 5px -2.5px rgba(9, 1, 20, 0.03),
+    0 3px 3px -1.5px rgba(8, 1, 20, 0.03),
+    0 2px 2px -1px rgba(8, 1, 20, 0.03);
+}
+
+.button-primary:active::before {
+  opacity: .06;
+}
+
+.button-light {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.96);
+  color: #141414 !important;
+  font-weight: 600;
+  border-radius: 9999px;
+  box-shadow: 
+    0 8px 8px -3px rgba(0, 0, 0, 0.04),
+    0 3px 3px -1.5px rgba(0, 0, 0, 0.04),
+    0 2px 2px -1px rgba(0, 0, 0, 0.03),
+    0 1px 1px -.5px rgba(0, 0, 0, 0.03),
+    0 .5px .5px rgba(0, 0, 0, 0.03),
+    0 0 0 1px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.button-light:hover {
+  box-shadow: 
+    0 16px 16px -8px rgba(0, 0, 0, 0.08),
+    0 3px 3px -1.5px rgba(0, 0, 0, 0.04),
+    0 2px 2px -1px rgba(0, 0, 0, 0.03),
+    0 1px 1px -.5px rgba(0, 0, 0, 0.03),
+    0 .5px .5px rgba(0, 0, 0, 0.03),
+    0 0 0 1px rgba(0, 0, 0, 0.04);
   transform: translateY(-1px);
 }
-.btn-outlined-white:active {
-  transform: translateY(1px);
+
+.button-light:active {
+  transform: translateY(1px) scale(0.99);
+  box-shadow: 
+    0 8px 8px -3px rgba(0, 0, 0, 0.02),
+    0 3px 3px -1.5px rgba(0, 0, 0, 0.02),
+    0 2px 2px -1px rgba(0, 0, 0, 0.02),
+    0 1px 1px -.5px rgba(0, 0, 0, 0.02),
+    0 .5px .5px rgba(0, 0, 0, 0.03),
+    0 0 0 1px rgba(0, 0, 0, 0.03);
 }
 
-/* 3. Rounded Dark Button - Contextual Action Inside Card Panel */
-.btn-rounded-dark {
-  font-family: var(--font-cosmica);
-  background-color: var(--color-obsidian);
-  color: var(--color-snow);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 14px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.btn-rounded-dark:hover {
-  background-color: rgba(255, 255, 255, 0.08);
-}
-
-/* 4. Light Surface Card - Bubble Shape */
-.card-light {
-  background-color: var(--color-snow);
-  border-radius: 36px;
-  box-shadow: rgb(228, 228, 231) 0px 1px 0px 0px inset;
-}
-
-/* 5. Muted Surface Card */
-.card-muted {
-  background-color: var(--color-fog);
-  border-radius: 28px;
-}
-
-/* 6. Badges */
-.badge-overlay {
-  font-family: var(--font-cosmica);
-  background-color: rgba(9, 9, 11, 0.4);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  color: var(--color-snow);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-  padding: 4px 8px;
-}
-
-.badge-filled {
-  font-family: var(--font-cosmica);
-  background-color: var(--color-graphite);
-  color: #fafafa;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-  padding: 4px 8px;
-}
-
-.badge-ember {
-  font-family: var(--font-cosmica);
-  background-color: var(--color-ember);
-  color: var(--color-snow);
-  border-radius: 12px;
-  font-size: 12px;
+.button-dark {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.04);
+  color: #ffffff !important;
   font-weight: 600;
-  padding: 4px 8px;
+  border-radius: 9999px;
+  box-shadow: 
+    0 -4px 12px -4px rgba(255, 255, 255, 0.08) inset,
+    0 1px 3px rgba(255, 255, 255, 0.06) inset,
+    0 .5px .5px rgba(255, 255, 255, 0.12) inset,
+    0 8px 8px -3px rgba(9, 1, 20, 0.06),
+    0 3px 3px -1.5px rgba(9, 1, 20, 0.06),
+    0 2px 2px -1px rgba(8, 1, 20, 0.04),
+    0 1px 1px -.5px rgba(8, 1, 20, 0.03),
+    0 .5px .5px rgba(8, 1, 20, 0.03);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.button-dark::before,
+.button-dark::after {
+  content: "";
+  transition-property: all;
+  transition-timing-function: cubic-bezier(.6, .6, 0, 1);
+  transition-duration: .2s;
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.button-dark::before {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.08));
+  z-index: 1;
+}
+
+.button-dark::after {
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.08));
+  opacity: 0;
+  z-index: 1;
+}
+
+.button-dark:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.button-dark:active {
+  background-color: rgba(255, 255, 255, 0.02);
+  transform: translateY(1px) scale(0.99);
+  box-shadow: 
+    0 4px 8px rgba(18, 7, 43, 0.16) inset,
+    0 3px 6px rgba(18, 7, 43, 0.06) inset,
+    0 .5px .5px rgba(18, 7, 43, 0.12) inset,
+    0 8px 8px -3px rgba(9, 1, 20, 0.06),
+    0 3px 3px -1.5px rgba(9, 1, 20, 0.06),
+    0 2px 2px -1px rgba(8, 1, 20, 0.04);
+}
+
+.button-dark:active::after {
+  opacity: 1;
+}
+
+.button-dark:active::before {
+  opacity: 0;
 }
 
 /* 7. Logos Ticker Animation loop */
@@ -450,27 +628,50 @@ html {
     transform: translateX(-50%);
   }
 }
+
 .logo-ticker-track {
   display: flex;
   width: max-content;
   animation: infiniteScroll 25s linear infinite;
 }
+
 .logo-ticker-track:hover {
   animation-play-state: paused;
 }
 
-/* Custom Scrollbar for Portfolio scrolling */
-.portfolio-scroll-container::-webkit-scrollbar {
-  height: 6px;
+/* ==========================================================================
+   BORDER BEAM KEYFRAMES & UTILITIES
+   ========================================================================== */
+@keyframes border-beam {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -100;
+  }
 }
-.portfolio-scroll-container::-webkit-scrollbar-track {
-  background: var(--color-mist);
-  border-radius: 10px;
+
+.animate-border-beam {
+  animation: border-beam 4s linear infinite;
 }
-.portfolio-scroll-container::-webkit-scrollbar-thumb {
-  background: var(--color-pebble);
-  border-radius: 10px;
+
+/* ==========================================================================
+   DASH ROUTING KEYFRAMES & UTILITIES
+   ========================================================================== */
+@keyframes dash {
+  to {
+    stroke-dashoffset: -48;
+  }
 }
-.portfolio-scroll-container::-webkit-scrollbar-thumb:hover {
-  background: var(--color-ash);
+
+.animate-dash-fast {
+  animation: dash 2s linear infinite;
+}
+
+.animate-dash-slow {
+  animation: dash 3s linear infinite;
+}
+
+.animate-dash-slow-reverse {
+  animation: dash 3s linear infinite reverse;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { createClient } from "@/utils/supabase/client";
 import { 
   TrendingUp, 
   Users, 
@@ -149,6 +150,7 @@ const formatCurrency = (amount: number) => {
 
 export default function DashboardPage() {
   const [isMobile, setIsMobile] = useState(false);
+  const [tenantName, setTenantName] = useState("ZPOS");
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 768px)");
@@ -156,6 +158,97 @@ export default function DashboardPage() {
     const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
     mediaQuery.addEventListener("change", handler);
     return () => mediaQuery.removeEventListener("change", handler);
+  }, []);
+
+  useEffect(() => {
+    const loadTenantName = async () => {
+      if (typeof window === "undefined") return;
+      const host = window.location.hostname;
+      
+      let mainDomain = "zpos.click";
+      if (host.includes("localhost") || host.includes("127.0.0.1")) {
+        mainDomain = "localhost";
+      } else if (host.includes("zpos.vn")) {
+        mainDomain = "zpos.vn";
+      }
+      
+      let subdomain = null;
+      if (host.includes("localhost")) {
+        const parts = host.split(".");
+        if (parts.length > 1 && parts[parts.length - 1] === "localhost") {
+          subdomain = parts.slice(0, -1).join(".");
+        }
+      } else {
+        if (host.endsWith("." + mainDomain)) {
+          subdomain = host.replace("." + mainDomain, "");
+        }
+      }
+      
+      // If subdomain is universal or null, fall back to check active user's associated tenant from localStorage
+      if (!subdomain || ["www", "app", "console", "cms"].includes(subdomain)) {
+        const savedUser = localStorage.getItem("zpos_mock_user");
+        if (savedUser) {
+          try {
+            const parsed = JSON.parse(savedUser);
+            if (parsed.associated_tenant) {
+              subdomain = parsed.associated_tenant;
+            }
+          } catch (e) {
+            console.error("Failed to parse mock user in loadTenantName:", e);
+          }
+        }
+      }
+
+      // If still universal or null, try loading from Supabase for live user
+      if (!subdomain || ["www", "app", "console", "cms"].includes(subdomain)) {
+        try {
+          const supabase = createClient();
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: member } = await supabase
+              .from("organization_members")
+              .select("organizations(name, slug)")
+              .eq("profile_id", user.id)
+              .maybeSingle();
+            
+            const org = member?.organizations as any;
+            if (org?.name) {
+              setTenantName(org.name);
+              return;
+            }
+          }
+        } catch (err) {
+          console.error("Failed to load user organization from database:", err);
+        }
+      }
+      
+      if (!subdomain || ["www", "app", "console", "cms"].includes(subdomain)) {
+        setTenantName("ZPOS");
+        return;
+      }
+      
+      try {
+        const supabase = createClient();
+        const { data: org } = await supabase
+          .from("organizations")
+          .select("name")
+          .eq("slug", subdomain)
+          .maybeSingle();
+          
+        if (org?.name) {
+          setTenantName(org.name);
+        } else {
+          const fallbackName = subdomain.charAt(0).toUpperCase() + subdomain.slice(1);
+          setTenantName(fallbackName);
+        }
+      } catch (err) {
+        console.error("Failed to load tenant name:", err);
+        const fallbackName = subdomain.charAt(0).toUpperCase() + subdomain.slice(1);
+        setTenantName(fallbackName);
+      }
+    };
+
+    loadTenantName();
   }, []);
 
   const [stats, setStats] = useState<any>(null);
@@ -579,6 +672,7 @@ export default function DashboardPage() {
         lowStockProducts={lowStockProducts}
         loading={loading}
         onRefresh={loadDashboardData}
+        tenantName={tenantName}
       />
     );
   }
@@ -591,7 +685,7 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between border-b pb-5">
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-            Tổng quan kinh doanh
+            Xin chào, {tenantName}
           </h1>
           <p className="text-muted-foreground text-sm flex items-center gap-2 mt-0.5">
             <CalendarDays className="w-4 h-4 text-primary" />

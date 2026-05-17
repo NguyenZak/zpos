@@ -11,12 +11,12 @@ import { Input } from "@/components/ui/input";
 
 const formSchema = z
   .object({
-    email: z.string().email({ message: "Please enter a valid email address." }),
-    password: z.string().min(6, { message: "Password must be at least 6 characters." }),
-    confirmPassword: z.string().min(6, { message: "Confirm Password must be at least 6 characters." }),
+    email: z.string().email({ message: "Vui lòng nhập địa chỉ email hợp lệ." }),
+    password: z.string().min(6, { message: "Mật khẩu phải có ít nhất 6 ký tự." }),
+    confirmPassword: z.string().min(6, { message: "Xác nhận mật khẩu phải có ít nhất 6 ký tự." }),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match.",
+    message: "Mật khẩu xác nhận không khớp.",
     path: ["confirmPassword"],
   });
 
@@ -31,7 +31,7 @@ export function RegisterForm() {
   });
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
-    toast("You submitted the following values", {
+    toast("Bạn đã đăng ký thành công với thông tin:", {
       description: (
         <pre className="mt-2 w-[320px] rounded-md bg-neutral-950 p-4">
           <code className="text-white">{JSON.stringify(data, null, 2)}</code>
@@ -48,12 +48,12 @@ export function RegisterForm() {
           name="email"
           render={({ field, fieldState }) => (
             <Field className="gap-1.5" data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="register-email">Email Address</FieldLabel>
+              <FieldLabel htmlFor="register-email">Địa chỉ Email</FieldLabel>
               <Input
                 {...field}
                 id="register-email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="ten@doanhnghiep.com"
                 autoComplete="email"
                 aria-invalid={fieldState.invalid}
               />
@@ -66,7 +66,7 @@ export function RegisterForm() {
           name="password"
           render={({ field, fieldState }) => (
             <Field className="gap-1.5" data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="register-password">Password</FieldLabel>
+              <FieldLabel htmlFor="register-password">Mật khẩu</FieldLabel>
               <Input
                 {...field}
                 id="register-password"
@@ -84,7 +84,7 @@ export function RegisterForm() {
           name="confirmPassword"
           render={({ field, fieldState }) => (
             <Field className="gap-1.5" data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="register-confirm-password">Confirm Password</FieldLabel>
+              <FieldLabel htmlFor="register-confirm-password">Xác nhận mật khẩu</FieldLabel>
               <Input
                 {...field}
                 id="register-confirm-password"
@@ -98,8 +98,8 @@ export function RegisterForm() {
           )}
         />
       </FieldGroup>
-      <Button className="w-full" type="submit">
-        Register
+      <Button className="button-primary w-full py-6 text-sm font-semibold tracking-wide cursor-pointer font-sans" type="submit">
+        Đăng ký
       </Button>
     </form>
   );

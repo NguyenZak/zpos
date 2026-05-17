@@ -27,7 +27,8 @@ import {
   Sparkles,
   Coins,
   ArrowRight,
-  Pencil
+  Pencil,
+  RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -1059,7 +1060,7 @@ export default function POSPage() {
                   onClick={handleCheckout}
                   disabled={isProcessing || (paymentMethod === 'cash' && receivedAmount < total)}
                 >
-                  Xác nhận
+                  Xác nhận {paymentMethod === 'transfer' ? '(Thủ công)' : ''}
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </div>
@@ -1148,6 +1149,32 @@ export default function POSPage() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Webhook Simulation Button (For Demo) */}
+                    <Button 
+                      variant="secondary" 
+                      className="w-full h-10 mt-4 text-xs font-bold gap-2 animate-pulse hover:animate-none border-primary/20 hover:border-primary/50 text-primary bg-primary/5"
+                      onClick={() => {
+                        setIsProcessing(true);
+                        toast.info("Đang chờ webhook từ ngân hàng...");
+                        setTimeout(() => {
+                          handleCheckout();
+                        }, 1500);
+                      }}
+                      disabled={isProcessing}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          Đang nhận biến động số dư...
+                        </>
+                      ) : (
+                        <>
+                          <QrCode className="w-4 h-4" />
+                          Mô phỏng: Khách đã quét QR thành công
+                        </>
+                      )}
+                    </Button>
                   </div>
                 )}
 
@@ -1167,6 +1194,32 @@ export default function POSPage() {
                       <p className="text-sm font-bold text-foreground">Chờ quẹt / chạm thẻ...</p>
                       <p className="text-xs text-muted-foreground max-w-[240px] mx-auto leading-relaxed">Vui lòng gắn thiết bị đầu đọc thẻ hoặc hướng dẫn khách hàng chạm thẻ chip để hoàn tất.</p>
                     </div>
+                    
+                    {/* Card Webhook Simulation Button (For Demo) */}
+                    <Button 
+                      variant="secondary" 
+                      className="w-full h-10 mt-4 text-xs font-bold gap-2 hover:border-primary/50 text-primary bg-primary/5"
+                      onClick={() => {
+                        setIsProcessing(true);
+                        toast.info("Đang xử lý thanh toán qua mPOS...");
+                        setTimeout(() => {
+                          handleCheckout();
+                        }, 1500);
+                      }}
+                      disabled={isProcessing}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          Đang giao tiếp máy POS...
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="w-4 h-4" />
+                          Mô phỏng: Khách đã chạm thẻ thành công
+                        </>
+                      )}
+                    </Button>
                   </div>
                 )}
               </div>

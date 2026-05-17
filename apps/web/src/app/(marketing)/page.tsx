@@ -1,66 +1,39 @@
-"use client";
-
-import React, { useEffect, useRef } from 'react';
+import { CTA } from "./_components/CTA";
+import { FeatureDeepDive } from "./_components/FeatureDeepDive";
+import { FeatureGrid } from "./_components/FeatureGrid";
+import { Footer } from "./_components/Footer";
+import { Header } from "./_components/Header";
+import { Hero } from "./_components/Hero";
+import { LogoCloud } from "./_components/LogoCloud";
+import { Pricing } from "./_components/Pricing";
+import { ProductDemo } from "./_components/ProductDemo";
+import { SecuritySection } from "./_components/SecuritySection";
+import { LanguageProvider } from "./_components/LanguageContext";
 
 export default function LandingPage() {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  useEffect(() => {
-    // Auto-resize iframe to match content height
-    const iframe = iframeRef.current;
-    if (!iframe) return;
-
-    const handleLoad = () => {
-      try {
-        const doc = iframe.contentDocument || iframe.contentWindow?.document;
-        if (doc) {
-          // Set iframe height to match content
-          const updateHeight = () => {
-            const height = doc.documentElement.scrollHeight;
-            iframe.style.height = height + 'px';
-          };
-          updateHeight();
-          
-          // Watch for resize changes
-          const observer = new ResizeObserver(updateHeight);
-          observer.observe(doc.documentElement);
-
-          // Intercept link clicks to navigate in parent
-          doc.addEventListener('click', (e: MouseEvent) => {
-            const target = e.target as HTMLElement;
-            const anchor = target.closest('a');
-            if (anchor) {
-              const href = anchor.getAttribute('href');
-              if (href && (href.startsWith('/login') || href.startsWith('/register') || href.startsWith('/app'))) {
-                e.preventDefault();
-                window.location.href = href;
-              }
-            }
-          });
-        }
-      } catch (err) {
-        // Cross-origin fallback - just set a large height
-        iframe.style.height = '8000px';
-      }
-    };
-
-    iframe.addEventListener('load', handleLoad);
-    return () => iframe.removeEventListener('load', handleLoad);
-  }, []);
-
   return (
-    <iframe
-      ref={iframeRef}
-      src="/landing.html"
-      title="ZPOS Landing Page"
-      className="w-full border-0 overflow-hidden"
-      style={{
-        width: '100%',
-        minHeight: '100vh',
-        border: 'none',
-        display: 'block',
-      }}
-      scrolling="no"
-    />
+    <LanguageProvider>
+      <div className="flex min-h-screen flex-col bg-[#F8FAFC]">
+        <Header />
+        <main className="flex-1">
+          {/* Deep Blue/Space Gradient wrapper stretching down near half the page */}
+          <div 
+            style={{
+              background: "linear-gradient(0deg, rgb(255, 255, 255), rgb(230, 244, 247) 6.29%, rgb(128, 191, 239) 15.02%, rgb(68, 164, 233) 19.39%, rgb(48, 157, 231), rgb(16, 150, 229) 21.57%, color(xyz-d65 0.241 0.261 0.773), color(xyz-d65 0.23 0.248 0.764) 22.66%, color(xyz-d65 0.21 0.222 0.745) 23.75%, color(xyz-d65 0.188 0.157 0.764) 33.2%, color(xyz-d65 0.178 0.128 0.772), rgb(16, 70, 233) 42.64%, rgb(6, 29, 182) 53.09%, rgb(7, 11, 107) 66.19%, rgb(19, 2, 58) 75.33%, rgb(15, 7, 29) 86.09%, rgb(15, 7, 29))"
+            }}
+          >
+            <Hero />
+            <LogoCloud />
+            <FeatureGrid />
+            <ProductDemo />
+          </div>
+          <FeatureDeepDive />
+          <SecuritySection />
+          <Pricing />
+          <CTA />
+        </main>
+        <Footer />
+      </div>
+    </LanguageProvider>
   );
 }

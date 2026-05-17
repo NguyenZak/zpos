@@ -7,14 +7,24 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: "/login",
-        destination: "/v2/login",
-        permanent: false,
+        source: "/v1/login",
+        destination: "/login",
+        permanent: true,
       },
       {
-        source: "/register",
-        destination: "/v2/register",
-        permanent: false,
+        source: "/v2/login",
+        destination: "/login",
+        permanent: true,
+      },
+      {
+        source: "/v1/register",
+        destination: "/register",
+        permanent: true,
+      },
+      {
+        source: "/v2/register",
+        destination: "/register",
+        permanent: true,
       },
     ];
   },
