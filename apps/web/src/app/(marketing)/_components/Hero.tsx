@@ -140,7 +140,7 @@ export function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.2 }}
-          className="text-4xl md:text-6xl lg:text-[72px] font-bold tracking-tight text-center text-white leading-[1.1] mb-6 max-w-5xl"
+          className="text-4xl md:text-6xl lg:text-[72px] font-normal tracking-tight text-center text-white leading-[1.1] mb-6 max-w-5xl"
           style={{ fontFamily: "'Aeonik Pro', sans-serif", fontFeatureSettings: "'ss02', 'ss05', 'ss10', 'ss11'" }}
         >
           {t("hero.title1")} <br />
