@@ -170,3 +170,44 @@ create policy "Members can view products" on products for select
 using (exists (select 1 from organization_members where organization_id = products.organization_id and profile_id = auth.uid()));
 
 -- ... and so on for other tables
+
+-- 12. Audit Logs & Security Logs
+create table audit_logs (
+  id uuid primary key default uuid_generate_v4(),
+  tenant_id uuid references organizations(id) on delete cascade,
+  user_id uuid references profiles(id) on delete set null,
+  user_email text,
+  action text not null,
+  module text not null,
+  severity text not null check (severity in ('info', 'warning', 'error', 'critical')),
+  ip_address text,
+  user_agent text,
+  metadata jsonb default '{}'::jsonb,
+  is_alert boolean default false,
+  alert_reason text,
+  created_at timestamp with time zone default now()
+);
+
+-- Indexes for performance
+create index idx_audit_logs_tenant on audit_logs(tenant_id);
+create index idx_audit_logs_severity on audit_logs(severity);
+create index idx_audit_logs_created_at on audit_logs(created_at);
+create index idx_audit_logs_action on audit_logs(action);
+
+-- Enable RLS
+alter table audit_logs enable row level security;
+
+-- Super admins and workspace members can view their own tenant audit logs
+create policy "Super admins can view all audit logs" on audit_logs for select
+using (
+  auth.email() like '%@zpos.click' or 
+  auth.email() like '%@zpos.vn' or
+  (exists (
+    select 1 from organization_members 
+    where organization_id = audit_logs.tenant_id and profile_id = auth.uid() and role = 'owner'
+  ))
+);
+
+create policy "System can insert audit logs" on audit_logs for insert
+with check (true);
+

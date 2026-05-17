@@ -129,6 +129,20 @@ export function LoginForm() {
         );
 
         if (mockUser && data.password.length >= 6) {
+          // Track Sandbox login success
+          fetch("/api/admin/audit-logs", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              tenant_id: mockUser.associated_tenant || null,
+              user_email: mockUser.email,
+              action: "login_success",
+              module: "auth",
+              severity: "info",
+              metadata: { full_name: mockUser.full_name, role: mockUser.global_role, mode: "sandbox" }
+            })
+          }).catch(console.error);
+
           toast.success("Đăng nhập Sandbox thành công!", {
             description: `Xin chào ${mockUser.full_name} (${mockUser.global_role === 'super_admin' ? 'Super Admin' : 'Chủ doanh nghiệp'}).`,
           });
@@ -233,6 +247,20 @@ export function LoginForm() {
               associated_tenant: tenantSlug || null
             };
 
+            // Track Database Bypass login success
+            fetch("/api/admin/audit-logs", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                tenant_id: tenantSlug || null,
+                user_email: dbProfile.email,
+                action: "login_success",
+                module: "auth",
+                severity: "info",
+                metadata: { full_name: dbProfile.full_name, role, mode: "database_bypass" }
+              })
+            }).catch(console.error);
+
             toast.success(isUnconfirmedEmail ? "Đăng nhập xác thực tự động thành công!" : "Đăng nhập Sandbox Live thành công!", {
               description: `Chào mừng ${mockUser.full_name} đến với ${tenantSlug || 'ZPOS'}.`,
             });
@@ -266,6 +294,21 @@ export function LoginForm() {
 
         throw error;
       }
+
+      // Track Live login success
+      fetch("/api/admin/audit-logs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenant_id: null,
+          user_email: authData.user?.email || data.email,
+          user_id: authData.user?.id,
+          action: "login_success",
+          module: "auth",
+          severity: "info",
+          metadata: { mode: "live" }
+        })
+      }).catch(console.error);
 
       // 3. Live Success Redirection
       toast.success("Đăng nhập thành công!");
@@ -376,6 +419,20 @@ export function LoginForm() {
     } catch (err: any) {
       console.error("Auth Exception Caught:", err);
       const errMsg = err?.message || err?.error_description || (typeof err === 'object' ? JSON.stringify(err) : String(err)) || "Vui lòng kiểm tra lại email và mật khẩu.";
+      
+      // Track failed login
+      fetch("/api/admin/audit-logs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_email: data.email,
+          action: "login_failed",
+          module: "auth",
+          severity: "warning",
+          metadata: { error_message: errMsg, password_attempted_length: data.password.length }
+        })
+      }).catch(console.error);
+
       setLoginError(errMsg);
       toast.error("Đăng nhập thất bại", {
         description: errMsg,
@@ -526,7 +583,7 @@ export function LoginForm() {
       </Button>
 
       {/* Expandable Demo Accounts Panel */}
-      <div className="mt-2 rounded-2xl border border-white/5 bg-white/[0.02] p-3 backdrop-blur-md transition-all duration-300 hover:border-white/10">
+      <div className="mt-2 rounded-lg border border-white/5 bg-white/[0.02] p-3 backdrop-blur-md transition-all duration-300 hover:border-white/10">
         <button
           type="button"
           onClick={() => setShowDemoAccounts(!showDemoAccounts)}

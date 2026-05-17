@@ -142,7 +142,7 @@ export function MobileInventory({ products: initialProducts, loading = false, on
                 <Card 
                   key={p.id}
                   onClick={() => { setSelectedProduct(p); setAdjustQty(0); setDrawerOpen(true); }}
-                  className="border border-muted/50 rounded-2xl active:scale-[0.98] transition-all bg-card cursor-pointer"
+                  className="border border-muted/50 rounded-lg active:scale-[0.98] transition-all bg-card cursor-pointer"
                 >
                   <CardContent className="p-3.5 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
@@ -183,7 +183,7 @@ export function MobileInventory({ products: initialProducts, loading = false, on
             })}
           </div>
         ) : (
-          <div className="text-center py-20 bg-muted/20 border border-dashed rounded-2xl">
+          <div className="text-center py-20 bg-muted/20 border border-dashed rounded-lg">
             <p className="text-xs text-muted-foreground font-bold">Không tìm thấy sản phẩm nào trong kho</p>
           </div>
         )}
@@ -220,7 +220,7 @@ export function MobileInventory({ products: initialProducts, loading = false, on
 
               <div className="px-6 py-5 space-y-5">
                 {/* Visual Inventory Status Card */}
-                <div className="grid grid-cols-2 gap-3.5 bg-muted/30 p-3.5 rounded-2xl border">
+                <div className="grid grid-cols-2 gap-3.5 bg-muted/30 p-3.5 rounded-lg border">
                   <div className="space-y-0.5">
                     <span className="text-[8px] font-black text-muted-foreground uppercase leading-none">Tồn kho hiện tại</span>
                     <h4 className="text-lg font-black font-mono leading-none">{selectedProduct.stock ?? 0}</h4>

@@ -109,6 +109,12 @@ export async function proxy(request: NextRequest) {
     response.cookies.getAll().forEach((cookie) => {
       newResponse.cookies.set(cookie.name, cookie.value, cookie);
     });
+
+    // Enterprise SEO safety: Inject x-robots-tag header at the edge for all tenant and admin routes
+    if (cleanPath.startsWith("/app") || cleanPath.startsWith("/console") || cleanPath.startsWith("/cms") || subdomain) {
+      newResponse.headers.set("x-robots-tag", "noindex, nofollow, noarchive");
+    }
+
     return newResponse;
   };
 
@@ -218,6 +224,18 @@ export async function proxy(request: NextRequest) {
     }
 
     if (!isSuperAdmin) {
+      // Track unauthorized console access attempt in audit log
+      fetch(new URL("/api/admin/audit-logs", request.url).toString(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "unauthorized_access",
+          module: "console",
+          severity: "critical",
+          metadata: { attempted_url: url.pathname, reason: "Non-super-admin tried to access console subdomain" }
+        })
+      }).catch((e) => console.warn("Failed to log unauthorized access in middleware:", e));
+
       // Redirect unauthorized users to login with an error message
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("error", "unauthorized_console_access");
@@ -298,7 +316,3 @@ export async function proxy(request: NextRequest) {
 }
 
 export default proxy;
-
-export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
-};

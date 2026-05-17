@@ -6,16 +6,31 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Cloud, Menu, X, ChevronDown, Globe } from "lucide-react";
 import { useLanguage } from "./LanguageContext";
 
-export function Header() {
+export function Header({ initialLogoText }: { initialLogoText?: string }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { language, setLanguage, t } = useLanguage();
+  const [logoText, setLogoText] = useState(initialLogoText || "ZPOS");
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 15);
     };
     window.addEventListener("scroll", handleScroll);
+
+    async function loadLogoText() {
+      try {
+        const res = await fetch("/api/admin/landing-config");
+        const json = await res.json();
+        if (json.success && json.data && json.data.logoText) {
+          setLogoText(json.data.logoText);
+        }
+      } catch (err) {
+        console.error("Failed to load header logoText:", err);
+      }
+    }
+    loadLogoText();
+
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -39,7 +54,7 @@ export function Header() {
               <Cloud size={18} strokeWidth={2.5} />
             </div>
             {!isScrolled && (
-              <span className="font-semibold text-lg text-white tracking-tight ml-2.5">ZPOS</span>
+              <span className="font-semibold text-lg text-white tracking-tight ml-2.5">{logoText}</span>
             )}
           </Link>
 
@@ -50,7 +65,7 @@ export function Header() {
           {/* Navigation Links */}
           <nav className={`hidden md:flex items-center ${isScrolled ? "gap-6" : "gap-8 ml-16"}`}>
             <Link
-              href="#products"
+              href="/products"
               className={`text-sm font-semibold transition-colors flex items-center gap-1 ${
                 isScrolled ? "text-gray-800 hover:text-black" : "text-white/80 hover:text-white"
               }`}
@@ -155,12 +170,12 @@ export function Header() {
             exit={{ opacity: 0, y: -20 }}
             className={`absolute left-0 right-0 shadow-lg py-4 px-6 md:hidden flex flex-col gap-4 border transition-all duration-300 ${
               isScrolled
-                ? "top-16 bg-white border-gray-200/80 rounded-2xl w-full"
-                : "top-20 bg-[#05061b] border-white/10 rounded-2xl w-full"
+                ? "top-16 bg-white border-gray-200/80 rounded-lg w-full"
+                : "top-20 bg-[#05061b] border-white/10 rounded-lg w-full"
             }`}
           >
             <Link
-              href="#products"
+              href="/products"
               className={`text-base font-semibold ${isScrolled ? "text-gray-800" : "text-white"}`}
               onClick={() => setMobileMenuOpen(false)}
             >

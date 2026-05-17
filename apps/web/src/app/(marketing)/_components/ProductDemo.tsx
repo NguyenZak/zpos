@@ -120,7 +120,7 @@ export function ProductDemo() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="absolute top-8 left-0 right-10 z-20 rounded-2xl bg-[#05061b] shadow-[0_25px_60px_rgba(5,6,27,0.25)] border border-white/10 overflow-hidden w-[90%]"
+              className="absolute top-8 left-0 right-10 z-20 rounded-lg bg-[#05061b] shadow-[0_25px_60px_rgba(5,6,27,0.25)] border border-white/10 overflow-hidden w-[90%]"
             >
               {/* Header Bar */}
               <div className="h-11 bg-[#090b24] border-b border-white/5 flex items-center justify-between px-4">
@@ -158,7 +158,7 @@ export function ProductDemo() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="absolute bottom-6 right-0 z-30 w-[260px] bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.08)] border border-gray-100 p-4"
+              className="absolute bottom-6 right-0 z-30 w-[260px] bg-white/95 backdrop-blur-xl rounded-lg shadow-[0_12px_40px_rgba(0,0,0,0.08)] border border-gray-100 p-4"
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2.5">
@@ -202,7 +202,7 @@ export function ProductDemo() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="absolute top-4 right-0 z-10 w-[220px] bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.06)] border border-gray-100 p-4"
+              className="absolute top-4 right-0 z-10 w-[220px] bg-white/95 backdrop-blur-xl rounded-lg shadow-[0_12px_40px_rgba(0,0,0,0.06)] border border-gray-100 p-4"
             >
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100/50 shadow-inner">

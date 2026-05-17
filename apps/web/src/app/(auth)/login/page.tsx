@@ -13,9 +13,9 @@ export default async function Login() {
 
   if (isConsole) {
     return (
-      <div className="relative flex w-full max-w-sm flex-col justify-center rounded-2xl border border-slate-800/80 bg-slate-900/45 p-8 shadow-2xl backdrop-blur-xl">
+      <div className="relative flex w-full max-w-sm flex-col justify-center rounded-lg border border-slate-800/80 bg-slate-900/45 p-8 shadow-2xl backdrop-blur-xl">
         {/* Glow behind the login box */}
-        <div className="pointer-events-none absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-indigo-500 to-cyan-500 opacity-15 blur" />
+        <div className="pointer-events-none absolute -inset-0.5 rounded-lg bg-gradient-to-r from-indigo-500 to-cyan-500 opacity-15 blur" />
 
         <div className="relative space-y-6">
           <div className="space-y-2 text-center">

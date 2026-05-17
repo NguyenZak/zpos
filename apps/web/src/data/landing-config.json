@@ -1,0 +1,16 @@
+{
+  "logoText": "ZPOS Solutions",
+  "heroTitle": "Hệ thống Omnichannel POS Toàn Diện",
+  "heroSub": "Giải pháp quản lý bán lẻ, nhà hàng và F&B chuyên nghiệp. Tự động đồng bộ hóa kho, kết nối đa kênh & hoạt động offline-first thông minh.",
+  "accentColor": "#2563eb",
+  "primaryButtonText": "Dùng thử miễn phí",
+  "secondaryButtonText": "Trải nghiệm Simulator",
+  "showPricing": true,
+  "pricingPlanBasic": "350.000đ/tháng",
+  "pricingPlanPro: ": "1.250.000đ/tháng",
+  "pricingPlanPro": "1.250.000đ/tháng",
+  "supportPhone": "1900 8899",
+  "promoCode": "ZPOSLAUNCH",
+  "promoDiscount": "Giảm 10% trọn đời",
+  "isDarkPreview": true
+}

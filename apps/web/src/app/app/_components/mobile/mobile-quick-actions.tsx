@@ -139,7 +139,7 @@ export function MobileQuickActions() {
             <button
               key={idx}
               onClick={act.action}
-              className="flex-shrink-0 w-28 h-28 bg-card border border-muted/50 rounded-2xl flex flex-col items-center justify-center p-3 text-center gap-2 select-none snap-start active:scale-95 transition-all"
+              className="flex-shrink-0 w-28 h-28 bg-card border border-muted/50 rounded-lg flex flex-col items-center justify-center p-3 text-center gap-2 select-none snap-start active:scale-95 transition-all"
             >
               <div className={`p-2.5 rounded-xl ${act.color}`}>
                 <Icon className="w-5 h-5" />

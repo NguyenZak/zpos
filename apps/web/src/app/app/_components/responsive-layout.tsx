@@ -127,7 +127,7 @@ export function ResponsiveLayout({
             </div>
           </div>
         </header>
-        <div className="h-full p-4 md:p-6">
+        <div className="h-full p-3 md:p-4">
           <PermissionGuard>
             {children}
           </PermissionGuard>

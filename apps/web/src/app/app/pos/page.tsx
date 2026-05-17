@@ -940,7 +940,7 @@ export default function POSPage() {
       </Dialog>
 
       <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
-        <DialogContent className="sm:max-w-4xl md:max-w-4xl lg:max-w-4xl !max-w-4xl w-full p-0 overflow-hidden rounded-2xl border-none shadow-2xl bg-card">
+        <DialogContent className="sm:max-w-4xl md:max-w-4xl lg:max-w-4xl !max-w-4xl w-full p-0 overflow-hidden rounded-lg border-none shadow-2xl bg-card">
           <DialogHeader className="sr-only">
             <DialogTitle>Thanh toán đơn hàng</DialogTitle>
             <DialogDescription>Nhập phương thức thanh toán và số tiền để hoàn tất đơn hàng</DialogDescription>
@@ -1091,7 +1091,7 @@ export default function POSPage() {
                       </div>
 
                       {/* Tiền thừa */}
-                      <div className={`p-5 rounded-2xl border-2 transition-all text-center space-y-1.5 shadow-md ${
+                      <div className={`p-5 rounded-lg border-2 transition-all text-center space-y-1.5 shadow-md ${
                         receivedAmount >= total 
                           ? 'bg-emerald-500/10 dark:bg-emerald-500/20 border-emerald-500/50 text-emerald-700 dark:text-emerald-400 animate-pulse'
                           : 'bg-destructive/10 dark:bg-destructive/20 border-destructive/50 text-destructive'
@@ -1115,7 +1115,7 @@ export default function POSPage() {
                     </div>
 
                     {/* QR canvas */}
-                    <div className="relative w-64 h-64 sm:w-72 sm:h-72 bg-white p-3 rounded-2xl border-2 border-primary/20 shadow-lg mx-auto flex items-center justify-center group overflow-hidden">
+                    <div className="relative w-64 h-64 sm:w-72 sm:h-72 bg-white p-3 rounded-lg border-2 border-primary/20 shadow-lg mx-auto flex items-center justify-center group overflow-hidden">
                       <img 
                         src={`https://img.vietqr.io/image/${qrSettings.bankId}-${qrSettings.accountNo}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(qrSettings.memoTemplate + (orderId || 'BILL'))}&accountName=${encodeURIComponent(qrSettings.accountName)}`} 
                         alt="VietQR"
@@ -1185,8 +1185,8 @@ export default function POSPage() {
                       <p className="text-xs text-muted-foreground font-semibold">Hỗ trợ Napas, Visa, Mastercard, JCB</p>
                     </div>
 
-                    <div className="relative w-40 h-40 bg-card border rounded-2xl shadow-md mx-auto flex items-center justify-center">
-                      <div className="absolute inset-0 bg-primary/5 dark:bg-primary/10 rounded-2xl animate-ping opacity-75" />
+                    <div className="relative w-40 h-40 bg-card border rounded-lg shadow-md mx-auto flex items-center justify-center">
+                      <div className="absolute inset-0 bg-primary/5 dark:bg-primary/10 rounded-lg animate-ping opacity-75" />
                       <CreditCard className="w-16 h-16 text-primary relative z-10 animate-bounce" />
                     </div>
 

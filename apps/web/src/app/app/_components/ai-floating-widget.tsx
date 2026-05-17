@@ -136,7 +136,7 @@ export function AIFloatingWidget() {
     <div className="fixed bottom-6 right-6 z-[999] flex flex-col items-end">
       {/* Floating Chat Container */}
       {open && (
-        <Card className="w-[360px] h-[480px] bg-background/95 dark:bg-slate-900/95 backdrop-blur-md shadow-2xl border border-primary/20 rounded-2xl flex flex-col mb-4 overflow-hidden animate-in slide-in-from-bottom duration-300">
+        <Card className="w-[360px] h-[480px] bg-background/95 dark:bg-slate-900/95 backdrop-blur-md shadow-2xl border border-primary/20 rounded-lg flex flex-col mb-4 overflow-hidden animate-in slide-in-from-bottom duration-300">
           {/* Header */}
           <div className="p-3 bg-gradient-to-r from-primary to-primary-hover text-white flex items-center justify-between shadow-md">
             <div className="flex items-center gap-2">

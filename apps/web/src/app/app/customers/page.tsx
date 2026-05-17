@@ -283,7 +283,7 @@ export default function CustomersPage() {
           {selectedCustomer && (
             <div className="grid grid-cols-3 gap-6 py-4">
               <div className="col-span-1 space-y-4">
-                <div className="flex flex-col items-center p-4 bg-muted/30 rounded-2xl border">
+                <div className="flex flex-col items-center p-4 bg-muted/30 rounded-lg border">
                   <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-2xl mb-3">
                     {selectedCustomer.name.charAt(0)}
                   </div>

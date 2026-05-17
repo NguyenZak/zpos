@@ -1,0 +1,41 @@
+[
+  {
+    "id": "inq-1",
+    "customerName": "Hoàng Đức Trung",
+    "customerEmail": "trung.hd@bibomart.com.vn",
+    "customerPhone": "0912 345 678",
+    "message": "Tôi muốn nhận báo giá hệ thống POS quản lý chuỗi 15 chi nhánh siêu thị mẹ và bé tại Hà Nội. Yêu cầu tích hợp xuất hóa đơn đỏ và chuyển kho nội bộ tức thời.",
+    "status": "new",
+    "date": "2026-05-17 18:35",
+    "notes": [
+      "Khách hàng là đại diện chuỗi BiboMart Hà Nội.",
+      "Cần demo hệ thống trực tiếp vào chiều thứ 4 này."
+    ]
+  },
+  {
+    "id": "inq-2",
+    "customerName": "Lâm Mỹ Lệ",
+    "customerEmail": "le.lam@thecoffeehouse.vn",
+    "customerPhone": "0977 888 999",
+    "message": "Tìm hiểu giải pháp Voice AI order cho quầy cafe take-away. Hệ thống có hỗ trợ máy in nhiệt bếp không?",
+    "status": "contacted",
+    "date": "2026-05-16 11:20",
+    "notes": [
+      "Đã gọi điện tư vấn buổi sáng 16/5.",
+      "Khách hàng phản hồi rất quan tâm đến trợ lý Voice AI nhưng lo ngại tiếng ồn tại quầy."
+    ]
+  },
+  {
+    "id": "inq-3",
+    "customerName": "Phạm Minh Hoàng",
+    "customerEmail": "hoangpm@tocotocotea.com",
+    "customerPhone": "0909 112 233",
+    "message": "Cần tích hợp ZPOS với phần mềm ERP SAP có sẵn của doanh nghiệp. Xin gửi tài liệu hướng dẫn API SDK.",
+    "status": "completed",
+    "date": "2026-05-14 09:45",
+    "notes": [
+      "Đã bàn giao bộ tài liệu API Swagger.",
+      "Kỹ thuật hai bên đã kết nối thử nghiệm Sandbox thành công."
+    ]
+  }
+]

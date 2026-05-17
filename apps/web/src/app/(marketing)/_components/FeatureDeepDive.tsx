@@ -7,7 +7,7 @@ import { Code2, Database, LineChart, AppWindow } from "lucide-react";
 // Mockup 1: Real-time sync across all devices
 const RealTimeSyncVisual = () => {
   return (
-    <div className="relative w-full h-full bg-[#05061b] rounded-2xl overflow-hidden flex flex-col justify-between p-6 border border-white/10 shadow-[0_20px_50px_rgba(5,6,27,0.3)] group select-none">
+    <div className="relative w-full h-full bg-[#05061b] rounded-lg overflow-hidden flex flex-col justify-between p-6 border border-white/10 shadow-[0_20px_50px_rgba(5,6,27,0.3)] group select-none">
       {/* Background Dotted Grid */}
       <div 
         className="absolute inset-0 opacity-20 pointer-events-none"
@@ -84,7 +84,7 @@ const RealTimeSyncVisual = () => {
 // Mockup 2: Insights that drive growth
 const InsightsAnalyticsVisual = () => {
   return (
-    <div className="relative w-full h-full bg-[#05061b] rounded-2xl overflow-hidden flex flex-col justify-between p-6 border border-white/10 shadow-[0_20px_50px_rgba(5,6,27,0.3)] group select-none">
+    <div className="relative w-full h-full bg-[#05061b] rounded-lg overflow-hidden flex flex-col justify-between p-6 border border-white/10 shadow-[0_20px_50px_rgba(5,6,27,0.3)] group select-none">
       {/* Background Dotted Grid */}
       <div 
         className="absolute inset-0 opacity-20 pointer-events-none"
@@ -150,7 +150,7 @@ const InsightsAnalyticsVisual = () => {
 // Mockup 3: Extensible by design
 const ExtensibleCodeVisual = () => {
   return (
-    <div className="relative w-full h-full bg-[#05061b] rounded-2xl overflow-hidden flex flex-col justify-between p-6 border border-white/10 shadow-[0_20px_50px_rgba(5,6,27,0.3)] group select-none">
+    <div className="relative w-full h-full bg-[#05061b] rounded-lg overflow-hidden flex flex-col justify-between p-6 border border-white/10 shadow-[0_20px_50px_rgba(5,6,27,0.3)] group select-none">
       {/* VSCode-style Header */}
       <div className="flex items-center justify-between border-b border-white/5 pb-3.5 z-10">
         <div className="flex items-center gap-1.5">
@@ -279,7 +279,7 @@ export function FeatureDeepDive() {
               transition={{ duration: 0.6 }}
               className="flex-1 w-full max-w-[500px]"
             >
-              <div className="aspect-[4/3] rounded-2xl bg-white border border-gray-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] overflow-hidden flex items-center justify-center p-4">
+              <div className="aspect-[4/3] rounded-lg bg-white border border-gray-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] overflow-hidden flex items-center justify-center p-4">
                 <section.visual />
               </div>
             </motion.div>

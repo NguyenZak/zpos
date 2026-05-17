@@ -5,8 +5,12 @@ import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { useLanguage } from "./LanguageContext";
 
-export function Pricing() {
+export function Pricing({ dynamicConfig }: { dynamicConfig?: any }) {
   const { t, language } = useLanguage();
+
+  if (dynamicConfig && !dynamicConfig.showPricing) {
+    return null;
+  }
 
   const plans = [
     {
@@ -22,7 +26,7 @@ export function Pricing() {
     {
       name: t("pricing.pro.title"),
       desc: t("pricing.pro.desc"),
-      price: "$29",
+      price: dynamicConfig?.pricingPlanBasic || "$29",
       period: language === "vi" ? "/tháng" : "/mo",
       features: language === "vi"
         ? [
@@ -47,7 +51,7 @@ export function Pricing() {
     {
       name: t("pricing.ent.title"),
       desc: t("pricing.ent.desc"),
-      price: language === "vi" ? "Tùy chỉnh" : "Custom",
+      price: dynamicConfig?.pricingPlanPro || (language === "vi" ? "Tùy chỉnh" : "Custom"),
       features: language === "vi"
         ? [
             "Bao gồm tất cả gói Pro",

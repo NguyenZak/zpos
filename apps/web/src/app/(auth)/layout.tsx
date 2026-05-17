@@ -30,14 +30,14 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
       <main className="min-h-dvh select-none overflow-hidden bg-slate-950 text-slate-100">
         <div className="grid h-dvh justify-center p-3 lg:grid-cols-2">
           {/* Cyberpunk left panel showing active admin command logs */}
-          <div className="relative order-2 hidden h-full flex-col overflow-hidden rounded-3xl border border-slate-800 bg-slate-900 p-10 shadow-2xl shadow-indigo-500/10 lg:flex">
+          <div className="relative order-2 hidden h-full flex-col overflow-hidden rounded-xl border border-slate-800 bg-slate-900 p-10 shadow-2xl shadow-indigo-500/10 lg:flex">
             {/* Ambient gradients */}
             <div className="absolute top-1/4 -left-20 h-80 w-80 rounded-full bg-indigo-500/10 blur-[100px]" />
             <div className="absolute -right-20 bottom-1/4 h-80 w-80 rounded-full bg-cyan-500/10 blur-[100px]" />
 
             {/* Header info */}
             <div className="relative z-10 flex items-center gap-3">
-              <div className="rounded-2xl border border-indigo-500/30 bg-indigo-500/20 p-2.5 text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.15)]">
+              <div className="rounded-lg border border-indigo-500/30 bg-indigo-500/20 p-2.5 text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.15)]">
                 <ShieldCheck className="size-8" />
               </div>
               <div>
@@ -56,7 +56,7 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
 
             {/* Console Tech Specs Terminal */}
             <div className="relative z-10 my-8 flex flex-1 flex-col justify-center">
-              <div className="max-w-full space-y-4 rounded-2xl border border-slate-800/80 bg-slate-950/80 p-6 font-mono text-slate-300 text-xs leading-relaxed shadow-inner backdrop-blur-md">
+              <div className="max-w-full space-y-4 rounded-lg border border-slate-800/80 bg-slate-950/80 p-6 font-mono text-slate-300 text-xs leading-relaxed shadow-inner backdrop-blur-md">
                 <div className="flex items-center gap-2 border-slate-800 border-b pb-3">
                   <div className="flex gap-1.5">
                     <span className="h-3 w-3 rounded-full bg-rose-500/80" />
@@ -165,12 +165,12 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
 
           {/* Centralized Glassmorphic Login/Register Card */}
           <div className="relative z-10 w-full max-w-md my-auto">
-            <div className="dark relative overflow-hidden rounded-3xl border border-white/10 bg-[#0c0822]/60 p-8 md:p-10 shadow-[0_24px_80px_rgba(0,0,0,0.5),inset_0_1px_2px_rgba(255,255,255,0.15)] backdrop-blur-lg">
+            <div className="dark relative overflow-hidden rounded-xl border border-white/10 bg-[#0c0822]/60 p-8 md:p-10 shadow-[0_24px_80px_rgba(0,0,0,0.5),inset_0_1px_2px_rgba(255,255,255,0.15)] backdrop-blur-lg">
               {/* Dynamic Animated border beam */}
-              <div className="pointer-events-none absolute -inset-px rounded-3xl bg-gradient-to-r from-[#0093ff]/20 via-[#0036ff]/20 to-[#00f0ff]/20 opacity-80" />
+              <div className="pointer-events-none absolute -inset-px rounded-xl bg-gradient-to-r from-[#0093ff]/20 via-[#0036ff]/20 to-[#00f0ff]/20 opacity-80" />
               
               {/* Outer subtle glow */}
-              <div className="pointer-events-none absolute -inset-0.5 rounded-3xl bg-gradient-to-r from-[#0093ff]/10 via-[#0036ff]/10 to-[#00f0ff]/10 opacity-70 blur" />
+              <div className="pointer-events-none absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#0093ff]/10 via-[#0036ff]/10 to-[#00f0ff]/10 opacity-70 blur" />
 
               <div className="relative z-10 w-full">
                 {children}

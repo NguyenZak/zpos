@@ -32,7 +32,7 @@ function MetricCard({
   variant = "default"
 }: MetricCardProps) {
   return (
-    <Card className={cn("overflow-hidden border border-muted/50 shadow-sm rounded-2xl bg-card active:scale-[0.98] transition-all", className)}>
+    <Card className={cn("overflow-hidden border border-muted/50 shadow-sm rounded-lg bg-card active:scale-[0.98] transition-all", className)}>
       <CardContent className="p-4 flex flex-col justify-between h-full space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">

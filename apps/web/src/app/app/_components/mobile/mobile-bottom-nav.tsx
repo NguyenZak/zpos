@@ -177,7 +177,7 @@ export function MobileBottomNav({ className }: BottomNavProps) {
           {/* Drawer Menu Items */}
           <div className="px-5 py-4 overflow-y-auto space-y-5">
             {/* Quick Stats Panel */}
-            <div className="bg-muted/40 rounded-2xl p-4 flex justify-between items-center border border-muted/50">
+            <div className="bg-muted/40 rounded-lg p-4 flex justify-between items-center border border-muted/50">
               <div className="space-y-1">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Doanh thu hôm nay</p>
                 <p className="text-xl font-black text-primary">5,400,000 ₫</p>

@@ -99,7 +99,7 @@ const CircularGridIcon = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-export function Hero() {
+export function Hero({ dynamicConfig }: { dynamicConfig?: any }) {
   const { t } = useLanguage();
 
   return (
@@ -143,8 +143,14 @@ export function Hero() {
           className="text-4xl md:text-6xl lg:text-[72px] font-normal tracking-tight text-center text-white leading-[1.1] mb-6 max-w-5xl"
           style={{ fontFamily: "'Aeonik Pro', sans-serif", fontFeatureSettings: "'ss02', 'ss05', 'ss10', 'ss11'" }}
         >
-          {t("hero.title1")} <br />
-          {t("hero.title2")} <BlueprintIcon />
+          {dynamicConfig?.heroTitle ? (
+            dynamicConfig.heroTitle
+          ) : (
+            <>
+              {t("hero.title1")} <br />
+              {t("hero.title2")} <BlueprintIcon />
+            </>
+          )}
         </motion.h1>
 
         {/* Subtitle */}
@@ -155,7 +161,7 @@ export function Hero() {
           className="text-base md:text-lg text-white/60 max-w-2xl text-center mb-10 leading-relaxed font-light"
           style={{ fontFamily: "'Aeonik Pro', sans-serif" }}
         >
-          {t("hero.subtitle")}
+          {dynamicConfig?.heroSub || t("hero.subtitle")}
         </motion.p>
 
         {/* Unified CTA & Floating Technical Features */}
@@ -170,16 +176,19 @@ export function Hero() {
             <Link
               href="/register"
               className="button-primary w-full sm:w-auto px-6 py-2.5 text-sm transition-all flex items-center justify-center gap-1.5 font-semibold"
-              style={{ fontFamily: "'Aeonik Pro', sans-serif" }}
+              style={{ 
+                fontFamily: "'Aeonik Pro', sans-serif",
+                ...(dynamicConfig?.accentColor ? { backgroundColor: dynamicConfig.accentColor, borderColor: dynamicConfig.accentColor } : {})
+              }}
             >
-              {t("hero.cta.trial")} <ArrowRight size={15} strokeWidth={2.5} />
+              {dynamicConfig?.primaryButtonText || t("hero.cta.trial")} <ArrowRight size={15} strokeWidth={2.5} />
             </Link>
             <Link
               href="/docs"
               className="button-dark w-full sm:w-auto px-6 py-2.5 text-sm transition-all flex items-center justify-center font-semibold bg-white/10 hover:bg-white/15 border border-white/5"
               style={{ fontFamily: "'Aeonik Pro', sans-serif" }}
             >
-              {t("hero.cta.docs")}
+              {dynamicConfig?.secondaryButtonText || t("hero.cta.docs")}
             </Link>
           </div>
 

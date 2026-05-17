@@ -33,7 +33,7 @@ export function OrderDetailDialog({ order, open, onOpenChange, onPrint }: OrderD
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto rounded-2xl shadow-2xl">
+      <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto rounded-lg shadow-2xl">
         <DialogHeader className="border-b pb-4">
           <div className="flex flex-col gap-1.5 text-left">
             <div className="flex items-center justify-between">

@@ -75,7 +75,7 @@ export function MobileDashboard({
       {/* MOBILE HEADER */}
       <div className="flex items-center justify-between border-b pb-4 mt-2">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-primary to-primary/80 flex items-center justify-center text-primary-foreground font-black shadow-md">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-primary to-primary/80 flex items-center justify-center text-primary-foreground font-black shadow-md">
             ZP
           </div>
           <div>
@@ -131,7 +131,7 @@ export function MobileDashboard({
 
       {/* LOW STOCK CARD ALERTS */}
       {lowStockProducts && lowStockProducts.length > 0 && (
-        <Card className="border-amber-500/25 bg-amber-500/5 dark:bg-amber-950/10 rounded-2xl">
+        <Card className="border-amber-500/25 bg-amber-500/5 dark:bg-amber-950/10 rounded-lg">
           <CardContent className="p-4 flex gap-3 items-start">
             <div className="p-2 bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-xl shrink-0">
               <AlertTriangle className="w-5 h-5" />
@@ -187,7 +187,7 @@ export function MobileDashboard({
               return (
                 <Card 
                   key={sale.id} 
-                  className="border border-muted/50 rounded-2xl active:scale-[0.99] transition-all bg-card"
+                  className="border border-muted/50 rounded-lg active:scale-[0.99] transition-all bg-card"
                 >
                   <CardContent className="p-4 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
@@ -228,7 +228,7 @@ export function MobileDashboard({
               );
             })
           ) : (
-            <div className="text-center py-8 bg-card border border-dashed rounded-2xl">
+            <div className="text-center py-8 bg-card border border-dashed rounded-lg">
               <p className="text-xs text-muted-foreground font-semibold">Chưa có giao dịch nào được ghi nhận.</p>
             </div>
           )}

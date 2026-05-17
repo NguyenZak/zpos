@@ -268,7 +268,7 @@ export function AccountSwitcher({
 
       {/* 🔔 Notifications Premium Dialog */}
       <Dialog open={isNotificationsOpen} onOpenChange={setIsNotificationsOpen}>
-        <DialogContent className="sm:max-w-[480px] bg-slate-950 text-slate-100 border-slate-800 rounded-2xl">
+        <DialogContent className="sm:max-w-[480px] bg-slate-950 text-slate-100 border-slate-800 rounded-lg">
           <DialogHeader className="border-b border-slate-800 pb-4">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-xl font-bold flex items-center gap-2">

@@ -423,7 +423,7 @@ export default function SettingsPage() {
               <div className="flex items-center gap-6">
                 <div 
                   onClick={handleLogoChange}
-                  className="w-24 h-24 rounded-2xl bg-muted flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/20 text-muted-foreground hover:bg-muted/80 cursor-pointer transition-colors overflow-hidden relative"
+                  className="w-24 h-24 rounded-lg bg-muted flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/20 text-muted-foreground hover:bg-muted/80 cursor-pointer transition-colors overflow-hidden relative"
                 >
                   {logoUrl ? (
                     <img src={logoUrl} alt="Store Logo" className="w-full h-full object-cover" />

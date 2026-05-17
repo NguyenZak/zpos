@@ -1,0 +1,94 @@
+[
+  {
+    "id": "log-1779047374125-hj6lqodkg",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "hello@arhamkhnz.com",
+    "action": "login_success",
+    "module": "cms",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "full_name": "Arham Khan",
+      "role": "super_admin",
+      "mode": "sandbox"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-17T19:49:34.125Z"
+  },
+  {
+    "id": "log-1779046575115-dzdiaaqte",
+    "tenant_id": "bibomart",
+    "user_id": null,
+    "user_email": "accountant_pro@gmail.com",
+    "action": "export",
+    "module": "inventory",
+    "severity": "critical",
+    "ip_address": "118.70.147.202",
+    "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "metadata": {
+      "file_name": "inventory_report_2026-05-17.csv",
+      "record_count": 706,
+      "format": "CSV"
+    },
+    "is_alert": true,
+    "alert_reason": "Xuất lượng dữ liệu lớn bất thường: 706 bản ghi được kết xuất từ mô-đun inventory.",
+    "created_at": "2026-05-17T19:36:15.115Z"
+  },
+  {
+    "id": "log-1779046416293-mqukmp319",
+    "tenant_id": "bibomart",
+    "user_id": null,
+    "user_email": "hacker_test_36@gmail.com",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "critical",
+    "ip_address": "91.200.12.89",
+    "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "metadata": {
+      "attempt": 3,
+      "reason": "Incorrect password"
+    },
+    "is_alert": true,
+    "alert_reason": "Phát hiện tấn công Brute-Force: Thất bại liên tiếp 3 lần đăng nhập từ IP (91.200.12.89) hoặc tài khoản (hacker_test_36@gmail.com).",
+    "created_at": "2026-05-17T19:33:36.293Z"
+  },
+  {
+    "id": "log-1779046416153-xefdbq55x",
+    "tenant_id": "bibomart",
+    "user_id": null,
+    "user_email": "hacker_test_36@gmail.com",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "warning",
+    "ip_address": "91.200.12.89",
+    "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "metadata": {
+      "attempt": 2,
+      "reason": "Incorrect password"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-17T19:33:36.153Z"
+  },
+  {
+    "id": "log-1779046415931-7kirw9fq4",
+    "tenant_id": "bibomart",
+    "user_id": null,
+    "user_email": "hacker_test_36@gmail.com",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "warning",
+    "ip_address": "91.200.12.89",
+    "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "metadata": {
+      "attempt": 1,
+      "reason": "Incorrect password"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-17T19:33:35.931Z"
+  }
+]

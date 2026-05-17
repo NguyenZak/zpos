@@ -145,7 +145,7 @@ export function MobileOrders({ orders, loading = false }: MobileOrdersProps) {
                 <Card 
                   key={ord.id}
                   onClick={() => { setSelectedOrder(ord); setDrawerOpen(true); }}
-                  className="border border-muted/50 rounded-2xl active:scale-[0.98] transition-all bg-card cursor-pointer"
+                  className="border border-muted/50 rounded-lg active:scale-[0.98] transition-all bg-card cursor-pointer"
                 >
                   <CardContent className="p-4 flex items-center justify-between gap-3">
                     <div className="space-y-1.5 min-w-0">
@@ -185,7 +185,7 @@ export function MobileOrders({ orders, loading = false }: MobileOrdersProps) {
             })}
           </div>
         ) : (
-          <div className="text-center py-20 bg-muted/20 border border-dashed rounded-2xl">
+          <div className="text-center py-20 bg-muted/20 border border-dashed rounded-lg">
             <p className="text-xs text-muted-foreground font-bold">Không tìm thấy đơn hàng nào</p>
           </div>
         )}

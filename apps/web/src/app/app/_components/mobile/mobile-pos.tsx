@@ -335,7 +335,7 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
               {filteredProducts.map((prod) => (
                 <Card 
                   key={prod.id} 
-                  className="overflow-hidden border border-muted/50 rounded-2xl active:scale-[0.97] transition-all bg-card flex flex-col justify-between"
+                  className="overflow-hidden border border-muted/50 rounded-lg active:scale-[0.97] transition-all bg-card flex flex-col justify-between"
                   onClick={() => addToCart(prod)}
                 >
                   <div className="aspect-square bg-muted relative overflow-hidden">
@@ -371,7 +371,7 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
               {filteredProducts.map((prod) => (
                 <div 
                   key={prod.id} 
-                  className="flex items-center gap-3 bg-card border border-muted/50 rounded-2xl p-3 active:scale-[0.98] transition-all"
+                  className="flex items-center gap-3 bg-card border border-muted/50 rounded-lg p-3 active:scale-[0.98] transition-all"
                   onClick={() => addToCart(prod)}
                 >
                   <img 
@@ -397,7 +397,7 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
             </div>
           )
         ) : (
-          <div className="text-center py-16 bg-muted/20 border border-dashed rounded-2xl">
+          <div className="text-center py-16 bg-muted/20 border border-dashed rounded-lg">
             <p className="text-xs text-muted-foreground font-bold">Không tìm thấy sản phẩm nào</p>
           </div>
         )}
