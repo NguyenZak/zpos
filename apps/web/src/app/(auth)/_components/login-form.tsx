@@ -28,6 +28,14 @@ const MOCK_USERS = [
   { email: "my.vh@thecoffeehouse.vn", full_name: "Vũ Hoàng My", global_role: "staff", associated_tenant: "tch-q3" },
 ];
 
+const getMainDomain = () => {
+  if (typeof window === "undefined") return "zpos.vn";
+  const host = window.location.hostname;
+  if (host.includes("localhost") || host.includes("127.0.0.1")) return "localhost";
+  if (host.endsWith("zpos-web.vercel.app")) return "zpos-web.vercel.app";
+  return "zpos.vn";
+};
+
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -101,7 +109,8 @@ export function LoginForm() {
             document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=localhost; max-age=86400`;
             document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=.localhost; max-age=86400`;
           } else {
-            document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=.zpos.vn; max-age=86400`;
+            const domain = `.${getMainDomain()}`;
+            document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=${domain}; max-age=86400`;
           }
 
           const params = new URLSearchParams(window.location.search);
@@ -124,12 +133,12 @@ export function LoginForm() {
           } else if (mockUser.global_role === "super_admin") {
             const consoleUrl = isLocal 
               ? "http://console.localhost:3000/dashboard" 
-              : "https://console.zpos.vn/dashboard";
+              : `https://console.${getMainDomain()}/dashboard`;
             window.location.href = consoleUrl;
           } else if (mockUser.associated_tenant) {
             const tenantUrl = isLocal
               ? `http://${mockUser.associated_tenant}.localhost:3000/app`
-              : `https://${mockUser.associated_tenant}.zpos.vn/app`;
+              : `https://${mockUser.associated_tenant}.${getMainDomain()}/app`;
             window.location.href = tenantUrl;
           } else {
             window.location.href = "/app";
@@ -242,12 +251,13 @@ export function LoginForm() {
           document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=localhost; max-age=86400`;
           document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=.localhost; max-age=86400`;
         } else {
-          document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=.zpos.vn; max-age=86400`;
+          const domain = `.${getMainDomain()}`;
+          document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=${domain}; max-age=86400`;
         }
 
         const redirectUrl = isLocal
           ? `http://${tenantSlug}.localhost${port}/app`
-          : `https://${tenantSlug}.zpos.vn/app`;
+          : `https://${tenantSlug}.${getMainDomain()}/app`;
         window.location.href = redirectUrl;
         return;
       }
@@ -277,12 +287,13 @@ export function LoginForm() {
           document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=localhost; max-age=86400`;
           document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=.localhost; max-age=86400`;
         } else {
-          document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=.zpos.vn; max-age=86400`;
+          const domain = `.${getMainDomain()}`;
+          document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=${domain}; max-age=86400`;
         }
 
         const consoleUrl = isLocal 
           ? `http://console.localhost${port}/dashboard` 
-          : "https://console.zpos.vn/dashboard";
+          : `https://console.${getMainDomain()}/dashboard`;
         window.location.href = consoleUrl;
         return;
       }

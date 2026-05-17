@@ -6,7 +6,17 @@ import { createServerClient } from '@supabase/ssr';
 // Helper: create a lightweight Supabase client for auth checks in proxy
 function createProxySupabase(request: NextRequest) {
   const isDev = process.env.NODE_ENV === "development";
-  const cookieDomain = isDev ? undefined : ".zpos.vn";
+  const hostname = request.headers.get('host') || '';
+  const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'localhost:3000';
+  
+  let cookieDomain = undefined;
+  if (!isDev) {
+    if (hostname.endsWith(mainDomain)) {
+      cookieDomain = `.${mainDomain}`;
+    } else {
+      cookieDomain = ".zpos.vn";
+    }
+  }
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

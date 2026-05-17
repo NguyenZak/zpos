@@ -92,7 +92,12 @@ export function MobileBottomNav({ className }: BottomNavProps) {
       
       // Clear mock session cookie from all subdomains
       const isLocal = window.location.hostname.includes("localhost");
-      const cookieDomain = isLocal ? ".localhost" : ".zpos.vn";
+      let cookieDomain = ".zpos.vn";
+      if (isLocal) {
+        cookieDomain = ".localhost";
+      } else if (window.location.hostname.endsWith("zpos-web.vercel.app")) {
+        cookieDomain = ".zpos-web.vercel.app";
+      }
       document.cookie = `zpos_mock_session=; path=/; domain=${cookieDomain}; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
 
       toast.success("Đã đăng xuất khỏi hệ thống!");
