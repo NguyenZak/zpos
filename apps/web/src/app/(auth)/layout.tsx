@@ -156,16 +156,16 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
             </svg>
           </div>
 
-          {/* Animated background glowing spheres */}
+          {/* Optimized hardware-accelerated background glowing spheres */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
-            <div className="absolute top-[20%] left-[10%] w-72 h-72 rounded-full bg-blue-500/10 blur-[100px] animate-pulse" style={{ animationDuration: "10s" }} />
-            <div className="absolute bottom-[20%] right-[10%] w-96 h-96 rounded-full bg-[#00f0ff]/10 blur-[130px] animate-pulse" style={{ animationDuration: "14s" }} />
-            <div className="absolute top-[40%] right-[25%] w-80 h-80 rounded-full bg-purple-500/5 blur-[120px] animate-pulse" style={{ animationDuration: "12s" }} />
+            <div className="absolute top-[20%] left-[10%] w-72 h-72 rounded-full bg-blue-500/10 blur-[100px] will-change-transform" />
+            <div className="absolute bottom-[20%] right-[10%] w-96 h-96 rounded-full bg-[#00f0ff]/10 blur-[130px] will-change-transform" />
+            <div className="absolute top-[40%] right-[25%] w-80 h-80 rounded-full bg-purple-500/5 blur-[120px] will-change-transform" />
           </div>
 
           {/* Centralized Glassmorphic Login/Register Card */}
           <div className="relative z-10 w-full max-w-md my-auto">
-            <div className="dark relative overflow-hidden rounded-3xl border border-white/10 bg-[#0c0822]/60 p-8 md:p-10 shadow-[0_24px_80px_rgba(0,0,0,0.5),inset_0_1px_2px_rgba(255,255,255,0.15)] backdrop-blur-2xl">
+            <div className="dark relative overflow-hidden rounded-3xl border border-white/10 bg-[#0c0822]/60 p-8 md:p-10 shadow-[0_24px_80px_rgba(0,0,0,0.5),inset_0_1px_2px_rgba(255,255,255,0.15)] backdrop-blur-lg">
               {/* Dynamic Animated border beam */}
               <div className="pointer-events-none absolute -inset-px rounded-3xl bg-gradient-to-r from-[#0093ff]/20 via-[#0036ff]/20 to-[#00f0ff]/20 opacity-80" />
               
