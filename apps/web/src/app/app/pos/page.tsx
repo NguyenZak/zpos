@@ -50,8 +50,49 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { posService, getTenantSlug } from '@/services/pos.service';
+import {
+  vietQRService,
+  buildVietQRImageUrl,
+  generateReferenceCode,
+  type BankAccount,
+} from '@/services/vietqr.service';
+import { einvoiceService } from '@/services/einvoice.service';
+import { zaloService } from '@/services/zalo.service';
+import { FileText, WifiOff } from 'lucide-react';
+import { cacheProducts, getCachedProducts, cacheCustomers, getCachedCustomers } from '@/lib/offline/offline-db';
+import { debtService, type CreditAccount } from '@/services/debt.service';
+import { Coins as CoinsIcon } from 'lucide-react';
+import { queueOfflineOrder, flushOfflineQueue } from '@/lib/offline/sync';
+import { useOnlineStatus } from '@/hooks/use-online-status';
+import { OfflineStatus } from '@/components/offline-status';
 import { MobilePOS } from '../_components/mobile/mobile-pos';
 import { PrintInvoice } from './_components/print-invoice';
+
+// Fire-and-forget Zalo ZNS send. Always swallows errors so checkout never blocks.
+async function fireZalo(event: 'order_paid' | 'invoice_issued', opts: {
+  phone?: string;
+  orderId?: string;
+  invoiceId?: string;
+  customerId?: string;
+  data?: Record<string, any>;
+}) {
+  if (!opts.phone) return;
+  try {
+    await zaloService.sendZNS({
+      phone: opts.phone,
+      templateEvent: event,
+      templateData: opts.data || {},
+      orderId: opts.orderId,
+      invoiceId: opts.invoiceId,
+      customerId: opts.customerId,
+    });
+  } catch (e: any) {
+    // 412 not_configured / 404 template_not_found → skip silently.
+    if (!/zalo_not_configured|template_not_found/.test(String(e?.message))) {
+      console.warn('Zalo ZNS send failed:', e?.message);
+    }
+  }
+}
 
 
 // --- MOCK DATA --- (Fallback)
@@ -74,6 +115,15 @@ const MOCK_CUSTOMERS = [
 
 export default function POSPage() {
   const [isMobile, setIsMobile] = useState(false);
+  const isOnline = useOnlineStatus();
+
+  // When the browser comes back online, opportunistically flush queued orders
+  // and refresh the catalog cache. The OfflineStatus pill also auto-flushes;
+  // this runs even if the pill isn't visible (e.g. legacy layouts).
+  useEffect(() => {
+    if (!isOnline) return;
+    flushOfflineQueue().catch(() => {});
+  }, [isOnline]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 768px)");
@@ -226,7 +276,9 @@ export default function POSPage() {
   const [activeCategory, setActiveCategory] = useState('Tất cả');
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'transfer'>('cash');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'transfer' | 'debt'>('cash');
+  const [creditAccount, setCreditAccount] = useState<CreditAccount | null>(null);
+  const [debtDueDays, setDebtDueDays] = useState<number>(30);
   const [successOpen, setSuccessOpen] = useState(false);
   const [lastOrder, setLastOrder] = useState<any>(null);
 
@@ -241,20 +293,98 @@ export default function POSPage() {
   const [receivedAmount, setReceivedAmount] = useState<number>(0);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
+  // eInvoice: issuance state for the success modal
+  const [invoiceIssuing, setInvoiceIssuing] = useState(false);
+  const [issuedInvoice, setIssuedInvoice] = useState<any>(null);
+
+  // Debt mode: load credit account whenever the customer changes during checkout
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedBankId = localStorage.getItem('zpos_qr_bank_id') || 'vcb';
-      const savedAccountNo = localStorage.getItem('zpos_qr_account_no') || '0071001234567';
-      const savedAccountName = localStorage.getItem('zpos_qr_account_name') || 'ZPOS RETAIL';
-      const savedMemoTemplate = localStorage.getItem('zpos_qr_memo_template') || 'ZPOS_';
-      setQrSettings({
-        bankId: savedBankId,
-        accountNo: savedAccountNo,
-        accountName: savedAccountName,
-        memoTemplate: savedMemoTemplate
-      });
+    if (!selectedCustomer?.id) {
+      setCreditAccount(null);
+      return;
     }
+    let cancelled = false;
+    (async () => {
+      try {
+        const acct = await debtService.getCreditAccount(selectedCustomer.id);
+        if (!cancelled) {
+          setCreditAccount(acct);
+          if (acct?.due_days) setDebtDueDays(acct.due_days);
+        }
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [selectedCustomer?.id, checkoutOpen]);
+
+  // VietQR Pro: server-backed bank account + pending payment reference + realtime listener
+  const [defaultBank, setDefaultBank] = useState<BankAccount | null>(null);
+  const [paymentReference, setPaymentReference] = useState<string>('');
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
+  const [transferStatus, setTransferStatus] = useState<'idle' | 'waiting' | 'received'>('idle');
+  const transferUnsubRef = useRef<null | (() => void)>(null);
+
+  // Load server-side default bank account when checkout opens.
+  // Falls back to legacy localStorage values so prior config keeps working.
+  useEffect(() => {
+    if (!checkoutOpen) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const bank = await vietQRService.getDefaultBankAccount();
+        if (cancelled) return;
+        if (bank) {
+          setDefaultBank(bank);
+          setQrSettings({
+            bankId: bank.bank_id,
+            accountNo: bank.account_no,
+            accountName: bank.account_name,
+            memoTemplate: (bank.memo_prefix || 'ZPOS') + ' '
+          });
+          return;
+        }
+      } catch (e) {
+        console.warn('Could not load default bank account:', e);
+      }
+      // Legacy fallback
+      if (typeof window !== 'undefined') {
+        const savedBankId = localStorage.getItem('zpos_qr_bank_id') || 'vcb';
+        const savedAccountNo = localStorage.getItem('zpos_qr_account_no') || '0071001234567';
+        const savedAccountName = localStorage.getItem('zpos_qr_account_name') || 'ZPOS RETAIL';
+        const savedMemoTemplate = localStorage.getItem('zpos_qr_memo_template') || 'ZPOS_';
+        if (!cancelled) {
+          setDefaultBank(null);
+          setQrSettings({
+            bankId: savedBankId,
+            accountNo: savedAccountNo,
+            accountName: savedAccountName,
+            memoTemplate: savedMemoTemplate,
+          });
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [checkoutOpen]);
+
+  // Reset transfer flow whenever the dialog closes or method changes
+  useEffect(() => {
+    if (!checkoutOpen || paymentMethod !== 'transfer') {
+      if (transferUnsubRef.current) {
+        transferUnsubRef.current();
+        transferUnsubRef.current = null;
+      }
+      setTransferStatus('idle');
+      setPendingOrderId(null);
+      setPaymentReference('');
+      return;
+    }
+    // Generate a fresh reference on each entry into transfer mode
+    const prefix = defaultBank?.memo_prefix || 'ZPOS';
+    setPaymentReference(generateReferenceCode(prefix));
+  }, [checkoutOpen, paymentMethod, defaultBank?.memo_prefix]);
 
   const handleCopy = (text: string, field: string) => {
     if (typeof navigator !== 'undefined') {
@@ -327,25 +457,33 @@ export default function POSPage() {
   const barcodeRef = useRef<string>('');
   const lastKeyTimeRef = useRef<number>(0);
 
-  // Fetch Products & derive categories from them
+  // Fetch Products & derive categories from them.
+  // Strategy: try network first, write fresh data to IndexedDB, fall back to
+  // the cache when offline so POS stays operational without connectivity.
   useEffect(() => {
+    const applyProducts = (rows: any[]) => {
+      const mapped = rows.map((p: any) => ({
+        ...p,
+        category: p.category?.name || p.category || 'Chưa phân loại',
+      }));
+      setProducts(mapped);
+      const uniqueCats = Array.from(new Set(mapped.map((p: any) => p.category))) as string[];
+      setCategories(['Tất cả', ...uniqueCats.sort()]);
+    };
+
     const loadData = async () => {
       try {
         const productsData = await posService.getProducts();
-
         if (productsData && productsData.length > 0) {
-          const mapped = productsData.map(p => ({
-            ...p,
-            category: p.category?.name || 'Chưa phân loại'
-          }));
-          setProducts(mapped);
-
-          // Derive categories from loaded products (already tenant-filtered)
-          const uniqueCats = Array.from(new Set(mapped.map(p => p.category))) as string[];
-          setCategories(['Tất cả', ...uniqueCats.sort()]);
+          applyProducts(productsData);
+          // Warm the offline cache for next time the cashier loses Wi-Fi.
+          cacheProducts(productsData).catch(() => {});
         } else {
-          const tenantSlug = getTenantSlug();
-          if (tenantSlug === 'app') {
+          // Empty server response → fall back to cached or mock
+          const cached = await getCachedProducts();
+          if (cached.length > 0) {
+            applyProducts(cached);
+          } else if (getTenantSlug() === 'app') {
             setProducts(MOCK_PRODUCTS);
             setCategories(['Tất cả', ...Array.from(new Set(MOCK_PRODUCTS.map(p => p.category)))]);
           } else {
@@ -353,9 +491,12 @@ export default function POSPage() {
           }
         }
       } catch (e) {
-        console.warn("Sử dụng dữ liệu Mock (DB chưa có sản phẩm hoặc lỗi kết nối):", e);
-        const tenantSlug = getTenantSlug();
-        if (tenantSlug === 'app') {
+        console.warn('Server unreachable — falling back to offline product cache:', (e as any)?.message);
+        const cached = await getCachedProducts();
+        if (cached.length > 0) {
+          applyProducts(cached);
+          toast.info('Đang dùng dữ liệu offline. Một số sản phẩm có thể cũ.');
+        } else if (getTenantSlug() === 'app') {
           setProducts(MOCK_PRODUCTS);
           setCategories(['Tất cả', ...Array.from(new Set(MOCK_PRODUCTS.map(p => p.category)))]);
         } else {
@@ -368,15 +509,30 @@ export default function POSPage() {
     loadData();
   }, []);
 
-  // Customer Search Logic
+  // Customer Search Logic — server-first with offline cache fallback.
   useEffect(() => {
     const searchCustomers = async () => {
       try {
         const data = await posService.getCustomers(customerQuery);
         setCustomers(data || []);
+        // Cache the *full* customer list — we re-pull it whenever the query
+        // is empty (the "browse all" case).
+        if (!customerQuery.trim() && Array.isArray(data) && data.length > 0) {
+          cacheCustomers(data).catch(() => {});
+        }
       } catch (e) {
-        console.error("Error fetching customers for POS:", e);
-        setCustomers([]);
+        console.warn('Customer search failed, using offline cache:', (e as any)?.message);
+        const cached = await getCachedCustomers();
+        const q = customerQuery.trim().toLowerCase();
+        const filtered = q
+          ? cached.filter(
+              (c: any) =>
+                (c.name || '').toLowerCase().includes(q) ||
+                (c.phone || '').includes(q) ||
+                (c.email || '').toLowerCase().includes(q),
+            )
+          : cached;
+        setCustomers(filtered.slice(0, 50));
       }
     };
     const timer = setTimeout(searchCustomers, 300);
@@ -476,66 +632,341 @@ export default function POSPage() {
     }
   }, [checkoutOpen, total]);
 
+  // Reset the POS state + close dialogs after a successful checkout.
+  const finishCheckoutSuccess = (snapshot: any) => {
+    setLastOrder(snapshot);
+    setProducts(prevProducts =>
+      prevProducts.map(p => {
+        const cartItem = cart.find(c => c.id === p.id);
+        if (cartItem) {
+          return { ...p, stock: Math.max(0, (p.stock || 0) - cartItem.quantity) };
+        }
+        return p;
+      })
+    );
+
+    // Auto-issue eInvoice is handled by the dedicated useEffect on `successOpen`
+    // → see handleIssueInvoice + the effect a bit further down.
+
+    // Fire Zalo ZNS for order_paid (best-effort, doesn't block UI)
+    fireZalo('order_paid', {
+      phone: snapshot?.customer?.phone,
+      orderId: snapshot?.dbOrderId,
+      customerId: snapshot?.customer?.id,
+      data: {
+        customer_name: snapshot?.customer?.name || 'Quý khách',
+        order_no: snapshot?.orderId,
+        total: new Intl.NumberFormat('vi-VN').format(snapshot?.total || 0),
+        payment_method: snapshot?.paymentMethod,
+      },
+    });
+
+    setCart([]);
+    setSelectedCustomer(null);
+    setReceivedAmount(0);
+    setOrderId(`ORD-${Date.now().toString().slice(-6)}`);
+    setDiscountValue(0);
+    setDiscountType('fixed');
+    if (transferUnsubRef.current) {
+      transferUnsubRef.current();
+      transferUnsubRef.current = null;
+    }
+    setTransferStatus('idle');
+    setPendingOrderId(null);
+    setCheckoutOpen(false);
+    setSuccessOpen(true);
+  };
+
   const handleCheckout = async () => {
+    // For transfer mode: 2-stage flow (start → confirm).
+    // If we're not yet waiting, start the pending order and listen for webhook.
+    if (paymentMethod === 'transfer' && transferStatus === 'idle') {
+      return handleStartTransfer();
+    }
+    // If we're already waiting, the primary CTA acts as "manual confirm".
+    if (paymentMethod === 'transfer' && transferStatus === 'waiting' && pendingOrderId) {
+      return handleManualConfirmTransfer();
+    }
+
+    // Cash / card / fallback: complete the order immediately.
+    // Hoisted out of `try` so the catch block can reach it when queueing
+    // a fallback offline order after a network error.
+    const orderData: any = {
+      organization_id: '00000000-0000-0000-0000-000000000000',
+      branch_id: '00000000-0000-0000-0000-000000000000',
+      customer_id: selectedCustomer?.id || null,
+      order_number: orderId.toString().startsWith('ORD-') ? orderId.toString() : `ORD-${orderId}`,
+      total_amount: total,
+      discount_amount: discount,
+      payment_method: paymentMethod,
+      payment_status: 'paid',
+      payment_confirmed_at: new Date().toISOString(),
+      payment_amount_received: total,
+      status: 'completed'
+    };
+
     setIsProcessing(true);
     try {
-      // In a real app, these IDs would come from Auth/Org Context
-      const orderData = {
-        organization_id: '00000000-0000-0000-0000-000000000000', // Placeholder
-        branch_id: '00000000-0000-0000-0000-000000000000', // Placeholder
-        customer_id: selectedCustomer?.id || null,
-        order_number: orderId.toString().startsWith('ORD-') ? orderId.toString() : `ORD-${orderId}`,
-        total_amount: total,
-        discount_amount: discount,
-        payment_method: paymentMethod,
-        status: 'completed'
-      };
+      // Offline mode: queue the order to IndexedDB and continue as if it succeeded.
+      // The cashier has already taken cash — we MUST not block them on the network.
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        await queueOfflineOrder({ orderData, items: cart });
+        finishCheckoutSuccess({
+          cart: [...cart],
+          subtotal,
+          discount,
+          total,
+          orderId: orderData.order_number,
+          dbOrderId: undefined,
+          paymentMethod,
+          customer: selectedCustomer,
+          createdAt: new Date().toISOString(),
+          isOffline: true,
+        });
+        toast.success("Đơn đã lưu offline — sẽ tự đồng bộ khi có mạng");
+        return;
+      }
 
-      await posService.createOrder(orderData, cart);
-      
-      // Save snapshot for receipt before resetting
-      setLastOrder({
+      const createdOrder = await posService.createOrder(orderData, cart);
+
+      finishCheckoutSuccess({
         cart: [...cart],
         subtotal,
         discount,
         total,
         orderId: orderData.order_number,
-        paymentMethod: paymentMethod,
+        dbOrderId: createdOrder?.id,
+        paymentMethod,
         customer: selectedCustomer,
         createdAt: new Date().toISOString()
       });
-      
-      // Update local product stock in UI immediately for real-time feedback
-      setProducts(prevProducts => 
-        prevProducts.map(p => {
-          const cartItem = cart.find(c => c.id === p.id);
-          if (cartItem) {
-            return { ...p, stock: Math.max(0, (p.stock || 0) - cartItem.quantity) };
-          }
-          return p;
-        })
-      );
-      
-      // Immediately reset the POS
-      setCart([]);
-      setSelectedCustomer(null);
-      setReceivedAmount(0);
-      setOrderId(`ORD-${Date.now().toString().slice(-6)}`);
-      setDiscountValue(0);
-      setDiscountType('fixed');
-      
-      setCheckoutOpen(false);
-      setSuccessOpen(true);
       toast.success("Thanh toán thành công!");
-    } catch (e) {
+    } catch (e: any) {
       console.error("Checkout failed:", e);
-      // Fallback: still show success modal in demo mode if DB fails
+      // Network-shaped error after the connectivity check → still queue, don't lose the sale.
+      const msg = String(e?.message || '').toLowerCase();
+      const isNetwork = msg.includes('network') || msg.includes('fetch') || msg.includes('timeout');
+      if (isNetwork) {
+        try {
+          await queueOfflineOrder({ orderData, items: cart });
+          finishCheckoutSuccess({
+            cart: [...cart],
+            subtotal,
+            discount,
+            total,
+            orderId: orderData.order_number,
+            paymentMethod,
+            customer: selectedCustomer,
+            createdAt: new Date().toISOString(),
+            isOffline: true,
+          });
+          toast.success("Mất mạng — đơn đã xếp hàng đợi & sẽ tự sync");
+          return;
+        } catch (qe) {
+          console.error("Queue fallback failed:", qe);
+        }
+      }
       setCheckoutOpen(false);
       setSuccessOpen(true);
       toast.error("Lỗi lưu trữ đơn hàng, nhưng vẫn tiếp tục demo.");
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  // Create a pending order and start listening for the bank webhook to confirm it.
+  const handleStartTransfer = async () => {
+    setIsProcessing(true);
+    try {
+      const orderNumber = orderId.toString().startsWith('ORD-')
+        ? orderId.toString()
+        : `ORD-${orderId}`;
+
+      const order = await posService.createOrder(
+        {
+          organization_id: '00000000-0000-0000-0000-000000000000',
+          branch_id: '00000000-0000-0000-0000-000000000000',
+          customer_id: selectedCustomer?.id || null,
+          order_number: orderNumber,
+          total_amount: total,
+          discount_amount: discount,
+          payment_method: 'transfer',
+          payment_status: 'pending',
+          payment_reference: paymentReference,
+          bank_account_id: defaultBank?.id || null,
+          status: 'pending',
+        } as any,
+        cart,
+      );
+
+      if (!order?.id) {
+        toast.error("Không thể tạo đơn hàng chờ thanh toán");
+        return;
+      }
+
+      setPendingOrderId(order.id);
+      setTransferStatus('waiting');
+
+      // Make sure the reference is persisted even if createOrder dropped the field
+      try {
+        if (defaultBank?.id) {
+          await vietQRService.attachPendingPayment({
+            orderId: order.id,
+            bankAccountId: defaultBank.id,
+            referenceCode: paymentReference,
+          });
+        }
+      } catch (e) {
+        console.warn("attachPendingPayment failed:", e);
+      }
+
+      // Realtime: listen for the order being flipped to "paid" by the webhook RPC
+      transferUnsubRef.current = vietQRService.subscribeOrderPayment(order.id, () => {
+        toast.success("Khách đã chuyển khoản thành công!");
+        finishCheckoutSuccess({
+          cart: [...cart],
+          subtotal,
+          discount,
+          total,
+          orderId: orderNumber,
+          dbOrderId: order.id,
+          paymentMethod: 'transfer',
+          customer: selectedCustomer,
+          createdAt: new Date().toISOString(),
+          paymentReference,
+        });
+      });
+
+      toast.info("Đang chờ khách chuyển khoản — mã: " + paymentReference);
+    } catch (e) {
+      console.error("Failed to start transfer:", e);
+      toast.error("Không thể bắt đầu thanh toán chuyển khoản");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Cashier-side fallback: manually mark the pending transfer order as paid.
+  const handleManualConfirmTransfer = async () => {
+    if (!pendingOrderId) return;
+    setIsProcessing(true);
+    try {
+      await vietQRService.confirmOrderPaymentManually(pendingOrderId, total);
+      toast.success("Đã xác nhận nhận tiền thủ công");
+      finishCheckoutSuccess({
+        cart: [...cart],
+        subtotal,
+        discount,
+        total,
+        orderId: orderId.toString().startsWith('ORD-') ? orderId.toString() : `ORD-${orderId}`,
+        dbOrderId: pendingOrderId,
+        paymentMethod: 'transfer',
+        customer: selectedCustomer,
+        createdAt: new Date().toISOString(),
+        paymentReference,
+      });
+    } catch (e) {
+      console.error("manual confirm failed:", e);
+      toast.error("Xác nhận thủ công thất bại");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Issue an eInvoice for the last completed order (manual or auto).
+  const handleIssueInvoice = async (orderSnapshot?: any) => {
+    const snap = orderSnapshot || lastOrder;
+    if (!snap) return;
+    if (invoiceIssuing || issuedInvoice) return;
+
+    setInvoiceIssuing(true);
+    try {
+      const items = (snap.cart || []).map((c: any) => ({
+        name: c.name,
+        quantity: c.quantity,
+        unit_price: c.price,
+        total: c.price * c.quantity,
+      }));
+      const res = await einvoiceService.issueInvoice({
+        orderId: snap.dbOrderId,
+        buyer: {
+          name: snap.customer?.name || 'Khách lẻ',
+          tax_code: snap.customer?.tax_code,
+          phone: snap.customer?.phone,
+          email: snap.customer?.email,
+          address: snap.customer?.address,
+        },
+        items,
+      });
+      if (!res.ok) {
+        toast.error(res.error || 'Phát hành hoá đơn thất bại');
+        return;
+      }
+      setIssuedInvoice(res.invoice);
+      toast.success(
+        `Đã phát hành HĐ ${res.invoice?.invoice_series || ''}-${res.invoice?.invoice_no || ''}`,
+      );
+
+      // Fire Zalo ZNS for invoice_issued — sends lookup code so customer can verify on Tổng cục Thuế
+      fireZalo('invoice_issued', {
+        phone: snap?.customer?.phone,
+        orderId: snap?.dbOrderId,
+        invoiceId: res.invoice?.id,
+        customerId: snap?.customer?.id,
+        data: {
+          customer_name: snap?.customer?.name || 'Quý khách',
+          invoice_no: `${res.invoice?.invoice_series || ''}/${res.invoice?.invoice_no || ''}`,
+          lookup_code: res.invoice?.provider_lookup_code || '',
+          total: new Intl.NumberFormat('vi-VN').format(res.invoice?.total_amount || 0),
+          pdf_url: res.invoice?.provider_pdf_url || '',
+        },
+      });
+    } catch (e: any) {
+      toast.error(`Lỗi: ${e?.message || 'Không rõ'}`);
+    } finally {
+      setInvoiceIssuing(false);
+    }
+  };
+
+  // Auto-issue when a fresh order opens the success modal AND the default
+  // provider has auto_issue_on_payment enabled.
+  useEffect(() => {
+    if (!successOpen || !lastOrder || issuedInvoice) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const cfg = await einvoiceService.getDefaultConfig();
+        if (cancelled) return;
+        if (cfg?.auto_issue_on_payment) {
+          handleIssueInvoice(lastOrder);
+        }
+      } catch (e) {
+        console.warn('auto-issue check failed:', e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [successOpen, lastOrder]);
+
+  // Reset invoice state whenever the success modal closes
+  useEffect(() => {
+    if (!successOpen) {
+      setIssuedInvoice(null);
+      setInvoiceIssuing(false);
+    }
+  }, [successOpen]);
+
+  // Cancel a started transfer (the order row stays in DB with payment_status='pending').
+  const handleCancelTransfer = () => {
+    if (transferUnsubRef.current) {
+      transferUnsubRef.current();
+      transferUnsubRef.current = null;
+    }
+    setTransferStatus('idle');
+    setPendingOrderId(null);
+    toast.info("Đã huỷ chờ thanh toán. Đơn hàng vẫn ở trạng thái 'Chờ thanh toán'.");
   };
 
   const filteredProducts = products.filter(p => {
@@ -567,7 +998,19 @@ export default function POSPage() {
             <h1 className="text-3xl leading-none tracking-tight">Bán hàng</h1>
             <p className="text-muted-foreground text-sm">Ghi nhận giao dịch và quản lý đơn hàng tại quầy.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <OfflineStatus
+              onSyncComplete={(res) => {
+                if (res.ok > 0) {
+                  // Force-refresh products to reflect just-synced stock deltas
+                  posService.getProducts?.().then((rows) => {
+                    if (Array.isArray(rows) && rows.length) {
+                      setProducts(rows.map((p: any) => ({ ...p, category: p.category?.name || p.category || 'Chưa phân loại' })));
+                    }
+                  }).catch(() => {});
+                }
+              }}
+            />
             <Button variant="outline" size="sm" className="gap-2">
               <History className="w-4 h-4" />
               Lịch sử
@@ -577,6 +1020,17 @@ export default function POSPage() {
             </Button>
           </div>
         </div>
+
+        {/* Offline banner — shown when navigator.onLine === false */}
+        {!isOnline && (
+          <div className="rounded-lg border border-red-500/30 bg-red-500/5 px-3 py-2 flex items-center gap-2 text-xs animate-in slide-in-from-top-2 duration-300">
+            <WifiOff className="h-4 w-4 text-red-600 shrink-0" />
+            <p className="text-red-700 dark:text-red-400">
+              <b>Đang offline</b> — POS vẫn hoạt động, đơn hàng sẽ được lưu vào hàng đợi và tự đồng bộ khi có mạng.
+            </p>
+          </div>
+        )}
+
 
         {/* Search & Tool Bar */}
         <div className="relative">
@@ -1089,8 +1543,8 @@ export default function POSPage() {
                 {/* Method selector */}
                 <div className="space-y-2">
                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Phương thức thanh toán</span>
-                  <div className="grid grid-cols-3 gap-3">
-                    <button 
+                  <div className="grid grid-cols-4 gap-2">
+                    <button
                       onClick={() => setPaymentMethod('cash')}
                       className={`flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border-2 transition-all duration-300 ${
                         paymentMethod === 'cash' 
@@ -1123,7 +1577,25 @@ export default function POSPage() {
                       <CreditCard className={`w-7 h-7 transition-transform ${paymentMethod === 'card' ? 'scale-110' : ''}`} />
                       <span className="text-xs">Thẻ ATM/Visa</span>
                     </button>
+                    <button
+                      onClick={() => setPaymentMethod('debt')}
+                      disabled={!selectedCustomer}
+                      title={!selectedCustomer ? 'Cần chọn khách hàng để ghi nợ' : ''}
+                      className={`flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border-2 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed ${
+                        paymentMethod === 'debt'
+                          ? 'bg-amber-500/10 dark:bg-amber-500/20 border-amber-500 text-amber-700 dark:text-amber-400 font-bold scale-[1.02] shadow-sm'
+                          : 'bg-muted/40 text-muted-foreground border-transparent hover:border-border hover:bg-muted/60'
+                      }`}
+                    >
+                      <CoinsIcon className={`w-7 h-7 transition-transform ${paymentMethod === 'debt' ? 'scale-110' : ''}`} />
+                      <span className="text-xs">Ghi nợ</span>
+                    </button>
                   </div>
+                  {paymentMethod === 'debt' && !selectedCustomer && (
+                    <p className="text-[11px] font-bold text-amber-600">
+                      ⚠️ Vui lòng chọn khách hàng trước khi ghi nợ
+                    </p>
+                  )}
                 </div>
 
                 {/* Received Amount Input (For Cash / general inputs) */}
@@ -1177,20 +1649,27 @@ export default function POSPage() {
 
               {/* Action Buttons */}
               <div className="flex items-center gap-3 mt-8">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-1/3 h-12 rounded-xl font-bold border-muted-foreground/10 text-muted-foreground"
-                  onClick={() => setCheckoutOpen(false)}
+                  onClick={() => {
+                    if (paymentMethod === 'transfer' && transferStatus === 'waiting') {
+                      handleCancelTransfer();
+                    } else {
+                      setCheckoutOpen(false);
+                    }
+                  }}
                 >
-                  Hủy bỏ
+                  {paymentMethod === 'transfer' && transferStatus === 'waiting' ? 'Huỷ chờ' : 'Hủy bỏ'}
                 </Button>
-                <Button 
+                <Button
                   className="w-2/3 h-12 rounded-xl text-lg font-bold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-colors"
                   onClick={handleCheckout}
                   disabled={isProcessing || (paymentMethod === 'cash' && receivedAmount < total)}
                 >
-                  Xác nhận {paymentMethod === 'transfer' ? '(Thủ công)' : ''}
-                  <ArrowRight className="w-5 h-5" />
+                  {paymentMethod === 'transfer' && transferStatus === 'idle' && (<>Tạo mã & chờ chuyển khoản <ArrowRight className="w-5 h-5" /></>)}
+                  {paymentMethod === 'transfer' && transferStatus === 'waiting' && (<>Đã nhận tiền (thủ công) <Check className="w-5 h-5" /></>)}
+                  {paymentMethod !== 'transfer' && (<>Xác nhận <ArrowRight className="w-5 h-5" /></>)}
                 </Button>
               </div>
             </div>
@@ -1243,15 +1722,39 @@ export default function POSPage() {
                       <p className="text-xs text-muted-foreground font-semibold">Quét bằng mọi ứng dụng Smart Banking</p>
                     </div>
 
+                    {/* Live status badge */}
+                    <div className="flex items-center justify-center">
+                      {transferStatus === 'idle' && (
+                        <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-400 hover:bg-amber-500/15 border-amber-500/30 font-bold">
+                          Sẵn sàng tạo mã chuyển khoản
+                        </Badge>
+                      )}
+                      {transferStatus === 'waiting' && (
+                        <Badge className="bg-blue-500/15 text-blue-700 dark:text-blue-400 hover:bg-blue-500/15 border-blue-500/30 font-bold gap-1.5">
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600" />
+                          </span>
+                          Đang chờ khách chuyển khoản…
+                        </Badge>
+                      )}
+                    </div>
+
                     {/* QR canvas */}
                     <div className="relative w-64 h-64 sm:w-72 sm:h-72 bg-white p-3 rounded-lg border-2 border-primary/20 shadow-lg mx-auto flex items-center justify-center group overflow-hidden">
-                      <img 
-                        src={`https://img.vietqr.io/image/${qrSettings.bankId}-${qrSettings.accountNo}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(qrSettings.memoTemplate + (orderId || 'BILL'))}&accountName=${encodeURIComponent(qrSettings.accountName)}`} 
+                      <img
+                        src={buildVietQRImageUrl({
+                          bankBin: qrSettings.bankId,
+                          accountNo: qrSettings.accountNo,
+                          amount: total,
+                          addInfo: paymentReference || `${qrSettings.memoTemplate}${orderId || 'BILL'}`,
+                          accountName: qrSettings.accountName,
+                        })}
                         alt="VietQR"
                         className="w-full h-full object-contain transition-transform group-hover:scale-105 duration-300"
                       />
                       <div className="absolute inset-x-0 bottom-0 bg-primary text-primary-foreground text-[8px] font-black tracking-widest uppercase py-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        Đang hoạt động
+                        {transferStatus === 'waiting' ? 'Đang nhận biến động số dư' : 'Sẵn sàng'}
                       </div>
                     </div>
 
@@ -1259,7 +1762,7 @@ export default function POSPage() {
                     <div className="bg-card rounded-xl border shadow-sm p-3.5 text-left space-y-2 text-xs">
                       <div className="flex justify-between items-center border-b pb-1.5">
                         <span className="text-muted-foreground font-semibold">Ngân hàng</span>
-                        <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-none font-bold uppercase">{qrSettings.bankId}</Badge>
+                        <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-none font-bold uppercase">{defaultBank?.bank_short_name || qrSettings.bankId}</Badge>
                       </div>
 
                       <div className="flex justify-between items-center border-b pb-1.5 cursor-pointer hover:bg-muted/50 p-1 rounded transition-colors group" onClick={() => handleCopy(qrSettings.accountNo, 'Số tài khoản')}>
@@ -1270,40 +1773,28 @@ export default function POSPage() {
                         </div>
                       </div>
 
-                      <div className="flex justify-between items-center cursor-pointer hover:bg-muted/50 p-1 rounded transition-colors group" onClick={() => handleCopy(qrSettings.accountName, 'Tên chủ TK')}>
+                      <div className="flex justify-between items-center border-b pb-1.5 cursor-pointer hover:bg-muted/50 p-1 rounded transition-colors group" onClick={() => handleCopy(qrSettings.accountName, 'Tên chủ TK')}>
                         <span className="text-muted-foreground font-semibold">Tên chủ tài khoản</span>
                         <div className="flex items-center gap-1 font-bold text-foreground uppercase">
                           {qrSettings.accountName}
                           {copiedField === 'Tên chủ TK' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />}
                         </div>
                       </div>
+
+                      <div className="flex justify-between items-center cursor-pointer hover:bg-muted/50 p-1 rounded transition-colors group" onClick={() => paymentReference && handleCopy(paymentReference, 'Nội dung CK')}>
+                        <span className="text-muted-foreground font-semibold">Nội dung chuyển khoản</span>
+                        <div className="flex items-center gap-1 font-mono font-bold text-violet-700 dark:text-violet-400">
+                          {paymentReference || '—'}
+                          {paymentReference && (copiedField === 'Nội dung CK' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />)}
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Webhook Simulation Button (For Demo) */}
-                    <Button 
-                      variant="secondary" 
-                      className="w-full h-10 mt-4 text-xs font-bold gap-2 animate-pulse hover:animate-none border-primary/20 hover:border-primary/50 text-primary bg-primary/5"
-                      onClick={() => {
-                        setIsProcessing(true);
-                        toast.info("Đang chờ webhook từ ngân hàng...");
-                        setTimeout(() => {
-                          handleCheckout();
-                        }, 1500);
-                      }}
-                      disabled={isProcessing}
-                    >
-                      {isProcessing ? (
-                        <>
-                          <RefreshCw className="w-4 h-4 animate-spin" />
-                          Đang nhận biến động số dư...
-                        </>
-                      ) : (
-                        <>
-                          <QrCode className="w-4 h-4" />
-                          Mô phỏng: Khách đã quét QR thành công
-                        </>
-                      )}
-                    </Button>
+                    {!defaultBank && (
+                      <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">
+                        ⚠️ Chưa cấu hình tài khoản — vào Cài đặt → Thanh toán
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -1372,61 +1863,126 @@ export default function POSPage() {
             <DialogTitle>Thanh toán thành công</DialogTitle>
             <DialogDescription>Đơn hàng đã được xử lý và ghi nhận vào hệ thống.</DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-primary">
-              <CheckCircle2 className="w-10 h-10" />
+          <div className="flex flex-col items-center gap-5">
+            {/* Premium Animated Green Checkmark Ring */}
+            <div className="relative">
+              <div className="w-16 h-16 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-500 animate-in zoom-in duration-300">
+                <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+              </div>
+              <div className="absolute inset-0 rounded-full bg-emerald-500/10 animate-ping opacity-25" style={{ animationDuration: '2s' }} />
             </div>
+
             <div className="space-y-1">
-              <h2 className="text-2xl font-bold">Thành công!</h2>
+              <h2 className="text-2xl font-black tracking-tight text-zinc-900 dark:text-zinc-50">Thành công!</h2>
               <p className="text-muted-foreground text-sm">Giao dịch đã được hoàn tất và ghi nhận.</p>
             </div>
             
-              {/* Mini Receipt Preview */}
-              {lastOrder && (
-                <div className="w-full bg-muted/50 rounded-xl p-6 text-left space-y-3 font-mono text-[10px] border">
-                  <div className="text-center space-y-1">
-                    <p className="font-bold text-sm uppercase">ZPOS RETAIL</p>
-                    <p>123 Đường ABC, Quận 1, TP.HCM</p>
-                    <p className="text-muted-foreground mt-1">Mã HĐ: {lastOrder.orderId}</p>
-                  </div>
-                  <Separator className="border-dashed" />
-                  <div className="space-y-1.5">
-                    {lastOrder.cart.map((item: any) => (
-                      <div key={item.id} className="flex justify-between">
-                        <span>{item.name} x {item.quantity}</span>
-                        <span>{formatCurrency(item.price * item.quantity)}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <Separator className="border-dashed" />
-                  <div className="space-y-1 text-right">
-                    <div className="flex justify-between">
-                      <span>Tạm tính:</span>
-                      <span>{formatCurrency(lastOrder.subtotal)}</span>
-                    </div>
-                    {lastOrder.discount > 0 && (
-                      <div className="flex justify-between text-muted-foreground text-xs">
-                        <span>Giảm giá:</span>
-                        <span>-{formatCurrency(lastOrder.discount)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between font-bold pt-1">
-                      <span>TỔNG CỘNG:</span>
-                      <span>{formatCurrency(lastOrder.total)}</span>
-                    </div>
-                  </div>
-                  <div className="text-center pt-2 italic">Cảm ơn quý khách!</div>
+            {/* Premium Thermal Paper Receipt Preview */}
+            {lastOrder && (
+              <div className="w-full bg-white dark:bg-zinc-950 rounded-2xl p-6 text-left space-y-4 font-mono text-[11px] border border-zinc-200/80 dark:border-zinc-800 shadow-sm relative overflow-hidden">
+                {/* Top decorative line for paper texture */}
+                <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-zinc-200 via-transparent to-zinc-200 dark:from-zinc-800 dark:to-zinc-800 opacity-50" />
+                
+                <div className="text-center space-y-1">
+                  <p className="font-bold text-sm tracking-wide text-zinc-900 dark:text-zinc-50 uppercase">ZPOS RETAIL</p>
+                  <p className="text-zinc-500 dark:text-zinc-400 text-[10px]">123 Đường ABC, Quận 1, TP.HCM</p>
+                  <p className="text-zinc-400 dark:text-zinc-500 text-[9px] font-sans mt-1">Mã HĐ: <span className="font-mono font-bold text-zinc-600 dark:text-zinc-300">{lastOrder.orderId}</span></p>
                 </div>
-              )}
+                
+                <Separator className="border-dashed border-zinc-200 dark:border-zinc-800" />
+                
+                <div className="space-y-2 text-zinc-700 dark:text-zinc-300">
+                  {lastOrder.cart.map((item: any) => (
+                    <div key={item.id} className="flex justify-between items-start gap-4">
+                      <span className="break-words max-w-[70%] font-medium">{item.name} x {item.quantity}</span>
+                      <span className="shrink-0 font-bold text-zinc-900 dark:text-zinc-100">{formatCurrency(item.price * item.quantity)}</span>
+                    </div>
+                  ))}
+                </div>
+                
+                <Separator className="border-dashed border-zinc-200 dark:border-zinc-800" />
+                
+                <div className="space-y-1.5 text-zinc-600 dark:text-zinc-400">
+                  <div className="flex justify-between text-[10px]">
+                    <span>Tạm tính:</span>
+                    <span>{formatCurrency(lastOrder.subtotal)}</span>
+                  </div>
+                  {lastOrder.discount > 0 && (
+                    <div className="flex justify-between text-rose-500 text-[10px] font-bold">
+                      <span>Giảm giá:</span>
+                      <span>-{formatCurrency(lastOrder.discount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-extrabold text-xs text-zinc-900 dark:text-zinc-50 pt-1.5 border-t border-zinc-100 dark:border-zinc-900">
+                    <span>TỔNG CỘNG:</span>
+                    <span className="text-sm font-black text-primary">{formatCurrency(lastOrder.total)}</span>
+                  </div>
+                </div>
+                
+                <div className="text-center pt-2 italic text-zinc-400 dark:text-zinc-500 text-[10px] font-sans">
+                  Cảm ơn quý khách!
+                </div>
+              </div>
+            )}
 
-            <div className="w-full grid grid-cols-2 gap-3 mt-4">
-              <Button variant="outline" className="h-12 rounded-xl font-bold" onClick={() => setSuccessOpen(false)}>
-                Tiếp tục
+            {/* eInvoice status banner */}
+            {issuedInvoice && (
+              <div className="w-full rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3 text-left text-xs space-y-1">
+                <p className="font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5" /> Đã phát hành HĐĐT
+                </p>
+                <p className="font-mono">
+                  {issuedInvoice.invoice_series || '—'}/{issuedInvoice.invoice_no || '—'}
+                  {issuedInvoice.provider_lookup_code && (
+                    <> · Tra cứu: <b>{issuedInvoice.provider_lookup_code}</b></>
+                  )}
+                </p>
+                {issuedInvoice.provider_pdf_url && (
+                  <a
+                    href={issuedInvoice.provider_pdf_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline font-bold text-emerald-700 dark:text-emerald-400"
+                  >
+                    Mở PDF hoá đơn ↗
+                  </a>
+                )}
+              </div>
+            )}
+
+            {/* Re-designed Buttons Section to Prevent Overlapping */}
+            <div className="w-full flex flex-col gap-2.5 mt-4">
+              <Button 
+                className="w-full h-12 rounded-xl font-bold bg-primary hover:bg-primary/95 text-primary-foreground gap-2 text-sm shadow-md shadow-primary/10 transition-all active:scale-[0.98]" 
+                onClick={() => setSuccessOpen(false)}
+              >
+                Tiếp tục bán hàng
+                <ArrowRight className="w-4 h-4 transition-transform group-hover/button:translate-x-0.5" />
               </Button>
-              <Button className="h-12 rounded-xl gap-2 font-bold" onClick={() => window.print()}>
-                <Printer className="w-4 h-4" />
-                In hóa đơn
-              </Button>
+              
+              <div className="grid grid-cols-2 gap-2.5 w-full">
+                <Button
+                  variant="outline"
+                  className="h-11 rounded-xl gap-2 font-semibold text-xs border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all active:scale-[0.98]"
+                  onClick={() => handleIssueInvoice()}
+                  disabled={invoiceIssuing || !!issuedInvoice}
+                >
+                  {invoiceIssuing ? (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <FileText className="w-3.5 h-3.5" />
+                  )}
+                  {issuedInvoice ? 'Đã PH HĐĐT' : 'Phát hành HĐĐT'}
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="h-11 rounded-xl gap-2 font-semibold text-xs border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all active:scale-[0.98]" 
+                  onClick={() => window.print()}
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  In hoá đơn
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>

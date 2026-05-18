@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/utils/supabase/client";
-import { ShieldAlert, Mail, Lock, Eye, EyeOff, Sparkles, ChevronDown, ChevronUp, Store } from "lucide-react";
+import { ShieldAlert, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Vui lòng nhập địa chỉ email hợp lệ." }),
@@ -66,7 +66,6 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [showDemoAccounts, setShowDemoAccounts] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -90,14 +89,6 @@ export function LoginForm() {
     },
   });
 
-  const handleQuickLogin = (email: string) => {
-    form.setValue("email", email);
-    form.setValue("password", "sandbox-bypass-pass");
-    toast.info("Đang tự động đăng nhập...");
-    setTimeout(() => {
-      form.handleSubmit(onSubmit)();
-    }, 200);
-  };
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsLoading(true);
@@ -582,53 +573,6 @@ export function LoginForm() {
         <div className="absolute inset-0 bg-gradient-to-r from-[#00b0ff] to-[#0056ff] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       </Button>
 
-      {/* Expandable Demo Accounts Panel */}
-      <div className="mt-2 rounded-lg border border-white/5 bg-white/[0.02] p-3 backdrop-blur-md transition-all duration-300 hover:border-white/10">
-        <button
-          type="button"
-          onClick={() => setShowDemoAccounts(!showDemoAccounts)}
-          className="flex w-full items-center justify-between font-semibold text-xs text-white/70 hover:text-white transition-colors"
-        >
-          <span className="flex items-center gap-2">
-            <Sparkles size={14} className="text-amber-400 animate-pulse" />
-            <span>Tài khoản Demo dùng thử (Sandbox Quick Login)</span>
-          </span>
-          {showDemoAccounts ? <ChevronUp size={14} className="text-white/40" /> : <ChevronDown size={14} className="text-white/40" />}
-        </button>
-        
-        {showDemoAccounts && (
-          <div className="mt-3 grid grid-cols-1 gap-2 border-t border-white/5 pt-3 animate-fade-in max-h-56 overflow-y-auto pr-1">
-            {MOCK_USERS.map((user) => (
-              <button
-                key={user.email}
-                type="button"
-                onClick={() => handleQuickLogin(user.email)}
-                disabled={isLoading}
-                className="flex flex-col text-left p-2.5 rounded-xl border border-white/5 bg-white/[0.01] hover:bg-white/5 hover:border-white/15 transition-all duration-200 group/demo"
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="font-semibold text-xs text-white group-hover/demo:text-blue-400 transition-colors">
-                    {user.full_name}
-                  </span>
-                  <span className="px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-white/10 text-white/80 scale-90 group-hover/demo:bg-blue-500/20 group-hover/demo:text-blue-400 transition-all duration-300">
-                    {user.global_role === "super_admin" ? "Super Admin" : "Store Owner"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between w-full mt-1.5">
-                  <span className="text-[10px] text-white/40 font-mono">
-                    {user.email}
-                  </span>
-                  {user.associated_tenant && (
-                    <span className="text-[9px] text-blue-400 font-bold flex items-center gap-1">
-                      <Store size={10} /> {user.associated_tenant}
-                    </span>
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
     </form>
   );
 }

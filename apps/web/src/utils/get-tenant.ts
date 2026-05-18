@@ -50,3 +50,21 @@ export async function getIsConsoleFromHost() {
 
   return subdomain === "console";
 }
+
+export async function getIsAppFromHost() {
+  const headersList = await headers();
+  const host = headersList.get("host") || "";
+  
+  let mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || "localhost:3000";
+  if (host.includes("zpos.click")) {
+    mainDomain = "zpos.click";
+  } else if (host.includes("zpos.vn")) {
+    mainDomain = "zpos.vn";
+  }
+  
+  const subdomain = host.endsWith(`.${mainDomain}`)
+    ? host.replace(`.${mainDomain}`, "")
+    : null;
+
+  return subdomain === "app";
+}

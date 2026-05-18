@@ -18,6 +18,9 @@ import {
   PieChart,
   Landmark,
   Sparkles,
+  QrCode,
+  FileText,
+  MessageCircle,
   type LucideIcon,
 } from "lucide-react";
 
@@ -94,6 +97,12 @@ export const sidebarItems: NavGroup[] = [
         url: "/orders",
         icon: ClipboardList,
       },
+      {
+        title: "Hoá đơn điện tử",
+        url: "/invoices",
+        icon: FileText,
+        isNew: true,
+      },
     ],
   },
   {
@@ -109,6 +118,12 @@ export const sidebarItems: NavGroup[] = [
         title: "Nhà cung cấp",
         url: "/suppliers",
         icon: Truck,
+      },
+      {
+        title: "Tin nhắn Zalo",
+        url: "/crm/zalo-messages",
+        icon: MessageCircle,
+        isNew: true,
       },
       {
         title: "Nhân viên",
@@ -166,6 +181,18 @@ export const sidebarItems: NavGroup[] = [
         title: "Dòng tiền",
         url: "/finance/cashflow",
         icon: Wallet,
+      },
+      {
+        title: "Giao dịch VietQR",
+        url: "/finance/payments",
+        icon: QrCode,
+        isNew: true,
+      },
+      {
+        title: "Hoá đơn điện tử",
+        url: "/finance/invoices",
+        icon: FileText,
+        isNew: true,
       },
       {
         title: "Lợi nhuận & Lỗ",

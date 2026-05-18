@@ -15,6 +15,7 @@ import { Printer, ShoppingBag, User, Calendar, CreditCard, Truck, ExternalLink, 
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { VN_LOCATIONS } from "@/data/vn-locations";
+import { IssueInvoiceButton } from "@/components/issue-invoice-button";
 
 interface OrderDetailDialogProps {
   order: any | null;
@@ -463,10 +464,27 @@ export function OrderDetailDialog({ order, open, onOpenChange, onPrint }: OrderD
           </div>
         </div>
 
-        <DialogFooter className="border-t pt-4 flex gap-2">
+        <DialogFooter className="border-t pt-4 flex gap-2 flex-wrap">
           <Button variant="outline" className="gap-2 font-bold" onClick={() => onOpenChange(false)}>
             Đóng
           </Button>
+          <IssueInvoiceButton
+            orderId={order.id}
+            buyer={{
+              name: order.customer?.name || order.customer_name || order.customers?.name,
+              tax_code: order.customer?.tax_code || order.customer_tax_code,
+              address: order.customer?.address || order.customer_address,
+              email: order.customer?.email || order.customer_email,
+              phone: order.customer?.phone || order.customer_phone,
+            }}
+            items={(order.items || order.order_items || []).map((it: any) => ({
+              name: it.name || it.product_name || it.variant_name || "Sản phẩm",
+              quantity: Number(it.quantity || 1),
+              unit_price: Number(it.unit_price || it.price || 0),
+              total: Number(it.total_price || (it.quantity || 1) * (it.unit_price || it.price || 0)),
+            }))}
+            variant="outline"
+          />
           <Button className="gap-2 font-bold bg-primary hover:bg-primary/90 text-white" onClick={onPrint}>
             <Printer className="w-4 h-4" /> In hóa đơn
           </Button>

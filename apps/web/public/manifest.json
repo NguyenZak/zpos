@@ -1,0 +1,32 @@
+{
+  "name": "ZPOS - Hệ điều hành bán lẻ",
+  "short_name": "ZPOS",
+  "description": "POS, quản lý kho, đơn hàng và HĐĐT đa tenant",
+  "id": "/",
+  "start_url": "/app/pos",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#7c3aed",
+  "lang": "vi",
+  "orientation": "any",
+  "categories": ["business", "finance", "productivity"],
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Mở POS",
+      "url": "/app/pos",
+      "description": "Mở màn hình bán hàng"
+    },
+    {
+      "name": "Đơn hàng",
+      "url": "/app/orders",
+      "description": "Quản lý đơn hàng"
+    }
+  ]
+}

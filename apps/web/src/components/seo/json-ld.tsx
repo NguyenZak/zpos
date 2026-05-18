@@ -1,4 +1,5 @@
 import React from "react";
+import Script from "next/script";
 
 interface JsonLdProps {
   data: Record<string, any>;
@@ -8,10 +9,16 @@ interface JsonLdProps {
  * Standard base component that outputs a schema.org compliant json+ld block
  */
 export function JsonLd({ data }: JsonLdProps) {
+  // Generate a deterministic ID based on content to prevent hydration mismatches
+  const contentHash = JSON.stringify(data).slice(0, 30).replace(/[^a-zA-Z0-9]/g, "");
+  const scriptId = `jsonld-${contentHash}`;
+
   return (
-    <script
+    <Script
+      id={scriptId}
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+      strategy="afterInteractive"
     />
   );
 }

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { KeyRound, ShieldAlert, Store } from "lucide-react";
 
-import { getIsConsoleFromHost, getTenantFromHost } from "@/utils/get-tenant";
+import { getIsAppFromHost, getIsConsoleFromHost, getTenantFromHost } from "@/utils/get-tenant";
 
 import { LoginForm } from "../_components/login-form";
 import { GoogleButton } from "../_components/social-auth/google-button";
@@ -11,8 +11,9 @@ import { GoogleButton } from "../_components/social-auth/google-button";
 export default async function Login() {
   const tenant = await getTenantFromHost();
   const isConsole = await getIsConsoleFromHost();
+  const isApp = await getIsAppFromHost();
 
-  if (!tenant && !isConsole) {
+  if (!tenant && !isConsole && !isApp) {
     notFound();
   }
 

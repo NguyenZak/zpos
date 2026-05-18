@@ -14,7 +14,8 @@ import {
   QrCode,
   Send,
   Truck,
-  Search
+  Search,
+  FileText
 } from 'lucide-react';
 import { 
   Tabs, 
@@ -31,6 +32,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { posService } from '@/services/pos.service';
+import { BankAccountsManager } from './_components/bank-accounts-manager';
+import { EInvoiceManager } from './_components/einvoice-manager';
+import { ZaloManager } from './_components/zalo-manager';
+import { MessageCircle } from 'lucide-react';
 import { 
   Card, 
   CardContent, 
@@ -184,7 +189,7 @@ export default function SettingsPage() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab');
-      if (tab && ['business', 'branch', 'payment', 'printer', 'security', 'telegram'].includes(tab)) {
+      if (tab && ['business', 'branch', 'payment', 'einvoice', 'printer', 'security', 'telegram', 'zalo', 'shipping'].includes(tab)) {
         setActiveTab(tab);
       }
 
@@ -432,6 +437,10 @@ export default function SettingsPage() {
               <QrCode className="w-4 h-4 text-violet-500" />
               Mã QR thanh toán
             </TabsTrigger>
+            <TabsTrigger value="einvoice" className="gap-2 shrink-0">
+              <FileText className="w-4 h-4 text-violet-500" />
+              Hoá đơn điện tử
+            </TabsTrigger>
             <TabsTrigger value="printer" className="gap-2 shrink-0">
               <Printer className="w-4 h-4" />
               Máy in & Hóa đơn
@@ -443,6 +452,10 @@ export default function SettingsPage() {
             <TabsTrigger value="telegram" className="gap-2 shrink-0">
               <Send className="w-4 h-4 text-sky-500" />
               Thông báo Telegram
+            </TabsTrigger>
+            <TabsTrigger value="zalo" className="gap-2 shrink-0">
+              <MessageCircle className="w-4 h-4 text-violet-500" />
+              Zalo OA / ZNS
             </TabsTrigger>
             <TabsTrigger value="shipping" className="gap-2 shrink-0">
               <Truck className="w-4 h-4 text-orange-500" />
@@ -584,114 +597,14 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* VietQR Dynamic Checkout Integration */}
+        {/* VietQR Dynamic Checkout — multi-account, server-side */}
         <TabsContent value="payment" className="space-y-4 animate-in fade-in duration-300">
-          <Card className="border shadow-sm overflow-hidden bg-card">
-            <CardHeader className="bg-muted/30 pb-4 border-b">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <QrCode className="w-5 h-5 text-violet-600 animate-pulse" />
-                Tạo mã QR thanh toán động (VietQR)
-              </CardTitle>
-              <CardDescription>
-                Nhập tài khoản ngân hàng của bạn. Khi bán hàng, hệ thống sẽ tự động tạo mã QR có sẵn số tiền đơn hàng và nội dung chuyển khoản để khách quét trả tiền.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="grid gap-6 lg:grid-cols-3">
-                {/* Left Side Inputs Form */}
-                <div className="lg:col-span-2 space-y-4">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="grid gap-2">
-                      <Label htmlFor="qr-bank" className="font-bold text-foreground">Ngân hàng thụ hưởng</Label>
-                      <select
-                        id="qr-bank"
-                        value={bankId}
-                        onChange={(e) => setBankId(e.target.value)}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-bold"
-                      >
-                        {bankList.map((b) => (
-                          <option key={b.id} value={b.id} className="font-semibold text-foreground">
-                            {b.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="qr-no" className="font-bold text-foreground">Số tài khoản (STK)</Label>
-                      <Input
-                        id="qr-no"
-                        placeholder="Nhập số tài khoản ngân hàng..."
-                        value={accountNo}
-                        onChange={(e) => setAccountNo(e.target.value)}
-                        className="font-mono font-bold border-violet-500/10 focus-visible:ring-violet-500"
-                      />
-                    </div>
-                  </div>
+          <BankAccountsManager />
+        </TabsContent>
 
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="grid gap-2">
-                      <Label htmlFor="qr-name" className="font-bold text-foreground">Họ và tên chủ tài khoản</Label>
-                      <Input
-                        id="qr-name"
-                        placeholder="NGUYEN VAN A..."
-                        value={accountName}
-                        onChange={(e) => setAccountName(e.target.value.toUpperCase())}
-                        className="font-bold uppercase border-violet-500/10 focus-visible:ring-violet-500"
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="qr-memo" className="font-bold text-foreground">Mẫu cú pháp ghi chú (Prefix)</Label>
-                      <Input
-                        id="qr-memo"
-                        placeholder="ZPOS DH..."
-                        value={memoTemplate}
-                        onChange={(e) => setMemoTemplate(e.target.value)}
-                        className="font-bold border-violet-500/10 focus-visible:ring-violet-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="bg-violet-500/5 dark:bg-violet-500/10 p-4 rounded-xl border border-violet-500/20 text-xs leading-relaxed text-muted-foreground space-y-1.5 shadow-sm">
-                    <p className="font-bold text-violet-700 dark:text-violet-400 flex items-center gap-1.5">
-                      💡 Tính năng tối ưu thanh toán tự động:
-                    </p>
-                    <p>Khi khách chọn **Chuyển khoản** lúc Checkout, màn hình sẽ hiển thị mã **VietQR** được tạo theo tiêu chuẩn Napas.</p>
-                    <p>Khách hàng quét mã bằng ứng dụng ngân hàng bất kỳ (Smart Banking) sẽ **tự động điền đúng Số tài khoản**, **đúng tên bạn**, **đúng số tiền** đơn hàng và điền sẵn nội dung chuyển khoản **"{memoTemplate}[Mã_HĐ]"** cực kỳ tiện lợi.</p>
-                  </div>
-                </div>
-
-                {/* Right Side Live Interactive Card mockup */}
-                <div className="flex flex-col items-center justify-center p-5 bg-muted/30 border border-violet-500/10 rounded-xl gap-4 shadow-inner relative overflow-hidden">
-                  <span className="text-[10px] font-black tracking-widest text-muted-foreground uppercase">Bản xem trước mã QR động</span>
-                  
-                  <div className="relative w-48 h-48 bg-white p-2.5 rounded-lg border-2 border-violet-500/20 shadow-md animate-in zoom-in-95 duration-200">
-                    <img
-                      src={`https://img.vietqr.io/image/${bankId}-${accountNo || "0000"}-compact2.png?amount=100000&addInfo=${encodeURIComponent(memoTemplate + "123")}&accountName=${encodeURIComponent(accountName || "CHU TAI KHOAN")}`}
-                      alt="VietQR Live Preview"
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-
-                  <div className="text-center space-y-0.5">
-                    <p className="font-extrabold text-sm uppercase text-foreground">{bankId}</p>
-                    <p className="text-[10px] text-muted-foreground">
-                      Chủ TK: <strong className="text-foreground uppercase">{accountName || "CHƯA NHẬP"}</strong>
-                    </p>
-                    <p className="text-[10px] text-muted-foreground">
-                      Số TK: <strong className="text-foreground font-mono">{accountNo || "CHƯA NHẬP"}</strong>
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="border-t bg-muted/20 px-6 py-4 flex justify-end">
-              <Button size="sm" onClick={handleSave} disabled={loading} className="bg-violet-600 hover:bg-violet-700 text-white font-bold">
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                <Save className="mr-2 h-4 w-4" />
-                Lưu cấu hình
-              </Button>
-            </CardFooter>
-          </Card>
+        {/* eInvoice — Hóa đơn điện tử theo TT 78/2021 */}
+        <TabsContent value="einvoice" className="space-y-4 animate-in fade-in duration-300">
+          <EInvoiceManager />
         </TabsContent>
 
         <TabsContent value="printer" className="space-y-4">
@@ -937,6 +850,10 @@ export default function SettingsPage() {
               </div>
             </CardFooter>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="zalo" className="space-y-4 animate-in fade-in duration-300">
+          <ZaloManager />
         </TabsContent>
 
         <TabsContent value="shipping" className="space-y-4">
