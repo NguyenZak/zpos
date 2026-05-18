@@ -120,10 +120,13 @@ export function LoginForm() {
       });
 
       if (error) {
-        // 2. Sandbox Fallback bypass for mock accounts (UX-focused robustness)
-        const mockUser = MOCK_USERS.find(
+        const isLocal = window.location.hostname.includes("localhost") || 
+                        window.location.hostname.includes("127.0.0.1");
+
+        // 2. Sandbox Fallback bypass for mock accounts (ONLY allowed in local environment)
+        const mockUser = isLocal ? MOCK_USERS.find(
           (u) => u.email.toLowerCase() === data.email.toLowerCase()
-        );
+        ) : null;
 
         if (mockUser && data.password.length >= 6) {
           // Track Sandbox login success
@@ -199,15 +202,15 @@ export function LoginForm() {
         }
 
         // 2b. Database Bypass for newly created tenants / users (unconfirmed emails in Supabase Auth or local testing)
-        const isLocal = window.location.hostname.includes("localhost") || 
-                        window.location.hostname.includes("127.0.0.1") || 
-                        window.location.port !== "";
+        const isLocalHost = window.location.hostname.includes("localhost") || 
+                            window.location.hostname.includes("127.0.0.1") || 
+                            window.location.port !== "";
         const port = window.location.port ? `:${window.location.port}` : "";
         const isUnconfirmedEmail = error.message?.toLowerCase().includes("confirm") || 
                                    error.message?.toLowerCase().includes("verify");
 
         // Allow database bypass on localhost for development, or on live server if the email is unconfirmed (password is validated by Supabase Auth)
-        const shouldBypass = isLocal || isUnconfirmedEmail;
+        const shouldBypass = isLocalHost || isUnconfirmedEmail;
 
         if (shouldBypass && data.password.length >= 6) {
           // Query profiles directly by email
@@ -382,11 +385,7 @@ export function LoginForm() {
         window.location.hostname.startsWith("console.") || 
         window.location.hostname === "console.localhost";
 
-      const isSuperAdmin = 
-        data.email.toLowerCase().endsWith("@zpos.click") ||
-        data.email.toLowerCase().endsWith("@zpos.vn") ||
-        authData.user?.user_metadata?.role === "super_admin" ||
-        isConsoleSubdomain;
+      const isSuperAdmin = data.email.toLowerCase() === "quan.tm@zpos.click";
 
       if (isSuperAdmin) {
         // Fail-safe: write zpos_mock_session cookie for live super_admin to bypass any browser cookie sync latency on subdomain

@@ -62,6 +62,7 @@ export async function proxy(request: NextRequest) {
   // 1. Update Supabase Session — refreshes cookies
   const response = await updateSession(request);
   const hostname = request.headers.get("host") || "";
+  const isLocal = hostname.includes("localhost") || hostname.includes("127.0.0.1");
 
   let mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || "localhost:3000";
   if (hostname.includes("zpos.click")) {
@@ -85,8 +86,8 @@ export async function proxy(request: NextRequest) {
   let user: any = null;
   const mockSession = request.cookies.get("zpos_mock_session");
 
-  // Prioritize sandbox mock session to enable bypass across live/local environments smoothly
-  if (mockSession?.value) {
+  // Prioritize sandbox mock session ONLY in local development to enable bypass smoothly
+  if (isLocal && mockSession?.value) {
     try {
       const mockUser = JSON.parse(decodeURIComponent(mockSession.value));
       
@@ -95,11 +96,13 @@ export async function proxy(request: NextRequest) {
       let isValidMock = true;
 
       if (isTenantSubdomain) {
-        if (mockUser.global_role !== "super_admin" && mockUser.associated_tenant !== subdomain) {
+        const isSuperAdmin = mockUser.email?.toLowerCase() === "quan.tm@zpos.click";
+        if (!isSuperAdmin && mockUser.associated_tenant !== subdomain) {
           isValidMock = false;
         }
       } else if (subdomain === "console") {
-        if (mockUser.global_role !== "super_admin") {
+        const isSuperAdmin = mockUser.email?.toLowerCase() === "quan.tm@zpos.click";
+        if (!isSuperAdmin) {
           isValidMock = false;
         }
       }
@@ -156,7 +159,6 @@ export async function proxy(request: NextRequest) {
   };
 
   // Development Fallback: Allow path-based access on localhost
-  const isLocal = hostname.includes("localhost") || hostname.includes("127.0.0.1");
   if (!subdomain && isLocal) {
     // 1. Pass-through known routes to avoid rewriting console/cms/api
     if (
@@ -240,10 +242,7 @@ export async function proxy(request: NextRequest) {
     }
 
     // 2. Role Guard: Check if the user is a super_admin
-    let isSuperAdmin =
-      user.email?.toLowerCase().endsWith("@zpos.click") ||
-      user.email?.toLowerCase().endsWith("@zpos.vn") ||
-      user.user_metadata?.role === "super_admin";
+    let isSuperAdmin = user.email?.toLowerCase() === "quan.tm@zpos.click";
 
     // Sandbox Showcase Fallback: allow zpos_mock_session cookie to override role guard locally and on demo domains
     if (!isSuperAdmin) {
@@ -251,7 +250,7 @@ export async function proxy(request: NextRequest) {
       if (mockSession?.value) {
         try {
           const mockUser = JSON.parse(decodeURIComponent(mockSession.value));
-          if (mockUser.global_role === "super_admin") {
+          if (mockUser.email?.toLowerCase() === "quan.tm@zpos.click") {
             isSuperAdmin = true;
           }
         } catch (e) {
@@ -324,12 +323,21 @@ export async function proxy(request: NextRequest) {
     if (user) {
       const isMockUser = !!mockSession?.value;
       if (isMockUser) {
-        hasAccess = true;
+        try {
+          const mockUser = JSON.parse(decodeURIComponent(mockSession.value));
+          const emailLower = mockUser.email?.toLowerCase();
+          if (emailLower === "quan.tm@zpos.click") {
+            hasAccess = true;
+          } else if (mockUser.associated_tenant === subdomain) {
+            hasAccess = true;
+          } else {
+            hasAccess = false;
+          }
+        } catch (e) {
+          hasAccess = false;
+        }
       } else {
-        const isLiveSuperAdmin =
-          user.email?.toLowerCase().endsWith("@zpos.click") ||
-          user.email?.toLowerCase().endsWith("@zpos.vn") ||
-          user.user_metadata?.role === "super_admin";
+        const isLiveSuperAdmin = user.email?.toLowerCase() === "quan.tm@zpos.click";
 
         if (isLiveSuperAdmin) {
           hasAccess = true;

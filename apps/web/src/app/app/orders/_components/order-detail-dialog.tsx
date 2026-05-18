@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { VN_LOCATIONS } from "@/data/vn-locations";
 import { IssueInvoiceButton } from "@/components/issue-invoice-button";
+import { SendZaloButton } from "@/components/send-zalo-button";
 
 interface OrderDetailDialogProps {
   order: any | null;
@@ -468,6 +469,18 @@ export function OrderDetailDialog({ order, open, onOpenChange, onPrint }: OrderD
           <Button variant="outline" className="gap-2 font-bold" onClick={() => onOpenChange(false)}>
             Đóng
           </Button>
+          <SendZaloButton
+            event="order_paid"
+            orderId={order.id}
+            customerId={order.customer?.id || order.customer_id}
+            defaultPhone={order.customer?.phone || order.customer_phone || order.customers?.phone}
+            templateData={{
+              order_number: order.order_number || order.id,
+              total: new Intl.NumberFormat("vi-VN").format(Number(order.total_amount || 0)),
+              customer_name: order.customer?.name || order.customer_name || "Quý khách",
+            }}
+            variant="outline"
+          />
           <IssueInvoiceButton
             orderId={order.id}
             buyer={{

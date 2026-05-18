@@ -932,6 +932,7 @@ export default function POSPage() {
 
   // Auto-issue when a fresh order opens the success modal AND the default
   // provider has auto_issue_on_payment enabled.
+  // Also fires the order_paid Zalo ZNS notification if a template exists.
   useEffect(() => {
     if (!successOpen || !lastOrder || issuedInvoice) return;
     let cancelled = false;
@@ -945,6 +946,17 @@ export default function POSPage() {
       } catch (e) {
         console.warn('auto-issue check failed:', e);
       }
+      // Fire-and-forget Zalo ZNS — server will skip if not configured.
+      fireZalo('order_paid', {
+        phone: lastOrder?.customer?.phone,
+        orderId: lastOrder?.dbOrderId,
+        customerId: lastOrder?.customer?.id,
+        data: {
+          order_number: lastOrder?.orderId || '',
+          total: new Intl.NumberFormat('vi-VN').format(Number(lastOrder?.total || 0)),
+          customer_name: lastOrder?.customer?.name || 'Quý khách',
+        },
+      });
     })();
     return () => {
       cancelled = true;

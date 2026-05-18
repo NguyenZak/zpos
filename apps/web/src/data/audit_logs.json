@@ -1,5 +1,24 @@
 [
   {
+    "id": "log-1779127248404-5k1ye6ynd",
+    "tenant_id": "kphone",
+    "user_id": null,
+    "user_email": "kphone@zpos.vn",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "full_name": "Chủ Cửa Hàng KPhone",
+      "role": "tenant_owner",
+      "mode": "sandbox"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-18T18:00:48.404Z"
+  },
+  {
     "id": "log-1779126975722-27gqdrz2d",
     "tenant_id": "manhchien",
     "user_id": null,
