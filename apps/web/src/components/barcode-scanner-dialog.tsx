@@ -163,6 +163,7 @@ export function BarcodeScannerDialog({
 
       const html5QrCode = new Html5Qrcode(regionId, {
         formatsToSupport: formats,
+        useBarCodeDetectorIfSupported: true,
         verbose: false
       });
       scannerRef.current = html5QrCode;
@@ -171,14 +172,19 @@ export function BarcodeScannerDialog({
       await html5QrCode.start(
         cameraId,
         {
-          fps: 15,
+          fps: 24, // Higher frame rate for fluid scanning and fast frame capture
           qrbox: (width, height) => {
-            // Rectangular scanning window for standard barcodes
-            const boxWidth = Math.min(width * 0.85, 360);
-            const boxHeight = Math.min(height * 0.4, 160);
+            // Wider scan window to capture complete long 1D barcodes
+            const boxWidth = Math.min(width * 0.9, 380);
+            const boxHeight = Math.min(height * 0.5, 180);
             return { width: boxWidth, height: boxHeight };
           },
           aspectRatio: 1.777778, // 16:9 widescreen
+          videoConstraints: {
+            // Request high resolution so that barcode lines don't blur into each other
+            width: { min: 640, ideal: 1280, max: 1920 },
+            height: { min: 480, ideal: 720, max: 1080 }
+          }
         },
         (decodedText) => {
           handleBarcodeScanned(decodedText);
