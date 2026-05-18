@@ -26,15 +26,17 @@ import { toast } from "sonner";
 interface BarcodeScannerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  products: any[];
-  onScanSuccess: (product: any) => void;
+  products?: any[];
+  onScanSuccess?: (product: any) => void;
+  onRawScan?: (code: string) => void;
 }
 
 export function BarcodeScannerDialog({
   open,
   onOpenChange,
-  products,
+  products = [],
   onScanSuccess,
+  onRawScan,
 }: BarcodeScannerDialogProps) {
   const [cameras, setCameras] = useState<any[]>([]);
   const [selectedCameraId, setSelectedCameraId] = useState<string>("");
@@ -237,31 +239,48 @@ export function BarcodeScannerDialog({
     (window as any).lastScannedCode = cleanedCode;
     (window as any).lastScannedTime = now;
 
-    // Search product by barcode
-    const matchedProduct = products.find(
-      (p) => p.barcode && p.barcode.toString().trim() === cleanedCode
-    );
-
-    if (matchedProduct) {
+    // 1. Raw scan mode (e.g. populating product code fields)
+    if (onRawScan) {
       playBeep();
-      onScanSuccess(matchedProduct);
+      onRawScan(cleanedCode);
       toast.success(
         <div className="flex flex-col gap-1">
-          <span className="font-bold text-xs text-green-600 dark:text-green-400">Đã quét thành công</span>
-          <span className="font-semibold text-sm">{matchedProduct.name}</span>
-          <span className="text-[10px] text-muted-foreground">Mã vạch: {cleanedCode}</span>
+          <span className="font-bold text-xs text-green-600 dark:text-green-400">Đã nhận diện mã vạch</span>
+          <span className="font-mono text-sm font-bold">{cleanedCode}</span>
         </div>,
-        { duration: 2500 }
+        { duration: 2000 }
       );
-    } else {
-      playErrorBeep();
-      toast.error(
-        <div className="flex flex-col gap-1.5">
-          <span className="font-bold text-xs text-red-600 dark:text-red-400">Mã vạch không khớp</span>
-          <span className="text-sm">Không tìm thấy sản phẩm có mã vạch: <strong className="font-mono">{cleanedCode}</strong></span>
-        </div>,
-        { duration: 4000 }
+      onOpenChange(false);
+      return;
+    }
+
+    // 2. POS product matching mode
+    if (products && onScanSuccess) {
+      const matchedProduct = products.find(
+        (p) => p.barcode && p.barcode.toString().trim() === cleanedCode
       );
+
+      if (matchedProduct) {
+        playBeep();
+        onScanSuccess(matchedProduct);
+        toast.success(
+          <div className="flex flex-col gap-1">
+            <span className="font-bold text-xs text-green-600 dark:text-green-400">Đã quét thành công</span>
+            <span className="font-semibold text-sm">{matchedProduct.name}</span>
+            <span className="text-[10px] text-muted-foreground">Mã vạch: {cleanedCode}</span>
+          </div>,
+          { duration: 2500 }
+        );
+      } else {
+        playErrorBeep();
+        toast.error(
+          <div className="flex flex-col gap-1.5">
+            <span className="font-bold text-xs text-red-600 dark:text-red-400">Mã vạch không khớp</span>
+            <span className="text-sm">Không tìm thấy sản phẩm có mã vạch: <strong className="font-mono">{cleanedCode}</strong></span>
+          </div>,
+          { duration: 4000 }
+        );
+      }
     }
   };
 

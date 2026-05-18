@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, Loader2, Package, Image as ImageIcon, Sparkles } from "lucide-react";
+import { Plus, Loader2, Package, Image as ImageIcon, Sparkles, Barcode } from "lucide-react";
 import { 
   Dialog, 
   DialogContent, 
@@ -18,10 +18,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { posService } from "@/services/pos.service";
 import { convertToWebP } from "@/lib/image-utils";
+import { BarcodeScannerDialog } from "@/components/barcode-scanner-dialog";
+
 
 export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   
   const [formData, setFormData] = useState({
@@ -278,17 +281,27 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="sku">Mã SKU</Label>
+                <Label htmlFor="sku">Mã SKU / Barcode</Label>
                 <div className="flex gap-2">
                   <Input 
                     id="sku" 
-                    placeholder="Mã SP" 
+                    placeholder="Mã SP hoặc Mã vạch" 
                     className="uppercase flex-1"
                     value={formData.sku}
                     onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                   />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-9 w-9 text-purple-500 bg-purple-500/5 border-purple-500/10 hover:bg-purple-500/15 shrink-0"
+                    onClick={() => setScannerOpen(true)}
+                    title="Quét mã vạch bằng camera"
+                  >
+                    <Barcode className="h-4 w-4" />
+                  </Button>
                   <Button type="button" variant="outline" size="sm" onClick={generateSKU}>
-                    Tạo mã
+                    Tự tạo
                   </Button>
                 </div>
               </div>
@@ -341,6 +354,11 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
             </Button>
           </DialogFooter>
         </form>
+        <BarcodeScannerDialog
+          open={scannerOpen}
+          onOpenChange={setScannerOpen}
+          onRawScan={(code) => setFormData(prev => ({ ...prev, sku: code }))}
+        />
       </DialogContent>
     </Dialog>
   );
