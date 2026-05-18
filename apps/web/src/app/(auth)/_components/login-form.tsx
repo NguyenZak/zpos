@@ -22,6 +22,8 @@ const formSchema = z.object({
 
 const MOCK_USERS = [
   { email: "quan.tm@zpos.click", full_name: "Trần Minh Quân", global_role: "super_admin" },
+  { email: "kphone@zpos.vn", full_name: "Chủ Cửa Hàng KPhone", global_role: "tenant_owner", associated_tenant: "kphone" },
+  { email: "kphone.staff@zpos.vn", full_name: "Nhân Viên KPhone", global_role: "staff", associated_tenant: "kphone" },
   { email: "mai.nt@bibomart.com.vn", full_name: "Nguyễn Thị Mai", global_role: "tenant_owner", associated_tenant: "bibomart" },
   { email: "nam.lh@comnieusaigon.vn", full_name: "Lê Hoàng Nam", global_role: "tenant_owner", associated_tenant: "comnieusg" },
   { email: "dang.ph@juno.vn", full_name: "Phạm Hải Đăng", global_role: "tenant_owner", associated_tenant: "juno" },
@@ -170,16 +172,17 @@ export function LoginForm() {
             );
           };
 
+          const port = window.location.port ? `:${window.location.port}` : "";
           if (redirectToParam && !isAuthPath(redirectToParam)) {
             window.location.href = redirectToParam;
           } else if (mockUser.global_role === "super_admin") {
             const consoleUrl = isLocal 
-              ? "http://console.localhost:3000/dashboard" 
+              ? `http://console.localhost${port}/dashboard` 
               : `https://console.${getMainDomain()}/dashboard`;
             window.location.href = consoleUrl;
           } else if (mockUser.associated_tenant) {
             const tenantUrl = isLocal
-              ? `http://${mockUser.associated_tenant}.localhost:3000/app`
+              ? `http://${mockUser.associated_tenant}.localhost${port}/app`
               : `https://${mockUser.associated_tenant}.${getMainDomain()}/app`;
             window.location.href = tenantUrl;
           } else {
