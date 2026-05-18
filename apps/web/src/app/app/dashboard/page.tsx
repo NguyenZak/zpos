@@ -673,6 +673,36 @@ export default function DashboardPage() {
         loading={loading}
         onRefresh={loadDashboardData}
         tenantName={tenantName}
+        timeRange={timeRange}
+        setTimeRange={setTimeRange}
+        startDate={startDate}
+        setStartDate={setStartDate}
+        endDate={endDate}
+        setEndDate={setEndDate}
+        displayRevenue={displayRevenue}
+        displayOrders={displayOrders}
+        displayCustomers={displayCustomers}
+        displayAOV={displayAOV}
+        displayNetProfit={displayNetProfit}
+        displayCOGS={displayCOGS}
+        displayExpenses={displayExpenses}
+        financePieData={financePieData}
+        dynamicRevenueData={dynamicRevenueData}
+        dynamicComparisonData={dynamicComparisonData}
+        dynamicHourlySalesList={dynamicHourlySalesList}
+        dynamicCategorySalesData={dynamicCategorySalesData}
+        filteredTopProducts={filteredTopProducts}
+        cashPercent={cashPercent}
+        bankPercent={bankPercent}
+        cardPercent={cardPercent}
+        goal={goal}
+        goalProgress={goalProgress}
+        goalDialogOpen={goalDialogOpen}
+        setGoalDialogOpen={setGoalDialogOpen}
+        newTarget={newTarget}
+        setNewTarget={setNewTarget}
+        handleUpdateGoal={handleUpdateGoal}
+        handleExportReport={handleExportReport}
       />
     );
   }
