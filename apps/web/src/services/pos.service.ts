@@ -635,7 +635,7 @@ export const posService = {
       .from('orders')
       .select(`
         *,
-        customer:customers(name),
+        customer:customers(name, address, phone),
         order_items(
           quantity,
           unit_price,
@@ -652,8 +652,7 @@ export const posService = {
     // 2. Fetch all products and their variants to map names in memory
     const { data: products } = await supabase
       .from('products')
-      .select('id, name, variants:product_variants(id, name)')
-      .eq('organization_id', orgId);
+      .select('id, name, description, variants:product_variants(id, name)');
 
     const variantMap = new Map<string, { productName: string, variantName: string | null }>();
 
@@ -671,6 +670,8 @@ export const posService = {
         const mapped = variantMap.get(item.variant_id);
         return {
           ...item,
+          product_name: mapped?.productName || "Sản phẩm",
+          variant_name: mapped?.variantName || null,
           variant: {
             name: mapped?.variantName || null,
             product: {
@@ -719,6 +720,59 @@ export const posService = {
     return data;
   },
 
+  async updateOrderItems(orderId: string, items: any[]) {
+    const supabase = createClient();
+    
+    // 1. Get existing items from the database
+    const { data: existingItems, error: fetchError } = await supabase
+      .from('order_items')
+      .select('id')
+      .eq('order_id', orderId);
+      
+    if (fetchError) throw fetchError;
+    
+    const existingIds = existingItems?.map((i: any) => i.id) || [];
+    const currentIds = items.filter((i: any) => i.id).map((i: any) => i.id);
+    
+    // 2. Identify items to delete
+    const idsToDelete = existingIds.filter(id => !currentIds.includes(id));
+    if (idsToDelete.length > 0) {
+      const { error: delError } = await supabase
+        .from('order_items')
+        .delete()
+        .in('id', idsToDelete);
+      if (delError) throw delError;
+    }
+    
+    // 3. Insert new items and update existing ones
+    for (const item of items) {
+      if (item.id && existingIds.includes(item.id)) {
+        // Update existing item
+        const { error: updError } = await supabase
+          .from('order_items')
+          .update({
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            total_price: item.total_price
+          })
+          .eq('id', item.id);
+        if (updError) throw updError;
+      } else {
+        // Insert new item
+        const { error: insError } = await supabase
+          .from('order_items')
+          .insert([{
+            order_id: orderId,
+            variant_id: item.variant_id,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            total_price: item.total_price
+          }]);
+        if (insError) throw insError;
+      }
+    }
+  },
+
   async cancelOrder(id: string) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
@@ -758,18 +812,54 @@ export const posService = {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
     
-    const { data, error } = await supabase
+    const { data: order, error } = await supabase
       .from('orders')
       .select(`
         *,
-        customer:customers(*)
+        customer:customers(*),
+        order_items(
+          id,
+          variant_id,
+          quantity,
+          unit_price,
+          total_price
+        )
       `)
       .eq('id', id)
       .eq('organization_id', orgId)
       .single();
     
     if (error) throw error;
-    return data;
+    if (!order) return null;
+
+    // Fetch all products to map names in memory
+    const { data: products } = await supabase
+      .from('products')
+      .select('id, name, description, variants:product_variants(id, name)');
+
+    const variantMap = new Map<string, { productName: string, variantName: string | null }>();
+
+    products?.forEach((p: any) => {
+      variantMap.set(p.id, { productName: p.name, variantName: null });
+
+      p.variants?.forEach((v: any) => {
+        variantMap.set(v.id, { productName: p.name, variantName: v.name });
+      });
+    });
+
+    const orderItemsMapped = (order.order_items || []).map((item: any) => {
+      const mapped = variantMap.get(item.variant_id);
+      return {
+        ...item,
+        product_name: mapped?.productName || "Sản phẩm",
+        variant_name: mapped?.variantName || null
+      };
+    });
+
+    return {
+      ...order,
+      order_items: orderItemsMapped
+    };
   },
 
   async createCustomer(customerData: any) {
@@ -823,6 +913,34 @@ export const posService = {
       cleanData.address = cleanData.address.split('::').slice(1).join('::');
     }
     return cleanData;
+  },
+
+  async updateCustomer(id: string, customerData: any) {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+    const tenantSlug = getTenantSlug();
+
+    // If address is provided, add tenantSlug prefix if not already present
+    let address = customerData.address;
+    if (address !== undefined && !address.startsWith(`${tenantSlug}::`)) {
+      address = `${tenantSlug}::${address}`;
+    }
+
+    const preparedData = {
+      ...customerData,
+      ...(address !== undefined ? { address } : {})
+    };
+
+    const { data, error } = await supabase
+      .from('customers')
+      .update(preparedData)
+      .eq('id', id)
+      .eq('organization_id', orgId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
   },
 
   async getSuppliers(query: string = "") {

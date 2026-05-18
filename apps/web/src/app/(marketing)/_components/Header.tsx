@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import Link from "next/link";
+
 import { AnimatePresence, motion } from "framer-motion";
-import { Cloud, Menu, X, ChevronDown, Globe } from "lucide-react";
+import { ChevronDown, Cloud, Globe, Menu, X } from "lucide-react";
+
 import { useLanguage } from "./LanguageContext";
 
 export function Header({ initialLogoText }: { initialLogoText?: string }) {
@@ -53,14 +56,10 @@ export function Header({ initialLogoText }: { initialLogoText?: string }) {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0093ff] to-[#0036ff] flex items-center justify-center text-white shadow-md group-hover:shadow-lg transition-all">
               <Cloud size={18} strokeWidth={2.5} />
             </div>
-            {!isScrolled && (
-              <span className="font-semibold text-lg text-white tracking-tight ml-2.5">{logoText}</span>
-            )}
+            {!isScrolled && <span className="font-semibold text-lg text-white tracking-tight ml-2.5">{logoText}</span>}
           </Link>
 
-          {isScrolled && (
-            <div className="w-px h-5 bg-gray-200/80 mx-4" />
-          )}
+          {isScrolled && <div className="w-px h-5 bg-gray-200/80 mx-4" />}
 
           {/* Navigation Links */}
           <nav className={`hidden md:flex items-center ${isScrolled ? "gap-6" : "gap-8 ml-16"}`}>
@@ -115,17 +114,6 @@ export function Header({ initialLogoText }: { initialLogoText?: string }) {
           </button>
 
           <Link
-            href="/login"
-            className={`text-sm font-semibold rounded-full transition-all flex items-center justify-center ${
-              isScrolled
-                ? "bg-[#f3f4f6]/60 border border-black/5 px-5 py-1.5 text-gray-800 hover:bg-gray-100"
-                : "text-white/90 border border-white/20 bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:border-white/40 px-5 py-1.5"
-            }`}
-          >
-            {t("nav.login")}
-          </Link>
-
-          <Link
             href="/register"
             className={`text-sm font-semibold rounded-full transition-all flex items-center justify-center ${
               isScrolled
@@ -143,9 +131,7 @@ export function Header({ initialLogoText }: { initialLogoText?: string }) {
           <button
             onClick={() => setLanguage(language === "vi" ? "en" : "vi")}
             className={`text-[9px] font-mono font-bold uppercase transition-all rounded-full flex items-center justify-center gap-1 px-2.5 py-1 border ${
-              isScrolled
-                ? "bg-black/5 border-black/5 text-gray-700"
-                : "bg-white/5 border-white/20 text-white/90"
+              isScrolled ? "bg-black/5 border-black/5 text-gray-700" : "bg-white/5 border-white/20 text-white/90"
             }`}
           >
             <Globe size={10} />
@@ -203,13 +189,6 @@ export function Header({ initialLogoText }: { initialLogoText?: string }) {
               {t("nav.blog")}
             </Link>
             <div className={`h-px ${isScrolled ? "bg-gray-100" : "bg-white/10"} my-1`} />
-            <Link
-              href="/login"
-              className={`text-base font-semibold ${isScrolled ? "text-gray-800" : "text-white"}`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              {t("nav.login")}
-            </Link>
             <Link
               href="/register"
               className="w-full text-center py-2 text-base font-semibold bg-[#0036FF] text-white rounded-lg"

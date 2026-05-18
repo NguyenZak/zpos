@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 import { KeyRound, ShieldAlert, Store } from "lucide-react";
 
@@ -10,6 +11,10 @@ import { GoogleButton } from "../_components/social-auth/google-button";
 export default async function Login() {
   const tenant = await getTenantFromHost();
   const isConsole = await getIsConsoleFromHost();
+
+  if (!tenant && !isConsole) {
+    notFound();
+  }
 
   if (isConsole) {
     return (
@@ -79,9 +84,7 @@ export default async function Login() {
 
         <div className="flex items-center gap-3 text-xs py-1">
           <div className="h-px flex-1 bg-white/10" />
-          <span className="text-white/30 font-mono uppercase tracking-wider text-[9px]">
-            Hoặc đăng nhập với email
-          </span>
+          <span className="text-white/30 font-mono uppercase tracking-wider text-[9px]">Hoặc đăng nhập với email</span>
           <div className="h-px flex-1 bg-white/10" />
         </div>
 

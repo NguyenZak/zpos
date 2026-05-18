@@ -12,7 +12,8 @@ import {
   Save,
   Loader2,
   QrCode,
-  Send
+  Send,
+  Truck
 } from 'lucide-react';
 import { 
   Tabs, 
@@ -86,6 +87,10 @@ export default function SettingsPage() {
   // Security Settings State
   const [enable2FA, setEnable2FA] = React.useState(false);
   const [restrictIP, setRestrictIP] = React.useState(false);
+
+  // Shipping Settings State
+  const [shippingProvider, setShippingProvider] = React.useState('ghn');
+  const [shippingToken, setShippingToken] = React.useState('');
 
   // Telegram Settings State
   const [telegramEnabled, setTelegramEnabled] = React.useState(false);
@@ -403,6 +408,10 @@ export default function SettingsPage() {
           <TabsTrigger value="telegram" className="gap-2">
             <Send className="w-4 h-4 text-sky-500" />
             Thông báo Telegram
+          </TabsTrigger>
+          <TabsTrigger value="shipping" className="gap-2">
+            <Truck className="w-4 h-4 text-orange-500" />
+            Vận chuyển
           </TabsTrigger>
         </TabsList>
 
@@ -862,6 +871,61 @@ export default function SettingsPage() {
                   Lưu cấu hình
                 </Button>
               </div>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="shipping" className="space-y-4">
+          <Card className="border shadow-sm overflow-hidden bg-card">
+            <CardHeader className="bg-muted/30 pb-4 border-b">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Truck className="w-5 h-5 text-orange-500 animate-pulse" />
+                Kết nối đơn vị vận chuyển
+              </CardTitle>
+              <CardDescription>
+                Cấu hình API Key của hãng vận chuyển (GHN, GHTK, Viettel Post...) để tự động báo giá ship và đẩy đơn.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-6">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="shipping-provider" className="font-bold">Nhà cung cấp</Label>
+                  <select
+                    id="shipping-provider"
+                    value={shippingProvider}
+                    onChange={(e) => setShippingProvider(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 font-bold"
+                  >
+                    <option value="ghn">Giao Hàng Nhanh (GHN)</option>
+                    <option value="ghtk">Giao Hàng Tiết Kiệm (GHTK)</option>
+                    <option value="viettel_post">Viettel Post</option>
+                    <option value="ahamove">AhaMove</option>
+                    <option value="lalamove">Lalamove</option>
+                  </select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="shipping-token" className="font-bold">API Token / Client ID</Label>
+                  <Input
+                    id="shipping-token"
+                    placeholder="Nhập API Token..."
+                    value={shippingToken}
+                    onChange={(e) => setShippingToken(e.target.value)}
+                    className="font-mono text-xs border-orange-500/10 focus-visible:ring-orange-500"
+                  />
+                </div>
+              </div>
+              <div className="bg-orange-500/5 p-4 rounded-xl border border-orange-500/20 text-xs leading-relaxed text-muted-foreground space-y-1.5 shadow-sm">
+                <p className="font-bold text-orange-700">💡 Hướng dẫn lấy Token:</p>
+                <p>- <b>GHN</b>: Đăng nhập hệ thống 5sao.ghn.vn, vào mục Thông tin tài khoản để lấy API Token.</p>
+                <p>- <b>GHTK</b>: Đăng nhập khachhang.giaohangtietkiem.vn, vào mục Sửa thông tin cửa hàng để lấy API Token.</p>
+              </div>
+            </CardContent>
+            <CardFooter className="border-t bg-muted/20 px-6 py-4 flex justify-end">
+              <Button size="sm" onClick={handleSave} disabled={loading} className="bg-orange-600 hover:bg-orange-700 text-white font-bold">
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Save className="mr-2 h-4 w-4" />
+                Lưu cấu hình vận chuyển
+              </Button>
             </CardFooter>
           </Card>
         </TabsContent>

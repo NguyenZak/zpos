@@ -423,6 +423,8 @@ export default function OrdersPage() {
         id: o.id,
         order_number: o.order_number,
         customer_name: o.customer?.name,
+        customer_address: o.customer?.address || '',
+        customer_phone: o.customer?.phone || '',
         total_amount: o.total_amount,
         status: o.status,
         payment_method: o.payment_method,
