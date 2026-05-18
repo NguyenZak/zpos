@@ -40,6 +40,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { MobileFloatingCart } from "./mobile-floating-cart";
 import { MobileCheckoutSheet } from "./mobile-checkout-sheet";
+import { BarcodeScannerDialog } from "@/components/barcode-scanner-dialog";
 
 interface MobilePOSProps {
   products: any[];
@@ -54,6 +55,7 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [customerSearchOpen, setCustomerSearchOpen] = useState(false);
   const [customerQuery, setCustomerQuery] = useState("");
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   // Tabs State
   interface OrderTab {
@@ -258,10 +260,10 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
             <Button 
               variant="outline" 
               size="icon" 
-              className="h-10 w-10 rounded-xl text-primary"
-              onClick={handleBarcodeScan}
+              className="h-10 w-10 rounded-xl text-primary bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border-purple-500/20"
+              onClick={() => setScannerOpen(true)}
             >
-              <Barcode className="w-4.5 h-4.5" />
+              <Barcode className="w-4.5 h-4.5 text-purple-500" />
             </Button>
           </div>
         </div>
@@ -500,6 +502,13 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
         selectedCustomer={selectedCustomer} 
         onCheckoutSuccess={handleCheckoutSuccess} 
         orderId={orderId} 
+      />
+
+      <BarcodeScannerDialog
+        open={scannerOpen}
+        onOpenChange={setScannerOpen}
+        products={products}
+        onScanSuccess={addToCart}
       />
     </div>
   );

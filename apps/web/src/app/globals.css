@@ -694,3 +694,23 @@ html {
 .animate-fadeIn {
   animation: fadeIn 0.3s ease-out forwards;
 }
+
+/* ==========================================================================
+   BARCODE SCANNER VIEWPORT KEYFRAMES
+   ========================================================================== */
+@keyframes scanner-laser {
+  0% {
+    top: 5%;
+  }
+  50% {
+    top: 95%;
+  }
+  100% {
+    top: 5%;
+  }
+}
+
+.animate-scanner-laser {
+  position: absolute;
+  animation: scanner-laser 2.4s ease-in-out infinite;
+}

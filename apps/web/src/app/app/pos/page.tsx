@@ -67,6 +67,7 @@ import { useOnlineStatus } from '@/hooks/use-online-status';
 import { OfflineStatus } from '@/components/offline-status';
 import { MobilePOS } from '../_components/mobile/mobile-pos';
 import { PrintInvoice } from './_components/print-invoice';
+import { BarcodeScannerDialog } from '@/components/barcode-scanner-dialog';
 
 // Fire-and-forget Zalo ZNS send. Always swallows errors so checkout never blocks.
 async function fireZalo(event: 'order_paid' | 'invoice_issued', opts: {
@@ -275,6 +276,7 @@ export default function POSPage() {
   const [tempPrice, setTempPrice] = useState<string>('');
   const [activeCategory, setActiveCategory] = useState('Tất cả');
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'transfer' | 'debt'>('cash');
   const [creditAccount, setCreditAccount] = useState<CreditAccount | null>(null);
@@ -1015,8 +1017,14 @@ export default function POSPage() {
               <History className="w-4 h-4" />
               Lịch sử
             </Button>
-            <Button variant="outline" size="sm" className="w-9 p-0" onClick={() => toast.info("Đang lắng nghe mã vạch...")}>
-              <Barcode className="w-4 h-4" />
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 text-purple-400 border-purple-500/20 hover:border-purple-500/40 hover:from-purple-500/20 hover:to-indigo-500/20" 
+              onClick={() => setScannerOpen(true)}
+            >
+              <Barcode className="w-4 h-4 text-purple-500" />
+              Quét Camera
             </Button>
           </div>
         </div>
@@ -2005,6 +2013,13 @@ export default function POSPage() {
           customer: lastOrder.customer ? { name: lastOrder.customer.name, phone: lastOrder.customer.phone } : undefined
         }} />
       )}
+
+      <BarcodeScannerDialog
+        open={scannerOpen}
+        onOpenChange={setScannerOpen}
+        products={products}
+        onScanSuccess={addToCart}
+      />
     </>
   );
 }
