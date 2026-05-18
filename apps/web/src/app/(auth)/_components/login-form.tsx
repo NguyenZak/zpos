@@ -78,6 +78,10 @@ export function LoginForm() {
         toast.error("Truy cập bị từ chối!", {
           description: "Tài khoản của bạn không có quyền truy cập vào trang kiểm soát tổng Console.",
         });
+      } else if (errorParam === "tenant_access_denied") {
+        toast.error("Truy cập bị từ chối!", {
+          description: "Tài khoản của bạn không thuộc về chi nhánh/tenant này.",
+        });
       }
     }
   }, []);

@@ -72,10 +72,10 @@ export function AccountSwitcher({
   useEffect(() => {
     const loadActiveUser = async () => {
       let loggedUser = {
-        id: "1",
-        name: "Arham Khan",
-        email: "hello@arhamkhnz.com",
-        avatar: "https://avatars.githubusercontent.com/u/43849669",
+        id: "loading",
+        name: "Chủ doanh nghiệp",
+        email: "loading...",
+        avatar: "",
         role: "Administrator",
       };
 

@@ -89,11 +89,28 @@ export async function proxy(request: NextRequest) {
   if (mockSession?.value) {
     try {
       const mockUser = JSON.parse(decodeURIComponent(mockSession.value));
-      user = {
-        id: mockUser.email,
-        email: mockUser.email,
-        user_metadata: { full_name: mockUser.full_name, role: mockUser.global_role },
-      };
+      
+      // Ensure the mock session is valid for the current host subdomain
+      const isTenantSubdomain = subdomain && !["www", "app", "console", "cms"].includes(subdomain);
+      let isValidMock = true;
+
+      if (isTenantSubdomain) {
+        if (mockUser.global_role !== "super_admin" && mockUser.associated_tenant !== subdomain) {
+          isValidMock = false;
+        }
+      } else if (subdomain === "console") {
+        if (mockUser.global_role !== "super_admin") {
+          isValidMock = false;
+        }
+      }
+
+      if (isValidMock) {
+        user = {
+          id: mockUser.email,
+          email: mockUser.email,
+          user_metadata: { full_name: mockUser.full_name, role: mockUser.global_role },
+        };
+      }
     } catch (e) {
       console.error("Failed to parse mock session cookie in proxy:", e);
     }
@@ -302,20 +319,55 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL(`${protocol}://${mainDomain}/`));
     }
 
-    // Root path → send to /login or /app
-    if (url.pathname === "/") {
-      return NextResponse.redirect(new URL(user ? "/app" : "/login", request.url));
+    // Validate live Supabase user tenant membership
+    let hasAccess = false;
+    if (user) {
+      const isMockUser = !!mockSession?.value;
+      if (isMockUser) {
+        hasAccess = true;
+      } else {
+        const isLiveSuperAdmin =
+          user.email?.toLowerCase().endsWith("@zpos.click") ||
+          user.email?.toLowerCase().endsWith("@zpos.vn") ||
+          user.user_metadata?.role === "super_admin";
+
+        if (isLiveSuperAdmin) {
+          hasAccess = true;
+        } else {
+          try {
+            const { data: member } = await supabase
+              .from("organization_members")
+              .select("id, organizations!inner(slug)")
+              .eq("profile_id", user.id)
+              .eq("organizations.slug", subdomain)
+              .maybeSingle();
+            if (member) {
+              hasAccess = true;
+            }
+          } catch (e) {
+            console.warn("Failed to verify live user tenant membership:", e);
+          }
+        }
+      }
     }
 
-    // Auth guard: unauthenticated attempting /app/* → redirect to /login
-    if (!user && !isAuthRoute) {
+    // Root path → send to /login or /app
+    if (url.pathname === "/") {
+      return NextResponse.redirect(new URL((user && hasAccess) ? "/app" : "/login", request.url));
+    }
+
+    // Auth guard: unauthenticated or unauthorized attempting /app/* → redirect to /login
+    if ((!user || !hasAccess) && !isAuthRoute) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("redirectTo", url.pathname);
+      if (user && !hasAccess) {
+        loginUrl.searchParams.set("error", "tenant_access_denied");
+      }
       return NextResponse.redirect(loginUrl);
     }
 
-    // Auth guard: authenticated attempting /login → redirect to /app
-    if (user && (url.pathname === "/login" || url.pathname === "/register")) {
+    // Auth guard: authenticated AND authorized attempting /login → redirect to /app
+    if (user && hasAccess && (url.pathname === "/login" || url.pathname === "/register")) {
       return NextResponse.redirect(new URL("/app", request.url));
     }
 

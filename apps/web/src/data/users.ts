@@ -1,18 +1,18 @@
 export const users = [
   {
     id: "1",
-    name: "Arham Khan",
-    username: "Aarhamkhnz",
-    email: "hello@arhamkhnz.com",
-    avatar: "https://avatars.githubusercontent.com/u/43849669",
+    name: "Chủ doanh nghiệp (Demo)",
+    username: "demowner",
+    email: "demo@zpos.vn",
+    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Demo%20Owner",
     role: "administrator",
   },
   {
     id: "2",
-    name: "Ammar Khan",
-    username: "ammarkhnz",
-    email: "hello@ammarkhnz.com",
-    avatar: "",
+    name: "Quản trị viên (Demo)",
+    username: "demoadmin",
+    email: "admin-demo@zpos.vn",
+    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Demo%20Admin",
     role: "admin",
   },
 ];

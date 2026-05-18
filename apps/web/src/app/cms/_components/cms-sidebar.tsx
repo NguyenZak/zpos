@@ -60,9 +60,9 @@ export function CMSSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // --- Real User Session loading identical to app-sidebar.tsx ---
   const [currentUser, setCurrentUser] = React.useState({
-    name: "Arham Khan",
-    email: "hello@arhamkhnz.com",
-    avatar: "https://avatars.githubusercontent.com/u/43849669",
+    name: "Chủ doanh nghiệp",
+    email: "loading...",
+    avatar: "",
   });
 
   React.useEffect(() => {
