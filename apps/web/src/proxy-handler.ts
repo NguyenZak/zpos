@@ -39,10 +39,28 @@ function createProxySupabase(request: NextRequest) {
 }
 
 export async function proxy(request: NextRequest) {
+  const url = request.nextUrl;
+  const mockSessionParam = url.searchParams.get("mock_session");
+
+  // Intercept local mock sessions to establish secure, host-only subdomain cookies on localhost
+  if (mockSessionParam) {
+    const cleanUrl = new URL(request.url);
+    cleanUrl.searchParams.delete("mock_session");
+    
+    const cleanResponse = NextResponse.redirect(cleanUrl);
+    
+    // Set cookie on current host explicitly (host-only cookie, perfectly supported on localhost subdomains)
+    cleanResponse.cookies.set("zpos_mock_session", mockSessionParam, {
+      path: "/",
+      maxAge: 86400,
+      httpOnly: false,
+    });
+    
+    return cleanResponse;
+  }
+
   // 1. Update Supabase Session — refreshes cookies
   const response = await updateSession(request);
-
-  const url = request.nextUrl;
   const hostname = request.headers.get("host") || "";
 
   let mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || "localhost:3000";

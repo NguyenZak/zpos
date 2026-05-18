@@ -177,16 +177,19 @@ export function LoginForm() {
             window.location.href = redirectToParam;
           } else if (mockUser.global_role === "super_admin") {
             const consoleUrl = isLocal 
-              ? `http://console.localhost${port}/dashboard` 
+              ? `http://console.localhost${port}/dashboard?mock_session=${encodeURIComponent(JSON.stringify(mockUser))}` 
               : `https://console.${getMainDomain()}/dashboard`;
             window.location.href = consoleUrl;
           } else if (mockUser.associated_tenant) {
             const tenantUrl = isLocal
-              ? `http://${mockUser.associated_tenant}.localhost${port}/app`
+              ? `http://${mockUser.associated_tenant}.localhost${port}/app?mock_session=${encodeURIComponent(JSON.stringify(mockUser))}`
               : `https://${mockUser.associated_tenant}.${getMainDomain()}/app`;
             window.location.href = tenantUrl;
           } else {
-            window.location.href = "/app";
+            const appUrl = isLocal
+              ? `http://localhost${port}/app?mock_session=${encodeURIComponent(JSON.stringify(mockUser))}`
+              : "/app";
+            window.location.href = appUrl;
           }
           return;
         }
@@ -273,12 +276,12 @@ export function LoginForm() {
 
             if (tenantSlug) {
               const tenantUrl = isLocal
-                ? `http://${tenantSlug}.localhost${port}/app`
+                ? `http://${tenantSlug}.localhost${port}/app?mock_session=${encodeURIComponent(JSON.stringify(mockUser))}`
                 : `https://${tenantSlug}.${getMainDomain()}/app`;
               window.location.href = tenantUrl;
             } else {
               const consoleUrl = isLocal
-                ? `http://console.localhost${port}/dashboard`
+                ? `http://console.localhost${port}/dashboard?mock_session=${encodeURIComponent(JSON.stringify(mockUser))}`
                 : `https://console.${getMainDomain()}/dashboard`;
               window.location.href = consoleUrl;
             }
@@ -364,7 +367,7 @@ export function LoginForm() {
         }
 
         const redirectUrl = isLocal
-          ? `http://${tenantSlug}.localhost${port}/app`
+          ? `http://${tenantSlug}.localhost${port}/app?mock_session=${encodeURIComponent(JSON.stringify(mockUser))}`
           : `https://${tenantSlug}.${getMainDomain()}/app`;
         window.location.href = redirectUrl;
         return;
@@ -401,7 +404,7 @@ export function LoginForm() {
         }
 
         const consoleUrl = isLocal 
-          ? `http://console.localhost${port}/dashboard` 
+          ? `http://console.localhost${port}/dashboard?mock_session=${encodeURIComponent(JSON.stringify(mockUser))}` 
           : `https://console.${getMainDomain()}/dashboard`;
         window.location.href = consoleUrl;
         return;
