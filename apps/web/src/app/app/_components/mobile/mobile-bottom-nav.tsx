@@ -38,6 +38,7 @@ import { toast } from "sonner";
 import { usePreferencesStore } from "@/stores/preferences/preferences-provider";
 import { persistPreference } from "@/lib/preferences/preferences-storage";
 import { getTenantSlug } from "@/services/pos.service";
+import { clearAllSessions } from "@/utils/clear-session";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -101,22 +102,7 @@ export function MobileBottomNav({ className }: BottomNavProps) {
 
   const handleLogout = async () => {
     try {
-      const { createClient } = await import("@/utils/supabase/client");
-      const supabase = createClient();
-      await supabase.auth.signOut();
-      
-      localStorage.removeItem("zpos_mock_user"); // Also clean up mock user
-      
-      // Clear mock session cookie from all subdomains
-      const isLocal = window.location.hostname.includes("localhost");
-      let cookieDomain = ".zpos.click";
-      if (isLocal) {
-        cookieDomain = ".localhost";
-      } else if (window.location.hostname.endsWith("zpos-web.vercel.app")) {
-        cookieDomain = ".zpos-web.vercel.app";
-      }
-      document.cookie = `zpos_mock_session=; path=/; domain=${cookieDomain}; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-
+      await clearAllSessions();
       toast.success("Đã đăng xuất khỏi hệ thống!");
       router.push("/login");
     } catch (error) {

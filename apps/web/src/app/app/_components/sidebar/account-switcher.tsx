@@ -6,6 +6,7 @@ import { BadgeCheck, Bell, Check, CreditCard, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
+import { clearAllSessions } from "@/utils/clear-session";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -183,21 +184,7 @@ export function AccountSwitcher({
 
   const handleLogout = async () => {
     try {
-      const supabase = createClient();
-      await supabase.auth.signOut();
-      
-      localStorage.removeItem("zpos_mock_user");
-      
-      // Clear mock session cookie from all subdomains
-      const isLocal = window.location.hostname.includes("localhost");
-      let cookieDomain = ".zpos.click";
-      if (isLocal) {
-        cookieDomain = ".localhost";
-      } else if (window.location.hostname.endsWith("zpos-web.vercel.app")) {
-        cookieDomain = ".zpos-web.vercel.app";
-      }
-      document.cookie = `zpos_mock_session=; path=/; domain=${cookieDomain}; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-
+      await clearAllSessions();
       toast.success("Đã đăng xuất khỏi hệ thống!");
       router.push("/login");
     } catch (error) {

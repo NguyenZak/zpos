@@ -3,7 +3,7 @@
 import { CircleUser, CreditCard, EllipsisVertical, LogOut, MessageSquareDot } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { createClient } from "@/utils/supabase/client";
+import { clearAllSessions } from "@/utils/clear-session";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -32,10 +32,7 @@ export function NavUser({
 
   const handleLogout = async () => {
     try {
-      const supabase = createClient();
-      await supabase.auth.signOut();
-      
-      localStorage.removeItem("zpos_mock_user");
+      await clearAllSessions();
       toast.success("Đã đăng xuất khỏi hệ thống!");
       router.push("/login");
     } catch (error) {
