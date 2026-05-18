@@ -19,7 +19,8 @@ import {
   ChevronRight,
   TrendingUp,
   MapPin,
-  Bot
+  Bot,
+  Send
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -33,8 +34,23 @@ import {
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useTheme } from "next-themes";
 import { toast } from "sonner";
+import { usePreferencesStore } from "@/stores/preferences/preferences-provider";
+import { persistPreference } from "@/lib/preferences/preferences-storage";
+import { getTenantSlug } from "@/services/pos.service";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { NativeSelect } from "@/components/ui/native-select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface BottomNavProps {
   className?: string;
@@ -43,7 +59,8 @@ interface BottomNavProps {
 export function MobileBottomNav({ className }: BottomNavProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
+  const themeMode = usePreferencesStore((s) => s.themeMode);
+  const setThemeMode = usePreferencesStore((s) => s.setThemeMode);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Dynamic route prefix detection for multi-tenant subdomains vs local path-based routing
@@ -105,6 +122,66 @@ export function MobileBottomNav({ className }: BottomNavProps) {
     } catch (error) {
       console.error("Logout error", error);
       toast.error("Không thể đăng xuất. Vui lòng thử lại.");
+    }
+  };
+
+  const [supportOpen, setSupportOpen] = useState(false);
+  const [supportLoading, setSupportLoading] = useState(false);
+  const [supportTitle, setSupportTitle] = useState("");
+  const [supportDescription, setSupportDescription] = useState("");
+  const [supportCategory, setSupportCategory] = useState("Lỗi phần mềm");
+  const [supportPriority, setSupportPriority] = useState("Trung bình");
+  const [supportContactPhone, setSupportContactPhone] = useState("");
+
+  const handleSupportSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supportTitle.trim() || !supportDescription.trim()) {
+      toast.error("Vui lòng nhập đầy đủ tiêu đề và nội dung yêu cầu!");
+      return;
+    }
+
+    setSupportLoading(true);
+    try {
+      const tenantSlug = getTenantSlug();
+      const tenantName = tenantSlug === "app" 
+        ? "Zpos Main System" 
+        : tenantSlug.charAt(0).toUpperCase() + tenantSlug.slice(1) + " Store";
+
+      const res = await fetch("/api/support/tickets", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tenantName,
+          tenantSlug,
+          title: supportTitle,
+          description: supportDescription,
+          category: supportCategory,
+          priority: supportPriority,
+          contactPhone: supportContactPhone,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Gửi yêu cầu hỗ trợ thành công! Đội ngũ ZPOS sẽ liên hệ bạn sớm nhất.");
+        setSupportOpen(false);
+        setDrawerOpen(false); // Close main drawer
+        // Reset form
+        setSupportTitle("");
+        setSupportDescription("");
+        setSupportCategory("Lỗi phần mềm");
+        setSupportPriority("Trung bình");
+        setSupportContactPhone("");
+      } else {
+        toast.error(data.error || "Gửi yêu cầu thất bại. Vui lòng thử lại!");
+      }
+    } catch (error) {
+      console.error("Error submitting ticket:", error);
+      toast.error("Có lỗi xảy ra khi gửi yêu cầu. Vui lòng thử lại!");
+    } finally {
+      setSupportLoading(false);
     }
   };
 
@@ -245,13 +322,16 @@ export function MobileBottomNav({ className }: BottomNavProps) {
                   { value: "system", icon: Laptop, label: "Hệ thống" },
                 ].map((item) => {
                   const ItemIcon = item.icon;
-                  const isActive = theme === item.value;
+                  const isActive = themeMode === item.value;
                   return (
                     <button
                       key={item.value}
-                      onClick={() => setTheme(item.value)}
+                      onClick={() => {
+                        setThemeMode(item.value as any);
+                        void persistPreference("theme_mode", item.value as any);
+                      }}
                       className={cn(
-                        "flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl border-2 transition-all active:scale-95",
+                        "flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl border-2 transition-all active:scale-95 cursor-pointer",
                         isActive 
                           ? "bg-primary/5 border-primary text-primary font-bold" 
                           : "bg-muted/30 border-transparent text-muted-foreground hover:bg-muted"
@@ -267,18 +347,119 @@ export function MobileBottomNav({ className }: BottomNavProps) {
 
             {/* Support and Sign Out */}
             <div className="space-y-1.5 border-t pt-4">
-              <button 
-                onClick={() => toast.info("Tính năng hỗ trợ 24/7 đang mở rộng!")}
-                className="w-full flex items-center justify-between p-3.5 rounded-xl hover:bg-muted/60 transition-colors text-left active:bg-muted"
-              >
-                <div className="flex items-center gap-3.5">
-                  <div className="p-2 bg-sky-500/10 text-sky-600 rounded-lg">
-                    <HelpCircle className="w-5 h-5" />
-                  </div>
-                  <span className="text-sm font-semibold text-foreground">Hỗ trợ & Liên hệ kỹ thuật</span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
-              </button>
+              <Dialog open={supportOpen} onOpenChange={setSupportOpen}>
+                <DialogTrigger asChild>
+                  <button 
+                    className="w-full flex items-center justify-between p-3.5 rounded-xl hover:bg-muted/60 transition-colors text-left active:bg-muted cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3.5">
+                      <div className="p-2 bg-sky-500/10 text-sky-600 rounded-lg">
+                        <HelpCircle className="w-5 h-5" />
+                      </div>
+                      <span className="text-sm font-semibold text-foreground">Hỗ trợ & Liên hệ kỹ thuật</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="w-[92vw] max-w-[450px] rounded-2xl p-5 gap-4">
+                  <DialogHeader className="space-y-1">
+                    <DialogTitle className="flex items-center gap-2 text-lg font-bold">
+                      <HelpCircle className="w-5 h-5 text-sky-500 animate-pulse" />
+                      Yêu Cầu Hỗ Trợ Kỹ Thuật
+                    </DialogTitle>
+                    <DialogDescription className="text-xs text-muted-foreground">
+                      Gửi yêu cầu trực tiếp về hệ thống quản trị. Đội ngũ kỹ thuật viên của ZPOS sẽ phản hồi bạn qua số điện thoại sớm nhất.
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <form onSubmit={handleSupportSubmit} className="space-y-3.5 py-1">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="support-category" className="text-[10px] font-bold text-muted-foreground uppercase">Loại yêu cầu</Label>
+                        <NativeSelect
+                          id="support-category"
+                          value={supportCategory}
+                          onChange={(e) => setSupportCategory(e.target.value)}
+                          className="text-xs cursor-pointer h-9"
+                        >
+                          <option value="Lỗi phần mềm">🐞 Lỗi phần mềm</option>
+                          <option value="Yêu cầu tính năng">✨ Yêu cầu tính năng</option>
+                          <option value="Hỏi đáp/Tư vấn">💬 Hỏi đáp/Tư vấn</option>
+                          <option value="Hóa đơn/Thanh toán">💳 Hóa đơn/Thanh toán</option>
+                        </NativeSelect>
+                      </div>
+                      
+                      <div className="space-y-1.5">
+                        <Label htmlFor="support-priority" className="text-[10px] font-bold text-muted-foreground uppercase">Ưu tiên</Label>
+                        <NativeSelect
+                          id="support-priority"
+                          value={supportPriority}
+                          onChange={(e) => setSupportPriority(e.target.value)}
+                          className="text-xs cursor-pointer h-9"
+                        >
+                          <option value="Thấp">🟢 Thấp</option>
+                          <option value="Trung bình">🟡 Trung bình</option>
+                          <option value="Cao">🔴 Cao (Gấp)</option>
+                        </NativeSelect>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="support-phone" className="text-[10px] font-bold text-muted-foreground uppercase">Số điện thoại liên hệ</Label>
+                      <Input
+                        id="support-phone"
+                        type="tel"
+                        placeholder="Số điện thoại của bạn..."
+                        value={supportContactPhone}
+                        onChange={(e) => setSupportContactPhone(e.target.value)}
+                        className="text-xs h-9"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="support-title" className="text-[10px] font-bold text-muted-foreground uppercase">Tiêu đề yêu cầu</Label>
+                      <Input
+                        id="support-title"
+                        type="text"
+                        placeholder="Ví dụ: Không in được hóa đơn bán hàng..."
+                        value={supportTitle}
+                        onChange={(e) => setSupportTitle(e.target.value)}
+                        className="text-xs h-9"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="support-description" className="text-[10px] font-bold text-muted-foreground uppercase">Nội dung chi tiết</Label>
+                      <Textarea
+                        id="support-description"
+                        rows={3}
+                        placeholder="Mô tả chi tiết lỗi bạn gặp phải hoặc tính năng cần hỗ trợ..."
+                        value={supportDescription}
+                        onChange={(e) => setSupportDescription(e.target.value)}
+                        className="text-xs resize-none"
+                        required
+                      />
+                    </div>
+
+                    <DialogFooter className="pt-2 flex flex-row gap-2 justify-end">
+                      <Button type="button" variant="outline" onClick={() => setSupportOpen(false)} className="text-xs h-9 py-1 px-3 cursor-pointer">
+                        Hủy bỏ
+                      </Button>
+                      <Button type="submit" disabled={supportLoading} className="text-xs h-9 font-bold gap-1.5 cursor-pointer py-1 px-4">
+                        {supportLoading ? (
+                          "Đang gửi..."
+                        ) : (
+                          <>
+                            <Send className="w-3.5 h-3.5" />
+                            Gửi ticket
+                          </>
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
 
               <button 
                 onClick={handleLogout}

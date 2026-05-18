@@ -65,7 +65,7 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
   }
   
   const [tabs, setTabs] = useState<OrderTab[]>([
-    { id: '1', cart: [], selectedCustomer: null, orderId: 0, title: 'Đơn 1' }
+    { id: '1', cart: [], selectedCustomer: null, orderId: Math.floor(Date.now() % 10000), title: 'Đơn 1' }
   ]);
   const [activeTabId, setActiveTabId] = useState<string>('1');
 
@@ -125,9 +125,43 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
     });
   };
 
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Load draft tabs from localStorage on client-side mount
   useEffect(() => {
-    setOrderId(Math.floor(Date.now() % 10000));
+    if (typeof window !== 'undefined') {
+      const savedTabs = localStorage.getItem('zpos_draft_tabs');
+      const savedActiveTabId = localStorage.getItem('zpos_active_tab_id');
+      if (savedTabs) {
+        try {
+          const parsed = JSON.parse(savedTabs);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setTabs(parsed);
+          }
+        } catch (e) {
+          console.error("Error loading mobile draft tabs from localStorage:", e);
+        }
+      }
+      if (savedActiveTabId) {
+        setActiveTabId(savedActiveTabId);
+      }
+      setIsMounted(true);
+    }
   }, []);
+
+  // Save tabs to localStorage whenever they change
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isMounted) {
+      localStorage.setItem('zpos_draft_tabs', JSON.stringify(tabs));
+    }
+  }, [tabs, isMounted]);
+
+  // Save activeTabId to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isMounted) {
+      localStorage.setItem('zpos_active_tab_id', activeTabId);
+    }
+  }, [activeTabId, isMounted]);
 
   const addToCart = (product: any) => {
     const existing = cart.find(item => item.id === product.id);

@@ -209,7 +209,7 @@ export function MobileDashboard({
                     </div>
                     
                     <div className="text-right shrink-0 space-y-0.5">
-                      <p className="text-xs font-black font-mono text-primary">
+                      <p className="text-xs font-black text-primary">
                         {formatCurrency(sale.total_amount)}
                       </p>
                       <Badge 

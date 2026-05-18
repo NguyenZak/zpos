@@ -362,13 +362,26 @@ export const posService = {
       if (!error && dbData) {
         data = dbData;
       }
+      
+      // Auto-seed Nguyễn Văn A, Trần Thị B, Lê Văn C if organization has no customers
+      if ((!dbData || dbData.length === 0) && !query.trim()) {
+        const mockToSeed = [
+          { organization_id: orgId, name: 'Nguyễn Văn A', phone: '0901234567', email: 'vana@gmail.com', loyalty_points: 1250, address: 'app::123 Lê Lợi, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh' },
+          { organization_id: orgId, name: 'Trần Thị B', phone: '0912345678', email: 'thib@gmail.com', loyalty_points: 800, address: 'app::456 Nguyễn Thị Minh Khai, Phường 6, Quận 3, TP. Hồ Chí Minh' },
+          { organization_id: orgId, name: 'Lê Văn C', phone: '0923456789', email: 'vanc@gmail.com', loyalty_points: 2100, address: 'app::789 Điện Biên Phủ, Phường 25, Quận Bình Thạnh, TP. Hồ Chí Minh' }
+        ];
+        const { data: seededData } = await supabase.from('customers').insert(mockToSeed).select();
+        if (seededData && seededData.length > 0) {
+          data = seededData;
+        }
+      }
     } catch (e) {
       console.warn("Supabase customers query error, using local storage fallback", e);
     }
     
     let filteredData = data || [];
     
-    // Clean up address for UI
+    // Clean up address and map fields for UI compatibility (points, debt)
     filteredData = filteredData.map((c: any) => {
       let cleanAddress = c.address;
       if (c.address && c.address.includes('::')) {
@@ -376,6 +389,8 @@ export const posService = {
       }
       return {
         ...c,
+        points: c.loyalty_points ?? c.points ?? 0,
+        debt: c.debt ?? 0,
         address: cleanAddress
       };
     });
@@ -891,9 +906,20 @@ export const posService = {
     }
 
     try {
+      // Filter out non-existent columns (points, debt, etc.) before inserting into Supabase
+      const dbPayload = {
+        id: finalData.id,
+        organization_id: finalData.organization_id,
+        name: finalData.name,
+        email: finalData.email || null,
+        phone: finalData.phone || null,
+        address: finalData.address || null,
+        loyalty_points: finalData.points || 0
+      };
+
       const { data, error } = await supabase
         .from('customers')
-        .insert([finalData])
+        .insert([dbPayload])
         .select()
         .single();
       
@@ -901,7 +927,11 @@ export const posService = {
         if (data.address && data.address.includes('::')) {
           data.address = data.address.split('::').slice(1).join('::');
         }
-        return data;
+        return {
+          ...data,
+          points: data.loyalty_points ?? 0,
+          debt: 0
+        };
       }
       console.warn("Supabase customer insert warning:", error?.message);
     } catch (e) {

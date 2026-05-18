@@ -1,6 +1,17 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Settings } from "lucide-react";
+
+function applyFontSize(size: string) {
+  if (typeof window === "undefined") return;
+  const root = document.documentElement;
+  let scale = "100%";
+  if (size === "sm") scale = "90%";
+  else if (size === "lg") scale = "110%";
+  else if (size === "xl") scale = "120%";
+  root.style.fontSize = scale;
+}
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -38,6 +49,23 @@ export function LayoutControls() {
   const setSidebarCollapsible = usePreferencesStore((s) => s.setSidebarCollapsible);
   const font = usePreferencesStore((s) => s.font);
   const setFont = usePreferencesStore((s) => s.setFont);
+
+  const [fontSize, setFontSizeState] = useState<string>("md");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("zpos_font_size") || "md";
+      setFontSizeState(saved);
+      applyFontSize(saved);
+    }
+  }, []);
+
+  const onFontSizeChange = (value: string) => {
+    if (!value) return;
+    setFontSizeState(value);
+    applyFontSize(value);
+    localStorage.setItem("zpos_font_size", value);
+  };
 
   const onThemePresetChange = (preset: ThemePreset) => {
     applyThemePreset(preset);
@@ -94,6 +122,7 @@ export function LayoutControls() {
     onSidebarStyleChange(PREFERENCE_DEFAULTS.sidebar_variant);
     onSidebarCollapseModeChange(PREFERENCE_DEFAULTS.sidebar_collapsible);
     onFontChange(PREFERENCE_DEFAULTS.font);
+    onFontSizeChange("md");
   };
 
   return (
@@ -151,6 +180,30 @@ export function LayoutControls() {
                   </SelectGroup>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-1">
+              <Label className="font-medium text-xs">Font Size (Kích thước chữ)</Label>
+              <ToggleGroup
+                size="sm"
+                variant="outline"
+                type="single"
+                value={fontSize}
+                onValueChange={onFontSizeChange}
+              >
+                <ToggleGroupItem value="sm" aria-label="Small font size" className="text-xs">
+                  S (90%)
+                </ToggleGroupItem>
+                <ToggleGroupItem value="md" aria-label="Medium font size" className="text-xs font-bold">
+                  M (100%)
+                </ToggleGroupItem>
+                <ToggleGroupItem value="lg" aria-label="Large font size" className="text-xs font-semibold">
+                  L (110%)
+                </ToggleGroupItem>
+                <ToggleGroupItem value="xl" aria-label="Extra Large font size" className="text-xs font-bold text-sm">
+                  XL (120%)
+                </ToggleGroupItem>
+              </ToggleGroup>
             </div>
 
             <div className="space-y-1">

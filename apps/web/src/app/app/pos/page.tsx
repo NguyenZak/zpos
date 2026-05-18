@@ -36,6 +36,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { 
   Dialog, 
   DialogContent, 
@@ -90,12 +92,14 @@ export default function POSPage() {
     id: string;
     cart: any[];
     selectedCustomer: any | null;
-    orderId: number;
+    orderId: string | number;
     title: string;
+    discountType?: 'percentage' | 'fixed';
+    discountValue?: number;
   }
   
   const [tabs, setTabs] = useState<OrderTab[]>([
-    { id: '1', cart: [], selectedCustomer: null, orderId: 0, title: 'Đơn 1' }
+    { id: '1', cart: [], selectedCustomer: null, orderId: `ORD-${Date.now().toString().slice(-6)}`, title: 'Đơn 1', discountType: 'fixed', discountValue: 0 }
   ]);
   const [activeTabId, setActiveTabId] = useState<string>('1');
 
@@ -103,6 +107,27 @@ export default function POSPage() {
   const cart = activeTab.cart;
   const selectedCustomer = activeTab.selectedCustomer;
   const orderId = activeTab.orderId;
+
+  const discountType = activeTab.discountType || 'fixed';
+  const discountValue = activeTab.discountValue || 0;
+
+  const setDiscountType = (type: 'percentage' | 'fixed') => {
+    setTabs(prev => prev.map(tab => {
+      if (tab.id === activeTabId) {
+        return { ...tab, discountType: type };
+      }
+      return tab;
+    }));
+  };
+
+  const setDiscountValue = (val: number) => {
+    setTabs(prev => prev.map(tab => {
+      if (tab.id === activeTabId) {
+        return { ...tab, discountValue: val };
+      }
+      return tab;
+    }));
+  };
 
   const setCart = (newCart: any[] | ((prev: any[]) => any[])) => {
     setTabs(prev => prev.map(tab => {
@@ -122,7 +147,7 @@ export default function POSPage() {
     }));
   };
 
-  const setOrderId = (id: number | ((prev: number) => number)) => {
+  const setOrderId = (id: string | number | ((prev: string | number) => string | number)) => {
     setTabs(prev => prev.map(tab => {
       if (tab.id === activeTabId) {
         return { ...tab, orderId: typeof id === 'function' ? id(tab.orderId) : id };
@@ -138,8 +163,10 @@ export default function POSPage() {
       id: newId,
       cart: [],
       selectedCustomer: null,
-      orderId: Math.floor(Date.now() % 10000),
-      title: newTitle
+      orderId: `ORD-${Date.now().toString().slice(-6)}`,
+      title: newTitle,
+      discountType: 'fixed',
+      discountValue: 0
     }]);
     setActiveTabId(newId);
   };
@@ -154,6 +181,44 @@ export default function POSPage() {
       return newTabs;
     });
   };
+
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Load draft tabs from localStorage on client-side mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedTabs = localStorage.getItem('zpos_draft_tabs');
+      const savedActiveTabId = localStorage.getItem('zpos_active_tab_id');
+      if (savedTabs) {
+        try {
+          const parsed = JSON.parse(savedTabs);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setTabs(parsed);
+          }
+        } catch (e) {
+          console.error("Error loading draft tabs from localStorage:", e);
+        }
+      }
+      if (savedActiveTabId) {
+        setActiveTabId(savedActiveTabId);
+      }
+      setIsMounted(true);
+    }
+  }, []);
+
+  // Save tabs to localStorage whenever they change
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isMounted) {
+      localStorage.setItem('zpos_draft_tabs', JSON.stringify(tabs));
+    }
+  }, [tabs, isMounted]);
+
+  // Save activeTabId to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isMounted) {
+      localStorage.setItem('zpos_active_tab_id', activeTabId);
+    }
+  }, [activeTabId, isMounted]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
@@ -301,7 +366,6 @@ export default function POSPage() {
       }
     };
     loadData();
-    setOrderId(Math.floor(Date.now() % 10000));
   }, []);
 
   // Customer Search Logic
@@ -309,24 +373,10 @@ export default function POSPage() {
     const searchCustomers = async () => {
       try {
         const data = await posService.getCustomers(customerQuery);
-        if (data && data.length > 0) {
-          setCustomers(data);
-        } else {
-          const tenantSlug = getTenantSlug();
-          if (tenantSlug === 'app') {
-            setCustomers(MOCK_CUSTOMERS);
-          } else {
-            setCustomers([]);
-          }
-        }
+        setCustomers(data || []);
       } catch (e) {
         console.error("Error fetching customers for POS:", e);
-        const tenantSlug = getTenantSlug();
-        if (tenantSlug === 'app') {
-          setCustomers(MOCK_CUSTOMERS);
-        } else {
-          setCustomers([]);
-        }
+        setCustomers([]);
       }
     };
     const timer = setTimeout(searchCustomers, 300);
@@ -410,13 +460,15 @@ export default function POSPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    return new Intl.NumberFormat('vi-VN').format(amount) + " Đ";
   };
 
   const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  const discount = 0;
+  const discount = discountType === 'percentage'
+    ? Math.round((subtotal * discountValue) / 100)
+    : discountValue;
   const tax = 0;
-  const total = subtotal - discount + tax;
+  const total = Math.max(0, subtotal - discount + tax);
 
   useEffect(() => {
     if (checkoutOpen) {
@@ -432,8 +484,9 @@ export default function POSPage() {
         organization_id: '00000000-0000-0000-0000-000000000000', // Placeholder
         branch_id: '00000000-0000-0000-0000-000000000000', // Placeholder
         customer_id: selectedCustomer?.id || null,
-        order_number: `ORD-${Date.now().toString().slice(-6)}`,
+        order_number: orderId.toString().startsWith('ORD-') ? orderId.toString() : `ORD-${orderId}`,
         total_amount: total,
+        discount_amount: discount,
         payment_method: paymentMethod,
         status: 'completed'
       };
@@ -444,6 +497,7 @@ export default function POSPage() {
       setLastOrder({
         cart: [...cart],
         subtotal,
+        discount,
         total,
         orderId: orderData.order_number,
         paymentMethod: paymentMethod,
@@ -466,7 +520,9 @@ export default function POSPage() {
       setCart([]);
       setSelectedCustomer(null);
       setReceivedAmount(0);
-      setOrderId(Math.floor(Date.now() % 10000));
+      setOrderId(`ORD-${Date.now().toString().slice(-6)}`);
+      setDiscountValue(0);
+      setDiscountType('fixed');
       
       setCheckoutOpen(false);
       setSuccessOpen(true);
@@ -502,7 +558,7 @@ export default function POSPage() {
 
   return (
     <>
-      <div className="flex h-[calc(100vh-140px)] gap-4 overflow-hidden print:hidden">
+      <div className="flex h-[calc(100vh-80px)] gap-4 overflow-hidden print:hidden">
 
       {/* Left Column: Product Selection */}
       <div className="flex-1 flex flex-col gap-4 overflow-hidden">
@@ -576,7 +632,7 @@ export default function POSPage() {
       </div>
 
       {/* Right Column: Order Panel */}
-      <div className="w-[420px] flex flex-col bg-card border rounded-xl shadow-lg overflow-hidden relative">
+      <div className="w-[420px] h-full flex flex-col bg-card border rounded-xl shadow-lg overflow-hidden relative">
         {/* Tabs */}
         <div className="max-h-[140px] overflow-y-auto scrollbar-none border-b bg-muted/30">
           <div className="flex flex-wrap items-center gap-1 p-2">
@@ -617,7 +673,9 @@ export default function POSPage() {
             </div>
             <div>
               <h2 className="font-bold text-lg leading-none">Đơn hàng</h2>
-              <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mt-1">Mã số: #{orderId || '....'}</p>
+              <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mt-1">
+                Mã số: {orderId ? (orderId.toString().startsWith('ORD-') ? orderId : '#' + orderId) : '....'}
+              </p>
             </div>
           </div>
           <Button variant="ghost" size="icon-sm" className="rounded-full hover:bg-destructive/10 hover:text-destructive" onClick={() => setCart([])}>
@@ -652,7 +710,7 @@ export default function POSPage() {
         </div>
 
         {/* Cart Items List */}
-        <ScrollArea className="flex-1 px-6">
+        <ScrollArea className="flex-1 min-h-0 px-6">
           <div className="space-y-4 py-2">
             {cart.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
@@ -731,11 +789,11 @@ export default function POSPage() {
                                 setEditingItemId(null);
                               }
                             }}
-                            className="w-24 bg-transparent border-none text-right font-bold text-sm text-primary focus:outline-none focus:ring-0 font-mono p-0"
+                            className="w-24 bg-transparent border-none text-right font-bold text-sm text-primary focus:outline-none focus:ring-0 p-0"
                             autoFocus
                             placeholder="0"
                           />
-                          <span className="text-xs font-bold text-primary">đ</span>
+                          <span className="text-xs font-bold text-primary">Đ</span>
                         </div>
                       ) : (
                         <div 
@@ -746,7 +804,7 @@ export default function POSPage() {
                           }}
                           title="Click để sửa giá sản phẩm"
                         >
-                          <p className="font-bold text-primary text-sm group-hover/price:text-primary/80 font-mono">
+                          <p className="font-bold text-primary text-sm group-hover/price:text-primary/80">
                             {formatCurrency(item.price * item.quantity)}
                           </p>
                           <Pencil className="w-3 h-3 text-primary/45 opacity-0 group-hover/price:opacity-100 transition-opacity" />
@@ -761,25 +819,94 @@ export default function POSPage() {
         </ScrollArea>
 
         {/* Order Summary Footer */}
-        <div className="p-6 bg-primary text-primary-foreground space-y-4">
-          <div className="space-y-2">
-            <div className="flex justify-between items-center text-primary-foreground/70 font-semibold text-[10px] uppercase tracking-wider">
+        <div className="p-6 bg-primary text-primary-foreground space-y-5 rounded-b-xl border-t border-primary-foreground/10">
+          <div className="space-y-3">
+            <div className="flex justify-between items-center text-primary-foreground/75 font-semibold text-[10px] uppercase tracking-wider">
               <span>Tạm tính</span>
-              <span>{formatCurrency(subtotal)}</span>
+              <span className="text-sm font-bold">{formatCurrency(subtotal)}</span>
             </div>
-            <div className="flex justify-between items-center text-primary-foreground/70 font-semibold text-[10px] uppercase tracking-wider">
-              <span>Giảm giá</span>
-              <span>-0₫</span>
-            </div>
-            <Separator className="bg-primary-foreground/10 my-1" />
-            <div className="flex justify-between items-center">
-              <span className="font-bold text-lg uppercase">Tổng cộng</span>
-              <span className="text-2xl font-bold">{formatCurrency(total)}</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <div className="flex justify-between items-center text-primary-foreground/75 hover:text-primary-foreground font-semibold text-[10px] uppercase tracking-wider cursor-pointer transition-colors group">
+                  <span className="flex items-center gap-1.5">
+                    Giảm giá
+                    <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </span>
+                  <span className="text-sm font-bold">
+                    {discountValue > 0 ? `-${formatCurrency(discount)}` : "-0 Đ"}
+                    {discountValue > 0 && discountType === 'percentage' && ` (${discountValue}%)`}
+                  </span>
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-4 space-y-4" align="end">
+                <div className="space-y-1">
+                  <h4 className="font-bold text-sm text-foreground">Chiết khấu đơn hàng</h4>
+                  <p className="text-muted-foreground text-[11px] leading-normal">
+                    Áp dụng giảm giá trực tiếp theo phần trăm hoặc số tiền cố định.
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">Loại giảm giá</Label>
+                    <ToggleGroup
+                      size="sm"
+                      variant="outline"
+                      type="single"
+                      value={discountType}
+                      onValueChange={(val) => {
+                        if (val) {
+                          setDiscountType(val as 'percentage' | 'fixed');
+                          setDiscountValue(0);
+                        }
+                      }}
+                      className="w-full flex"
+                    >
+                      <ToggleGroupItem value="fixed" className="flex-1 text-xs">Số tiền (Đ)</ToggleGroupItem>
+                      <ToggleGroupItem value="percentage" className="flex-1 text-xs">Phần trăm (%)</ToggleGroupItem>
+                    </ToggleGroup>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">
+                      {discountType === 'percentage' ? 'Mức giảm (%)' : 'Số tiền giảm (Đ)'}
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        min="0"
+                        max={discountType === 'percentage' ? "100" : undefined}
+                        value={discountValue || ""}
+                        onChange={(e) => {
+                          let val = Math.max(0, Number(e.target.value));
+                          if (discountType === 'percentage') {
+                            val = Math.min(100, val);
+                          }
+                          setDiscountValue(val);
+                        }}
+                        placeholder="0"
+                        className="h-9 pr-10 font-bold text-foreground text-sm"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">
+                        {discountType === 'percentage' ? '%' : 'Đ'}
+                      </span>
+                    </div>
+                  </div>
+                  {discountValue > 0 && discountType === 'percentage' && (
+                    <div className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 p-2 rounded-lg text-center animate-in fade-in zoom-in-95 duration-200 dark:text-emerald-400">
+                      Tổng giảm giá: -{formatCurrency(discount)}
+                    </div>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+            <Separator className="bg-primary-foreground/15 my-2" />
+            <div className="flex justify-between items-baseline pt-1">
+              <span className="font-extrabold text-sm uppercase tracking-wider text-primary-foreground/90">Tổng cộng</span>
+              <span className="text-3xl font-black tracking-tight">{formatCurrency(total)}</span>
             </div>
           </div>
           
           <Button 
-            className="w-full h-14 bg-primary-foreground text-primary hover:bg-primary-foreground/90 text-lg font-bold rounded-xl shadow-lg disabled:opacity-50" 
+            className="w-full h-14 bg-primary-foreground text-primary hover:bg-primary-foreground/90 text-lg font-bold rounded-xl shadow-lg disabled:opacity-50 transition-all active:scale-[0.98]" 
             disabled={cart.length === 0}
             onClick={() => setCheckoutOpen(true)}
           >
@@ -954,7 +1081,9 @@ export default function POSPage() {
                     <Coins className="w-6 h-6 text-primary" />
                     Thanh toán đơn hàng
                   </h2>
-                  <p className="text-muted-foreground text-xs font-semibold uppercase mt-1">Hóa đơn: #{orderId || '....'}</p>
+                  <p className="text-muted-foreground text-xs font-semibold uppercase mt-1">
+                    Hóa đơn: {orderId ? (orderId.toString().startsWith('ORD-') ? orderId : '#' + orderId) : '....'}
+                  </p>
                 </div>
 
                 {/* Method selector */}
@@ -1099,7 +1228,7 @@ export default function POSPage() {
                         <span className="text-[10px] font-black tracking-wider uppercase opacity-85">
                           {receivedAmount >= total ? 'Tiền thừa trả khách' : 'Còn thiếu'}
                         </span>
-                        <h3 className="text-3xl font-black font-mono">
+                        <h3 className="text-3xl font-black">
                           {formatCurrency(Math.abs(receivedAmount - total))}
                         </h3>
                       </div>
@@ -1228,7 +1357,7 @@ export default function POSPage() {
               <div className="border-t pt-4 mt-6">
                 <div className="bg-card p-4 rounded-xl border shadow-sm space-y-1.5 text-center">
                   <span className="text-[9px] font-black tracking-widest text-muted-foreground uppercase">Tổng tiền thanh toán</span>
-                  <h3 className="text-2xl font-black text-primary font-mono">{formatCurrency(total)}</h3>
+                  <h3 className="text-2xl font-black text-primary">{formatCurrency(total)}</h3>
                 </div>
               </div>
             </div>
@@ -1275,6 +1404,12 @@ export default function POSPage() {
                       <span>Tạm tính:</span>
                       <span>{formatCurrency(lastOrder.subtotal)}</span>
                     </div>
+                    {lastOrder.discount > 0 && (
+                      <div className="flex justify-between text-muted-foreground text-xs">
+                        <span>Giảm giá:</span>
+                        <span>-{formatCurrency(lastOrder.discount)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between font-bold pt-1">
                       <span>TỔNG CỘNG:</span>
                       <span>{formatCurrency(lastOrder.total)}</span>

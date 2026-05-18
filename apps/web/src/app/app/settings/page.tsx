@@ -13,7 +13,8 @@ import {
   Loader2,
   QrCode,
   Send,
-  Truck
+  Truck,
+  Search
 } from 'lucide-react';
 import { 
   Tabs, 
@@ -71,6 +72,7 @@ export default function SettingsPage() {
   const [bizTax, setBizTax] = React.useState('');
   const [bizAddr, setBizAddr] = React.useState('123 Đường ABC, Quận 1, TP. Hồ Chí Minh');
   const [logoUrl, setLogoUrl] = React.useState('');
+  const [searchingTax, setSearchingTax] = React.useState(false);
 
   // VietQR Config State
   const [bankId, setBankId] = React.useState('vcb');
@@ -376,6 +378,38 @@ export default function SettingsPage() {
     }
   };
 
+  const handleLookupTax = async () => {
+    const cleanTax = bizTax.trim().replace(/[^0-9-]/g, '');
+    if (!cleanTax) {
+      toast.error("Vui lòng nhập mã số thuế hợp lệ!");
+      return;
+    }
+
+    setSearchingTax(true);
+    const toastId = toast.loading("Đang tra cứu thông tin mã số thuế doanh nghiệp...");
+    try {
+      const res = await fetch(`https://api.vietqr.io/v2/business/${cleanTax}`);
+      if (!res.ok) {
+        throw new Error("Không thể kết nối đến hệ thống tra cứu.");
+      }
+      const json = await res.json();
+      
+      if (json && json.code === "00" && json.data) {
+        const { name, address } = json.data;
+        if (name) setBizName(name);
+        if (address) setBizAddr(address);
+        toast.success(`Tra cứu thành công! Đã tự động điền thông tin doanh nghiệp.`, { id: toastId });
+      } else {
+        toast.error(json.desc || "Không tìm thấy thông tin doanh nghiệp cho mã số thuế này.", { id: toastId });
+      }
+    } catch (error) {
+      console.error("Lỗi tra cứu MST:", error);
+      toast.error("Không thể kết nối tới dịch vụ tra cứu. Vui lòng thử lại.", { id: toastId });
+    } finally {
+      setSearchingTax(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
@@ -384,36 +418,38 @@ export default function SettingsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-muted/50 p-1 mb-6 flex flex-wrap h-auto gap-1">
-          <TabsTrigger value="business" className="gap-2">
-            <Building2 className="w-4 h-4" />
-            Thông tin cửa hàng
-          </TabsTrigger>
-          <TabsTrigger value="branch" className="gap-2">
-            <Store className="w-4 h-4" />
-            Chi nhánh
-          </TabsTrigger>
-          <TabsTrigger value="payment" className="gap-2">
-            <QrCode className="w-4 h-4 text-violet-500" />
-            Mã QR thanh toán
-          </TabsTrigger>
-          <TabsTrigger value="printer" className="gap-2">
-            <Printer className="w-4 h-4" />
-            Máy in & Hóa đơn
-          </TabsTrigger>
-          <TabsTrigger value="security" className="gap-2">
-            <ShieldCheck className="w-4 h-4" />
-            Bảo mật
-          </TabsTrigger>
-          <TabsTrigger value="telegram" className="gap-2">
-            <Send className="w-4 h-4 text-sky-500" />
-            Thông báo Telegram
-          </TabsTrigger>
-          <TabsTrigger value="shipping" className="gap-2">
-            <Truck className="w-4 h-4 text-orange-500" />
-            Vận chuyển
-          </TabsTrigger>
-        </TabsList>
+        <div className="w-full overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-1">
+          <TabsList className="bg-muted/50 p-1 mb-6 inline-flex min-w-full md:flex w-max md:w-full flex-nowrap md:flex-wrap h-10 items-center justify-start gap-1 rounded-xl border border-muted/20">
+            <TabsTrigger value="business" className="gap-2 shrink-0">
+              <Building2 className="w-4 h-4" />
+              Thông tin cửa hàng
+            </TabsTrigger>
+            <TabsTrigger value="branch" className="gap-2 shrink-0">
+              <Store className="w-4 h-4" />
+              Chi nhánh
+            </TabsTrigger>
+            <TabsTrigger value="payment" className="gap-2 shrink-0">
+              <QrCode className="w-4 h-4 text-violet-500" />
+              Mã QR thanh toán
+            </TabsTrigger>
+            <TabsTrigger value="printer" className="gap-2 shrink-0">
+              <Printer className="w-4 h-4" />
+              Máy in & Hóa đơn
+            </TabsTrigger>
+            <TabsTrigger value="security" className="gap-2 shrink-0">
+              <ShieldCheck className="w-4 h-4" />
+              Bảo mật
+            </TabsTrigger>
+            <TabsTrigger value="telegram" className="gap-2 shrink-0">
+              <Send className="w-4 h-4 text-sky-500" />
+              Thông báo Telegram
+            </TabsTrigger>
+            <TabsTrigger value="shipping" className="gap-2 shrink-0">
+              <Truck className="w-4 h-4 text-orange-500" />
+              Vận chuyển
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="business" className="space-y-4">
           <Card>
@@ -459,13 +495,41 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="biz-tax">Mã số thuế</Label>
-                  <Input 
-                    id="biz-tax" 
-                    placeholder="Nhập mã số thuế..." 
-                    value={bizTax} 
-                    onChange={(e) => setBizTax(e.target.value)}
-                  />
+                  <Label htmlFor="biz-tax" className="font-semibold text-foreground flex items-center gap-1.5">
+                    Mã số thuế
+                  </Label>
+                  <div className="relative flex items-center">
+                    <Input 
+                      id="biz-tax" 
+                      placeholder="Nhập mã số thuế (e.g. 0316794479)..." 
+                      value={bizTax} 
+                      onChange={(e) => setBizTax(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleLookupTax();
+                        }
+                      }}
+                      className="pr-24 font-mono font-bold transition-all focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
+                    />
+                    <Button 
+                      type="button"
+                      size="sm" 
+                      onClick={handleLookupTax}
+                      disabled={searchingTax || !bizTax.trim()}
+                      className="absolute right-1 h-8 px-3 text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm rounded-md transition-all duration-200 flex items-center gap-1"
+                    >
+                      {searchingTax ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Search className="w-3 h-3" />
+                      )}
+                      <span>Tra cứu</span>
+                    </Button>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed italic">
+                    💡 Nhập Mã số thuế và bấm <strong>Tra cứu</strong> (hoặc nhấn <strong>Enter</strong>) để tự động lấy tên doanh nghiệp và địa chỉ từ Tổng cục Thuế.
+                  </p>
                 </div>
               </div>
               <div className="grid gap-2">

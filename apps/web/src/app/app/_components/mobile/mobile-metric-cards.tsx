@@ -51,7 +51,7 @@ function MetricCard({
         </div>
 
         <div className="space-y-1">
-          <h3 className="text-lg font-black tracking-tight font-mono text-foreground leading-none">
+          <h3 className="text-lg font-black tracking-tight text-foreground leading-none">
             {value}
           </h3>
           <div className="flex items-center gap-1">

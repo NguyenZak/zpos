@@ -140,7 +140,7 @@ export function OrderDetailDialog({ order, open, onOpenChange, onPrint }: OrderD
   if (!order) return null;
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    return new Intl.NumberFormat('vi-VN').format(amount) + " đ";
   };
 
   const handlePushShipping = async () => {

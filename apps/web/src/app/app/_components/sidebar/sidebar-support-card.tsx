@@ -1,11 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
-import { MessageSquareDot, Send, HelpCircle, CheckCircle } from "lucide-react";
+import { Send, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +18,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+} from "@/components/ui/sidebar";
 import { getTenantSlug } from "@/services/pos.service";
 
 export function SidebarSupportCard() {
@@ -83,20 +89,21 @@ export function SidebarSupportCard() {
   };
 
   return (
-    <Card size="sm" className="shadow-none group-data-[collapsible=icon]:hidden border border-muted bg-muted/20">
-      <CardHeader className="px-4 py-3 space-y-2">
-        <CardTitle className="text-xs font-bold tracking-wider uppercase text-muted-foreground">Trung tâm hỗ trợ</CardTitle>
-        <CardDescription className="text-xs leading-relaxed text-foreground/80">
-          Bạn cần hỗ trợ kỹ thuật hoặc có yêu cầu tính năng mới cho cửa hàng?
-        </CardDescription>
-        
-        <div className="flex flex-col gap-2 pt-1.5">
+    <SidebarGroup className="px-3 py-1 group-data-[collapsible=icon]:hidden border-t border-muted/50 bg-muted/5">
+      <SidebarGroupLabel className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground/80 h-7 flex items-center">
+        Hỗ trợ kỹ thuật
+      </SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu className="gap-1">
+          {/* Button 1: Gửi yêu cầu hỗ trợ (Dialog Trigger) */}
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" variant="default" className="w-full text-xs font-bold gap-1.5 h-8 cursor-pointer shadow-sm">
-                <MessageSquareDot className="size-3.5" />
-                Gửi yêu cầu hỗ trợ
-              </Button>
+              <SidebarMenuItem>
+                <SidebarMenuButton className="w-full text-xs font-semibold gap-2 h-8.5 hover:bg-muted cursor-pointer transition-all duration-200">
+                  <HelpCircle className="size-4 text-indigo-500 animate-pulse" />
+                  <span>Gửi yêu cầu hỗ trợ</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </DialogTrigger>
             
             <DialogContent className="sm:max-w-[500px]">
@@ -198,19 +205,9 @@ export function SidebarSupportCard() {
               </form>
             </DialogContent>
           </Dialog>
-
-          <Button asChild size="sm" variant="outline" className="w-full text-xs font-semibold gap-1.5 h-8 border-muted-foreground/20 hover:bg-muted cursor-pointer">
-            <Link
-              href="https://zalo.me/0388925432"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <MessageSquareDot className="size-3.5 text-[#0068FF]" />
-              Liên hệ Zalo: 0388925432
-            </Link>
-          </Button>
-        </div>
-      </CardHeader>
-    </Card>
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
   );
 }
+

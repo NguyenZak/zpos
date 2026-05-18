@@ -71,6 +71,13 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
                 root.setAttribute("data-sidebar-variant", readPreference("sidebar_variant", "inset"));
                 root.setAttribute("data-sidebar-collapsible", readPreference("sidebar_collapsible", "icon"));
                 root.style.colorScheme = resolvedMode === "dark" ? "dark" : "light";
+                
+                var savedFontSize = readLocal("zpos_font_size") || "md";
+                var scale = "100%";
+                if (savedFontSize === "sm") scale = "90%";
+                else if (savedFontSize === "lg") scale = "110%";
+                else if (savedFontSize === "xl") scale = "120%";
+                root.style.fontSize = scale;
               } catch (e) {}
             })();
           `}
