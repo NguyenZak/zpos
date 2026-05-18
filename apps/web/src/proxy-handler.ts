@@ -279,7 +279,7 @@ export async function proxy(request: NextRequest) {
     // Validate tenant exists
     let tenantExists = false;
     try {
-      const { data: tenant } = await supabase.from("organizations").select("slug").eq("slug", subdomain).single();
+      const { data: tenant } = await supabase.from("organizations").select("slug").eq("slug", subdomain).maybeSingle();
       if (tenant) {
         tenantExists = true;
       }

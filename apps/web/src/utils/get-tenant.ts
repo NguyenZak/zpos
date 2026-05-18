@@ -28,7 +28,7 @@ export async function getTenantFromHost() {
     .from("organizations")
     .select("*")
     .eq("slug", subdomain)
-    .single();
+    .maybeSingle();
 
   return tenant || null;
 }

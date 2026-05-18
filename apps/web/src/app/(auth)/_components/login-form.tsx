@@ -341,7 +341,7 @@ export function LoginForm() {
         .from("profiles")
         .select("*, organization_members(organization_id, role, organizations(slug))")
         .eq("id", authData.user.id)
-        .single();
+        .maybeSingle();
 
       const member = profile?.organization_members?.[0];
       const tenantSlug = member?.organizations?.slug;

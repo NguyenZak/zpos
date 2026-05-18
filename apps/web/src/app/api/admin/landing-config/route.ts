@@ -47,7 +47,7 @@ export async function GET() {
         .from("organizations")
         .select("branding")
         .eq("slug", "app")
-        .single();
+        .maybeSingle();
         
       if (!error && data && data.branding && (data.branding as any).landing_page) {
         const dbConfig = (data.branding as any).landing_page;
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
           .from("organizations")
           .select("branding")
           .eq("slug", "app")
-          .single();
+          .maybeSingle();
           
         const currentBranding = org?.branding || {};
         const updatedBranding = {

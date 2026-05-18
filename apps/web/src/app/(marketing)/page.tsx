@@ -49,7 +49,7 @@ export default async function LandingPage() {
         .from("organizations")
         .select("branding")
         .eq("slug", "app")
-        .single();
+        .maybeSingle();
         
       if (!error && data && data.branding && (data.branding as any).landing_page) {
         dynamicConfig = { ...dynamicConfig, ...(data.branding as any).landing_page };
