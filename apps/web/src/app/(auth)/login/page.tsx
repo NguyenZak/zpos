@@ -19,14 +19,14 @@ export default async function Login() {
 
   if (isConsole) {
     return (
-      <div className="relative flex w-full max-w-sm flex-col justify-center rounded-lg border border-slate-800/80 bg-slate-900/45 p-8 shadow-2xl backdrop-blur-xl">
+      <div className="relative flex w-full max-w-sm flex-col justify-center rounded-lg border border-slate-800/80 bg-slate-900/90 p-6 shadow-xl md:bg-slate-900/45 md:p-8 md:shadow-2xl md:backdrop-blur-xl">
         {/* Glow behind the login box */}
-        <div className="pointer-events-none absolute -inset-0.5 rounded-lg bg-gradient-to-r from-indigo-500 to-cyan-500 opacity-15 blur" />
+        <div className="pointer-events-none absolute -inset-0.5 hidden rounded-lg bg-gradient-to-r from-indigo-500 to-cyan-500 opacity-15 blur md:block" />
 
         <div className="relative space-y-6">
           <div className="space-y-2 text-center">
             <div className="mb-2 inline-flex rounded-xl border border-indigo-500/20 bg-indigo-500/10 p-2 text-indigo-400">
-              <KeyRound className="size-6 animate-pulse" />
+              <KeyRound className="size-6" />
             </div>
             <h1 className="font-extrabold text-2xl text-white tracking-tight">ZPOS CORE LOGIN</h1>
             <p className="font-mono text-slate-400 text-xs uppercase tracking-wider">Central Authorization Node</p>
@@ -58,7 +58,7 @@ export default async function Login() {
       <div className="mx-auto flex justify-center mb-1">
         {tenant ? (
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-300 text-[11px] font-bold shadow-inner tracking-wider uppercase">
-            <Store size={12} className="text-blue-400 animate-pulse" />
+            <Store size={12} className="text-blue-400" />
             <span>Cửa hàng: {tenant.name}</span>
           </div>
         ) : (
@@ -72,7 +72,7 @@ export default async function Login() {
       </div>
 
       <div className="space-y-2 text-center">
-        <h2 className="font-extrabold text-3xl text-white tracking-tight bg-gradient-to-r from-white via-white to-white/75 bg-clip-text text-transparent">
+        <h2 className="font-extrabold text-3xl text-white tracking-tight">
           {tenant ? `Đăng nhập hệ thống` : "Chào mừng trở lại"}
         </h2>
         <p className="text-white/50 text-sm">
@@ -81,7 +81,7 @@ export default async function Login() {
       </div>
 
       <div className="space-y-5">
-        <GoogleButton className="flex w-full h-12 items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-white/5 text-white/90 transition-all duration-300 hover:bg-white/10 hover:border-white/20 hover:text-white hover:scale-[1.01] active:scale-[0.99] font-semibold text-sm shadow-sm" />
+        <GoogleButton className="flex w-full h-12 items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-white/5 text-white/90 transition-colors duration-150 hover:bg-white/10 hover:border-white/20 hover:text-white active:scale-[0.99] font-semibold text-sm shadow-sm md:hover:scale-[1.01]" />
 
         <div className="flex items-center gap-3 text-xs py-1">
           <div className="h-px flex-1 bg-white/10" />

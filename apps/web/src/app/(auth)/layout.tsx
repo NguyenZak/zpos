@@ -115,7 +115,7 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
             </div>
           </div>
 
-          <div className="relative order-1 flex h-full w-full items-center justify-center bg-slate-950 p-6">
+          <div className="relative order-1 flex h-full w-full items-center justify-center bg-slate-950 p-5 md:p-6">
             {children}
           </div>
         </div>
@@ -129,14 +129,19 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
       <div className="flex min-h-screen flex-col bg-[#F8FAFC]">
         <Header />
         <main
-          className="flex-1 flex flex-col items-center justify-center pt-32 pb-20 px-4 md:px-6 relative overflow-hidden"
-          style={{
-            background:
-              "linear-gradient(0deg, rgb(255, 255, 255), rgb(230, 244, 247) 6.29%, rgb(128, 191, 239) 15.02%, rgb(68, 164, 233) 19.39%, rgb(48, 157, 231), rgb(16, 150, 229) 21.57%, color(xyz-d65 0.241 0.261 0.773), color(xyz-d65 0.23 0.248 0.764) 22.66%, color(xyz-d65 0.21 0.222 0.745) 23.75%, color(xyz-d65 0.188 0.157 0.764) 33.2%, color(xyz-d65 0.178 0.128 0.772), rgb(16, 70, 233) 42.64%, rgb(6, 29, 182) 53.09%, rgb(7, 11, 107) 66.19%, rgb(19, 2, 58) 75.33%, rgb(15, 7, 29) 86.09%, rgb(15, 7, 29))",
-          }}
+          className="relative flex flex-1 flex-col items-center justify-center overflow-hidden bg-[oklch(0.16_0.035_265)] px-4 pt-24 pb-12 md:px-6 md:pt-32 md:pb-20"
         >
+          <div
+            className="pointer-events-none absolute inset-0 hidden select-none md:block"
+            style={{
+              background:
+                "linear-gradient(0deg, rgb(255, 255, 255), rgb(230, 244, 247) 6.29%, rgb(128, 191, 239) 15.02%, rgb(68, 164, 233) 19.39%, rgb(48, 157, 231), rgb(16, 150, 229) 21.57%, color(xyz-d65 0.241 0.261 0.773), color(xyz-d65 0.23 0.248 0.764) 22.66%, color(xyz-d65 0.21 0.222 0.745) 23.75%, color(xyz-d65 0.188 0.157 0.764) 33.2%, color(xyz-d65 0.178 0.128 0.772), rgb(16, 70, 233) 42.64%, rgb(6, 29, 182) 53.09%, rgb(7, 11, 107) 66.19%, rgb(19, 2, 58) 75.33%, rgb(15, 7, 29) 86.09%, rgb(15, 7, 29))",
+            }}
+          />
+          <div className="pointer-events-none absolute inset-0 select-none bg-[radial-gradient(circle_at_50%_0%,rgba(30,64,175,0.22),transparent_56%)] md:hidden" />
+
           {/* Glowing circuits background design matching home page */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none select-none opacity-40">
+          <div className="pointer-events-none absolute inset-0 hidden select-none overflow-hidden opacity-40 md:block">
             <svg
               className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[1400px] h-full text-white/5"
               viewBox="0 0 1400 800"
@@ -157,20 +162,20 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
           </div>
 
           {/* Optimized hardware-accelerated background glowing spheres */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
-            <div className="absolute top-[20%] left-[10%] w-72 h-72 rounded-full bg-blue-500/10 blur-[100px] will-change-transform" />
-            <div className="absolute bottom-[20%] right-[10%] w-96 h-96 rounded-full bg-[#00f0ff]/10 blur-[130px] will-change-transform" />
-            <div className="absolute top-[40%] right-[25%] w-80 h-80 rounded-full bg-purple-500/5 blur-[120px] will-change-transform" />
+          <div className="pointer-events-none absolute inset-0 hidden select-none overflow-hidden md:block">
+            <div className="absolute top-[20%] left-[10%] h-72 w-72 rounded-full bg-blue-500/10 blur-[100px]" />
+            <div className="absolute right-[10%] bottom-[20%] h-96 w-96 rounded-full bg-[#00f0ff]/10 blur-[130px]" />
+            <div className="absolute top-[40%] right-[25%] h-80 w-80 rounded-full bg-purple-500/5 blur-[120px]" />
           </div>
 
           {/* Centralized Glassmorphic Login/Register Card */}
           <div className="relative z-10 w-full max-w-md my-auto">
-            <div className="dark relative overflow-hidden rounded-xl border border-white/10 bg-[#0c0822]/60 p-8 md:p-10 shadow-[0_24px_80px_rgba(0,0,0,0.5),inset_0_1px_2px_rgba(255,255,255,0.15)] backdrop-blur-lg">
+            <div className="dark relative overflow-hidden rounded-xl border border-white/10 bg-[#0c0822]/95 p-6 shadow-[0_14px_44px_rgba(0,0,0,0.42),inset_0_1px_1px_rgba(255,255,255,0.12)] md:bg-[#0c0822]/60 md:p-10 md:shadow-[0_24px_80px_rgba(0,0,0,0.5),inset_0_1px_2px_rgba(255,255,255,0.15)] md:backdrop-blur-lg">
               {/* Dynamic Animated border beam */}
-              <div className="pointer-events-none absolute -inset-px rounded-xl bg-gradient-to-r from-[#0093ff]/20 via-[#0036ff]/20 to-[#00f0ff]/20 opacity-80" />
+              <div className="pointer-events-none absolute -inset-px hidden rounded-xl bg-gradient-to-r from-[#0093ff]/20 via-[#0036ff]/20 to-[#00f0ff]/20 opacity-80 md:block" />
               
               {/* Outer subtle glow */}
-              <div className="pointer-events-none absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#0093ff]/10 via-[#0036ff]/10 to-[#00f0ff]/10 opacity-70 blur" />
+              <div className="pointer-events-none absolute -inset-0.5 hidden rounded-xl bg-gradient-to-r from-[#0093ff]/10 via-[#0036ff]/10 to-[#00f0ff]/10 opacity-70 blur md:block" />
 
               <div className="relative z-10 w-full">
                 {children}

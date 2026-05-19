@@ -60,6 +60,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -88,6 +89,8 @@ interface Tenant {
   logo_url?: string;
   subscription_plan: string;
   subscription_status: string;
+  branding?: Record<string, any>;
+  welcome_message?: string;
   created_at: string;
   active_users?: number;
   monthly_revenue?: number;
@@ -519,6 +522,8 @@ export default function ConsoleDashboard() {
             logo_url: o.logo_url,
             subscription_plan: o.subscription_plan || "free",
             subscription_status: o.subscription_status || "active",
+            branding: o.branding || {},
+            welcome_message: o.branding?.welcome_message || "",
             created_at: o.created_at,
             active_users: 0,
             monthly_revenue: getPlanRevenue(o.subscription_plan),
@@ -857,6 +862,12 @@ export default function ConsoleDashboard() {
           name: selectedTenant.name,
           subscription_plan: selectedTenant.subscription_plan,
           subscription_status: selectedTenant.subscription_status,
+          branding: {
+            ...(selectedTenant.branding || {}),
+            welcome_message:
+              selectedTenant.welcome_message ||
+              "Chúc một ngày kinh doanh thuận lợi, bùng nổ doanh thu.",
+          },
         })
         .eq("id", selectedTenant.id);
 
@@ -947,6 +958,9 @@ export default function ConsoleDashboard() {
           slug: newTenant.slug,
           subscription_plan: newTenant.subscription_plan,
           subscription_status: newTenant.subscription_status,
+          branding: {
+            welcome_message: "Chúc một ngày kinh doanh thuận lợi, bùng nổ doanh thu.",
+          },
         }])
         .select();
 
@@ -2288,6 +2302,24 @@ export default function ConsoleDashboard() {
                             </SelectContent>
                           </Select>
                         </div>
+                      </div>
+                    </section>
+                    <section className="space-y-4">
+                      <h3 className="text-sm font-bold text-foreground flex items-center gap-2 border-b border-border pb-2">
+                        <Sparkles className="h-4 w-4 text-primary" />
+                        Nội dung màn chờ Tenant
+                      </h3>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-foreground">Câu chúc trên màn hình chờ</label>
+                        <Textarea
+                          value={selectedTenant.welcome_message || ""}
+                          onChange={(e) => setSelectedTenant({ ...selectedTenant, welcome_message: e.target.value })}
+                          placeholder="Ví dụ: Chúc một ngày kinh doanh thuận lợi, bùng nổ doanh thu."
+                          className="min-h-24 bg-background border-border text-foreground"
+                        />
+                        <p className="text-[9px] text-muted-foreground mt-1">
+                          Nội dung này hiển thị ở màn chờ trước khi nhân viên vào dashboard tenant.
+                        </p>
                       </div>
                     </section>
                     {/* Section 2: Tài khoản chủ sở hữu */}

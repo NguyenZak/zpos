@@ -78,6 +78,8 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { toast } from 'sonner';
 import { MobileDashboard } from '../_components/mobile/mobile-dashboard';
+import { TenantWelcomeOverlay } from "@/components/welcome/tenant-welcome-overlay";
+import { getTenantSlug } from '@/services/pos.service';
 
 
 // 1. Chart 1: Revenue Area Data (7 days)
@@ -151,6 +153,9 @@ const formatCurrency = (amount: number) => {
 export default function DashboardPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [tenantName, setTenantName] = useState("ZPOS");
+  const [staffName, setStaffName] = useState<string | undefined>();
+  const [branchName, setBranchName] = useState<string | undefined>();
+  const [welcomeActive, setWelcomeActive] = useState(true);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 768px)");
@@ -190,10 +195,17 @@ export default function DashboardPage() {
           const supabase = createClient();
           const { data: { user } } = await supabase.auth.getUser();
           if (user) {
+            setStaffName(
+              (user.user_metadata?.full_name as string | undefined) ||
+              (user.user_metadata?.name as string | undefined) ||
+              user.email?.split("@")[0]
+            );
             const { data: member } = await supabase
               .from("organization_members")
               .select("organizations(name, slug)")
               .eq("profile_id", user.id)
+              .order("created_at", { ascending: true })
+              .limit(1)
               .maybeSingle();
             
             const org = member?.organizations as any;
@@ -234,6 +246,26 @@ export default function DashboardPage() {
     };
 
     loadTenantName();
+  }, []);
+
+  useEffect(() => {
+    const loadBranchName = async () => {
+      try {
+        const branches = await posService.getBranches();
+        if (!branches?.length) return;
+        const storageKey = `zpos_selected_branch_id_${getTenantSlug()}`;
+        const selectedId = typeof window !== "undefined" ? localStorage.getItem(storageKey) : null;
+        const selected = branches.find((branch: any) => branch.id === selectedId) || branches[0];
+        setBranchName(selected?.name);
+      } catch (error) {
+        console.warn("Failed to load active branch for welcome overlay:", error);
+      }
+    };
+
+    loadBranchName();
+    const onBranchSwitched = () => loadBranchName();
+    window.addEventListener("zpos_branch_switched", onBranchSwitched);
+    return () => window.removeEventListener("zpos_branch_switched", onBranchSwitched);
   }, []);
 
   const [stats, setStats] = useState<any>(null);
@@ -643,52 +675,89 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex h-[calc(100vh-100px)] items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-[calc(100vh-100px)]">
+        <TenantWelcomeOverlay
+          mode="inline"
+          userName={staffName}
+          tenantName={tenantName}
+          branchName={branchName}
+          onVisibilityChange={setWelcomeActive}
+          metrics={{
+            revenueToday: 0,
+            ordersToday: 0,
+            lowStockCount: 0,
+          }}
+        />
+        {!welcomeActive && (
+          <div className="flex h-[calc(100vh-100px)] items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        )}
       </div>
     );
   }
 
+  const welcomeOverlay = (
+    <TenantWelcomeOverlay
+      mode="inline"
+      userName={staffName}
+      tenantName={tenantName}
+      branchName={branchName}
+      onVisibilityChange={setWelcomeActive}
+      metrics={{
+        revenueToday: displayRevenue,
+        ordersToday: displayOrders,
+        lowStockCount: lowStockProducts.length,
+      }}
+    />
+  );
+
+  if (welcomeActive) {
+    return <div className="animate-in fade-in duration-300">{welcomeOverlay}</div>;
+  }
+
   if (isMobile) {
     return (
-      <MobileDashboard
-        stats={stats}
-        recentSales={filteredRecentSales}
-        lowStockProducts={lowStockProducts}
-        loading={loading}
-        onRefresh={loadDashboardData}
-        tenantName={tenantName}
-        timeRange={timeRange}
-        setTimeRange={setTimeRange}
-        startDate={startDate}
-        setStartDate={setStartDate}
-        endDate={endDate}
-        setEndDate={setEndDate}
-        displayRevenue={displayRevenue}
-        displayOrders={displayOrders}
-        displayCustomers={displayCustomers}
-        displayAOV={displayAOV}
-        displayNetProfit={displayNetProfit}
-        displayCOGS={displayCOGS}
-        displayExpenses={displayExpenses}
-        financePieData={financePieData}
-        dynamicRevenueData={dynamicRevenueData}
-        dynamicComparisonData={dynamicComparisonData}
-        dynamicHourlySalesList={dynamicHourlySalesList}
-        dynamicCategorySalesData={dynamicCategorySalesData}
-        filteredTopProducts={filteredTopProducts}
-        cashPercent={cashPercent}
-        bankPercent={bankPercent}
-        cardPercent={cardPercent}
-        goal={goal}
-        goalProgress={goalProgress}
-        goalDialogOpen={goalDialogOpen}
-        setGoalDialogOpen={setGoalDialogOpen}
-        newTarget={newTarget}
-        setNewTarget={setNewTarget}
-        handleUpdateGoal={handleUpdateGoal}
-        handleExportReport={handleExportReport}
-      />
+      <div className="animate-in fade-in duration-300">
+        <MobileDashboard
+          stats={stats}
+          recentSales={filteredRecentSales}
+          lowStockProducts={lowStockProducts}
+          loading={loading}
+          onRefresh={loadDashboardData}
+          tenantName={tenantName}
+          timeRange={timeRange}
+          setTimeRange={setTimeRange}
+          startDate={startDate}
+          setStartDate={setStartDate}
+          endDate={endDate}
+          setEndDate={setEndDate}
+          displayRevenue={displayRevenue}
+          displayOrders={displayOrders}
+          displayCustomers={displayCustomers}
+          displayAOV={displayAOV}
+          displayNetProfit={displayNetProfit}
+          displayCOGS={displayCOGS}
+          displayExpenses={displayExpenses}
+          financePieData={financePieData}
+          dynamicRevenueData={dynamicRevenueData}
+          dynamicComparisonData={dynamicComparisonData}
+          dynamicHourlySalesList={dynamicHourlySalesList}
+          dynamicCategorySalesData={dynamicCategorySalesData}
+          filteredTopProducts={filteredTopProducts}
+          cashPercent={cashPercent}
+          bankPercent={bankPercent}
+          cardPercent={cardPercent}
+          goal={goal}
+          goalProgress={goalProgress}
+          goalDialogOpen={goalDialogOpen}
+          setGoalDialogOpen={setGoalDialogOpen}
+          newTarget={newTarget}
+          setNewTarget={setNewTarget}
+          handleUpdateGoal={handleUpdateGoal}
+          handleExportReport={handleExportReport}
+        />
+      </div>
     );
   }
 

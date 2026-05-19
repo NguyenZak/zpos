@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { ArrowRight, AppWindow, Shield, MousePointerClick } from "lucide-react";
 import { useLanguage } from "./LanguageContext";
 
@@ -112,34 +111,21 @@ export function Hero({ dynamicConfig }: { dynamicConfig?: any }) {
 
       <div className="max-w-[1200px] mx-auto px-6 w-full flex flex-col items-center">
         {/* Top Centered Isometric Icon */}
-        <motion.div
-          initial={{ opacity: 0, y: -15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="flex justify-center"
-        >
+        <div className="flex justify-center">
           <IsometricCubeIcon />
-        </motion.div>
+        </div>
 
         {/* Action Badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="inline-flex items-center gap-2.5 px-3.5 py-1 rounded-full bg-white/5 border border-white/10 text-white/90 text-[10px] font-mono tracking-wider font-semibold uppercase mb-8 shadow-[0_0_15px_rgba(0,147,255,0.05)]"
-        >
+        <div className="inline-flex items-center gap-2.5 px-3.5 py-1 rounded-full bg-white/5 border border-white/10 text-white/90 text-[10px] font-mono tracking-wider font-semibold uppercase mb-8 shadow-[0_0_15px_rgba(0,147,255,0.05)]">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-[#0093ff]" />
           </span>
           {t("hero.badge")}
-        </motion.div>
+        </div>
 
         {/* Display Title */}
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.2 }}
+        <h1
           className="text-4xl md:text-6xl lg:text-[72px] font-normal tracking-tight text-center text-white leading-[1.1] mb-6 max-w-5xl"
           style={{ fontFamily: "'Aeonik Pro', sans-serif", fontFeatureSettings: "'ss02', 'ss05', 'ss10', 'ss11'" }}
         >
@@ -151,26 +137,18 @@ export function Hero({ dynamicConfig }: { dynamicConfig?: any }) {
               {t("hero.title2")} <BlueprintIcon />
             </>
           )}
-        </motion.h1>
+        </h1>
 
         {/* Subtitle */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.3 }}
+        <p
           className="text-base md:text-lg text-white/60 max-w-2xl text-center mb-10 leading-relaxed font-light"
           style={{ fontFamily: "'Aeonik Pro', sans-serif" }}
         >
           {dynamicConfig?.heroSub || t("hero.subtitle")}
-        </motion.p>
+        </p>
 
         {/* Unified CTA & Floating Technical Features */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="w-full max-w-5xl flex flex-col items-center mt-4"
-        >
+        <div className="w-full max-w-5xl flex flex-col items-center mt-4">
           {/* Centered CTA Buttons */}
           <div className="flex flex-row items-center justify-center gap-4 mb-16 w-full sm:w-auto">
             <Link
@@ -257,7 +235,7 @@ export function Hero({ dynamicConfig }: { dynamicConfig?: any }) {
               </p>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

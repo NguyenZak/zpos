@@ -6,16 +6,28 @@ import { createServerClient } from "@supabase/ssr";
 import { updateSession } from "@/utils/supabase/middleware";
 import { isSuperAdminEmail } from "@/utils/super-admin";
 
-// Helper: create a lightweight Supabase client for auth checks in proxy
-function createProxySupabase(request: NextRequest) {
-  const isDev = process.env.NODE_ENV === "development";
-  const hostname = request.headers.get("host") || "";
+function resolveMainDomain(hostname: string) {
   let mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || "localhost:3000";
+
+  if (hostname.includes("localhost")) {
+    const port = hostname.includes(":") ? hostname.split(":").pop() : "";
+    return port ? `localhost:${port}` : "localhost";
+  }
+
   if (hostname.includes("zpos.click")) {
     mainDomain = "zpos.click";
   } else if (hostname.includes("zpos.vn")) {
     mainDomain = "zpos.vn";
   }
+
+  return mainDomain;
+}
+
+// Helper: create a lightweight Supabase client for auth checks in proxy
+function createProxySupabase(request: NextRequest) {
+  const isDev = process.env.NODE_ENV === "development";
+  const hostname = request.headers.get("host") || "";
+  const mainDomain = resolveMainDomain(hostname);
 
   let cookieDomain: string | undefined = undefined;
   if (!isDev) {
@@ -47,12 +59,7 @@ export async function proxy(request: NextRequest) {
   const hostname = request.headers.get("host") || "";
   const isLocal = hostname.includes("localhost") || hostname.includes("127.0.0.1");
 
-  let mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || "localhost:3000";
-  if (hostname.includes("zpos.click")) {
-    mainDomain = "zpos.click";
-  } else if (hostname.includes("zpos.vn")) {
-    mainDomain = "zpos.vn";
-  }
+  const mainDomain = resolveMainDomain(hostname);
 
   // Extract subdomain
   const subdomain = hostname.endsWith(`.${mainDomain}`) ? hostname.replace(`.${mainDomain}`, "") : null;

@@ -285,7 +285,7 @@ export function LoginForm() {
                   autoComplete="email"
                   aria-invalid={fieldState.invalid}
                   disabled={isLoading}
-                  className="h-12 pl-11 pr-4 rounded-xl border-white/10 bg-white/5 placeholder:text-white/20 text-white transition-all duration-300 focus-visible:border-blue-500/60 focus-visible:ring-4 focus-visible:ring-blue-500/10 focus-visible:bg-[#0c0822]/40"
+                  className="h-12 pl-11 pr-4 rounded-xl border-white/10 bg-white/5 placeholder:text-white/20 text-white transition-colors duration-150 focus-visible:border-blue-500/60 focus-visible:ring-4 focus-visible:ring-blue-500/10 focus-visible:bg-[#0c0822]/40"
                 />
               </div>
               {fieldState.invalid && <FieldError errors={[fieldState.error]} className="text-rose-400 text-[11px] mt-0.5" />}
@@ -325,7 +325,7 @@ export function LoginForm() {
                   autoComplete="current-password"
                   aria-invalid={fieldState.invalid}
                   disabled={isLoading}
-                  className="h-12 pl-11 pr-11 rounded-xl border-white/10 bg-white/5 placeholder:text-white/20 text-white transition-all duration-300 focus-visible:border-blue-500/60 focus-visible:ring-4 focus-visible:ring-blue-500/10 focus-visible:bg-[#0c0822]/40"
+                  className="h-12 pl-11 pr-11 rounded-xl border-white/10 bg-white/5 placeholder:text-white/20 text-white transition-colors duration-150 focus-visible:border-blue-500/60 focus-visible:ring-4 focus-visible:ring-blue-500/10 focus-visible:bg-[#0c0822]/40"
                 />
                 <button
                   type="button"
@@ -367,7 +367,7 @@ export function LoginForm() {
       </FieldGroup>
       
       <Button
-        className="relative group overflow-hidden h-12 w-full py-6 text-sm font-semibold tracking-wide cursor-pointer rounded-xl bg-gradient-to-r from-[#0093ff] to-[#0036ff] text-white shadow-[0_4px_20px_rgba(0,147,255,0.25)] hover:shadow-[0_4px_30px_rgba(0,147,255,0.45)] transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 mt-1"
+        className="relative group overflow-hidden h-12 w-full py-6 text-sm font-semibold tracking-wide cursor-pointer rounded-xl bg-[#0036ff] text-white shadow-[0_4px_18px_rgba(0,54,255,0.24)] transition-colors duration-150 hover:bg-[#0056ff] active:scale-[0.99] disabled:opacity-50 mt-1 md:bg-gradient-to-r md:from-[#0093ff] md:to-[#0036ff] md:hover:shadow-[0_4px_30px_rgba(0,147,255,0.35)]"
         type="submit"
         disabled={isLoading}
       >
@@ -389,7 +389,7 @@ export function LoginForm() {
             </>
           )}
         </span>
-        <div className="absolute inset-0 bg-gradient-to-r from-[#00b0ff] to-[#0056ff] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <div className="absolute inset-0 hidden bg-gradient-to-r from-[#00b0ff] to-[#0056ff] opacity-0 transition-opacity duration-300 group-hover:opacity-100 md:block" />
       </Button>
 
     </form>
