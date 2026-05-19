@@ -75,6 +75,7 @@ import {
   SidebarInset,
 } from "@/components/ui/sidebar";
 import { createClient } from "@/utils/supabase/client";
+import { isSuperAdminEmail } from "@/utils/super-admin";
 import { usePreferencesStore } from "@/stores/preferences/preferences-provider";
 import { persistPreference } from "@/lib/preferences/preferences-storage";
 import { ThemeSwitcher } from "@/app/app/_components/sidebar/theme-switcher";
@@ -95,12 +96,43 @@ interface Tenant {
 
 interface SystemUser {
   id: string;
+  member_id?: string;
+  organization_id?: string;
+  role_id?: string | null;
+  role_name?: string;
   full_name: string;
   email: string;
   avatar_url?: string;
   created_at: string;
   global_role: "super_admin" | "tenant_owner" | "staff";
   associated_tenant?: string;
+  tenant_slug?: string;
+  source?: "auth" | "profile" | "employee";
+}
+
+interface ConsoleRole {
+  id: string;
+  organization_id: string;
+  name: string;
+  description?: string;
+  is_system?: boolean;
+}
+
+interface ProfileRow {
+  id: string;
+  full_name?: string | null;
+  email?: string | null;
+  avatar_url?: string | null;
+  created_at?: string | null;
+}
+
+interface OrganizationMemberRow {
+  id: string;
+  organization_id: string;
+  profile_id: string;
+  role?: string | null;
+  role_id?: string | null;
+  created_at?: string | null;
 }
 
 interface BillingLog {
@@ -179,6 +211,33 @@ const PLANS_BASE: PricingPlan[] = [
   },
 ];
 
+const ROLE_LABELS: Record<SystemUser["global_role"], string> = {
+  super_admin: "Super Admin",
+  tenant_owner: "Tenant Owner",
+  staff: "Nhân viên",
+};
+
+const getInitials = (name?: string, email?: string) => {
+  const base = (name || email || "ZA").trim();
+  const words = base.split(/\s+/).filter(Boolean);
+  if (words.length >= 2) return `${words[0][0]}${words[words.length - 1][0]}`.toUpperCase();
+  return base.slice(0, 2).toUpperCase();
+};
+
+const normalizeTextRole = (role?: string | null): SystemUser["global_role"] => {
+  if (!role) return "staff";
+  const value = role.toLowerCase();
+  if (value === "owner" || value === "admin" || value === "tenant_owner") return "tenant_owner";
+  return "staff";
+};
+
+const getPlanRevenue = (plan?: string | null) => {
+  if (plan === "pro") return 12500000;
+  if (plan === "enterprise") return 45000000;
+  if (plan === "basic") return 3500000;
+  return 0;
+};
+
 export default function ConsoleDashboard() {
   const themeMode = usePreferencesStore((s) => s.themeMode);
   const setThemeMode = usePreferencesStore((s) => s.setThemeMode);
@@ -190,8 +249,10 @@ export default function ConsoleDashboard() {
   };
 
   const [activeTab, setActiveTab] = useState<string>("dashboard");
+  const [currentAdmin, setCurrentAdmin] = useState<SystemUser | null>(null);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [users, setUsers] = useState<SystemUser[]>([]);
+  const [roles, setRoles] = useState<ConsoleRole[]>([]);
   const [billingLogs, setBillingLogs] = useState<BillingLog[]>([]);
   const [plans, setPlans] = useState<PricingPlan[]>(PLANS_BASE);
   const [logs, setLogs] = useState<LogItem[]>([]);
@@ -201,6 +262,8 @@ export default function ConsoleDashboard() {
   const [filterPlan, setFilterPlan] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [userSearch, setUserSearch] = useState("");
+  const [userTenantFilter, setUserTenantFilter] = useState("all");
+  const [userRoleFilter, setUserRoleFilter] = useState("all");
 
   // Log filter
   const [logSearch, setLogSearch] = useState("");
@@ -216,7 +279,7 @@ export default function ConsoleDashboard() {
   // Inline forms state
   const [tenantViewMode, setTenantViewMode] = useState<"list" | "add" | "edit">("list");
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
-  const [editOwner, setEditOwner] = useState({ name: "", email: "", password: "", profileId: "" });
+  const [editOwner, setEditOwner] = useState({ name: "", email: "", password: "", profileId: "", memberId: "" });
   const [isLoadingOwner, setIsLoadingOwner] = useState(false);
   const [newTenant, setNewTenant] = useState({
     name: "",
@@ -227,6 +290,21 @@ export default function ConsoleDashboard() {
     owner_password: "",
     owner_name: "",
   });
+
+  const emptyUserForm = {
+    id: "",
+    member_id: "",
+    full_name: "",
+    email: "",
+    password: "",
+    organization_id: "",
+    role: "staff",
+    role_id: "none",
+    avatar_url: "",
+  };
+  const [userFormOpen, setUserFormOpen] = useState(false);
+  const [userFormMode, setUserFormMode] = useState<"add" | "edit">("add");
+  const [userForm, setUserForm] = useState(emptyUserForm);
 
   const logsEndRef = useRef<HTMLDivElement>(null);
 
@@ -378,8 +456,37 @@ export default function ConsoleDashboard() {
     }
   };
 
+  const loadCurrentAdmin = async () => {
+    const supabase = createClient();
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user?.email) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, avatar_url, created_at")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      setCurrentAdmin({
+        id: user.id,
+        full_name: profile?.full_name || user.user_metadata?.full_name || user.email,
+        email: profile?.email || user.email,
+        avatar_url: profile?.avatar_url || user.user_metadata?.avatar_url,
+        created_at: profile?.created_at || user.created_at || new Date().toISOString(),
+        global_role: isSuperAdminEmail(user.email) ? "super_admin" : "tenant_owner",
+        source: "auth",
+      });
+    } catch (err) {
+      console.warn("Could not resolve current console admin:", err);
+    }
+  };
+
   // Sync Database automatically on Mount
   useEffect(() => {
+    loadCurrentAdmin();
     syncDatabase();
   }, []);
 
@@ -413,15 +520,8 @@ export default function ConsoleDashboard() {
             subscription_plan: o.subscription_plan || "free",
             subscription_status: o.subscription_status || "active",
             created_at: o.created_at,
-            active_users: 1,
-            monthly_revenue:
-              o.subscription_plan === "pro"
-                ? 12500000
-                : o.subscription_plan === "enterprise"
-                  ? 45000000
-                  : o.subscription_plan === "basic"
-                    ? 3500000
-                    : 0,
+            active_users: 0,
+            monthly_revenue: getPlanRevenue(o.subscription_plan),
             is_db: true,
           }));
         }
@@ -429,28 +529,78 @@ export default function ConsoleDashboard() {
         console.warn("Could not fetch organizations:", err);
       }
 
-
-      // 2. Fetch profiles (users)
+      // 2. Fetch roles, profiles and organization memberships, then join locally.
+      let dbRoles: ConsoleRole[] = [];
       let dbUsers: SystemUser[] = [];
       try {
-        const { data: profs, error: profsError } = await supabase
-          .from("profiles")
-          .select("*")
-          .order("created_at", { ascending: false });
+        const [{ data: profs, error: profsError }, membersResult, { data: roleRows }] =
+          await Promise.all([
+            supabase.from("profiles").select("id, full_name, email, avatar_url, created_at").order("created_at", {
+              ascending: false,
+            }),
+            supabase.from("organization_members").select("id, organization_id, profile_id, role, role_id, created_at"),
+            supabase.from("roles").select("id, organization_id, name, description, is_system").order("name"),
+          ]);
+
+        let members = membersResult.data;
+        let membersError = membersResult.error;
+        if (membersError && membersError.message?.includes("role_id")) {
+          const fallbackMembers = await supabase
+            .from("organization_members")
+            .select("id, organization_id, profile_id, role, created_at");
+          members = fallbackMembers.data?.map((member) => ({ ...member, role_id: null })) || null;
+          membersError = fallbackMembers.error;
+        }
+
+        if (roleRows) dbRoles = roleRows;
+        const profileRows = (profs || []) as ProfileRow[];
+        const memberRows = (members || []) as OrganizationMemberRow[];
+        const tenantById = new Map(dbTenants.map((tenant) => [tenant.id, tenant]));
+        const roleById = new Map(dbRoles.map((role) => [role.id, role]));
+        const profileById = new Map(profileRows.map((profile) => [profile.id, profile]));
+        const usedProfileIds = new Set<string>();
+
+        if (!membersError && members) {
+          dbUsers = memberRows.map((member) => {
+            const profile = profileById.get(member.profile_id);
+            const tenant = tenantById.get(member.organization_id);
+            const customRole = member.role_id ? roleById.get(member.role_id) : null;
+            usedProfileIds.add(member.profile_id);
+            return {
+              id: member.profile_id,
+              member_id: member.id,
+              organization_id: member.organization_id,
+              role_id: member.role_id,
+              role_name: customRole?.name || member.role || "staff",
+              full_name: profile?.full_name || profile?.email || "Thành viên ZPOS",
+              email: profile?.email || "user@zpos.click",
+              avatar_url: profile?.avatar_url || undefined,
+              created_at: profile?.created_at || member.created_at || new Date().toISOString(),
+              global_role: normalizeTextRole(member.role),
+              associated_tenant: tenant?.name || member.organization_id,
+              tenant_slug: tenant?.slug,
+              source: "profile",
+            };
+          });
+        }
 
         if (!profsError && profs) {
-          dbUsers = profs.map((p, idx) => ({
-            id: p.id,
-            full_name: p.full_name || "Thành viên ZPOS",
-            email: p.email || "user@zpos.click",
-            avatar_url: p.avatar_url,
-            created_at: p.created_at,
-            global_role: idx === 0 ? "super_admin" : "tenant_owner",
-            associated_tenant: "Mặc định (ZPOS Retail)",
-          }));
+          const unassignedProfiles = profileRows
+            .filter((profile) => !usedProfileIds.has(profile.id))
+            .map((profile): SystemUser => ({
+              id: profile.id,
+              full_name: profile.full_name || "Thành viên ZPOS",
+              email: profile.email || "user@zpos.click",
+              avatar_url: profile.avatar_url || undefined,
+              created_at: profile.created_at || new Date().toISOString(),
+              global_role: isSuperAdminEmail(profile.email) ? "super_admin" : "staff",
+              associated_tenant: isSuperAdminEmail(profile.email) ? undefined : "Chưa gán tenant",
+              source: "profile" as const,
+            }));
+          dbUsers = [...dbUsers, ...unassignedProfiles];
         }
       } catch (err) {
-        console.warn("Could not fetch profiles:", err);
+        console.warn("Could not fetch user directory:", err);
       }
 
       // If profiles query failed or empty, fallback to employees which represents active users in the database
@@ -478,9 +628,7 @@ export default function ConsoleDashboard() {
 
       // Update active users metric in tenants based on actual user counts
       dbTenants = dbTenants.map((t) => {
-        const activeUsersCount = dbUsers.filter(
-          (u) => u.associated_tenant === t.name
-        ).length;
+        const activeUsersCount = dbUsers.filter((u) => u.organization_id === t.id).length;
         return {
           ...t,
           active_users: Math.max(0, activeUsersCount),
@@ -552,6 +700,7 @@ export default function ConsoleDashboard() {
 
       setTenants(dbTenants);
       setUsers(dbUsers);
+      setRoles(dbRoles);
       setBillingLogs(dbBilling);
       setPlans(plansUpdated);
       setLogs(dbLogs);
@@ -588,15 +737,16 @@ export default function ConsoleDashboard() {
   // Fetch owner info when opening the edit form
   const fetchOwnerForTenant = async (tenantId: string) => {
     setIsLoadingOwner(true);
-    setEditOwner({ name: "", email: "", password: "", profileId: "" });
+    setEditOwner({ name: "", email: "", password: "", profileId: "", memberId: "" });
     const supabase = createClient();
     console.log("[DEBUG] fetchOwnerForTenant called with tenantId:", tenantId);
     try {
       // Strategy 1: Query organization_members with role=owner
       let memberId: string | null = null;
+      let ownerMemberRowId = "";
       const { data: member, error: memberErr } = await supabase
         .from("organization_members")
-        .select("profile_id")
+        .select("id, profile_id")
         .eq("organization_id", tenantId)
         .eq("role", "owner")
         .maybeSingle();
@@ -604,19 +754,21 @@ export default function ConsoleDashboard() {
 
       if (member?.profile_id) {
         memberId = member.profile_id;
+        ownerMemberRowId = member.id;
       }
 
       // Strategy 2: If RLS blocked or no "owner" role found, try any member of this org
       if (!memberId) {
         const { data: anyMember, error: anyErr } = await supabase
           .from("organization_members")
-          .select("profile_id")
+          .select("id, profile_id")
           .eq("organization_id", tenantId)
           .limit(1)
           .maybeSingle();
         console.log("[DEBUG] Strategy 2 - anyMember:", anyMember, "error:", anyErr);
         if (anyMember?.profile_id) {
           memberId = anyMember.profile_id;
+          ownerMemberRowId = anyMember.id;
         }
       }
 
@@ -635,37 +787,10 @@ export default function ConsoleDashboard() {
             email: profiles[0].email || "",
             password: "",
             profileId: profiles[0].id,
+            memberId: ownerMemberRowId,
           });
           setIsLoadingOwner(false);
           return;
-        }
-      }
-
-      // Strategy 4: Query ALL profiles and check if any has email matching this tenant
-      if (!memberId) {
-        const { data: allProfiles, error: allErr } = await supabase
-          .from("profiles")
-          .select("id, full_name, email");
-        console.log("[DEBUG] Strategy 4 - ALL profiles:", allProfiles, "error:", allErr);
-        // Try to find a profile linked to this org by checking user_metadata or just show the first non-admin profile
-        if (allProfiles && allProfiles.length > 0) {
-          // Filter out known admin emails
-          const nonAdmin = allProfiles.filter(p => 
-            p.email && !p.email.endsWith("@zpos.click") && !p.email.endsWith("@zpos.vn")
-          );
-          // If we only have 1 non-admin, it's likely the tenant owner
-          const candidate = nonAdmin.length > 0 ? nonAdmin[0] : allProfiles[0];
-          if (candidate) {
-            console.log("[DEBUG] Strategy 4 - using candidate:", candidate);
-            setEditOwner({
-              name: candidate.full_name || "",
-              email: candidate.email || "",
-              password: "",
-              profileId: candidate.id,
-            });
-            setIsLoadingOwner(false);
-            return;
-          }
         }
       }
 
@@ -684,8 +809,13 @@ export default function ConsoleDashboard() {
             email: profile.email || "",
             password: "",
             profileId: profile.id,
+            memberId: ownerMemberRowId,
           });
         }
+      } else {
+        toast.warning("Tenant này chưa có owner được gán trong organization_members.", {
+          description: "Hãy tạo/gán owner trước khi sửa email để tránh cập nhật nhầm profile.",
+        });
       }
 
       console.log("[DEBUG] Final memberId:", memberId);
@@ -733,13 +863,25 @@ export default function ConsoleDashboard() {
       if (!error) dbSuccess = true;
 
       if (editOwner.profileId) {
-        await supabase
-          .from("profiles")
-          .update({
-            full_name: editOwner.name,
+        const ownerRes = await fetch("/api/admin/tenant-owner", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            organizationId: selectedTenant.id,
+            profileId: editOwner.profileId,
+            fullName: editOwner.name,
             email: editOwner.email,
-          })
-          .eq("id", editOwner.profileId);
+            password: editOwner.password,
+          }),
+        });
+        const ownerResult = await ownerRes.json().catch(() => null);
+        if (!ownerRes.ok || !ownerResult?.success) {
+          throw new Error(ownerResult?.error || "Không thể cập nhật owner tenant.");
+        }
+
+        if (ownerResult.data?.profileId && ownerResult.data.profileId !== editOwner.profileId) {
+          setEditOwner((prev) => ({ ...prev, profileId: ownerResult.data.profileId }));
+        }
       }
 
       if (editOwner.password && editOwner.password.length >= 6) {
@@ -753,7 +895,13 @@ export default function ConsoleDashboard() {
         setLogs((prev) => [...prev, pwLog]);
         toast.info("Lưu ý: Đặt lại mật khẩu cần thực hiện qua Supabase Admin API.");
       }
-    } catch {}
+    } catch (e: any) {
+      toast.error("Không thể cập nhật owner tenant.", {
+        description: e?.message || "Dừng cập nhật để tránh lẫn tài khoản giữa các tenant.",
+      });
+      setIsSyncing(false);
+      return;
+    }
 
     setTenants(updated);
     setTenantViewMode("list");
@@ -768,7 +916,7 @@ export default function ConsoleDashboard() {
     setLogs((prev) => [...prev, newLog]);
 
     toast.success("Cập nhật thông tin Tenant thành công!", {
-      description: dbSuccess ? "Đã đồng bộ thay đổi xuống Database." : "Đã cập nhật tại Sandbox.",
+      description: dbSuccess ? "Đã đồng bộ thay đổi xuống Database." : "Chưa đồng bộ được xuống Database.",
     });
     setIsSyncing(false);
   };
@@ -809,26 +957,23 @@ export default function ConsoleDashboard() {
 
       if (data && data[0]) {
         const orgId = data[0].id;
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: newTenant.owner_email,
-          password: newTenant.owner_password,
-          options: {
-            data: { full_name: newTenant.owner_name || "Chủ doanh nghiệp", organization_id: orgId, role: "tenant_owner" }
-          }
+        const ownerResponse = await fetch("/api/admin/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fullName: newTenant.owner_name || "Chủ doanh nghiệp",
+            email: newTenant.owner_email,
+            password: newTenant.owner_password,
+            organizationId: orgId,
+            role: "owner",
+            roleId: null,
+          }),
         });
 
-        if (!authError && authData.user) {
-          await supabase.from("profiles").upsert({
-            id: authData.user.id,
-            full_name: newTenant.owner_name || "Chủ doanh nghiệp",
-            email: newTenant.owner_email,
-            avatar_url: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(newTenant.owner_name || 'Owner')}`,
-          });
-          try {
-            await supabase.from("organization_members").insert({
-              organization_id: orgId, profile_id: authData.user.id, role: "owner"
-            });
-          } catch (memberErr) {}
+        const ownerResult = await ownerResponse.json().catch(() => null);
+        if (!ownerResponse.ok || !ownerResult?.success) {
+          await supabase.from("organizations").delete().eq("id", orgId);
+          throw new Error(ownerResult?.error || "Không thể tạo tài khoản owner trong Supabase Auth.");
         }
         
         const newLog: LogItem = {
@@ -875,9 +1020,120 @@ export default function ConsoleDashboard() {
     setLogs((prev) => [...prev, newLog]);
 
     toast.success(`Đã xóa vĩnh viễn Tenant ${slug}!`, {
-      description: dbSuccess ? "Đã cập nhật cơ sở dữ liệu." : "Đã xóa tại Sandbox.",
+      description: dbSuccess ? "Đã cập nhật cơ sở dữ liệu." : "Chưa đồng bộ được xuống Database.",
     });
     setIsSyncing(false);
+  };
+
+  const openCreateUserForm = () => {
+    setUserFormMode("add");
+    setUserForm({
+      ...emptyUserForm,
+      organization_id: tenants[0]?.id || "",
+      role: "staff",
+      role_id: "none",
+    });
+    setUserFormOpen(true);
+  };
+
+  const openEditUserForm = (user: SystemUser) => {
+    setUserFormMode("edit");
+    setUserForm({
+      id: user.id,
+      member_id: user.member_id || "",
+      full_name: user.full_name,
+      email: user.email,
+      password: "",
+      organization_id: user.organization_id || "",
+      role: user.global_role === "tenant_owner" ? "owner" : "staff",
+      role_id: user.role_id || "none",
+      avatar_url: user.avatar_url || "",
+    });
+    setUserFormOpen(true);
+  };
+
+  const handleSaveUser = async () => {
+    if (!userForm.full_name.trim() || !userForm.email.trim()) {
+      toast.error("Vui lòng nhập họ tên và email nhân viên.");
+      return;
+    }
+    if (!userForm.organization_id && userForm.role !== "super_admin") {
+      toast.error("Vui lòng chọn doanh nghiệp để gán nhân viên.");
+      return;
+    }
+    if (userFormMode === "add" && userForm.password.length < 6) {
+      toast.error("Mật khẩu ban đầu phải có ít nhất 6 ký tự.");
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      const avatarUrl =
+        userForm.avatar_url ||
+        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userForm.full_name.trim())}`;
+
+      const userResponse = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          profileId: userFormMode === "edit" ? userForm.id : undefined,
+          memberId: userForm.member_id || undefined,
+          fullName: userForm.full_name.trim(),
+          email: userForm.email.trim().toLowerCase(),
+          password: userForm.password,
+          organizationId: userForm.role === "super_admin" ? null : userForm.organization_id,
+          role: userForm.role,
+          roleId: userForm.role_id === "none" ? null : userForm.role_id,
+          avatarUrl,
+        }),
+      });
+
+      const userResult = await userResponse.json().catch(() => null);
+      if (!userResponse.ok || !userResult?.success) {
+        throw new Error(userResult?.error || "Không thể tạo/cập nhật user trong Supabase Auth.");
+      }
+
+      toast.success(userFormMode === "add" ? "Đã thêm nhân viên mới." : "Đã cập nhật nhân viên.");
+      setUserFormOpen(false);
+      await syncDatabase();
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Không rõ lỗi";
+      toast.error("Không thể lưu nhân viên", {
+        description: message || "Kiểm tra quyền ghi bảng profiles, organization_members hoặc Supabase Auth.",
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleDeleteUser = async (user: SystemUser) => {
+    if (user.global_role === "super_admin") {
+      toast.warning("Không xóa tài khoản Super Admin từ màn hình nhân viên.");
+      return;
+    }
+    if (!confirm(`Xóa nhân viên '${user.full_name}' khỏi tenant hiện tại? Hồ sơ profile cũng sẽ được xóa nếu DB cho phép.`)) {
+      return;
+    }
+
+    setIsSyncing(true);
+    const supabase = createClient();
+    try {
+      if (user.member_id) {
+        const { error } = await supabase.from("organization_members").delete().eq("id", user.member_id);
+        if (error) throw error;
+      }
+      const { error: profileError } = await supabase.from("profiles").delete().eq("id", user.id);
+      if (profileError) {
+        toast.info("Đã gỡ liên kết tenant. Profile/Auth user cần xóa bằng Supabase Admin nếu RLS chặn.");
+      } else {
+        toast.success("Đã xóa nhân viên khỏi hệ thống.");
+      }
+      await syncDatabase();
+    } catch (e: unknown) {
+      toast.error("Không thể xóa nhân viên", { description: e instanceof Error ? e.message : "Không rõ lỗi" });
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   // Update Support Ticket Status
@@ -1033,12 +1289,20 @@ export default function ConsoleDashboard() {
   });
 
   const filteredUsers = users.filter((u) => {
-    return (
+    const matchSearch =
       u.full_name.toLowerCase().includes(userSearch.toLowerCase()) ||
       u.email.toLowerCase().includes(userSearch.toLowerCase()) ||
-      (u.associated_tenant && u.associated_tenant.toLowerCase().includes(userSearch.toLowerCase()))
-    );
+      (u.associated_tenant && u.associated_tenant.toLowerCase().includes(userSearch.toLowerCase()));
+    const matchTenant = userTenantFilter === "all" || u.organization_id === userTenantFilter;
+    const matchRole =
+      userRoleFilter === "all" ||
+      u.global_role === userRoleFilter ||
+      u.role_id === userRoleFilter ||
+      u.role_name?.toLowerCase() === userRoleFilter.toLowerCase();
+    return matchSearch && matchTenant && matchRole;
   });
+
+  const rolesForSelectedTenant = roles.filter((role) => role.organization_id === userForm.organization_id);
 
   const filteredLogs = logs.filter((l) => {
     const matchSearch =
@@ -1225,7 +1489,7 @@ export default function ConsoleDashboard() {
                       ? "Đã kết nối"
                       : dbStatus === "checking"
                         ? "Đang kiểm tra"
-                        : "Sandbox"}
+                        : "Chưa kết nối"}
                   </span>
                 </div>
 
@@ -1244,14 +1508,18 @@ export default function ConsoleDashboard() {
 
                 <div className="flex items-center gap-2 border-l pl-4 border-border">
                   <Avatar className="h-8 w-8 ring-2 ring-teal-500/30">
-                    <AvatarImage src="" />
+                    <AvatarImage src={currentAdmin?.avatar_url || ""} />
                     <AvatarFallback className="bg-gradient-to-tr from-teal-500 to-indigo-600 text-primary-foreground font-bold text-xs">
-                      SA
+                      {getInitials(currentAdmin?.full_name, currentAdmin?.email)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="hidden md:flex flex-col text-left">
-                    <span className="text-xs font-bold leading-none text-foreground">Super Admin</span>
-                    <span className="text-[10px] text-muted-foreground mt-0.5">quan.tm@zpos.click</span>
+                    <span className="text-xs font-bold leading-none text-foreground">
+                      {currentAdmin?.full_name || "Đang tải tài khoản"}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground mt-0.5">
+                      {currentAdmin?.email || "Chưa xác định phiên đăng nhập"}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -2227,17 +2495,132 @@ export default function ConsoleDashboard() {
           {activeTab === "users" && (
             <div className="space-y-6 animate-fadeIn">
               {/* Heading */}
-              <div>
-                <h2 className="text-3xl font-black text-foreground">Thành Viên Toàn Hệ Thống (Users Hub)</h2>
-                <p className="text-muted-foreground text-sm mt-1">
-                  Giám sát các người dùng đăng ký, điều chỉnh quyền truy cập đặc cách hoặc khóa người dùng vi phạm điều
-                  khoản.
-                </p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-3xl font-black text-foreground">Quản Lý Nhân Viên & Phân Quyền</h2>
+                  <p className="text-muted-foreground text-sm mt-1">
+                    Dữ liệu lấy từ profiles, organization_members và roles. Console có thể thêm, sửa, gỡ nhân viên khỏi tenant và gán vai trò truy cập.
+                  </p>
+                </div>
+                <Dialog open={userFormOpen} onOpenChange={setUserFormOpen}>
+                  <DialogTrigger asChild>
+                    <Button onClick={openCreateUserForm} className="button-primary px-4 py-2 gap-2 text-sm shadow-lg shadow-primary/10">
+                      <Plus className="h-4 w-4 stroke-[3]" />
+                      Thêm nhân viên
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl bg-card border-border text-foreground">
+                    <DialogHeader>
+                      <DialogTitle>{userFormMode === "add" ? "Thêm nhân viên mới" : "Sửa thông tin nhân viên"}</DialogTitle>
+                      <DialogDescription>
+                        Tạo profile, liên kết tenant và gán vai trò để sidebar/quyền trong app tenant hoạt động theo RBAC.
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-foreground">Họ tên</label>
+                        <Input
+                          value={userForm.full_name}
+                          onChange={(e) => setUserForm({ ...userForm, full_name: e.target.value })}
+                          className="bg-background border-border text-foreground"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-foreground">Email đăng nhập</label>
+                        <Input
+                          type="email"
+                          value={userForm.email}
+                          onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                          className="bg-background border-border text-foreground"
+                        />
+                      </div>
+                      <div className="space-y-1.5 md:col-span-2">
+                        <label className="text-xs font-bold text-foreground">
+                          {userFormMode === "add" ? "Mật khẩu ban đầu" : "Mật khẩu mới nếu cần tách tài khoản"}
+                        </label>
+                        <Input
+                          type="password"
+                          value={userForm.password}
+                          onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                          className="bg-background border-border text-foreground"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-foreground">Doanh nghiệp</label>
+                        <Select
+                          value={userForm.organization_id || "none"}
+                          onValueChange={(value) => setUserForm({ ...userForm, organization_id: value === "none" ? "" : value, role_id: "none" })}
+                        >
+                          <SelectTrigger className="bg-background border-border text-foreground">
+                            <SelectValue placeholder="Chọn tenant" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border-border text-foreground">
+                            <SelectItem value="none">Không gán tenant</SelectItem>
+                            {tenants.map((tenant) => (
+                              <SelectItem key={tenant.id} value={tenant.id}>
+                                {tenant.name} ({tenant.slug})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-foreground">Vai trò hệ thống</label>
+                        <Select
+                          value={userForm.role}
+                          onValueChange={(value) => setUserForm({ ...userForm, role: value })}
+                        >
+                          <SelectTrigger className="bg-background border-border text-foreground">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border-border text-foreground">
+                            <SelectItem value="owner">Owner tenant</SelectItem>
+                            <SelectItem value="admin">Admin tenant</SelectItem>
+                            <SelectItem value="manager">Manager</SelectItem>
+                            <SelectItem value="staff">Staff</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5 md:col-span-2">
+                        <label className="text-xs font-bold text-foreground">Role RBAC chi tiết</label>
+                        <Select
+                          value={userForm.role_id}
+                          onValueChange={(value) => setUserForm({ ...userForm, role_id: value })}
+                        >
+                          <SelectTrigger className="bg-background border-border text-foreground">
+                            <SelectValue placeholder="Chọn role" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border-border text-foreground">
+                            <SelectItem value="none">Dùng quyền mặc định theo vai trò hệ thống</SelectItem>
+                            {rolesForSelectedTenant.map((role) => (
+                              <SelectItem key={role.id} value={role.id}>
+                                {role.name}{role.is_system ? " (system)" : ""}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-[10px] text-muted-foreground">
+                          Role RBAC được quản lý trong tenant app tại Cài đặt / Vai trò. Console chỉ gán role cho nhân viên.
+                        </p>
+                      </div>
+                    </div>
+
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setUserFormOpen(false)} className="border-border bg-background text-foreground hover:bg-secondary">
+                        Hủy
+                      </Button>
+                      <Button onClick={handleSaveUser} disabled={isSyncing} className="button-primary">
+                        {isSyncing ? "Đang lưu..." : "Lưu nhân viên"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
 
               {/* 🔎 Search Users Toolbar */}
-              <div className="flex items-center gap-4 p-4 rounded-xl bg-card/40 border border-border">
-                <div className="relative flex-1">
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 p-4 rounded-xl bg-card/40 border border-border">
+                <div className="relative lg:col-span-2">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Tìm kiếm thành viên theo họ tên, địa chỉ email, hoặc tên doanh nghiệp liên kết..."
@@ -2246,6 +2629,35 @@ export default function ConsoleDashboard() {
                     className="pl-9 bg-background border-border text-foreground"
                   />
                 </div>
+                <Select value={userTenantFilter} onValueChange={setUserTenantFilter}>
+                  <SelectTrigger className="bg-background border-border text-foreground">
+                    <SelectValue placeholder="Tenant" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border text-foreground">
+                    <SelectItem value="all">Tất cả tenant</SelectItem>
+                    {tenants.map((tenant) => (
+                      <SelectItem key={tenant.id} value={tenant.id}>
+                        {tenant.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={userRoleFilter} onValueChange={setUserRoleFilter}>
+                  <SelectTrigger className="bg-background border-border text-foreground">
+                    <SelectValue placeholder="Vai trò" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border text-foreground">
+                    <SelectItem value="all">Tất cả vai trò</SelectItem>
+                    <SelectItem value="super_admin">Super Admin</SelectItem>
+                    <SelectItem value="tenant_owner">Tenant Owner</SelectItem>
+                    <SelectItem value="staff">Staff</SelectItem>
+                    {roles.map((role) => (
+                      <SelectItem key={role.id} value={role.id}>
+                        {role.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* 📋 System User Directory Table */}
@@ -2312,7 +2724,7 @@ export default function ConsoleDashboard() {
                                         : "bg-secondary text-muted-foreground"
                                   }`}
                                 >
-                                  {user.global_role.replace("_", " ")}
+                                  {user.role_name || ROLE_LABELS[user.global_role]}
                                 </Badge>
                               </TableCell>
                               <TableCell className="text-muted-foreground font-medium text-xs">
@@ -2323,19 +2735,19 @@ export default function ConsoleDashboard() {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => toast.info(`Đã gửi email khôi phục mật khẩu tới ${user.email}`)}
+                                    onClick={() => openEditUserForm(user)}
                                     className="border-border bg-background text-foreground hover:bg-secondary text-xs font-bold"
                                   >
-                                    Khôi phục mật khẩu
+                                    Sửa / phân quyền
                                   </Button>
                                   {user.global_role !== "super_admin" && (
                                     <Button
                                       size="sm"
                                       variant="outline"
-                                      onClick={() => toast.success(`Đã tạm ngưng tài khoản của ${user.full_name}`)}
+                                      onClick={() => handleDeleteUser(user)}
                                       className="border-border bg-background text-rose-400 hover:bg-rose-500/10 text-xs font-bold"
                                     >
-                                      Khóa tài khoản
+                                      Xóa
                                     </Button>
                                   )}
                                 </div>

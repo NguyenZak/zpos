@@ -67,23 +67,6 @@ export function CMSSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   React.useEffect(() => {
     const loadUser = async () => {
-      // 1. Try local mock session first
-      const savedUser = localStorage.getItem("zpos_mock_user");
-      if (savedUser) {
-        try {
-          const parsed = JSON.parse(savedUser);
-          setCurrentUser({
-            name: parsed.full_name || parsed.name || "Chủ doanh nghiệp",
-            email: parsed.email || "",
-            avatar: parsed.avatar || parsed.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(parsed.full_name || parsed.name || 'User')}`,
-          });
-          return;
-        } catch (e) {
-          console.error("Failed to parse local mock user:", e);
-        }
-      }
-
-      // 2. Try Supabase Auth session
       try {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -106,7 +89,7 @@ export function CMSSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       }
     };
 
-    loadUser();
+    void loadUser();
   }, []);
 
   const menuItems = [

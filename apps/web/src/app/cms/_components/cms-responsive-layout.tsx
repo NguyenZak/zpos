@@ -33,23 +33,7 @@ export function CMSResponsiveLayout({
 
   const checkSession = async () => {
     setIsCheckingAuth(true);
-    
-    // 1. Try local mock session first
-    const savedUser = localStorage.getItem("zpos_mock_user");
-    if (savedUser) {
-      try {
-        const parsed = JSON.parse(savedUser);
-        if (parsed.email) {
-          setIsAuthenticated(true);
-          setIsCheckingAuth(false);
-          return;
-        }
-      } catch (e) {
-        console.error("Failed to parse local mock user in layout guard:", e);
-      }
-    }
 
-    // 2. Try Supabase Auth session
     try {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
@@ -155,4 +139,3 @@ export function CMSResponsiveLayout({
     </SidebarProvider>
   );
 }
-

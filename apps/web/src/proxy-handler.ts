@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 import { updateSession } from "@/utils/supabase/middleware";
+import { isSuperAdminEmail } from "@/utils/super-admin";
 
 // Helper: create a lightweight Supabase client for auth checks in proxy
 function createProxySupabase(request: NextRequest) {
@@ -40,24 +41,6 @@ function createProxySupabase(request: NextRequest) {
 
 export async function proxy(request: NextRequest) {
   const url = request.nextUrl;
-  const mockSessionParam = url.searchParams.get("mock_session");
-
-  // Intercept local mock sessions to establish secure, host-only subdomain cookies on localhost
-  if (mockSessionParam) {
-    const cleanUrl = new URL(request.url);
-    cleanUrl.searchParams.delete("mock_session");
-    
-    const cleanResponse = NextResponse.redirect(cleanUrl);
-    
-    // Set cookie on current host explicitly (host-only cookie, perfectly supported on localhost subdomains)
-    cleanResponse.cookies.set("zpos_mock_session", mockSessionParam, {
-      path: "/",
-      maxAge: 86400,
-      httpOnly: false,
-    });
-    
-    return cleanResponse;
-  }
 
   // 1. Update Supabase Session — refreshes cookies
   const response = await updateSession(request);
@@ -81,49 +64,9 @@ export async function proxy(request: NextRequest) {
     url.pathname === "/login" ||
     url.pathname === "/register";
 
-  // --- Auth Session Check (Live + Mock Fallback) ---
+  // --- Auth Session Check (Supabase only) ---
   const supabase = createProxySupabase(request);
-  let user: any = null;
-  const mockSession = request.cookies.get("zpos_mock_session");
-
-  // Prioritize sandbox mock session ONLY in local development to enable bypass smoothly
-  if (isLocal && mockSession?.value) {
-    try {
-      const mockUser = JSON.parse(decodeURIComponent(mockSession.value));
-      
-      // Ensure the mock session is valid for the current host subdomain
-      const isTenantSubdomain = subdomain && !["www", "app", "console", "cms"].includes(subdomain);
-      let isValidMock = true;
-
-      if (isTenantSubdomain) {
-        const isSuperAdmin = mockUser.email?.toLowerCase() === "quan.tm@zpos.click";
-        if (!isSuperAdmin && mockUser.associated_tenant !== subdomain) {
-          isValidMock = false;
-        }
-      } else if (subdomain === "console") {
-        const isSuperAdmin = mockUser.email?.toLowerCase() === "quan.tm@zpos.click";
-        if (!isSuperAdmin) {
-          isValidMock = false;
-        }
-      }
-
-      if (isValidMock) {
-        user = {
-          id: mockUser.email,
-          email: mockUser.email,
-          user_metadata: { full_name: mockUser.full_name, role: mockUser.global_role },
-        };
-      }
-    } catch (e) {
-      console.error("Failed to parse mock session cookie in proxy:", e);
-    }
-  }
-
-  // Fallback to Live Supabase if no active sandbox session is present
-  if (!user) {
-    const { data: { user: liveUser } } = await supabase.auth.getUser();
-    user = liveUser;
-  }
+  const { data: { user } } = await supabase.auth.getUser();
 
   // Helper: rewrite + preserve session cookies & clean up trailing slashes
   const rewriteWithSession = (path: string) => {
@@ -242,22 +185,7 @@ export async function proxy(request: NextRequest) {
     }
 
     // 2. Role Guard: Check if the user is a super_admin
-    let isSuperAdmin = user.email?.toLowerCase() === "quan.tm@zpos.click";
-
-    // Sandbox Showcase Fallback: allow zpos_mock_session cookie to override role guard locally and on demo domains
-    if (!isSuperAdmin) {
-      const mockSession = request.cookies.get("zpos_mock_session");
-      if (mockSession?.value) {
-        try {
-          const mockUser = JSON.parse(decodeURIComponent(mockSession.value));
-          if (mockUser.email?.toLowerCase() === "quan.tm@zpos.click") {
-            isSuperAdmin = true;
-          }
-        } catch (e) {
-          console.error("Failed to parse mock session for role guard bypass:", e);
-        }
-      }
-    }
+    let isSuperAdmin = isSuperAdminEmail(user.email);
 
     if (!isSuperAdmin) {
       // Track unauthorized console access attempt in audit log
@@ -321,40 +249,23 @@ export async function proxy(request: NextRequest) {
     // Validate live Supabase user tenant membership
     let hasAccess = false;
     if (user) {
-      const isMockUser = !!mockSession?.value;
-      if (isMockUser) {
+      const isLiveSuperAdmin = isSuperAdminEmail(user.email);
+
+      if (isLiveSuperAdmin) {
+        hasAccess = true;
+      } else {
         try {
-          const mockUser = JSON.parse(decodeURIComponent(mockSession.value));
-          const emailLower = mockUser.email?.toLowerCase();
-          if (emailLower === "quan.tm@zpos.click") {
+          const { data: member } = await supabase
+            .from("organization_members")
+            .select("id, organizations!inner(slug)")
+            .eq("profile_id", user.id)
+            .eq("organizations.slug", subdomain)
+            .maybeSingle();
+          if (member) {
             hasAccess = true;
-          } else if (mockUser.associated_tenant === subdomain) {
-            hasAccess = true;
-          } else {
-            hasAccess = false;
           }
         } catch (e) {
-          hasAccess = false;
-        }
-      } else {
-        const isLiveSuperAdmin = user.email?.toLowerCase() === "quan.tm@zpos.click";
-
-        if (isLiveSuperAdmin) {
-          hasAccess = true;
-        } else {
-          try {
-            const { data: member } = await supabase
-              .from("organization_members")
-              .select("id, organizations!inner(slug)")
-              .eq("profile_id", user.id)
-              .eq("organizations.slug", subdomain)
-              .maybeSingle();
-            if (member) {
-              hasAccess = true;
-            }
-          } catch (e) {
-            console.warn("Failed to verify live user tenant membership:", e);
-          }
+          console.warn("Failed to verify live user tenant membership:", e);
         }
       }
     }

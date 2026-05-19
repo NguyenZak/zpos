@@ -48,28 +48,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   React.useEffect(() => {
     const loadUser = async () => {
-      // 1. Try local mock session first
-      const savedUser = localStorage.getItem("zpos_mock_user");
-      if (savedUser) {
-        try {
-          const parsed = JSON.parse(savedUser);
-          setCurrentUser({
-            name: parsed.full_name || parsed.name || "Chủ doanh nghiệp",
-            email: parsed.email || "",
-            avatar: parsed.avatar || parsed.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(parsed.full_name || parsed.name || 'User')}`,
-          });
-          return;
-        } catch (e) {
-          console.error("Failed to parse local mock user:", e);
-        }
-      }
+      const supabase = createClient();
 
-      // 2. Try Supabase Auth session
       try {
-        const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          // Query profile for actual name and details
           const { data: profile } = await supabase
             .from("profiles")
             .select("*")
@@ -81,13 +64,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             email: user.email || "",
             avatar: profile?.avatar_url || user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile?.full_name || user.user_metadata?.full_name || 'User')}`,
           });
+          return;
         }
       } catch (err) {
         console.error("Error loading user profile:", err);
       }
     };
 
-    loadUser();
+    void loadUser();
   }, []);
 
   // Filter sidebar groups and sub-items based on active permissions

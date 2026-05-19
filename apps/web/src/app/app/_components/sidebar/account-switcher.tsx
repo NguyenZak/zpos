@@ -53,6 +53,26 @@ const NOTIFICATIONS = [
   },
 ];
 
+type DisplayUser = {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+  role: string;
+};
+
+type OrganizationMember = {
+  role: string | null;
+  profiles: UserProfile | UserProfile[] | null;
+};
+
+type UserProfile = {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+};
+
 export function AccountSwitcher({
   users,
 }: {
@@ -64,14 +84,16 @@ export function AccountSwitcher({
     readonly role: string;
   }>;
 }) {
-  const [activeUser, setActiveUser] = useState<any>(null);
-  const [displayUsers, setDisplayUsers] = useState<any[]>([]);
+  const [activeUser, setActiveUser] = useState<DisplayUser | null>(null);
+  const [displayUsers, setDisplayUsers] = useState<DisplayUser[]>([]);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     const loadActiveUser = async () => {
-      let loggedUser = {
+      const supabase = createClient();
+      let liveUserId: string | null = null;
+      let loggedUser: DisplayUser = {
         id: "loading",
         name: "Chủ doanh nghiệp",
         email: "loading...",
@@ -79,70 +101,40 @@ export function AccountSwitcher({
         role: "Administrator",
       };
 
-      const savedUser = typeof window !== "undefined" ? localStorage.getItem("zpos_mock_user") : null;
-      if (savedUser) {
-        try {
-          const parsed = JSON.parse(savedUser);
-          loggedUser = {
-            id: parsed.email,
-            name: parsed.full_name || parsed.name || "Chủ doanh nghiệp",
-            email: parsed.email || "",
-            avatar: parsed.avatar || parsed.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(parsed.full_name || parsed.name || 'User')}`,
-            role: parsed.global_role === "super_admin" ? "Super Admin" : "Tenant Owner",
-          };
-        } catch (e) {
-          console.error("Failed to parse mock user in AccountSwitcher:", e);
-        }
-      } else {
-        try {
-          const supabase = createClient();
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("*")
-              .eq("id", user.id)
-              .maybeSingle();
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          liveUserId = user.id;
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", user.id)
+            .maybeSingle();
 
-            loggedUser = {
-              id: user.id,
-              name: profile?.full_name || user.user_metadata?.full_name || "Chủ doanh nghiệp",
-              email: user.email || "",
-              avatar: profile?.avatar_url || user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile?.full_name || user.user_metadata?.full_name || 'User')}`,
-              role: user.user_metadata?.role === "super_admin" ? "Super Admin" : "Tenant Owner",
-            };
-          }
-        } catch (err) {
-          console.error("Failed to fetch live user in AccountSwitcher:", err);
+          loggedUser = {
+            id: user.id,
+            name: profile?.full_name || user.user_metadata?.full_name || "Chủ doanh nghiệp",
+            email: user.email || "",
+            avatar: profile?.avatar_url || user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile?.full_name || user.user_metadata?.full_name || 'User')}`,
+            role: user.user_metadata?.role === "super_admin" ? "Super Admin" : "Tenant Owner",
+          };
         }
+      } catch (err) {
+        console.error("Failed to fetch live user in AccountSwitcher:", err);
       }
 
       setActiveUser(loggedUser);
       
       try {
-        const supabase = createClient();
         let orgId = null;
 
-        if (savedUser) {
-          const parsed = JSON.parse(savedUser);
-          if (parsed.associated_tenant) {
-            const { data: org } = await supabase
-              .from("organizations")
-              .select("id")
-              .eq("slug", parsed.associated_tenant)
-              .maybeSingle();
-            orgId = org?.id;
-          }
-        } else {
-          const { data: { user: liveUser } } = await supabase.auth.getUser();
-          if (liveUser) {
-            const { data: member } = await supabase
-              .from("organization_members")
-              .select("organization_id")
-              .eq("profile_id", liveUser.id)
-              .maybeSingle();
-            orgId = member?.organization_id;
-          }
+        if (liveUserId) {
+          const { data: member } = await supabase
+            .from("organization_members")
+            .select("organization_id")
+            .eq("profile_id", liveUserId)
+            .maybeSingle();
+          orgId = member?.organization_id;
         }
 
         if (orgId) {
@@ -152,13 +144,21 @@ export function AccountSwitcher({
             .eq("organization_id", orgId);
 
           if (members && members.length > 0) {
-            const realUsers = members
-              .filter((m: any) => m.profiles && m.profiles.email.toLowerCase() !== loggedUser.email.toLowerCase())
-              .map((m: any) => ({
-                id: m.profiles.id,
-                name: m.profiles.full_name || "Nhân viên",
-                email: m.profiles.email || "",
-                avatar: m.profiles.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(m.profiles.full_name || 'Staff')}`,
+            const realUsers = (members as OrganizationMember[])
+              .map((m) => ({
+                role: m.role,
+                profile: Array.isArray(m.profiles) ? m.profiles[0] : m.profiles,
+              }))
+              .filter((m): m is { role: string | null; profile: UserProfile & { email: string } } => {
+                const email = m.profile?.email;
+                if (!email) return false;
+                return email.toLowerCase() !== loggedUser.email.toLowerCase();
+              })
+              .map((m) => ({
+                id: m.profile.id,
+                name: m.profile.full_name || "Nhân viên",
+                email: m.profile.email || "",
+                avatar: m.profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(m.profile.full_name || 'Staff')}`,
                 role: m.role === "owner" ? "Tenant Owner" : "Staff",
               }));
 
@@ -173,7 +173,7 @@ export function AccountSwitcher({
       setDisplayUsers([loggedUser]);
     };
 
-    loadActiveUser();
+    void loadActiveUser();
   }, [users]);
 
   if (!activeUser) {
@@ -208,7 +208,11 @@ export function AccountSwitcher({
               key={user.email}
               className={cn("p-0", user.id === activeUser.id && "bg-accent/50")}
               aria-current={user.id === activeUser.id ? "true" : undefined}
-              onClick={() => setActiveUser(user)}
+              onClick={(event) => {
+                if (user.id !== activeUser.id) {
+                  event.preventDefault();
+                }
+              }}
             >
               <div className="flex w-full items-center gap-2 px-1 py-1.5">
                 <Avatar className="size-9 rounded-lg">

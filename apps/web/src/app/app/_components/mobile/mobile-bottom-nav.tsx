@@ -98,26 +98,10 @@ export function MobileBottomNav({ className }: BottomNavProps) {
         }
       }
       
-      // If subdomain is universal or null, fall back to check active user's associated tenant from localStorage
-      if (!subdomain || ["www", "app", "console", "cms"].includes(subdomain)) {
-        const savedUser = localStorage.getItem("zpos_mock_user");
-        if (savedUser) {
-          try {
-            const parsed = JSON.parse(savedUser);
-            if (parsed.associated_tenant) {
-              subdomain = parsed.associated_tenant;
-            }
-          } catch (e) {
-            console.error("Failed to parse mock user in bottom nav:", e);
-          }
-        }
-      }
-
       const supabase = createClient();
       let resolvedTenantName = "ZPOS Retail Merchant";
       let resolvedBranchName = "Chi nhánh Quận 1, TP.HCM";
       let resolvedAvatar = "";
-
       // 1. Fetch live user details and avatar
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -134,17 +118,6 @@ export function MobileBottomNav({ className }: BottomNavProps) {
         }
       } catch (err) {
         console.warn("Failed to query live user avatar:", err);
-      }
-
-      // Fallback for avatar using initials seed if empty
-      if (!resolvedAvatar) {
-        const savedUser = localStorage.getItem("zpos_mock_user");
-        if (savedUser) {
-          try {
-            const parsed = JSON.parse(savedUser);
-            resolvedAvatar = parsed.avatar || parsed.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(parsed.full_name || parsed.name || 'User')}`;
-          } catch (e) {}
-        }
       }
 
       if (!resolvedAvatar) {

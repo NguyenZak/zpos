@@ -102,14 +102,49 @@ export const DEFAULT_ROLES_PERMISSIONS: Record<string, string[]> = {
 // Local storage key prefix
 const STORAGE_PREFIX = "zpos_rbac_";
 
+const UNIVERSAL_SUBDOMAINS = ["www", "app", "console", "cms"];
+const EMPTY_UUID = '00000000-0000-0000-0000-000000000000';
+
+function getCurrentSubdomain(): string | null {
+  if (typeof window === "undefined") return null;
+
+  const host = window.location.hostname;
+  if (host === "localhost" || host === "127.0.0.1") return null;
+
+  if (host.endsWith(".localhost")) {
+    const subdomain = host.replace(".localhost", "");
+    return subdomain && !UNIVERSAL_SUBDOMAINS.includes(subdomain) ? subdomain : null;
+  }
+
+  const mainDomain = host.includes("zpos.vn") ? "zpos.vn" : "zpos.click";
+  if (!host.endsWith(`.${mainDomain}`)) return null;
+
+  const subdomain = host.replace(`.${mainDomain}`, "");
+  return subdomain && !UNIVERSAL_SUBDOMAINS.includes(subdomain) ? subdomain : null;
+}
+
 export const permissionService = {
   async getActiveOrgId(): Promise<string> {
     const supabase = createClient();
     try {
-      const { data: orgs } = await supabase.from('organizations').select('id').limit(1);
-      if (orgs && orgs.length > 0) return orgs[0].id;
+      const subdomain = getCurrentSubdomain();
+      if (subdomain) {
+        const { data: org } = await supabase.from('organizations').select('id').eq('slug', subdomain).maybeSingle();
+        if (org?.id) return org.id;
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: member } = await supabase
+          .from('organization_members')
+          .select('organization_id')
+          .eq('profile_id', user.id)
+          .maybeSingle();
+        if (member?.organization_id) return member.organization_id;
+      }
+
     } catch {}
-    return '00000000-0000-0000-0000-000000000000'; // fallback
+    return EMPTY_UUID;
   },
 
   async getActiveUserId(): Promise<string> {
@@ -117,11 +152,9 @@ export const permissionService = {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) return user.id;
-      
-      const { data: profiles } = await supabase.from('profiles').select('id').limit(1);
-      if (profiles && profiles.length > 0) return profiles[0].id;
+
     } catch {}
-    return '00000000-0000-0000-0000-000000000000'; // fallback
+    return EMPTY_UUID;
   },
 
   // Check if table missing error
@@ -328,40 +361,16 @@ export const permissionService = {
     const orgId = await this.getActiveOrgId();
     
     try {
-      // Find current user session (Check Supabase Auth first, fallback to Local Mock User)
+      // Find current user session from Supabase Auth only.
       let currentUser: any = null;
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         currentUser = user;
-      } else if (typeof window !== 'undefined') {
-        const mockData = localStorage.getItem("zpos_mock_user");
-        if (mockData) {
-          currentUser = JSON.parse(mockData);
-        }
       }
 
       if (!currentUser) {
         // Fallback for anonymous demo session
         return { role: 'owner', roleId: null, permissions: DEFAULT_PERMISSIONS.map(p => p.id) };
-      }
-
-      // If mock user has super_admin global role, give them owner rights
-      if (currentUser.global_role === 'super_admin') {
-        return { role: 'owner', roleId: null, permissions: DEFAULT_PERMISSIONS.map(p => p.id) };
-      }
-
-      // If mock user has associated_tenant, resolve their mock role
-      if (currentUser.associated_tenant) {
-        const mockRole = currentUser.global_role === 'tenant_owner' ? 'owner' : (currentUser.global_role || 'staff');
-        const matchedDefaultKey = Object.keys(DEFAULT_ROLES_PERMISSIONS).find(
-          k => k.toLowerCase() === mockRole.toLowerCase()
-        ) || 'Owner';
-        const permissions = DEFAULT_ROLES_PERMISSIONS[matchedDefaultKey];
-        return {
-          role: mockRole,
-          roleId: null,
-          permissions
-        };
       }
 
       // Live Supabase Organization Membership Query

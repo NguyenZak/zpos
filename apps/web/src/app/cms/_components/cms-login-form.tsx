@@ -5,16 +5,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { 
   ShieldAlert, 
   Mail, 
   Lock, 
   Eye, 
   EyeOff, 
-  Sparkles, 
-  ChevronDown, 
-  ChevronUp, 
   Command, 
   ShieldCheck, 
   ArrowRight 
@@ -25,7 +22,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/utils/supabase/client";
-import { users as CMS_USERS } from "@/data/users";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Vui lòng nhập địa chỉ email hợp lệ." }),
@@ -37,19 +33,10 @@ interface CMSLoginFormProps {
   onLoginSuccess: () => void;
 }
 
-const getMainDomain = () => {
-  if (typeof window === "undefined") return "zpos.click";
-  const host = window.location.hostname;
-  if (host.includes("localhost") || host.includes("127.0.0.1")) return "localhost";
-  if (host.endsWith("zpos-web.vercel.app")) return "zpos-web.vercel.app";
-  return "zpos.click";
-};
-
 export function CMSLoginForm({ onLoginSuccess }: CMSLoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [showDemoAccounts, setShowDemoAccounts] = useState(true);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -60,15 +47,6 @@ export function CMSLoginForm({ onLoginSuccess }: CMSLoginFormProps) {
     },
   });
 
-  const handleQuickLogin = (email: string) => {
-    form.setValue("email", email);
-    form.setValue("password", "sandbox-bypass-pass");
-    toast.info("Đang kết nối tài khoản quản trị...", { duration: 1500 });
-    setTimeout(() => {
-      form.handleSubmit(onSubmit)();
-    }, 300);
-  };
-
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     setLoginError(null);
@@ -76,115 +54,32 @@ export function CMSLoginForm({ onLoginSuccess }: CMSLoginFormProps) {
     const supabase = createClient();
     
     try {
-      // 1. Try Live Supabase Sign In if configured
       const envUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const envKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-      
-      let authData = null;
-      let hasSupabase = !!(envUrl && envKey);
-
-      if (hasSupabase) {
-        try {
-          const { data: resData, error: authError } = await supabase.auth.signInWithPassword({
-            email: data.email,
-            password: data.password,
-          });
-          if (!authError && resData.user) {
-            authData = resData;
-          }
-        } catch (e) {
-          console.warn("Supabase auth failed, checking fallback:", e);
-        }
+      if (!envUrl || !envKey) {
+        throw new Error("Cấu hình Supabase bị thiếu. Không thể đăng nhập CMS.");
       }
 
-      // 2. Mock Sandbox check for CMS Users (robust developer bypass for local/offline)
-      const matchedCmsUser = CMS_USERS.find(
-        (u) => u.email.toLowerCase() === data.email.toLowerCase()
-      );
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
 
-      if (matchedCmsUser && (data.password === "sandbox-bypass-pass" || data.password.length >= 6)) {
-        const mockUser = {
-          email: matchedCmsUser.email,
-          full_name: matchedCmsUser.name,
-          global_role: matchedCmsUser.role === "administrator" ? "super_admin" : "staff",
-          avatar: matchedCmsUser.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(matchedCmsUser.name)}`,
-          associated_tenant: null,
-        };
+      if (authError) throw authError;
 
-        // Track Sandbox login success
-        fetch("/api/admin/audit-logs", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            tenant_id: null,
-            user_email: mockUser.email,
-            action: "login_success",
-            module: "cms",
-            severity: "info",
-            metadata: { full_name: mockUser.full_name, role: mockUser.global_role, mode: "sandbox" }
-          })
-        }).catch(console.error);
-
-        toast.success("Đăng nhập CMS Sandbox thành công!", {
-          description: `Xin chào ${mockUser.full_name} (${matchedCmsUser.role === 'administrator' ? 'Quản trị tối cao' : 'Biên tập viên'}).`,
-        });
-
-        localStorage.setItem("zpos_mock_user", JSON.stringify(mockUser));
-
-        // Set cookies for mock user session so that the middleware/components can read it
-        const isLocal = window.location.hostname.includes("localhost");
-        document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; max-age=86400`;
-        
-        if (isLocal) {
-          document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=localhost; max-age=86400`;
-          document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=.localhost; max-age=86400`;
-        } else {
-          const domain = `.${getMainDomain()}`;
-          document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=${domain}; max-age=86400`;
+      if (authData.user) {
+        const role = authData.user.user_metadata?.role;
+        const isCmsAdmin = role === "super_admin" || role === "cms_admin" || authData.user.email?.endsWith("@zpos.click");
+        if (!isCmsAdmin) {
+          await supabase.auth.signOut();
+          throw new Error("Tài khoản Supabase này không có quyền truy cập CMS.");
         }
-
-        setTimeout(() => {
-          onLoginSuccess();
-        }, 500);
-        return;
-      }
-
-      // If we authenticated with Live Supabase but wasn't a mock user, we still check profile roles
-      if (authData && authData.user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", authData.user.id)
-          .maybeSingle();
-
-        const mockUser = {
-          email: authData.user.email,
-          full_name: profile?.full_name || authData.user.user_metadata?.full_name || "Quản trị viên",
-          global_role: authData.user.user_metadata?.role || "super_admin",
-          avatar: profile?.avatar_url || authData.user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile?.full_name || 'Admin')}`,
-          associated_tenant: null,
-        };
 
         toast.success("Đăng nhập CMS thành công!");
-        localStorage.setItem("zpos_mock_user", JSON.stringify(mockUser));
-
-        const isLocal = window.location.hostname.includes("localhost");
-        document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; max-age=86400`;
-        if (isLocal) {
-          document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=localhost; max-age=86400`;
-          document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=.localhost; max-age=86400`;
-        } else {
-          const domain = `.${getMainDomain()}`;
-          document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=${domain}; max-age=86400`;
-        }
-
-        setTimeout(() => {
-          onLoginSuccess();
-        }, 500);
+        onLoginSuccess();
         return;
       }
 
-      // If both options fail
       throw new Error("Tài khoản hoặc mật khẩu CMS không chính xác. Chỉ tài khoản Quản trị mới được phép truy cập phân hệ CMS.");
 
     } catch (err: any) {
@@ -384,60 +279,6 @@ export function CMSLoginForm({ onLoginSuccess }: CMSLoginFormProps) {
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </Button>
 
-              {/* Demo Accounts Panel */}
-              <div className="mt-2 rounded-xl border border-slate-800 bg-slate-950/30 p-3 backdrop-blur-md transition-all duration-300 hover:border-slate-700/80">
-                <button
-                  type="button"
-                  onClick={() => setShowDemoAccounts(!showDemoAccounts)}
-                  className="flex w-full items-center justify-between font-bold text-[11px] text-slate-400 hover:text-slate-200 transition-colors uppercase tracking-wider"
-                >
-                  <span className="flex items-center gap-2">
-                    <Sparkles size={13} className="text-amber-400 animate-pulse fill-amber-400" />
-                    <span>Tài khoản Demo CMS (Sandbox)</span>
-                  </span>
-                  {showDemoAccounts ? <ChevronUp size={13} className="text-slate-500" /> : <ChevronDown size={13} className="text-slate-500" />}
-                </button>
-                
-                <AnimatePresence>
-                  {showDemoAccounts && (
-                    <motion.div 
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="mt-2.5 grid grid-cols-1 gap-1.5 border-t border-slate-800/80 pt-2.5">
-                        {CMS_USERS.map((user) => (
-                          <button
-                            key={user.email}
-                            type="button"
-                            onClick={() => handleQuickLogin(user.email)}
-                            disabled={isLoading}
-                            className="flex flex-col text-left p-2.5 rounded-xl border border-slate-800/30 bg-slate-950/20 hover:bg-slate-800/40 hover:border-slate-700 transition-all duration-200 group/demo"
-                          >
-                            <div className="flex items-center justify-between w-full">
-                              <span className="font-semibold text-xs text-slate-300 group-hover/demo:text-indigo-400 transition-colors">
-                                {user.name}
-                              </span>
-                              <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 group-hover/demo:bg-indigo-500/20">
-                                {user.role === "administrator" ? "Admin" : "Editor"}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between w-full mt-1">
-                              <span className="text-[10px] text-slate-500 font-mono">
-                                {user.email}
-                              </span>
-                              <span className="text-[9px] text-slate-600 font-medium group-hover/demo:text-indigo-500/70 transition-colors">
-                                Nhấp để đăng nhập
-                              </span>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
             </form>
 
             {/* Back to Core App */}

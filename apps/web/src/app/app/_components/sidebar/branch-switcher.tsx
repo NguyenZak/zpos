@@ -12,7 +12,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { posService } from "@/services/pos.service";
+import { getTenantSlug, posService } from "@/services/pos.service";
+
+const getBranchStorageKey = () => `zpos_selected_branch_id_${getTenantSlug()}`;
 
 export function BranchSwitcher() {
   const [branches, setBranches] = React.useState<any[]>([]);
@@ -23,7 +25,7 @@ export function BranchSwitcher() {
       const data = await posService.getBranches();
       setBranches(data);
       
-      const stored = localStorage.getItem("zpos_selected_branch_id");
+      const stored = localStorage.getItem(getBranchStorageKey());
       if (stored) {
         const found = data.find((b: any) => b.id === stored);
         if (found) {
@@ -53,7 +55,7 @@ export function BranchSwitcher() {
 
   const handleSelectBranch = (branch: any) => {
     setSelectedBranch(branch);
-    localStorage.setItem("zpos_selected_branch_id", branch.id);
+    localStorage.setItem(getBranchStorageKey(), branch.id);
     window.dispatchEvent(new Event("zpos_branch_switched"));
   };
 

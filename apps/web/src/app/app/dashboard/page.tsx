@@ -184,22 +184,7 @@ export default function DashboardPage() {
         }
       }
       
-      // If subdomain is universal or null, fall back to check active user's associated tenant from localStorage
-      if (!subdomain || ["www", "app", "console", "cms"].includes(subdomain)) {
-        const savedUser = localStorage.getItem("zpos_mock_user");
-        if (savedUser) {
-          try {
-            const parsed = JSON.parse(savedUser);
-            if (parsed.associated_tenant) {
-              subdomain = parsed.associated_tenant;
-            }
-          } catch (e) {
-            console.error("Failed to parse mock user in loadTenantName:", e);
-          }
-        }
-      }
-
-      // If still universal or null, try loading from Supabase for live user
+      // If subdomain is universal or null, use the authenticated user's tenant.
       if (!subdomain || ["www", "app", "console", "cms"].includes(subdomain)) {
         try {
           const supabase = createClient();
@@ -221,7 +206,7 @@ export default function DashboardPage() {
           console.error("Failed to load user organization from database:", err);
         }
       }
-      
+
       if (!subdomain || ["www", "app", "console", "cms"].includes(subdomain)) {
         setTenantName("ZPOS");
         return;
@@ -837,7 +822,7 @@ export default function DashboardPage() {
             <div className="text-3xl font-extrabold">{formatCurrency(displayRevenue)}</div>
             <div className="flex items-center mt-1 text-xs font-medium text-primary-foreground/80">
               <ArrowUpRight className="w-3.5 h-3.5 mr-1" />
-              <span>{stats?.revenueChange || "+12.5%"} so với tuần trước</span>
+              <span>{stats?.revenueChange || "+0.0%"} so với tuần trước</span>
             </div>
             
             {goal && timeRange === "7days" && (
@@ -867,7 +852,7 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center mt-1 text-xs font-medium text-emerald-600 dark:text-emerald-500">
               <ArrowUpRight className="w-3.5 h-3.5 mr-1" />
-              <span>{finance?.profitChange || "+18.4%"} tăng trưởng</span>
+              <span>{finance?.profitChange || "+0.0%"} tăng trưởng</span>
             </div>
           </CardContent>
         </Card>
@@ -884,7 +869,7 @@ export default function DashboardPage() {
             <div className="text-3xl font-extrabold">+{displayOrders}</div>
             <div className="flex items-center mt-1 text-xs font-medium text-indigo-600 dark:text-indigo-400">
               <ArrowUpRight className="w-3.5 h-3.5 mr-1" />
-              <span>{stats?.ordersChange || "+18%"} trong kỳ</span>
+              <span>{stats?.ordersChange || "+0.0%"} trong kỳ</span>
             </div>
           </CardContent>
         </Card>
@@ -901,7 +886,7 @@ export default function DashboardPage() {
             <div className="text-3xl font-extrabold">{displayCustomers}</div>
             <div className="flex items-center mt-1 text-xs font-medium text-pink-600 dark:text-pink-400">
               <ArrowUpRight className="w-3.5 h-3.5 mr-1" />
-              <span>{stats?.customersChange || "+5%"} khách đăng ký mới</span>
+              <span>{stats?.customersChange || "+0.0%"} khách đăng ký mới</span>
             </div>
           </CardContent>
         </Card>

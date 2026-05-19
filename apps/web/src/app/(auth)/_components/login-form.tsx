@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/utils/supabase/client";
+import { isSuperAdminEmail } from "@/utils/super-admin";
 import { ShieldAlert, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 const formSchema = z.object({
@@ -19,16 +20,6 @@ const formSchema = z.object({
   password: z.string().min(6, { message: "Mật khẩu phải có ít nhất 6 ký tự." }),
   remember: z.boolean().optional(),
 });
-
-const MOCK_USERS = [
-  { email: "quan.tm@zpos.click", full_name: "Trần Minh Quân", global_role: "super_admin" },
-  { email: "kphone@zpos.vn", full_name: "Chủ Cửa Hàng KPhone", global_role: "tenant_owner", associated_tenant: "kphone" },
-  { email: "kphone.staff@zpos.vn", full_name: "Nhân Viên KPhone", global_role: "staff", associated_tenant: "kphone" },
-  { email: "mai.nt@bibomart.com.vn", full_name: "Nguyễn Thị Mai", global_role: "tenant_owner", associated_tenant: "bibomart" },
-  { email: "nam.lh@comnieusaigon.vn", full_name: "Lê Hoàng Nam", global_role: "tenant_owner", associated_tenant: "comnieusg" },
-  { email: "dang.ph@juno.vn", full_name: "Phạm Hải Đăng", global_role: "tenant_owner", associated_tenant: "juno" },
-  { email: "my.vh@thecoffeehouse.vn", full_name: "Vũ Hoàng My", global_role: "staff", associated_tenant: "tch-q3" },
-];
 
 const getMainDomain = () => {
   if (typeof window === "undefined") return "zpos.click";
@@ -62,6 +53,33 @@ const getSubdomain = () => {
   }
   
   return null;
+};
+
+const clearClientMockSession = () => {
+  if (typeof window === "undefined") return;
+
+  localStorage.removeItem("zpos_mock_user");
+  localStorage.removeItem("zpos_mock_session");
+
+  const cookieName = "zpos_mock_session";
+  const host = window.location.hostname;
+  const domains = [
+    "",
+    host,
+    `.${host}`,
+    "localhost",
+    ".localhost",
+    "zpos.click",
+    ".zpos.click",
+    "zpos.vn",
+    ".zpos.vn",
+    "zpos-web.vercel.app",
+    ".zpos-web.vercel.app",
+  ];
+
+  domains.forEach((domain) => {
+    document.cookie = `${cookieName}=; path=/; max-age=0${domain ? `; domain=${domain}` : ""}`;
+  });
 };
 
 export function LoginForm() {
@@ -113,191 +131,15 @@ export function LoginForm() {
     const supabase = createClient();
     
     try {
+      clearClientMockSession();
+
       // 1. Try Live Supabase Sign In
       const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       });
 
-      if (error) {
-        const isLocal = window.location.hostname.includes("localhost") || 
-                        window.location.hostname.includes("127.0.0.1");
-
-        // 2. Sandbox Fallback bypass for mock accounts (ONLY allowed in local environment)
-        const mockUser = isLocal ? MOCK_USERS.find(
-          (u) => u.email.toLowerCase() === data.email.toLowerCase()
-        ) : null;
-
-        if (mockUser && data.password.length >= 6) {
-          // Track Sandbox login success
-          fetch("/api/admin/audit-logs", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              tenant_id: mockUser.associated_tenant || null,
-              user_email: mockUser.email,
-              action: "login_success",
-              module: "auth",
-              severity: "info",
-              metadata: { full_name: mockUser.full_name, role: mockUser.global_role, mode: "sandbox" }
-            })
-          }).catch(console.error);
-
-          toast.success("Đăng nhập Sandbox thành công!", {
-            description: `Xin chào ${mockUser.full_name} (${mockUser.global_role === 'super_admin' ? 'Super Admin' : 'Chủ doanh nghiệp'}).`,
-          });
-
-          localStorage.setItem("zpos_mock_user", JSON.stringify(mockUser));
-
-          // Set cookie for mock user session so that the middleware (proxy.ts) can read it and allow access!
-          const isLocal = window.location.hostname.includes("localhost");
-          
-          // 1. Host-only cookie (100% reliable on active subdomain like console.localhost or bibomart.localhost)
-          document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; max-age=86400`;
-          
-          // 2. Wildcard cookies (for cross-subdomain redirections)
-          if (isLocal) {
-            document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=localhost; max-age=86400`;
-            document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=.localhost; max-age=86400`;
-          } else {
-            const domain = `.${getMainDomain()}`;
-            document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=${domain}; max-age=86400`;
-          }
-
-          const params = new URLSearchParams(window.location.search);
-          const redirectToParam = params.get("redirectTo");
-
-          const isAuthPath = (path: string) => {
-            const clean = path.toLowerCase().trim();
-            return (
-              clean.startsWith("/v1") ||
-              clean.startsWith("/v2") ||
-              clean.startsWith("v1") ||
-              clean.startsWith("v2") ||
-              clean.includes("login") ||
-              clean.includes("register")
-            );
-          };
-
-          const port = window.location.port ? `:${window.location.port}` : "";
-          if (redirectToParam && !isAuthPath(redirectToParam)) {
-            window.location.href = redirectToParam;
-          } else if (mockUser.global_role === "super_admin") {
-            const consoleUrl = isLocal 
-              ? `http://console.localhost${port}/dashboard?mock_session=${encodeURIComponent(JSON.stringify(mockUser))}` 
-              : `https://console.${getMainDomain()}/dashboard`;
-            window.location.href = consoleUrl;
-          } else if (mockUser.associated_tenant) {
-            const tenantUrl = isLocal
-              ? `http://${mockUser.associated_tenant}.localhost${port}/app?mock_session=${encodeURIComponent(JSON.stringify(mockUser))}`
-              : `https://${mockUser.associated_tenant}.${getMainDomain()}/app`;
-            window.location.href = tenantUrl;
-          } else {
-            const appUrl = isLocal
-              ? `http://localhost${port}/app?mock_session=${encodeURIComponent(JSON.stringify(mockUser))}`
-              : "/app";
-            window.location.href = appUrl;
-          }
-          return;
-        }
-
-        // 2b. Database Bypass for newly created tenants / users (unconfirmed emails in Supabase Auth or local testing)
-        const isLocalHost = window.location.hostname.includes("localhost") || 
-                            window.location.hostname.includes("127.0.0.1") || 
-                            window.location.port !== "";
-        const port = window.location.port ? `:${window.location.port}` : "";
-        const isUnconfirmedEmail = error.message?.toLowerCase().includes("confirm") || 
-                                   error.message?.toLowerCase().includes("verify");
-
-        // Allow database bypass on localhost for development, or on live server if the email is unconfirmed (password is validated by Supabase Auth)
-        const shouldBypass = isLocalHost || isUnconfirmedEmail;
-
-        if (shouldBypass && data.password.length >= 6) {
-          // Query profiles directly by email
-          const { data: dbProfile } = await supabase
-            .from("profiles")
-            .select("*, organization_members(organization_id, role, organizations(slug))")
-            .eq("email", data.email.toLowerCase())
-            .maybeSingle();
-
-          if (dbProfile) {
-            const member = dbProfile.organization_members?.[0];
-            let tenantSlug = member?.organizations?.slug;
-            let role = member?.role === "owner" ? "tenant_owner" : "staff";
-
-            // Robust fallback if RLS blocked organization_members join anonymously
-            if (!tenantSlug) {
-              const currentSubdomain = getSubdomain();
-              if (currentSubdomain) {
-                // Verify the subdomain exists in the organizations table
-                const { data: org } = await supabase
-                  .from("organizations")
-                  .select("slug")
-                  .eq("slug", currentSubdomain)
-                  .maybeSingle();
-                  
-                if (org) {
-                  tenantSlug = org.slug;
-                  // Default to tenant_owner for console-provisioned tenant owner
-                  role = "tenant_owner";
-                }
-              }
-            }
-
-            const mockUser = {
-              email: dbProfile.email,
-              full_name: dbProfile.full_name || "Chủ doanh nghiệp",
-              global_role: role,
-              associated_tenant: tenantSlug || null
-            };
-
-            // Track Database Bypass login success
-            fetch("/api/admin/audit-logs", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                tenant_id: tenantSlug || null,
-                user_email: dbProfile.email,
-                action: "login_success",
-                module: "auth",
-                severity: "info",
-                metadata: { full_name: dbProfile.full_name, role, mode: "database_bypass" }
-              })
-            }).catch(console.error);
-
-            toast.success(isUnconfirmedEmail ? "Đăng nhập xác thực tự động thành công!" : "Đăng nhập Sandbox Live thành công!", {
-              description: `Chào mừng ${mockUser.full_name} đến với ${tenantSlug || 'ZPOS'}.`,
-            });
-
-            localStorage.setItem("zpos_mock_user", JSON.stringify(mockUser));
-
-            // Write both Host-only and Wildcard cookies for current domain
-            document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; max-age=86400`;
-            if (isLocal) {
-              document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=localhost; max-age=86400`;
-              document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=.localhost; max-age=86400`;
-            } else {
-              const domain = `.${getMainDomain()}`;
-              document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=${domain}; max-age=86400`;
-            }
-
-            if (tenantSlug) {
-              const tenantUrl = isLocal
-                ? `http://${tenantSlug}.localhost${port}/app?mock_session=${encodeURIComponent(JSON.stringify(mockUser))}`
-                : `https://${tenantSlug}.${getMainDomain()}/app`;
-              window.location.href = tenantUrl;
-            } else {
-              const consoleUrl = isLocal
-                ? `http://console.localhost${port}/dashboard?mock_session=${encodeURIComponent(JSON.stringify(mockUser))}`
-                : `https://console.${getMainDomain()}/dashboard`;
-              window.location.href = consoleUrl;
-            }
-            return;
-          }
-        }
-
-        throw error;
-      }
+      if (error) throw error;
 
       // Track Live login success
       fetch("/api/admin/audit-logs", {
@@ -355,26 +197,8 @@ export function LoginForm() {
 
       // 2. If user is associated with a tenant, redirect them to their subdomain immediately!
       if (tenantSlug) {
-        const mockUser = {
-          email: authData.user?.email || data.email,
-          full_name: authData.user?.user_metadata?.full_name || profile?.full_name || "Chủ doanh nghiệp",
-          global_role: member?.role === "owner" ? "tenant_owner" : "staff",
-          associated_tenant: tenantSlug
-        };
-        localStorage.setItem("zpos_mock_user", JSON.stringify(mockUser));
-        
-        // Write both Host-only and Wildcard cookies
-        document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; max-age=86400`;
-        if (isLocal) {
-          document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=localhost; max-age=86400`;
-          document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=.localhost; max-age=86400`;
-        } else {
-          const domain = `.${getMainDomain()}`;
-          document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=${domain}; max-age=86400`;
-        }
-
         const redirectUrl = isLocal
-          ? `http://${tenantSlug}.localhost${port}/app?mock_session=${encodeURIComponent(JSON.stringify(mockUser))}`
+          ? "/app"
           : `https://${tenantSlug}.${getMainDomain()}/app`;
         window.location.href = redirectUrl;
         return;
@@ -385,29 +209,11 @@ export function LoginForm() {
         window.location.hostname.startsWith("console.") || 
         window.location.hostname === "console.localhost";
 
-      const isSuperAdmin = data.email.toLowerCase() === "quan.tm@zpos.click";
+      const isSuperAdmin = isSuperAdminEmail(data.email);
 
       if (isSuperAdmin) {
-        // Fail-safe: write zpos_mock_session cookie for live super_admin to bypass any browser cookie sync latency on subdomain
-        const mockUser = {
-          email: authData.user?.email || data.email,
-          full_name: authData.user?.user_metadata?.full_name || "Super Admin",
-          global_role: "super_admin"
-        };
-        localStorage.setItem("zpos_mock_user", JSON.stringify(mockUser));
-        
-        // Write both Host-only and Wildcard cookies
-        document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; max-age=86400`;
-        if (isLocal) {
-          document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=localhost; max-age=86400`;
-          document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=.localhost; max-age=86400`;
-        } else {
-          const domain = `.${getMainDomain()}`;
-          document.cookie = `zpos_mock_session=${encodeURIComponent(JSON.stringify(mockUser))}; path=/; domain=${domain}; max-age=86400`;
-        }
-
         const consoleUrl = isLocal 
-          ? `http://console.localhost${port}/dashboard?mock_session=${encodeURIComponent(JSON.stringify(mockUser))}` 
+          ? "/console" 
           : `https://console.${getMainDomain()}/dashboard`;
         window.location.href = consoleUrl;
         return;
@@ -418,7 +224,11 @@ export function LoginForm() {
 
     } catch (err: any) {
       console.error("Auth Exception Caught:", err);
-      const errMsg = err?.message || err?.error_description || (typeof err === 'object' ? JSON.stringify(err) : String(err)) || "Vui lòng kiểm tra lại email và mật khẩu.";
+      const rawErrMsg = err?.message || err?.error_description || (typeof err === 'object' ? JSON.stringify(err) : String(err)) || "Vui lòng kiểm tra lại email và mật khẩu.";
+      const isEmailUnconfirmed = rawErrMsg.toLowerCase().includes("email not confirmed");
+      const errMsg = isEmailUnconfirmed
+        ? "Email chưa được xác nhận trong Supabase Auth. Hãy mở Console và lưu lại user này bằng API admin mới, hoặc confirm email trực tiếp trong Supabase Dashboard."
+        : rawErrMsg;
       
       // Track failed login
       fetch("/api/admin/audit-logs", {

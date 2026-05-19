@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/client";
-import { getActiveOrganizationId, getTenantSlug } from "./pos.service";
+import { getActiveOrganizationId } from "./pos.service";
 
 export const aiService = {
   // 1. Revenue Summary
@@ -62,41 +62,31 @@ export const aiService = {
   // 3. Top Products
   async getTopProducts() {
     const supabase = createClient();
-    const tenantSlug = getTenantSlug();
+    const orgId = await getActiveOrganizationId();
     const { data, error } = await supabase
       .from('products')
       .select('*, category:categories(name)')
+      .eq('organization_id', orgId)
       .eq('is_active', true)
       .order('stock', { ascending: false });
     if (error) throw error;
 
-    let filtered = data || [];
-    if (tenantSlug === 'app') {
-      filtered = filtered.filter((p: any) => !p.description || !p.description.includes('::') || p.description.startsWith('app::'));
-    } else {
-      filtered = filtered.filter((p: any) => p.description && p.description.startsWith(`${tenantSlug}::`));
-    }
-    return filtered.slice(0, 5);
+    return (data || []).slice(0, 5);
   },
 
   // 4. Low Stock Items
   async getLowStockItems() {
     const supabase = createClient();
-    const tenantSlug = getTenantSlug();
+    const orgId = await getActiveOrganizationId();
     const { data, error } = await supabase
       .from('products')
       .select('*, category:categories(name)')
+      .eq('organization_id', orgId)
       .lt('stock', 5)
       .eq('is_active', true);
     if (error) throw error;
 
-    let filtered = data || [];
-    if (tenantSlug === 'app') {
-      filtered = filtered.filter((p: any) => !p.description || !p.description.includes('::') || p.description.startsWith('app::'));
-    } else {
-      filtered = filtered.filter((p: any) => p.description && p.description.startsWith(`${tenantSlug}::`));
-    }
-    return filtered;
+    return data || [];
   },
 
   // 5. Inventory Forecast
@@ -139,19 +129,15 @@ export const aiService = {
   // 7. Customer Segments
   async getCustomerSegments() {
     const supabase = createClient();
-    const tenantSlug = getTenantSlug();
+    const orgId = await getActiveOrganizationId();
     const { data, error } = await supabase
       .from('customers')
       .select('*')
+      .eq('organization_id', orgId)
       .order('points', { ascending: false });
     if (error) throw error;
 
-    let filtered = data || [];
-    if (tenantSlug === 'app') {
-      filtered = filtered.filter((c: any) => !c.address || !c.address.includes('::') || c.address.startsWith('app::'));
-    } else {
-      filtered = filtered.filter((c: any) => c.address && c.address.startsWith(`${tenantSlug}::`));
-    }
+    const filtered = data || [];
 
     const vip = filtered.filter(c => Number(c.points) > 1000);
     const regular = filtered.filter(c => Number(c.points) <= 1000 && Number(c.points) > 100);
@@ -176,7 +162,12 @@ export const aiService = {
   async createPurchaseDraft(supplierId: string, productId: string, qty: number) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    const { data: product } = await supabase.from('products').select('*').eq('id', productId).single();
+    const { data: product } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', productId)
+      .eq('organization_id', orgId)
+      .single();
     if (!product) throw new Error("Không tìm thấy sản phẩm");
 
     // Resolve branch

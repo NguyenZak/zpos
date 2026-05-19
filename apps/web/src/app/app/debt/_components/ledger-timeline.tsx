@@ -7,9 +7,9 @@ import type { DebtTransaction, DebtTxKind } from "@/services/debt.service";
 const fmt = (n: number) =>
   new Intl.NumberFormat("vi-VN").format(Math.round(n || 0)) + " ₫";
 
-const formatDateTime = (s: string) => {
-  const d = new Date(s);
-  return d.toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" });
+const formatDateTime = (s?: string | null) => {
+  if (!s) return "—";
+  return new Date(s).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" });
 };
 
 const kindMeta: Record<DebtTxKind, { label: string; icon: any; tone: string }> = {

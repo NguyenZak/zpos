@@ -1,5 +1,1228 @@
 [
   {
+    "id": "log-1779158298202-j4t20llxc",
+    "tenant_id": null,
+    "user_id": "14785931-42d6-4143-9291-a96dee12d42d",
+    "user_email": "hoa@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T02:38:18.202Z"
+  },
+  {
+    "id": "log-1779158281538-2ryakzyml",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "kphone@zpos.vn",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "critical",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Invalid login credentials",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": true,
+    "alert_reason": "Phát hiện tấn công Brute-Force: Thất bại liên tiếp 3 lần đăng nhập từ IP (127.0.0.1) hoặc tài khoản (kphone@zpos.vn).",
+    "created_at": "2026-05-19T02:38:01.538Z"
+  },
+  {
+    "id": "log-1779158259922-t56fqq0ht",
+    "tenant_id": null,
+    "user_id": "14785931-42d6-4143-9291-a96dee12d42d",
+    "user_email": "hoa@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T02:37:39.923Z"
+  },
+  {
+    "id": "log-1779158182810-9mj071fzg",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T02:36:22.810Z"
+  },
+  {
+    "id": "log-1779158158923-fesv9bic6",
+    "tenant_id": null,
+    "user_id": "ade4ca68-c276-4b9c-ad5b-78dbe5ad912f",
+    "user_email": "kphone@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T02:35:58.923Z"
+  },
+  {
+    "id": "log-1779158123339-024qq7ewf",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T02:35:23.339Z"
+  },
+  {
+    "id": "log-1779157851107-t4k2cu1yv",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T02:30:51.107Z"
+  },
+  {
+    "id": "log-1779157802199-wseu5zuow",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "kphone@zpos.click",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "critical",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Email chưa được xác nhận trong Supabase Auth. Hãy mở Console và lưu lại user này bằng API admin mới, hoặc confirm email trực tiếp trong Supabase Dashboard.",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": true,
+    "alert_reason": "Phát hiện tấn công Brute-Force: Thất bại liên tiếp 7 lần đăng nhập từ IP (127.0.0.1) hoặc tài khoản (kphone@zpos.click).",
+    "created_at": "2026-05-19T02:30:02.199Z"
+  },
+  {
+    "id": "log-1779157775813-elijl2m13",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T02:29:35.813Z"
+  },
+  {
+    "id": "log-1779157762425-cmryzx1xj",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "kphone@zpos.click",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "critical",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Email chưa được xác nhận trong Supabase Auth. Hãy mở Console và lưu lại user này bằng API admin mới, hoặc confirm email trực tiếp trong Supabase Dashboard.",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": true,
+    "alert_reason": "Phát hiện tấn công Brute-Force: Thất bại liên tiếp 6 lần đăng nhập từ IP (127.0.0.1) hoặc tài khoản (kphone@zpos.click).",
+    "created_at": "2026-05-19T02:29:22.425Z"
+  },
+  {
+    "id": "log-1779157603737-ftzdsnwvr",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "kphone@zpos.click",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "critical",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Email not confirmed",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": true,
+    "alert_reason": "Phát hiện tấn công Brute-Force: Thất bại liên tiếp 7 lần đăng nhập từ IP (127.0.0.1) hoặc tài khoản (kphone@zpos.click).",
+    "created_at": "2026-05-19T02:26:43.737Z"
+  },
+  {
+    "id": "log-1779157385407-usyvv6hdf",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "kphone@zpos.click",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "critical",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Email not confirmed",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": true,
+    "alert_reason": "Phát hiện tấn công Brute-Force: Thất bại liên tiếp 8 lần đăng nhập từ IP (127.0.0.1) hoặc tài khoản (kphone@zpos.click).",
+    "created_at": "2026-05-19T02:23:05.407Z"
+  },
+  {
+    "id": "log-1779157329441-qypmzz0tw",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "chienmanh@zpos.click",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "critical",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Email not confirmed",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": true,
+    "alert_reason": "Phát hiện tấn công Brute-Force: Thất bại liên tiếp 7 lần đăng nhập từ IP (127.0.0.1) hoặc tài khoản (chienmanh@zpos.click).",
+    "created_at": "2026-05-19T02:22:09.441Z"
+  },
+  {
+    "id": "log-1779157301828-6z4fzeoyo",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "kphone@zpos.click",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "critical",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Email not confirmed",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": true,
+    "alert_reason": "Phát hiện tấn công Brute-Force: Thất bại liên tiếp 7 lần đăng nhập từ IP (127.0.0.1) hoặc tài khoản (kphone@zpos.click).",
+    "created_at": "2026-05-19T02:21:41.828Z"
+  },
+  {
+    "id": "log-1779157295646-ztexkedoe",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "kphone@zpos.click",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "critical",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Email not confirmed",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": true,
+    "alert_reason": "Phát hiện tấn công Brute-Force: Thất bại liên tiếp 6 lần đăng nhập từ IP (127.0.0.1) hoặc tài khoản (kphone@zpos.click).",
+    "created_at": "2026-05-19T02:21:35.646Z"
+  },
+  {
+    "id": "log-1779157125567-iuyglh9ri",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "chienmanh@zpos.click",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "critical",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Email not confirmed",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": true,
+    "alert_reason": "Phát hiện tấn công Brute-Force: Thất bại liên tiếp 5 lần đăng nhập từ IP (127.0.0.1) hoặc tài khoản (chienmanh@zpos.click).",
+    "created_at": "2026-05-19T02:18:45.567Z"
+  },
+  {
+    "id": "log-1779157117126-khi2do71i",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "abc@zpos.click",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "critical",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Invalid login credentials",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": true,
+    "alert_reason": "Phát hiện tấn công Brute-Force: Thất bại liên tiếp 4 lần đăng nhập từ IP (127.0.0.1) hoặc tài khoản (abc@zpos.click).",
+    "created_at": "2026-05-19T02:18:37.126Z"
+  },
+  {
+    "id": "log-1779156940570-7umuw10ge",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "abc@zpos.click",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "critical",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Invalid login credentials",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": true,
+    "alert_reason": "Phát hiện tấn công Brute-Force: Thất bại liên tiếp 3 lần đăng nhập từ IP (127.0.0.1) hoặc tài khoản (abc@zpos.click).",
+    "created_at": "2026-05-19T02:15:40.571Z"
+  },
+  {
+    "id": "log-1779156880500-xy0si7bit",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "abc@zpos.click",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "warning",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Invalid login credentials",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T02:14:40.500Z"
+  },
+  {
+    "id": "log-1779156814865-tw3uxj77x",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T02:13:34.865Z"
+  },
+  {
+    "id": "log-1779156728531-z7ir1rlsd",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "kphone@zpos.click",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "warning",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Email not confirmed",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T02:12:08.531Z"
+  },
+  {
+    "id": "log-1779156469105-iic03vxv5",
+    "tenant_id": "manhchien",
+    "user_id": null,
+    "user_email": "abc@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "full_name": "ABC",
+      "role": "tenant_owner",
+      "mode": "database_bypass"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T02:07:49.105Z"
+  },
+  {
+    "id": "log-1779155596834-tg45wqtza",
+    "tenant_id": "kphone",
+    "user_id": null,
+    "user_email": "kphone@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "full_name": "Khởi",
+      "role": "tenant_owner",
+      "mode": "database_bypass"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T01:53:16.834Z"
+  },
+  {
+    "id": "log-1779155049877-57ppv2uwd",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "chienmanh@zpos.click",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "warning",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Email not confirmed",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T01:44:09.877Z"
+  },
+  {
+    "id": "log-1779155028287-l208kvcte",
+    "tenant_id": "kphone",
+    "user_id": null,
+    "user_email": "kphone@zpos.vn",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "full_name": "Chủ Cửa Hàng KPhone",
+      "role": "tenant_owner",
+      "mode": "sandbox"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T01:43:48.287Z"
+  },
+  {
+    "id": "log-1779154491968-8y3mac0xd",
+    "tenant_id": "kphone",
+    "user_id": null,
+    "user_email": "kphone@zpos.vn",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "full_name": "Chủ Cửa Hàng KPhone",
+      "role": "tenant_owner",
+      "mode": "sandbox"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T01:34:51.968Z"
+  },
+  {
+    "id": "log-1779154232231-c2ol9dtxf",
+    "tenant_id": "kphone",
+    "user_id": null,
+    "user_email": "kphone@zpos.vn",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "full_name": "Chủ Cửa Hàng KPhone",
+      "role": "tenant_owner",
+      "mode": "sandbox"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T01:30:32.231Z"
+  },
+  {
+    "id": "log-1779154217277-j0tw4obmw",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "chienmanh@zpos.click",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "warning",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Email not confirmed",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T01:30:17.277Z"
+  },
+  {
+    "id": "log-1779154135752-edpdbauk3",
+    "tenant_id": "kphone",
+    "user_id": null,
+    "user_email": "kphone@zpos.vn",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "full_name": "Chủ Cửa Hàng KPhone",
+      "role": "tenant_owner",
+      "mode": "sandbox"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T01:28:55.752Z"
+  },
+  {
+    "id": "log-1779154129144-ytt8wmtpk",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "chienmanh@zpos.click",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "warning",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Email not confirmed",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T01:28:49.144Z"
+  },
+  {
+    "id": "log-1779153870397-rf32tf2dy",
+    "tenant_id": "manhchien",
+    "user_id": null,
+    "user_email": "kphone@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "full_name": "ABC",
+      "role": "tenant_owner",
+      "mode": "database_bypass"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T01:24:30.397Z"
+  },
+  {
+    "id": "log-1779153826064-2cvvjodom",
+    "tenant_id": "manhchien",
+    "user_id": null,
+    "user_email": "kphone@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "full_name": "ABC",
+      "role": "tenant_owner",
+      "mode": "database_bypass"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T01:23:46.064Z"
+  },
+  {
+    "id": "log-1779153777510-onwekv004",
+    "tenant_id": "manhchien",
+    "user_id": null,
+    "user_email": "kphone@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "full_name": "ABC",
+      "role": "tenant_owner",
+      "mode": "database_bypass"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T01:22:57.510Z"
+  },
+  {
+    "id": "log-1779153287390-q63nutvlx",
+    "tenant_id": "manhchien",
+    "user_id": null,
+    "user_email": "kphone@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "full_name": "ABC",
+      "role": "tenant_owner",
+      "mode": "database_bypass"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T01:14:47.390Z"
+  },
+  {
+    "id": "log-1779153226197-8gpo9tjs6",
+    "tenant_id": "manhchien",
+    "user_id": null,
+    "user_email": "kphone@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "full_name": "ABC",
+      "role": "tenant_owner",
+      "mode": "database_bypass"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T01:13:46.197Z"
+  },
+  {
+    "id": "log-1779153220666-yc6l01a0n",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "chienmanh@zpos.click",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "warning",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Email not confirmed",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T01:13:40.667Z"
+  },
+  {
+    "id": "log-1779150215190-5gck1txbq",
+    "tenant_id": "manhchien",
+    "user_id": null,
+    "user_email": "kphone@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "full_name": "ABC",
+      "role": "tenant_owner",
+      "mode": "database_bypass"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T00:23:35.190Z"
+  },
+  {
+    "id": "log-1779150173899-0cni0myn9",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "kphone@zpos.click",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "warning",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Email not confirmed",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T00:22:53.899Z"
+  },
+  {
+    "id": "log-1779150170477-dlo5zny2k",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "kphone@zpos.click",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "warning",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Email not confirmed",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T00:22:50.477Z"
+  },
+  {
+    "id": "log-1779150138512-wz5wumgnu",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T00:22:18.512Z"
+  },
+  {
+    "id": "log-1779129650217-uaqu2n0uo",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-18T18:40:50.217Z"
+  },
+  {
+    "id": "log-1779129613531-btam98wml",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-18T18:40:13.531Z"
+  },
+  {
+    "id": "log-1779129609364-j3g71hpgx",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "kphone@zpos.click",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "warning",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Email not confirmed",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-18T18:40:09.364Z"
+  },
+  {
+    "id": "log-1779129581245-ovceuekkz",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": null,
+    "action": "unauthorized_access",
+    "module": "console",
+    "severity": "warning",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "attempted_url": "/app",
+      "reason": "Non-super-admin tried to access console subdomain"
+    },
+    "is_alert": true,
+    "alert_reason": "Truy cập trái quyền: Tài khoản cố gắng truy cập trái phép vào tài nguyên của mô-đun console.",
+    "created_at": "2026-05-18T18:39:41.245Z"
+  },
+  {
+    "id": "log-1779129580713-gc64ma9bm",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-18T18:39:40.713Z"
+  },
+  {
+    "id": "log-1779129555002-6fojmdkcf",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": null,
+    "action": "unauthorized_access",
+    "module": "console",
+    "severity": "warning",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "attempted_url": "/app",
+      "reason": "Non-super-admin tried to access console subdomain"
+    },
+    "is_alert": true,
+    "alert_reason": "Truy cập trái quyền: Tài khoản cố gắng truy cập trái phép vào tài nguyên của mô-đun console.",
+    "created_at": "2026-05-18T18:39:15.002Z"
+  },
+  {
+    "id": "log-1779129554415-vlyqy6lci",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-18T18:39:14.415Z"
+  },
+  {
+    "id": "log-1779129424381-p1c11pg8z",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": null,
+    "action": "unauthorized_access",
+    "module": "console",
+    "severity": "warning",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "attempted_url": "/app",
+      "reason": "Non-super-admin tried to access console subdomain"
+    },
+    "is_alert": true,
+    "alert_reason": "Truy cập trái quyền: Tài khoản cố gắng truy cập trái phép vào tài nguyên của mô-đun console.",
+    "created_at": "2026-05-18T18:37:04.381Z"
+  },
+  {
+    "id": "log-1779129423561-ebpnluvi6",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-18T18:37:03.561Z"
+  },
+  {
+    "id": "log-1779129415887-vdmzoknr3",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "kphone@zpos.click",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "warning",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Email not confirmed",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-18T18:36:55.887Z"
+  },
+  {
+    "id": "log-1779129244277-6s1eralgq",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": null,
+    "action": "unauthorized_access",
+    "module": "console",
+    "severity": "warning",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "attempted_url": "/app",
+      "reason": "Non-super-admin tried to access console subdomain"
+    },
+    "is_alert": true,
+    "alert_reason": "Truy cập trái quyền: Tài khoản cố gắng truy cập trái phép vào tài nguyên của mô-đun console.",
+    "created_at": "2026-05-18T18:34:04.277Z"
+  },
+  {
+    "id": "log-1779129243531-rs6ufpicc",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-18T18:34:03.531Z"
+  },
+  {
+    "id": "log-1779128724910-1tx45c7hh",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": null,
+    "action": "unauthorized_access",
+    "module": "console",
+    "severity": "warning",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "attempted_url": "/app",
+      "reason": "Non-super-admin tried to access console subdomain"
+    },
+    "is_alert": true,
+    "alert_reason": "Truy cập trái quyền: Tài khoản cố gắng truy cập trái phép vào tài nguyên của mô-đun console.",
+    "created_at": "2026-05-18T18:25:24.910Z"
+  },
+  {
+    "id": "log-1779128724354-aii985u5p",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-18T18:25:24.354Z"
+  },
+  {
+    "id": "log-1779128708207-ehtbq0aoo",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": null,
+    "action": "unauthorized_access",
+    "module": "console",
+    "severity": "warning",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "attempted_url": "/app",
+      "reason": "Non-super-admin tried to access console subdomain"
+    },
+    "is_alert": true,
+    "alert_reason": "Truy cập trái quyền: Tài khoản cố gắng truy cập trái phép vào tài nguyên của mô-đun console.",
+    "created_at": "2026-05-18T18:25:08.207Z"
+  },
+  {
+    "id": "log-1779128707535-gjb00qw78",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-18T18:25:07.535Z"
+  },
+  {
+    "id": "log-1779128553165-99iruodbb",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-18T18:22:33.165Z"
+  },
+  {
+    "id": "log-1779128508753-e9kduidt5",
+    "tenant_id": "kphone",
+    "user_id": null,
+    "user_email": "kphone@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "full_name": "Bá Khởi",
+      "role": "tenant_owner",
+      "mode": "database_bypass"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-18T18:21:48.753Z"
+  },
+  {
+    "id": "log-1779128450095-i5ni3sxq4",
+    "tenant_id": "kphone",
+    "user_id": null,
+    "user_email": "kphone@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "full_name": "Bá Khởi",
+      "role": "tenant_owner",
+      "mode": "database_bypass"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-18T18:20:50.095Z"
+  },
+  {
+    "id": "log-1779128446633-xmt2i4ws0",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": null,
+    "action": "unauthorized_access",
+    "module": "console",
+    "severity": "warning",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "attempted_url": "/app",
+      "reason": "Non-super-admin tried to access console subdomain"
+    },
+    "is_alert": true,
+    "alert_reason": "Truy cập trái quyền: Tài khoản cố gắng truy cập trái phép vào tài nguyên của mô-đun console.",
+    "created_at": "2026-05-18T18:20:46.633Z"
+  },
+  {
+    "id": "log-1779128446022-9vmhw64sd",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-18T18:20:46.022Z"
+  },
+  {
+    "id": "log-1779128438101-udh5xx2fh",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": null,
+    "action": "unauthorized_access",
+    "module": "console",
+    "severity": "warning",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "attempted_url": "/",
+      "reason": "Non-super-admin tried to access console subdomain"
+    },
+    "is_alert": true,
+    "alert_reason": "Truy cập trái quyền: Tài khoản cố gắng truy cập trái phép vào tài nguyên của mô-đun console.",
+    "created_at": "2026-05-18T18:20:38.101Z"
+  },
+  {
+    "id": "log-1779128437621-4evwsgtdh",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-18T18:20:37.621Z"
+  },
+  {
+    "id": "log-1779128390405-yiorp5z1i",
+    "tenant_id": "kphone",
+    "user_id": null,
+    "user_email": "kphone@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "full_name": "Bá Khởi",
+      "role": "tenant_owner",
+      "mode": "database_bypass"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-18T18:19:50.405Z"
+  },
+  {
+    "id": "log-1779128335271-t1nuqlw6z",
+    "tenant_id": "manhchien",
+    "user_id": null,
+    "user_email": "chienmanh@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "full_name": "Nguyễn Thị Chiên",
+      "role": "tenant_owner",
+      "mode": "database_bypass"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-18T18:18:55.271Z"
+  },
+  {
+    "id": "log-1779128213811-u6uiqrx8n",
+    "tenant_id": "manhchien",
+    "user_id": null,
+    "user_email": "chienmanh@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "full_name": "Nguyễn Thị Chiên",
+      "role": "tenant_owner",
+      "mode": "database_bypass"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-18T18:16:53.811Z"
+  },
+  {
+    "id": "log-1779128203839-i8m2a63ib",
+    "tenant_id": "manhchien",
+    "user_id": null,
+    "user_email": "chienmanh@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "full_name": "Nguyễn Thị Chiên",
+      "role": "tenant_owner",
+      "mode": "database_bypass"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-18T18:16:43.839Z"
+  },
+  {
+    "id": "log-1779128175999-1s6hehxy9",
+    "tenant_id": "manhchien",
+    "user_id": null,
+    "user_email": "chienmanh@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "full_name": "Nguyễn Thị Chiên",
+      "role": "tenant_owner",
+      "mode": "database_bypass"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-18T18:16:16.000Z"
+  },
+  {
     "id": "log-1779127248404-5k1ye6ynd",
     "tenant_id": "kphone",
     "user_id": null,
