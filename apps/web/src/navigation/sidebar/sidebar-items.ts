@@ -21,6 +21,8 @@ import {
   QrCode,
   FileText,
   MessageCircle,
+  Database,
+  Coins,
   type LucideIcon,
 } from "lucide-react";
 
@@ -115,6 +117,12 @@ export const sidebarItems: NavGroup[] = [
         icon: Users,
       },
       {
+        title: "Công nợ",
+        url: "/debt",
+        icon: Coins,
+        isNew: true,
+      },
+      {
         title: "Nhà cung cấp",
         url: "/suppliers",
         icon: Truck,
@@ -145,6 +153,12 @@ export const sidebarItems: NavGroup[] = [
         title: "Báo cáo",
         url: "/reports",
         icon: BarChart3,
+      },
+      {
+        title: "Đồng bộ offline",
+        url: "/sync",
+        icon: Database,
+        isNew: true,
       },
       {
         title: "Cài đặt",
@@ -186,6 +200,12 @@ export const sidebarItems: NavGroup[] = [
         title: "Giao dịch VietQR",
         url: "/finance/payments",
         icon: QrCode,
+        isNew: true,
+      },
+      {
+        title: "Công nợ",
+        url: "/debt",
+        icon: Coins,
         isNew: true,
       },
       {

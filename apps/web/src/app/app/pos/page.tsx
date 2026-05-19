@@ -690,7 +690,14 @@ export default function POSPage() {
       return handleManualConfirmTransfer();
     }
 
-    // Cash / card / fallback: complete the order immediately.
+    // Debt mode requires a customer (the ledger is keyed by customer_id).
+    const isDebt = paymentMethod === 'debt';
+    if (isDebt && !selectedCustomer?.id) {
+      toast.error('Phải chọn khách hàng khi bán ghi nợ');
+      return;
+    }
+
+    // Cash / card / debt / fallback: complete the order immediately.
     // Hoisted out of `try` so the catch block can reach it when queueing
     // a fallback offline order after a network error.
     const orderData: any = {
@@ -701,9 +708,9 @@ export default function POSPage() {
       total_amount: total,
       discount_amount: discount,
       payment_method: paymentMethod,
-      payment_status: 'paid',
-      payment_confirmed_at: new Date().toISOString(),
-      payment_amount_received: total,
+      payment_status: isDebt ? 'debt' : 'paid',
+      payment_confirmed_at: isDebt ? null : new Date().toISOString(),
+      payment_amount_received: isDebt ? 0 : total,
       status: 'completed'
     };
 
@@ -731,6 +738,31 @@ export default function POSPage() {
 
       const createdOrder = await posService.createOrder(orderData, cart);
 
+      // Debt mode: record the charge in the customer credit ledger so the
+      // order shows up as a receivable on the customer / debtors screens.
+      // RPC failure here doesn't roll back the order — surface a warning
+      // so an admin can reconcile manually.
+      if (isDebt && createdOrder?.id) {
+        try {
+          const debtRes = await debtService.chargeOrderAsDebt(createdOrder.id, debtDueDays);
+          if (!debtRes.ok) {
+            console.error('chargeOrderAsDebt failed:', debtRes.error);
+            toast.warning('Đơn đã tạo nhưng chưa ghi nợ', {
+              description: debtRes.error || 'Vui lòng kiểm tra lại trong mục Công nợ',
+              duration: 8000,
+            });
+          } else if (debtRes.over_limit) {
+            toast.warning('Khách hàng đã vượt hạn mức công nợ');
+          }
+        } catch (debtErr: any) {
+          console.error('chargeOrderAsDebt threw:', debtErr);
+          toast.warning('Đơn đã tạo nhưng chưa ghi nợ', {
+            description: debtErr?.message || 'Lỗi không xác định',
+            duration: 8000,
+          });
+        }
+      }
+
       finishCheckoutSuccess({
         cart: [...cart],
         subtotal,
@@ -742,10 +774,29 @@ export default function POSPage() {
         customer: selectedCustomer,
         createdAt: new Date().toISOString()
       });
-      toast.success("Thanh toán thành công!");
+      toast.success(isDebt ? "Đã ghi nợ đơn hàng!" : "Thanh toán thành công!");
     } catch (e: any) {
-      console.error("Checkout failed:", e);
-      // Network-shaped error after the connectivity check → still queue, don't lose the sale.
+      // Supabase errors often have non-enumerable fields — destructure explicitly
+      // so console.error prints actionable info instead of "Checkout failed: {}".
+      const errInfo = {
+        message: e?.message,
+        code: e?.code,
+        details: e?.details,
+        hint: e?.hint,
+        status: e?.status,
+        name: e?.name,
+        raw: e,
+      };
+      console.error('Checkout failed:', errInfo);
+
+      // Show the real Supabase error in the toast so the cashier knows what happened.
+      const userMsg =
+        e?.message ||
+        e?.details ||
+        e?.hint ||
+        (typeof e === 'string' ? e : '') ||
+        'Lỗi không xác định khi lưu đơn';
+
       const msg = String(e?.message || '').toLowerCase();
       const isNetwork = msg.includes('network') || msg.includes('fetch') || msg.includes('timeout');
       if (isNetwork) {
@@ -764,13 +815,15 @@ export default function POSPage() {
           });
           toast.success("Mất mạng — đơn đã xếp hàng đợi & sẽ tự sync");
           return;
-        } catch (qe) {
-          console.error("Queue fallback failed:", qe);
+        } catch (qe: any) {
+          console.error('Queue fallback failed:', { message: qe?.message, raw: qe });
         }
       }
       setCheckoutOpen(false);
-      setSuccessOpen(true);
-      toast.error("Lỗi lưu trữ đơn hàng, nhưng vẫn tiếp tục demo.");
+      toast.error('Không thể lưu đơn hàng', {
+        description: userMsg,
+        duration: 8000,
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -1685,7 +1738,7 @@ export default function POSPage() {
                 <Button
                   className="w-2/3 h-12 rounded-xl text-lg font-bold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-colors"
                   onClick={handleCheckout}
-                  disabled={isProcessing || (paymentMethod === 'cash' && receivedAmount < total)}
+                  disabled={isProcessing || (paymentMethod === 'cash' && receivedAmount < total) || (paymentMethod === 'debt' && !selectedCustomer)}
                 >
                   {paymentMethod === 'transfer' && transferStatus === 'idle' && (<>Tạo mã & chờ chuyển khoản <ArrowRight className="w-5 h-5" /></>)}
                   {paymentMethod === 'transfer' && transferStatus === 'waiting' && (<>Đã nhận tiền (thủ công) <Check className="w-5 h-5" /></>)}

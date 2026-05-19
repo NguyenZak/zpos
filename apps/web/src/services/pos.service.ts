@@ -1,10 +1,13 @@
 import { createClient } from "@/utils/supabase/client";
 
+const UNIVERSAL_TENANTS = new Set(["www", "app", "console", "cms"]);
+const EMPTY_UUID = "00000000-0000-0000-0000-000000000000";
+
 // Dynamic tenant resolution from current hostname
 export function getTenantSlug(): string {
   if (typeof window !== "undefined") {
-    const hostname = window.location.host; // e.g. bibomart.localhost:3000
-    const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || "localhost:3000";
+    const hostname = window.location.hostname; // e.g. bibomart.localhost
+    const mainDomain = (process.env.NEXT_PUBLIC_MAIN_DOMAIN || "localhost:3000").split(":")[0];
     
     if (hostname === mainDomain || hostname === `www.${mainDomain}`) {
       return "app";
@@ -13,7 +16,7 @@ export function getTenantSlug(): string {
     const parts = hostname.split('.');
     if (parts.length > 1) {
       const subdomain = parts[0];
-      if (subdomain !== 'www' && subdomain !== 'localhost:3000' && subdomain !== 'localhost') {
+      if (subdomain && !UNIVERSAL_TENANTS.has(subdomain) && subdomain !== 'localhost') {
         return subdomain;
       }
     }
@@ -34,76 +37,88 @@ export function isValidUUID(val: any): boolean {
 
 let cachedOrgId: string | null = null;
 let cachedTenantSlug: string | null = null;
+let cachedSessionKey: string | null = null;
+
+function getTenantStorageKey(key: string) {
+  return `${key}_${getTenantSlug()}`;
+}
+
+async function ensureWritableOrderSession(supabase: ReturnType<typeof createClient>, orgId: string) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user?.id) {
+    const { data: member, error } = await supabase
+      .from("organization_members")
+      .select("id, role")
+      .eq("organization_id", orgId)
+      .eq("profile_id", user.id)
+      .maybeSingle();
+
+    if (member || error) return { hasLiveUser: true };
+
+    throw new Error(
+      "Tài khoản Supabase hiện tại chưa được gán vào doanh nghiệp này. Hãy vào Console > Quản Lý Nhân Viên & Phân Quyền để gán tenant trước khi bán hàng.",
+    );
+  }
+
+  throw new Error("Chưa có phiên đăng nhập Supabase hợp lệ để ghi đơn hàng.");
+}
 
 export async function getActiveOrganizationId(): Promise<string> {
   const tenantSlug = getTenantSlug();
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const sessionKey = `${tenantSlug}:${user?.id || "anonymous"}`;
   
-  if (cachedOrgId && cachedTenantSlug === tenantSlug) {
+  if (cachedOrgId && cachedTenantSlug === tenantSlug && cachedSessionKey === sessionKey) {
     return cachedOrgId;
   }
-  
-  const supabase = createClient();
-  
+
   try {
-    // 1. Fetch organization matching subdomain slug
-    const { data: org, error } = await supabase
-      .from('organizations')
-      .select('id')
-      .eq('slug', tenantSlug)
-      .maybeSingle();
+    // Tenant subdomains are the strongest source of truth.
+    if (tenantSlug !== "app") {
+      const { data: org } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('slug', tenantSlug)
+        .maybeSingle();
       
-    if (org?.id) {
-      cachedOrgId = org.id;
-      cachedTenantSlug = tenantSlug;
-      return org.id;
+      if (org?.id) {
+        cachedOrgId = org.id;
+        cachedTenantSlug = tenantSlug;
+        cachedSessionKey = sessionKey;
+        return org.id;
+      }
+
+      console.warn(`No organization found for tenant slug "${tenantSlug}".`);
+      return EMPTY_UUID;
     }
-    
-    // 2. Auto-provision organization if it doesn't exist (robust self-healing UX)
-    const name = tenantSlug === 'app'
-      ? 'ZPOS Retail'
-      : tenantSlug.charAt(0).toUpperCase() + tenantSlug.slice(1);
-      
-    const { data: newOrg, error: createError } = await supabase
-      .from('organizations')
-      .insert([{
-        name: name,
-        slug: tenantSlug,
-        branding: { theme: 'default' }
-      }])
-      .select()
-      .single();
-      
-    if (!createError && newOrg) {
-      // Auto-create a main branch for this new organization
-      await supabase.from('branches').insert([{
-        organization_id: newOrg.id,
-        name: 'Chi nhánh chính',
-        is_main_branch: true,
-        address: 'Trụ sở chính'
-      }]);
-      
-      cachedOrgId = newOrg.id;
-      cachedTenantSlug = tenantSlug;
-      return newOrg.id;
+
+    // On the universal /app host, resolve from the current authenticated user.
+    if (user?.id) {
+      const { data: member } = await supabase
+        .from('organization_members')
+        .select('organization_id')
+        .eq('profile_id', user.id)
+        .maybeSingle();
+
+      if (member?.organization_id) {
+        cachedOrgId = member.organization_id;
+        cachedTenantSlug = tenantSlug;
+        cachedSessionKey = sessionKey;
+        return member.organization_id;
+      }
     }
+
   } catch (e) {
-    console.error("Error auto-provisioning organization for slug:", tenantSlug, e);
+    console.error("Error resolving active organization for slug:", tenantSlug, e);
   }
-  
-  // 3. Fallback to first organization in DB
-  try {
-    const { data: fallbackOrgs } = await supabase.from('organizations').select('id').limit(1);
-    if (fallbackOrgs && fallbackOrgs.length > 0) {
-      cachedOrgId = fallbackOrgs[0].id;
-      cachedTenantSlug = tenantSlug;
-      return fallbackOrgs[0].id;
-    }
-  } catch (e) {
-    console.error("Fallback query failed:", e);
-  }
-  
-  // 4. Ultimate fallback to prevent application crashing
-  return '00000000-0000-0000-0000-000000000000';
+
+  return EMPTY_UUID;
 }
 
 export const posService = {
@@ -113,7 +128,7 @@ export const posService = {
 
   async getProducts() {
     const supabase = createClient();
-    const tenantSlug = getTenantSlug();
+    const orgId = await getActiveOrganizationId();
     
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
       throw new Error("Supabase environment variables are missing");
@@ -126,6 +141,7 @@ export const posService = {
         category:categories(name),
         variants:product_variants(*)
       `)
+      .eq('organization_id', orgId)
       .eq('is_active', true);
     
     if (error) {
@@ -133,13 +149,7 @@ export const posService = {
       throw error;
     }
 
-    // Filter products by tenant prefix in description
     let filteredData = data || [];
-    if (tenantSlug === 'app') {
-      filteredData = filteredData.filter((p: any) => !p.description || !p.description.includes('::') || p.description.startsWith('app::'));
-    } else {
-      filteredData = filteredData.filter((p: any) => p.description && p.description.startsWith(`${tenantSlug}::`));
-    }
 
     // Clean up description prefix before returning
     filteredData = filteredData.map((p: any) => {
@@ -167,7 +177,7 @@ export const posService = {
     // Merge min_stock from local storage fallback if any
     if (filteredData && typeof window !== 'undefined') {
       try {
-        const localMinStocks = localStorage.getItem('zpos_products_min_stock');
+        const localMinStocks = localStorage.getItem(getTenantStorageKey('zpos_products_min_stock'));
         if (localMinStocks) {
           const minStockMap = JSON.parse(localMinStocks);
           filteredData.forEach((p: any) => {
@@ -213,6 +223,7 @@ export const posService = {
 
   async createProduct(productData: any) {
     const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
     const tenantSlug = getTenantSlug();
     
     const costPart = productData.cost_price !== undefined ? `[cost_price:${productData.cost_price}]` : '';
@@ -220,6 +231,7 @@ export const posService = {
     
     const preparedData = {
       ...restProductData,
+      organization_id: orgId,
       description: `${tenantSlug}::${costPart}${productData.description || ''}`
     };
     
@@ -252,15 +264,16 @@ export const posService = {
 
   async updateProduct(id: string, productData: any) {
     const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
     const tenantSlug = getTenantSlug();
 
     // Persist min_stock in local storage as a robust fallback first
     if (productData.min_stock !== undefined && typeof window !== 'undefined') {
       try {
-        const localMinStocks = localStorage.getItem('zpos_products_min_stock');
+        const localMinStocks = localStorage.getItem(getTenantStorageKey('zpos_products_min_stock'));
         const minStockMap = localMinStocks ? JSON.parse(localMinStocks) : {};
         minStockMap[id] = productData.min_stock;
-        localStorage.setItem('zpos_products_min_stock', JSON.stringify(minStockMap));
+        localStorage.setItem(getTenantStorageKey('zpos_products_min_stock'), JSON.stringify(minStockMap));
       } catch (e) {
         console.warn("Error saving local min stock:", e);
       }
@@ -271,6 +284,7 @@ export const posService = {
       const { cost_price, ...restProductData } = productData;
       
       const preparedData = { ...restProductData };
+      preparedData.organization_id = orgId;
       if (productData.description !== undefined || productData.cost_price !== undefined) {
         preparedData.description = `${tenantSlug}::${costPart}${productData.description || ''}`;
       }
@@ -279,6 +293,7 @@ export const posService = {
         .from('products')
         .update(preparedData)
         .eq('id', id)
+        .eq('organization_id', orgId)
         .select()
         .single();
       
@@ -318,6 +333,7 @@ export const posService = {
           variants:product_variants(*)
         `)
         .eq('id', id)
+        .eq('organization_id', orgId)
         .single();
 
       if (currentProduct) {
@@ -338,11 +354,13 @@ export const posService = {
 
   async deleteProduct(id: string) {
     const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
     
     const { error } = await supabase
       .from('products')
       .update({ is_active: false }) // Soft delete
-      .eq('id', id);
+      .eq('id', id)
+      .eq('organization_id', orgId);
     
     if (error) throw error;
   },
@@ -351,74 +369,111 @@ export const posService = {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
     let data: any[] = [];
-    
+    // Track whether the DB query actually succeeded — used to decide if we
+    // should merge stale localStorage customers (only if the DB is truly
+    // empty, not when the request failed). This prevents phantom UUIDs
+    // from localStorage leaking into orderData.customer_id and triggering
+    // orders_customer_id_fkey violations.
+    let dbQueryOk = false;
+
     try {
-      let dbQuery = supabase.from('customers').select('*').eq('organization_id', orgId);
-        
+      // Pull the credit account alongside the customer so the UI can show
+      // debt without a second round-trip. PostgREST infers the FK on
+      // customer_credit_accounts.customer_id; unique(tenant_id, customer_id)
+      // guarantees at most one row, so we take [0] in the mapper below.
+      let dbQuery = supabase
+        .from('customers')
+        .select(`
+          *,
+          credit_account:customer_credit_accounts(
+            current_balance,
+            overdue_amount,
+            credit_limit,
+            due_amount
+          )
+        `)
+        .eq('organization_id', orgId);
+
       if (query.trim()) {
         dbQuery = dbQuery.or(`name.ilike.%${query}%,phone.ilike.%${query}%`);
       }
       const { data: dbData, error } = await dbQuery.limit(100);
-      if (!error && dbData) {
-        data = dbData;
+      if (error) {
+        // Surface the actual error so we can debug 400/RLS/schema issues.
+        console.error('customers SELECT failed:', error.message, error.code, error.details, error.hint);
+      } else {
+        dbQueryOk = true;
+        if (dbData) data = dbData;
       }
-      
-      // Auto-seed Nguyễn Văn A, Trần Thị B, Lê Văn C if organization has no customers
-      if ((!dbData || dbData.length === 0) && !query.trim()) {
+
+      // Auto-seed only when the DB query succeeded with truly zero customers.
+      if (dbQueryOk && (!dbData || dbData.length === 0) && !query.trim()) {
         const mockToSeed = [
           { organization_id: orgId, name: 'Nguyễn Văn A', phone: '0901234567', email: 'vana@gmail.com', loyalty_points: 1250, address: 'app::123 Lê Lợi, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh' },
           { organization_id: orgId, name: 'Trần Thị B', phone: '0912345678', email: 'thib@gmail.com', loyalty_points: 800, address: 'app::456 Nguyễn Thị Minh Khai, Phường 6, Quận 3, TP. Hồ Chí Minh' },
           { organization_id: orgId, name: 'Lê Văn C', phone: '0923456789', email: 'vanc@gmail.com', loyalty_points: 2100, address: 'app::789 Điện Biên Phủ, Phường 25, Quận Bình Thạnh, TP. Hồ Chí Minh' }
         ];
-        const { data: seededData } = await supabase.from('customers').insert(mockToSeed).select();
-        if (seededData && seededData.length > 0) {
+        const { data: seededData, error: seedErr } = await supabase.from('customers').insert(mockToSeed).select();
+        if (seedErr) {
+          console.warn('customers auto-seed failed:', seedErr.message);
+        } else if (seededData && seededData.length > 0) {
           data = seededData;
         }
       }
     } catch (e) {
-      console.warn("Supabase customers query error, using local storage fallback", e);
+      console.error('Supabase customers query threw:', (e as any)?.message || e);
     }
     
     let filteredData = data || [];
     
-    // Clean up address and map fields for UI compatibility (points, debt)
+    // Clean up address and map fields for UI compatibility (points, debt).
+    // Debt comes from customer_credit_accounts (joined above), not from the
+    // customers table — that table has no `debt` column. Falling back to
+    // c.debt only for legacy localStorage records.
     filteredData = filteredData.map((c: any) => {
       let cleanAddress = c.address;
       if (c.address && c.address.includes('::')) {
         cleanAddress = c.address.split('::').slice(1).join('::');
       }
+      const account = Array.isArray(c.credit_account) ? c.credit_account[0] : c.credit_account;
       return {
         ...c,
         points: c.loyalty_points ?? c.points ?? 0,
-        debt: c.debt ?? 0,
+        debt: Number(account?.current_balance ?? c.debt ?? 0),
+        overdue_amount: Number(account?.overdue_amount ?? 0),
+        credit_limit: Number(account?.credit_limit ?? 0),
+        due_amount: Number(account?.due_amount ?? 0),
         address: cleanAddress
       };
     });
     
-    // Merge from local storage fallback
-    if (typeof window !== 'undefined') {
+    // Merge from local storage fallback — ONLY when the DB query failed
+    // outright (network down / RLS broken). If the DB returned successfully
+    // with zero rows, we trust that the tenant actually has no customers,
+    // and we MUST NOT inject phantom UUIDs that will break the orders FK.
+    if (!dbQueryOk && typeof window !== 'undefined') {
       try {
-        const local = localStorage.getItem('zpos_customers');
+        const local = localStorage.getItem(getTenantStorageKey('zpos_customers'));
         if (local) {
           const localList = JSON.parse(local);
-          const filteredLocal = localList.filter((c: any) => {
+          const filteredLocal = (localList || []).filter((c: any) => {
             if (!query.trim()) return true;
             const q = query.toLowerCase();
             return c.name?.toLowerCase().includes(q) || c.phone?.toLowerCase().includes(q);
           });
-          // Merge local customers that aren't already in the list
           const dbIds = new Set(filteredData.map(c => c.id));
           filteredLocal.forEach((c: any) => {
             if (!dbIds.has(c.id)) {
-              filteredData.push(c);
+              // Mark as offline-only so the UI can show a badge if it wants.
+              filteredData.push({ ...c, _offline_only: true });
             }
           });
         }
       } catch (e) {
-        console.warn("Error reading local customers:", e);
+        console.warn('Error reading local customers:', e);
       }
     }
-    
+
     return filteredData;
   },
 
@@ -479,6 +534,7 @@ export const posService = {
   async createOrder(orderData: any, items: any[]) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
+    const sessionState = await ensureWritableOrderSession(supabase, orgId);
     
     // Validate branch_id or auto-create main branch
     let branchId = orderData.branch_id;
@@ -518,10 +574,46 @@ export const posService = {
       }
     }
     
-    // Validate customer_id to ensure it is a valid UUID
+    // Validate customer_id: must be a real UUID AND must exist in DB, otherwise
+    // the FK orders_customer_id_fkey will reject the insert. Stale UUIDs from
+    // localStorage are a common cause of this — defensively null them out.
     let customerId = orderData.customer_id;
     if (customerId && !isValidUUID(customerId)) {
       customerId = null;
+    }
+    if (customerId) {
+      try {
+        const { data: existing } = await supabase
+          .from('customers')
+          .select('id')
+          .eq('id', customerId)
+          .eq('organization_id', orgId)
+          .maybeSingle();
+        if (!existing) {
+          console.warn(
+            `Customer ${customerId} not found in DB — order will be created without a customer link.`,
+          );
+          customerId = null;
+          // Best-effort: clean the phantom from localStorage so the user
+          // doesn't keep selecting the same broken record.
+          if (typeof window !== 'undefined') {
+            try {
+              const raw = localStorage.getItem(getTenantStorageKey('zpos_customers'));
+              if (raw) {
+                const list = JSON.parse(raw);
+                if (Array.isArray(list)) {
+                  const cleaned = list.filter((c: any) => c?.id !== orderData.customer_id);
+                  if (cleaned.length !== list.length) {
+                    localStorage.setItem(getTenantStorageKey('zpos_customers'), JSON.stringify(cleaned));
+                  }
+                }
+              }
+            } catch {}
+          }
+        }
+      } catch (e) {
+        console.warn('Could not verify customer_id existence:', (e as any)?.message);
+      }
     }
 
     // Ensure active tenant organization and valid branch/customer are linked
@@ -531,35 +623,69 @@ export const posService = {
       branch_id: branchId,
       customer_id: customerId
     };
-    
+
     // 1. Create the order
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert([preparedOrderData])
       .select()
       .single();
-    
+
     if (orderError) {
-      console.error("Order insertion failed:", orderError.message, orderError.details);
-      throw orderError;
+      // Supabase PostgrestError has non-enumerable fields, so a single
+      // console.error(obj) renders as `{}` in devtools. Log each field as
+      // its own argument and dump the raw error via getOwnPropertyNames so
+      // we always see *something*, even when the error isn't a PostgrestError.
+      const rawDump = (() => {
+        try {
+          return JSON.stringify(orderError, Object.getOwnPropertyNames(orderError ?? {}));
+        } catch {
+          return String(orderError);
+        }
+      })();
+      console.error(
+        'Order insertion failed →',
+        'message:', orderError?.message,
+        '| code:', orderError?.code,
+        '| details:', orderError?.details,
+        '| hint:', orderError?.hint,
+        '| raw:', rawDump,
+        '| payload:', preparedOrderData,
+      );
+      const wrapped = new Error(
+        orderError?.message ||
+          orderError?.details ||
+          orderError?.hint ||
+          `Không thể tạo đơn hàng (${rawDump})`,
+      );
+      (wrapped as any).code = orderError?.code;
+      (wrapped as any).details = orderError?.details;
+      (wrapped as any).hint = orderError?.hint;
+      (wrapped as any).pg = orderError;
+      throw wrapped;
     }
 
-    // Fetch a fallback product ID from DB to ensure foreign key constraint is satisfied if mock items are checked out
-    let fallbackProductId: string | null = null;
+    // Fetch a fallback variant ID from DB to ensure the order_items.variant_id
+    // foreign key is satisfied if mock/cart items carry product IDs.
+    let fallbackVariantId: string | null = null;
     try {
-      const { data: firstProd } = await supabase.from('products').select('id').limit(1);
-      if (firstProd && firstProd.length > 0) {
-        fallbackProductId = firstProd[0].id;
+      const { data: firstVariant } = await supabase
+        .from('product_variants')
+        .select('id, products!inner(organization_id)')
+        .eq('products.organization_id', orgId)
+        .limit(1);
+      if (firstVariant && firstVariant.length > 0) {
+        fallbackVariantId = firstVariant[0].id;
       }
     } catch (e) {
-      console.warn("Could not fetch fallback product ID for order_items:", e);
+      console.warn("Could not fetch fallback variant ID for order_items:", e);
     }
 
     // 2. Create order items
     const orderItems = items.map(item => {
       let itemId = item.variant_id || item.id;
       if (!isValidUUID(itemId)) {
-        itemId = fallbackProductId || '00000000-0000-0000-0000-000000000000';
+        itemId = fallbackVariantId || '00000000-0000-0000-0000-000000000000';
       }
       return {
         order_id: order.id,
@@ -574,10 +700,23 @@ export const posService = {
     const { error: itemsError } = await supabase
       .from('order_items')
       .insert(orderItems);
-    
+
     if (itemsError) {
-      console.error("Order items insertion failed:", itemsError.message, itemsError.details);
-      throw itemsError;
+      const wrapped = new Error(
+        itemsError.message || itemsError.details || itemsError.hint || 'Không thể lưu chi tiết đơn',
+      );
+      (wrapped as any).code = itemsError.code;
+      (wrapped as any).details = itemsError.details;
+      (wrapped as any).hint = itemsError.hint;
+      (wrapped as any).pg = itemsError;
+      console.error('Order items insertion failed:', {
+        message: itemsError.message,
+        code: itemsError.code,
+        details: itemsError.details,
+        hint: itemsError.hint,
+        sample: orderItems[0],
+      });
+      throw wrapped;
     }
 
     // 3. Deduct stock from products (actual inventory update)
@@ -587,10 +726,11 @@ export const posService = {
       if (!isValidUUID(productId)) continue;
       
       try {
-        const { data: productData } = await supabase
+      const { data: productData } = await supabase
           .from('products')
           .select('name, stock')
           .eq('id', productId)
+          .eq('organization_id', orgId)
           .single();
           
         if (productData) {
@@ -598,7 +738,8 @@ export const posService = {
           await supabase
             .from('products')
             .update({ stock: newStock })
-            .eq('id', productId);
+            .eq('id', productId)
+            .eq('organization_id', orgId);
             
           // Telegram Notification: Low Stock Check
           const notifyStock = localStorage.getItem('zpos_telegram_notify_stock') === 'true';
@@ -667,7 +808,8 @@ export const posService = {
     // 2. Fetch all products and their variants to map names in memory
     const { data: products } = await supabase
       .from('products')
-      .select('id, name, description, variants:product_variants(id, name)');
+      .select('id, name, description, variants:product_variants(id, name)')
+      .eq('organization_id', orgId);
 
     const variantMap = new Map<string, { productName: string, variantName: string | null }>();
 
@@ -850,7 +992,8 @@ export const posService = {
     // Fetch all products to map names in memory
     const { data: products } = await supabase
       .from('products')
-      .select('id, name, description, variants:product_variants(id, name)');
+      .select('id, name, description, variants:product_variants(id, name)')
+      .eq('organization_id', orgId);
 
     const variantMap = new Map<string, { productName: string, variantName: string | null }>();
 
@@ -896,10 +1039,10 @@ export const posService = {
     // 1. Persist to LocalStorage overlay
     if (typeof window !== 'undefined') {
       try {
-        const local = localStorage.getItem('zpos_customers');
+        const local = localStorage.getItem(getTenantStorageKey('zpos_customers'));
         const list = local ? JSON.parse(local) : [];
         list.push(finalData);
-        localStorage.setItem('zpos_customers', JSON.stringify(list));
+        localStorage.setItem(getTenantStorageKey('zpos_customers'), JSON.stringify(list));
       } catch (e) {
         console.warn("Error writing local customer:", e);
       }
@@ -1091,13 +1234,15 @@ export const posService = {
 
   async receiveStock(purchaseOrderId: string, items: { itemId: string, receivedQty: number }[]) {
     const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
     
     for (const item of items) {
       // 1. Update received quantity in purchase_order_items
       const { data: orderItem } = await supabase
         .from('purchase_order_items')
-        .select('received_quantity, product_id, variant_id, quantity')
+        .select('received_quantity, product_id, variant_id, quantity, purchase_orders!inner(organization_id)')
         .eq('id', item.itemId)
+        .eq('purchase_orders.organization_id', orgId)
         .single();
       
       if (orderItem) {
@@ -1109,32 +1254,44 @@ export const posService = {
 
         // 2. Increase stock in products or product_variants
         if (orderItem.variant_id) {
-          const { data: variant } = await supabase.from('product_variants').select('stock').eq('id', orderItem.variant_id).single();
+          const { data: variant } = await supabase
+            .from('product_variants')
+            .select('stock, products!inner(organization_id)')
+            .eq('id', orderItem.variant_id)
+            .eq('products.organization_id', orgId)
+            .single();
           await supabase.from('product_variants').update({ stock: (variant?.stock || 0) + item.receivedQty }).eq('id', orderItem.variant_id);
         } else {
-          const { data: product } = await supabase.from('products').select('stock').eq('id', orderItem.product_id).single();
-          await supabase.from('products').update({ stock: (product?.stock || 0) + item.receivedQty }).eq('id', orderItem.product_id);
+          const { data: product } = await supabase.from('products').select('stock').eq('id', orderItem.product_id).eq('organization_id', orgId).single();
+          await supabase.from('products').update({ stock: (product?.stock || 0) + item.receivedQty }).eq('id', orderItem.product_id).eq('organization_id', orgId);
         }
       }
     }
 
     // 3. Update PO status if fully received
-    const { data: allItems } = await supabase.from('purchase_order_items').select('quantity, received_quantity').eq('purchase_order_id', purchaseOrderId);
+    const { data: allItems } = await supabase
+      .from('purchase_order_items')
+      .select('quantity, received_quantity, purchase_orders!inner(organization_id)')
+      .eq('purchase_order_id', purchaseOrderId)
+      .eq('purchase_orders.organization_id', orgId);
     const fullyReceived = allItems?.every(i => i.received_quantity >= i.quantity);
     
     await supabase
       .from('purchase_orders')
       .update({ status: fullyReceived ? 'received' : 'receiving' })
-      .eq('id', purchaseOrderId);
+      .eq('id', purchaseOrderId)
+      .eq('organization_id', orgId);
   },
 
   async updateStock(productId: string, delta: number) {
     const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
     
     const { data: product } = await supabase
       .from('products')
       .select('stock')
       .eq('id', productId)
+      .eq('organization_id', orgId)
       .single();
     
     if (product) {
@@ -1142,7 +1299,8 @@ export const posService = {
       await supabase
         .from('products')
         .update({ stock: newStock })
-        .eq('id', productId);
+        .eq('id', productId)
+        .eq('organization_id', orgId);
     }
   },
 
@@ -1202,19 +1360,17 @@ export const posService = {
   async getDashboardStats() {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    const tenantSlug = getTenantSlug();
-    const { data: allProducts } = await supabase.from('products').select('*').eq('is_active', true);
-    let products = allProducts || [];
-    if (tenantSlug === 'app') {
-      products = products.filter((p: any) => !p.description || !p.description.includes('::') || p.description.startsWith('app::'));
-    } else {
-      products = products.filter((p: any) => p.description && p.description.startsWith(`${tenantSlug}::`));
-    }
+    const { data: allProducts } = await supabase
+      .from('products')
+      .select('*')
+      .eq('organization_id', orgId)
+      .eq('is_active', true);
+    const products = allProducts || [];
     const productsCount = products.length;
 
     const { count: ordersCount } = await supabase.from('orders').select('*', { count: 'exact', head: true }).eq('organization_id', orgId).neq('status', 'cancelled');
     
-    const { data: allCustomers } = await supabase.from('customers').select('*').eq('organization_id', orgId);
+    const { data: allCustomers } = await supabase.from('customers').select('id, created_at').eq('organization_id', orgId);
     let customers = allCustomers || [];
     const customersCount = customers.length;
     
@@ -1290,6 +1446,25 @@ export const posService = {
       ordersChange = "+100%";
     }
 
+    // Compute customersChange from real customer.created_at timestamps.
+    // "This week" = last 7 days; "last week" = the 7 days before that.
+    let thisWeekCustomers = 0;
+    let lastWeekCustomers = 0;
+    customers.forEach((c: any) => {
+      if (!c?.created_at) return;
+      const d = new Date(c.created_at);
+      if (d >= oneWeekAgo && d <= now) thisWeekCustomers += 1;
+      else if (d >= twoWeeksAgo && d < oneWeekAgo) lastWeekCustomers += 1;
+    });
+
+    let customersChange = "+0.0%";
+    if (lastWeekCustomers > 0) {
+      const changePct = ((thisWeekCustomers - lastWeekCustomers) / lastWeekCustomers) * 100;
+      customersChange = `${changePct >= 0 ? '+' : ''}${changePct.toFixed(1)}%`;
+    } else if (thisWeekCustomers > 0) {
+      customersChange = "+100%";
+    }
+
     // Fetch dynamic category sales and best-selling products
     let dynamicCategorySales: { name: string, value: number }[] = [];
     let dynamicTopProducts: any[] = [];
@@ -1304,14 +1479,10 @@ export const posService = {
         if (!itemsErr && orderItems && orderItems.length > 0) {
           const { data: products } = await supabase
             .from('products')
-            .select('id, name, price, image, description, category:categories(name), variants:product_variants(id)');
+            .select('id, name, price, image, description, category:categories(name), variants:product_variants(id)')
+            .eq('organization_id', orgId);
 
-          let finalProds = products || [];
-          if (tenantSlug === 'app') {
-            finalProds = finalProds.filter((p: any) => !p.description || !p.description.includes('::') || p.description.startsWith('app::'));
-          } else {
-            finalProds = finalProds.filter((p: any) => p.description && p.description.startsWith(`${tenantSlug}::`));
-          }
+          const finalProds = products || [];
 
         const productMap = new Map<string, any>();
         const variantProductMap = new Map<string, string>();
@@ -1382,14 +1553,10 @@ export const posService = {
       const { data: dbCats } = await supabase
         .from('categories')
         .select('name, description')
+        .eq('organization_id', orgId)
         .eq('is_active', true);
       
       let filteredCats = dbCats || [];
-      if (tenantSlug === 'app') {
-        filteredCats = filteredCats.filter((c: any) => !c.description || !c.description.includes('::') || c.description.startsWith('app::'));
-      } else {
-        filteredCats = filteredCats.filter((c: any) => c.description && c.description.startsWith(`${tenantSlug}::`));
-      }
       
       filteredCats = filteredCats.slice(0, 5);
       
@@ -1418,7 +1585,9 @@ export const posService = {
       productsCount: productsCount || 0,
       revenueChange,
       ordersChange,
-      customersChange: "+5%",
+      customersChange,
+      thisWeekCustomers,
+      lastWeekCustomers,
       ordersList: orders || [],
       categorySales: dynamicCategorySales,
       topProducts: dynamicTopProducts,
@@ -1472,45 +1641,63 @@ export const posService = {
 
   async getCustomerDetail(id: string) {
     const supabase = createClient();
-    
+    const orgId = await getActiveOrganizationId();
+
     const { data, error } = await supabase
       .from('customers')
       .select(`
         *,
-        orders:orders(id, order_number, total_amount, created_at, status)
+        orders:orders(id, order_number, total_amount, created_at, status, payment_method, payment_status, debt_amount, due_date),
+        credit_account:customer_credit_accounts(
+          current_balance,
+          overdue_amount,
+          credit_limit,
+          due_amount
+        )
       `)
       .eq('id', id)
+      .eq('organization_id', orgId)
       .single();
-    
+
+    if (error) throw error;
+
     if (data?.orders) {
       data.orders = data.orders.filter((o: any) => o.status !== 'cancelled');
     }
-    
+
     if (data && data.address && data.address.includes('::')) {
       data.address = data.address.split('::').slice(1).join('::');
     }
-    
-    if (error) throw error;
+
+    // Flatten the credit account so the UI can read selectedCustomer.debt
+    // directly — mirrors the shape returned by getCustomers().
+    if (data) {
+      const account = Array.isArray((data as any).credit_account)
+        ? (data as any).credit_account[0]
+        : (data as any).credit_account;
+      (data as any).debt = Number(account?.current_balance ?? 0);
+      (data as any).overdue_amount = Number(account?.overdue_amount ?? 0);
+      (data as any).credit_limit = Number(account?.credit_limit ?? 0);
+      (data as any).due_amount = Number(account?.due_amount ?? 0);
+      (data as any).points = (data as any).loyalty_points ?? (data as any).points ?? 0;
+    }
+
     return data;
   },
 
   async getCategoryList() {
     const supabase = createClient();
-    const tenantSlug = getTenantSlug();
+    const orgId = await getActiveOrganizationId();
     
     const { data, error } = await supabase
       .from('categories')
       .select('*, products(id)')
+      .eq('organization_id', orgId)
       .eq('is_active', true);
     
     if (error) throw error;
     
-    let filteredData = data || [];
-    if (tenantSlug === 'app') {
-      filteredData = filteredData.filter((c: any) => !c.description || !c.description.includes('::') || c.description.startsWith('app::'));
-    } else {
-      filteredData = filteredData.filter((c: any) => c.description && c.description.startsWith(`${tenantSlug}::`));
-    }
+    const filteredData = data || [];
     
     return filteredData.map(cat => {
       let cleanDesc = cat.description;
@@ -1527,10 +1714,12 @@ export const posService = {
 
   async createCategory(categoryData: any) {
     const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
     const tenantSlug = getTenantSlug();
     
     const preparedData = {
       ...categoryData,
+      organization_id: orgId,
       description: `${tenantSlug}::${categoryData.description || ''}`
     };
     
@@ -1550,6 +1739,7 @@ export const posService = {
 
   async updateCategory(id: string, categoryData: any) {
     const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
     const tenantSlug = getTenantSlug();
     
     const preparedData = { ...categoryData };
@@ -1561,6 +1751,7 @@ export const posService = {
       .from('categories')
       .update(preparedData)
       .eq('id', id)
+      .eq('organization_id', orgId)
       .select()
       .single();
     
@@ -1574,25 +1765,28 @@ export const posService = {
 
   async deleteCategory(id: string) {
     const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
     
     const { error } = await supabase
       .from('categories')
       .update({ is_active: false })
-      .eq('id', id);
+      .eq('id', id)
+      .eq('organization_id', orgId);
       
     if (error) throw error;
   },
 
   async deleteCustomer(id: string) {
     const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
     
     if (typeof window !== 'undefined') {
       try {
-        const local = localStorage.getItem('zpos_customers');
+        const local = localStorage.getItem(getTenantStorageKey('zpos_customers'));
         if (local) {
           const list = JSON.parse(local);
           const updated = list.filter((c: any) => c.id !== id);
-          localStorage.setItem('zpos_customers', JSON.stringify(updated));
+          localStorage.setItem(getTenantStorageKey('zpos_customers'), JSON.stringify(updated));
         }
       } catch (e) {
         console.warn("Error deleting local customer:", e);
@@ -1603,7 +1797,8 @@ export const posService = {
       const { error } = await supabase
         .from('customers')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('organization_id', orgId);
       if (!error) return;
     } catch (e) {
       console.warn("Supabase customer delete warning:", e);
@@ -1774,41 +1969,95 @@ export const posService = {
   async getFinanceOverview() {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
+    // Pull full rows with timestamps so we can split current vs prior period.
     const { data: orders, error: ordersError } = await supabase
       .from('orders')
-      .select('total_amount')
+      .select('total_amount, created_at')
       .eq('organization_id', orgId)
       .neq('status', 'cancelled');
     if (ordersError) throw ordersError;
-    const totalRevenue = orders?.reduce((sum, o) => sum + Number(o.total_amount), 0) || 0;
 
     const { data: purchases, error: purchasesError } = await supabase
       .from('purchase_orders')
-      .select('total_amount, paid_amount')
+      .select('total_amount, paid_amount, created_at')
       .eq('organization_id', orgId)
       .neq('status', 'cancelled');
     if (purchasesError) throw purchasesError;
-    const totalCOGS = purchases?.reduce((sum, p) => sum + Number(p.total_amount), 0) || 0;
 
     const { data: expenses, error: expensesError } = await supabase
       .from('expenses')
-      .select('amount')
+      .select('amount, created_at, expense_date')
       .eq('organization_id', orgId)
       .eq('status', 'paid');
     if (expensesError) throw expensesError;
-    const totalExpenses = expenses?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
 
+    // Total (all-time) figures shown in the big numbers.
+    const totalRevenue = orders?.reduce((s, o: any) => s + Number(o.total_amount || 0), 0) || 0;
+    const totalCOGS = purchases?.reduce((s, p: any) => s + Number(p.total_amount || 0), 0) || 0;
+    const totalExpenses = expenses?.reduce((s, e: any) => s + Number(e.amount || 0), 0) || 0;
     const netProfit = totalRevenue - totalCOGS - totalExpenses;
+
+    // Period-over-period: last 30 days vs the 30 days before that.
+    const now = new Date();
+    const d30 = new Date(); d30.setDate(now.getDate() - 30);
+    const d60 = new Date(); d60.setDate(now.getDate() - 60);
+
+    const sumWindow = (rows: any[] | null, getDate: (r: any) => any, getAmount: (r: any) => number,
+                       from: Date, to: Date) => {
+      if (!rows) return 0;
+      let s = 0;
+      for (const r of rows) {
+        const raw = getDate(r);
+        if (!raw) continue;
+        const d = new Date(raw);
+        if (d >= from && d < to) s += Number(getAmount(r) || 0);
+      }
+      return s;
+    };
+
+    const orderAmt = (o: any) => o.total_amount;
+    const orderDate = (o: any) => o.created_at;
+    const purchaseAmt = (p: any) => p.total_amount;
+    const purchaseDate = (p: any) => p.created_at;
+    const expenseAmt = (e: any) => e.amount;
+    const expenseDate = (e: any) => e.expense_date || e.created_at;
+
+    const revCur = sumWindow(orders, orderDate, orderAmt, d30, now);
+    const revPrev = sumWindow(orders, orderDate, orderAmt, d60, d30);
+    const cogsCur = sumWindow(purchases, purchaseDate, purchaseAmt, d30, now);
+    const cogsPrev = sumWindow(purchases, purchaseDate, purchaseAmt, d60, d30);
+    const expCur = sumWindow(expenses, expenseDate, expenseAmt, d30, now);
+    const expPrev = sumWindow(expenses, expenseDate, expenseAmt, d60, d30);
+
+    const profitCur = revCur - cogsCur - expCur;
+    const profitPrev = revPrev - cogsPrev - expPrev;
+
+    const pct = (cur: number, prev: number) => {
+      if (prev === 0) return cur > 0 ? '+100%' : '+0.0%';
+      const change = ((cur - prev) / Math.abs(prev)) * 100;
+      return `${change >= 0 ? '+' : ''}${change.toFixed(1)}%`;
+    };
 
     return {
       totalRevenue,
       totalCOGS,
       totalExpenses,
       netProfit,
-      revenueChange: "+12.5%",
-      expenseChange: "+3.2%",
-      profitChange: "+18.4%"
+      // Real period-over-period deltas
+      revenueChange: pct(revCur, revPrev),
+      expenseChange: pct(expCur, expPrev),
+      profitChange: pct(profitCur, profitPrev),
+      // Expose the underlying period numbers so the UI can show context
+      period: {
+        currentRevenue: revCur,
+        previousRevenue: revPrev,
+        currentProfit: profitCur,
+        previousProfit: profitPrev,
+        currentExpenses: expCur,
+        previousExpenses: expPrev,
+        windowDays: 30,
+      },
     };
   },
 
@@ -1995,13 +2244,13 @@ export const posService = {
     }
 
     if (typeof window !== 'undefined') {
-      const local = localStorage.getItem('zpos_branches');
+      const local = localStorage.getItem(getTenantStorageKey('zpos_branches'));
       if (!local) {
         const defaultBranches = [
           { id: crypto.randomUUID(), organization_id: orgId, name: "Chi nhánh Quận 1", address: "123 Đường ABC, Quận 1, TP.HCM", status: "Chính" },
           { id: crypto.randomUUID(), organization_id: orgId, name: "Chi nhánh Ba Đình", address: "456 Đường XYZ, Ba Đình, Hà Nội", status: "Phụ" }
         ];
-        localStorage.setItem('zpos_branches', JSON.stringify(defaultBranches));
+        localStorage.setItem(getTenantStorageKey('zpos_branches'), JSON.stringify(defaultBranches));
         return defaultBranches;
       }
       return JSON.parse(local);
@@ -2035,7 +2284,7 @@ export const posService = {
     }
 
     if (typeof window !== 'undefined') {
-      const local = localStorage.getItem('zpos_branches');
+      const local = localStorage.getItem(getTenantStorageKey('zpos_branches'));
       let branches = local ? JSON.parse(local) : [
         { id: "1", organization_id: orgId, name: "Chi nhánh Quận 1", address: "123 Đường ABC, Quận 1, TP.HCM", status: "Chính" },
         { id: "2", organization_id: orgId, name: "Chi nhánh Ba Đình", address: "456 Đường XYZ, Ba Đình, Hà Nội", status: "Phụ" }
@@ -2052,7 +2301,7 @@ export const posService = {
         branches.push(newBranch);
       }
       
-      localStorage.setItem('zpos_branches', JSON.stringify(branches));
+      localStorage.setItem(getTenantStorageKey('zpos_branches'), JSON.stringify(branches));
       return preparedBranch;
     }
     return preparedBranch;
@@ -2073,11 +2322,11 @@ export const posService = {
     }
 
     if (typeof window !== 'undefined') {
-      const local = localStorage.getItem('zpos_branches');
+      const local = localStorage.getItem(getTenantStorageKey('zpos_branches'));
       if (local) {
         let branches = JSON.parse(local);
         branches = branches.filter((b: any) => b.id !== id);
-        localStorage.setItem('zpos_branches', JSON.stringify(branches));
+        localStorage.setItem(getTenantStorageKey('zpos_branches'), JSON.stringify(branches));
       }
     }
   }

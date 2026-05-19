@@ -82,6 +82,8 @@ export type Order = {
   total_amount: number;
   status: string;
   payment_method: string;
+  payment_status?: string;
+  payment_amount_received?: number;
   created_at: string;
   branch_id?: string;
   order_items?: any[];
@@ -238,10 +240,32 @@ export default function OrdersPage() {
       header: "Thanh toán",
       cell: ({ row }) => {
         const method = row.getValue("payment_method") as string;
+        const status = row.original.payment_status;
+        const isDebt = method === 'debt' || status === 'debt' || status === 'partial_debt';
+        const label =
+          method === 'cash' ? 'Tiền mặt' :
+          method === 'card' ? 'Thẻ' :
+          method === 'transfer' ? 'Chuyển khoản' :
+          method === 'debt' ? 'Ghi nợ' :
+          method || '—';
         return (
-          <Badge variant="outline" className="capitalize">
-            {method === 'cash' ? 'Tiền mặt' : method === 'card' ? 'Thẻ' : 'Chuyển khoản'}
-          </Badge>
+          <div className="flex flex-col gap-1">
+            <Badge
+              variant={isDebt ? "destructive" : "outline"}
+              className="capitalize w-fit"
+            >
+              {label}
+            </Badge>
+            {status && status !== 'paid' && (
+              <span className="text-[10px] font-bold uppercase text-muted-foreground">
+                {status === 'debt' ? 'Chưa trả' :
+                  status === 'partial_debt' ? 'Trả một phần' :
+                  status === 'pending' ? 'Chờ thanh toán' :
+                  status === 'refunded' ? 'Đã hoàn' :
+                  status}
+              </span>
+            )}
+          </div>
         );
       },
     },
@@ -428,6 +452,8 @@ export default function OrdersPage() {
         total_amount: o.total_amount,
         status: o.status,
         payment_method: o.payment_method,
+        payment_status: o.payment_status,
+        payment_amount_received: o.payment_amount_received,
         created_at: o.created_at,
         branch_id: o.branch_id,
         order_items: o.order_items || []
@@ -526,7 +552,8 @@ export default function OrdersPage() {
             <SelectItem value="all">Tất cả thanh toán</SelectItem>
             <SelectItem value="cash">Tiền mặt</SelectItem>
             <SelectItem value="card">Thẻ</SelectItem>
-            <SelectItem value="bank">Chuyển khoản</SelectItem>
+            <SelectItem value="transfer">Chuyển khoản</SelectItem>
+            <SelectItem value="debt">Ghi nợ</SelectItem>
           </SelectContent>
         </Select>
 

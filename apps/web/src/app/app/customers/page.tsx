@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { 
-  User, 
-  Search, 
-  MoreHorizontal, 
-  History, 
-  CreditCard, 
+import Link from 'next/link';
+import {
+  User,
+  Search,
+  MoreHorizontal,
+  History,
+  CreditCard,
   Award,
   Loader2,
   Phone,
@@ -179,8 +180,10 @@ export default function CustomersPage() {
             <DropdownMenuItem onClick={() => handleViewDetail(row.original)}>
               <History className="mr-2 h-4 w-4" /> Xem lịch sử
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <CreditCard className="mr-2 h-4 w-4" /> Thanh toán nợ
+            <DropdownMenuItem asChild>
+              <Link href={`/debt/customers/${row.original.id}`}>
+                <CreditCard className="mr-2 h-4 w-4" /> Thanh toán nợ
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>Chỉnh sửa</DropdownMenuItem>
@@ -324,18 +327,24 @@ export default function CustomersPage() {
                     Lịch sử đơn hàng
                   </h4>
                   <div className="max-h-[250px] overflow-y-auto space-y-2 pr-2">
-                    {selectedCustomer.orders?.length > 0 ? selectedCustomer.orders.map((order: any) => (
-                      <div key={order.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border text-xs">
-                        <div className="flex flex-col">
-                          <span className="font-bold">#{order.order_number}</span>
-                          <span className="text-muted-foreground">{new Date(order.created_at).toLocaleDateString('vi-VN')}</span>
+                    {selectedCustomer.orders?.length > 0 ? selectedCustomer.orders.map((order: any) => {
+                      const isDebt = order.payment_status === 'debt' || order.payment_status === 'partial_debt' || order.payment_method === 'debt';
+                      return (
+                        <div key={order.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border text-xs">
+                          <div className="flex flex-col">
+                            <span className="font-bold">#{order.order_number}</span>
+                            <span className="text-muted-foreground">{new Date(order.created_at).toLocaleDateString('vi-VN')}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold">{formatCurrency(order.total_amount)}</span>
+                            {isDebt && (
+                              <Badge variant="destructive" className="text-[8px] h-4 px-1">Ghi nợ</Badge>
+                            )}
+                            <Badge className="text-[8px] h-4 px-1">{order.status}</Badge>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <span className="font-bold">{formatCurrency(order.total_amount)}</span>
-                          <Badge className="text-[8px] h-4 px-1">{order.status}</Badge>
-                        </div>
-                      </div>
-                    )) : (
+                      );
+                    }) : (
                       <p className="text-center py-10 text-muted-foreground text-sm italic">Chưa có lịch sử giao dịch.</p>
                     )}
                   </div>

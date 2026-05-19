@@ -35,7 +35,8 @@ import { posService } from '@/services/pos.service';
 import { BankAccountsManager } from './_components/bank-accounts-manager';
 import { EInvoiceManager } from './_components/einvoice-manager';
 import { ZaloManager } from './_components/zalo-manager';
-import { MessageCircle } from 'lucide-react';
+import { DebtSettingsManager } from './_components/debt-settings-manager';
+import { Coins, MessageCircle } from 'lucide-react';
 import { 
   Card, 
   CardContent, 
@@ -460,6 +461,10 @@ export default function SettingsPage() {
             <TabsTrigger value="shipping" className="gap-2 shrink-0">
               <Truck className="w-4 h-4 text-orange-500" />
               Vận chuyển
+            </TabsTrigger>
+            <TabsTrigger value="debt" className="gap-2 shrink-0">
+              <Coins className="w-4 h-4 text-amber-600" />
+              Công nợ
             </TabsTrigger>
           </TabsList>
         </div>
@@ -909,6 +914,10 @@ export default function SettingsPage() {
               </Button>
             </CardFooter>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="debt" className="space-y-4 animate-in fade-in duration-300">
+          <DebtSettingsManager />
         </TabsContent>
       </Tabs>
 
