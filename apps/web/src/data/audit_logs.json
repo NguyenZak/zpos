@@ -1,5 +1,124 @@
 [
   {
+    "id": "log-1779179650772-x5hukqtqh",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T08:34:10.772Z"
+  },
+  {
+    "id": "log-1779178679392-akp0z9ydg",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T08:17:59.392Z"
+  },
+  {
+    "id": "log-1779178308242-rv5iddkkz",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "kphone@zpos.vn",
+    "action": "login_failed",
+    "module": "cms",
+    "severity": "critical",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Invalid login credentials"
+    },
+    "is_alert": true,
+    "alert_reason": "Phát hiện tấn công Brute-Force: Thất bại liên tiếp 4 lần đăng nhập từ IP (127.0.0.1) hoặc tài khoản (kphone@zpos.vn).",
+    "created_at": "2026-05-19T08:11:48.242Z"
+  },
+  {
+    "id": "log-1779178298069-4vjbgmrmy",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_failed",
+    "module": "cms",
+    "severity": "critical",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Tài khoản Supabase này không có quyền truy cập CMS."
+    },
+    "is_alert": true,
+    "alert_reason": "Phát hiện tấn công Brute-Force: Thất bại liên tiếp 3 lần đăng nhập từ IP (127.0.0.1) hoặc tài khoản (nguyenvanzak@gmail.com).",
+    "created_at": "2026-05-19T08:11:38.069Z"
+  },
+  {
+    "id": "log-1779178266666-1zhk93wkp",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_failed",
+    "module": "cms",
+    "severity": "warning",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Tài khoản Supabase này không có quyền truy cập CMS."
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T08:11:06.666Z"
+  },
+  {
+    "id": "log-1779178253455-x4zghourb",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_failed",
+    "module": "cms",
+    "severity": "warning",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Tài khoản Supabase này không có quyền truy cập CMS."
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T08:10:53.455Z"
+  },
+  {
+    "id": "log-1779177264699-wwkfqd8wj",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-19T07:54:24.699Z"
+  },
+  {
     "id": "log-1779158298202-j4t20llxc",
     "tenant_id": null,
     "user_id": "14785931-42d6-4143-9291-a96dee12d42d",

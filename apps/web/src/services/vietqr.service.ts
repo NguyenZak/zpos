@@ -153,13 +153,10 @@ export const vietQRService = {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
 
-    // High-visibility debug logging to diagnose RLS errors
     const { data: { user } } = await supabase.auth.getUser();
-    console.log("%c=== ZPOS SAVE BANK ACCOUNT DEBUG ===", "background: #7c3aed; color: white; font-weight: bold; padding: 4px;");
-    console.log("Active Organization ID (tenant_id):", orgId);
-    console.log("Supabase Authenticated User:", user ? { id: user.id, email: user.email } : "NULL (Anonymous/Not Logged In)");
-    console.log("Account Form Data:", account);
-    console.log("========================================");
+    if (!user) {
+      throw new Error("Chưa có phiên đăng nhập Supabase hợp lệ để lưu tài khoản ngân hàng.");
+    }
 
     const payload: Partial<BankAccount> = {
       ...account,
@@ -172,31 +169,16 @@ export const vietQRService = {
         .slice(0, 8),
     };
 
-    // If this becomes default, clear other defaults first
-    if (payload.is_default) {
-      await supabase.from("bank_accounts").update({ is_default: false }).eq("tenant_id", orgId);
+    const res = await fetch("/api/bank-accounts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json?.success) {
+      throw new Error(json?.error || "Không thể lưu tài khoản ngân hàng.");
     }
-
-    if (account.id) {
-      const { data, error } = await supabase
-        .from("bank_accounts")
-        .update(payload)
-        .eq("id", account.id)
-        .eq("tenant_id", orgId)
-        .select()
-        .single();
-      if (error) throw error;
-      return data as BankAccount;
-    }
-
-    // Generate a webhook secret if missing
-    if (!payload.webhook_secret) {
-      payload.webhook_secret = `whk_${Math.random().toString(36).slice(2, 12)}${Date.now().toString(36)}`;
-    }
-
-    const { data, error } = await supabase.from("bank_accounts").insert([payload]).select().single();
-    if (error) throw error;
-    return data as BankAccount;
+    return json.data as BankAccount;
   },
 
   async deleteBankAccount(id: string): Promise<void> {
@@ -247,6 +229,7 @@ export const vietQRService = {
         payment_status: "paid",
         payment_confirmed_at: now,
         payment_amount_received: amount,
+        status: "completed",
       })
       .eq("id", orderId);
     if (updErr) throw updErr;

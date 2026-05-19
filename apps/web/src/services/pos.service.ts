@@ -104,6 +104,8 @@ export async function getActiveOrganizationId(): Promise<string> {
         .from('organization_members')
         .select('organization_id')
         .eq('profile_id', user.id)
+        .order('created_at', { ascending: true })
+        .limit(1)
         .maybeSingle();
 
       if (member?.organization_id) {

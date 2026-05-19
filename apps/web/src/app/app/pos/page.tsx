@@ -621,6 +621,13 @@ export default function POSPage() {
     return new Intl.NumberFormat('vi-VN').format(amount) + " Đ";
   };
 
+  const formatCompactPrice = (amount: number) => {
+    if (amount >= 1000 && amount % 1000 === 0) {
+      return `${new Intl.NumberFormat('vi-VN').format(amount / 1000)}k`;
+    }
+    return formatCurrency(amount).replace(/\s?Đ$/, 'đ');
+  };
+
   const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
   const discount = discountType === 'percentage'
     ? Math.round((subtotal * discountValue) / 100)
@@ -1138,19 +1145,48 @@ export default function POSPage() {
             {filteredProducts.map(product => (
               <Card 
                 key={product.id} 
-                className="cursor-pointer hover:border-primary transition-all overflow-hidden group shadow-sm border"
+                className="group cursor-pointer gap-0 overflow-hidden rounded-xl border border-border/70 bg-card py-0 shadow-sm transition-all duration-200 hover:border-primary/50 hover:shadow-md"
                 onClick={() => addToCart(product)}
               >
-                <div className="aspect-square bg-muted relative overflow-hidden">
-                  <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  <Badge className="absolute top-2 right-2 border-none text-[10px] uppercase">
-                    Còn {product.stock}
-                  </Badge>
+                <div className="relative aspect-square overflow-hidden bg-zinc-100 dark:bg-zinc-900">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.025]"
+                  />
+                  <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-2 pt-10">
+                    <div className="flex items-end justify-between gap-2">
+                      <span className="min-w-0 truncate rounded-full bg-white/90 px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide text-zinc-700 shadow-sm backdrop-blur dark:bg-zinc-950/80 dark:text-zinc-200">
+                        {product.category}
+                      </span>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold shadow-sm backdrop-blur ${
+                      (product.stock ?? 0) <= 0
+                        ? 'bg-red-500 text-white'
+                        : (product.stock ?? 0) <= 5
+                          ? 'bg-amber-500 text-white'
+                          : 'bg-zinc-950/85 text-white'
+                    }`}>
+                        {product.stock ?? 0}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <CardContent className="p-3 space-y-1">
-                  <p className="text-[10px] text-muted-foreground uppercase font-semibold">{product.category}</p>
-                  <p className="font-semibold text-sm line-clamp-1">{product.name}</p>
-                  <p className="text-base font-bold text-primary">{formatCurrency(product.price)}</p>
+                <CardContent className="p-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="min-h-[34px] text-sm font-medium leading-tight text-foreground line-clamp-2">
+                        {product.name}
+                      </p>
+                      <p className="mt-1 text-[15px] font-semibold leading-none tracking-tight text-primary">
+                        {formatCompactPrice(product.price)}
+                      </p>
+                    </div>
+                    {cart.some(item => item.id === product.id) && (
+                      <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                        ✓
+                      </span>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             ))}

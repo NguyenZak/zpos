@@ -38,7 +38,7 @@ const DEFAULT_FORM = {
   memo_prefix: "ZPOS",
   is_default: false,
   is_active: true,
-  webhook_provider: "sepay" as WebhookProvider,
+  webhook_provider: "manual" as WebhookProvider,
   webhook_secret: "",
   notes: "",
 };
@@ -201,7 +201,8 @@ export function BankAccountsManager() {
                 addInfo: `${a.memo_prefix} demo`,
                 accountName: a.account_name,
               });
-              const webhookUrl = vietQRService.buildWebhookUrl(a.id, a.webhook_provider);
+              const usesManualVietQR = a.webhook_provider === "manual";
+              const webhookUrl = usesManualVietQR ? "" : vietQRService.buildWebhookUrl(a.id, a.webhook_provider);
               return (
                 <div key={a.id} className="rounded-xl border bg-card p-4 space-y-3 transition-all hover:shadow-md">
                   <div className="flex items-start gap-3">
@@ -237,44 +238,55 @@ export function BankAccountsManager() {
                   </div>
 
                   <div className="space-y-1.5 pt-2 border-t">
-                    <div className="flex items-center gap-2 text-xs">
-                      <Webhook className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-muted-foreground shrink-0">Webhook:</span>
-                      <code className="flex-1 truncate font-mono bg-muted px-1.5 py-0.5 rounded text-[10px]">
-                        {webhookUrl}
-                      </code>
-                      <button
-                        type="button"
-                        onClick={() => copy(webhookUrl, `url-${a.id}`)}
-                        className="p-1 hover:bg-muted rounded"
-                      >
-                        {copiedField === `url-${a.id}` ? (
-                          <Check className="h-3.5 w-3.5 text-green-600" />
-                        ) : (
-                          <Copy className="h-3.5 w-3.5" />
-                        )}
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs">
-                      <ShieldCheck className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-muted-foreground shrink-0">Secret:</span>
-                      <code className="flex-1 truncate font-mono bg-muted px-1.5 py-0.5 rounded text-[10px]">
-                        {a.webhook_secret || "—"}
-                      </code>
-                      {a.webhook_secret && (
-                        <button
-                          type="button"
-                          onClick={() => copy(a.webhook_secret!, `sec-${a.id}`)}
-                          className="p-1 hover:bg-muted rounded"
-                        >
-                          {copiedField === `sec-${a.id}` ? (
-                            <Check className="h-3.5 w-3.5 text-green-600" />
-                          ) : (
-                            <Copy className="h-3.5 w-3.5" />
+                    {usesManualVietQR ? (
+                      <div className="flex items-center gap-2 text-xs">
+                        <QrCode className="h-3.5 w-3.5 text-violet-600" />
+                        <span className="font-semibold text-violet-700 dark:text-violet-400">
+                          VietQR không dùng webhook, xác nhận thanh toán thủ công.
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-2 text-xs">
+                          <Webhook className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-muted-foreground shrink-0">Webhook:</span>
+                          <code className="flex-1 truncate font-mono bg-muted px-1.5 py-0.5 rounded text-[10px]">
+                            {webhookUrl}
+                          </code>
+                          <button
+                            type="button"
+                            onClick={() => copy(webhookUrl, `url-${a.id}`)}
+                            className="p-1 hover:bg-muted rounded"
+                          >
+                            {copiedField === `url-${a.id}` ? (
+                              <Check className="h-3.5 w-3.5 text-green-600" />
+                            ) : (
+                              <Copy className="h-3.5 w-3.5" />
+                            )}
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                          <ShieldCheck className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-muted-foreground shrink-0">Secret:</span>
+                          <code className="flex-1 truncate font-mono bg-muted px-1.5 py-0.5 rounded text-[10px]">
+                            {a.webhook_secret || "—"}
+                          </code>
+                          {a.webhook_secret && (
+                            <button
+                              type="button"
+                              onClick={() => copy(a.webhook_secret!, `sec-${a.id}`)}
+                              className="p-1 hover:bg-muted rounded"
+                            >
+                              {copiedField === `sec-${a.id}` ? (
+                                <Check className="h-3.5 w-3.5 text-green-600" />
+                              ) : (
+                                <Copy className="h-3.5 w-3.5" />
+                              )}
+                            </button>
                           )}
-                        </button>
-                      )}
-                    </div>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   <div className="flex gap-2 pt-2">
@@ -302,7 +314,11 @@ export function BankAccountsManager() {
         )}
 
         <div className="mt-6 rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 text-xs space-y-1.5 leading-relaxed">
-          <p className="font-bold text-violet-700 dark:text-violet-400">💡 Cách tự động xác nhận thanh toán</p>
+          <p className="font-bold text-violet-700 dark:text-violet-400">💡 VietQR và tự động xác nhận thanh toán</p>
+          <p>
+            Chọn <b>VietQR (không dùng webhook)</b> nếu chỉ muốn POS hiển thị mã QR để khách chuyển khoản và nhân viên
+            tự xác nhận khi thấy tiền về.
+          </p>
           <p>
             1. Đăng ký tài khoản tại <b>Sepay.vn</b> hoặc <b>Casso.vn</b> — kết nối ngân hàng của bạn (qua SMS forward
             hoặc API).
@@ -441,7 +457,7 @@ export function BankAccountsManager() {
 
                 <div className="grid gap-1.5">
                   <Label htmlFor="ba-provider" className="font-bold text-xs text-zinc-600 dark:text-zinc-400">
-                    Dịch vụ webhook tự động
+                    Dịch vụ xác nhận thanh toán
                   </Label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500">
@@ -458,10 +474,10 @@ export function BankAccountsManager() {
                       }
                       className="flex h-11 w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-background pl-9 pr-10 py-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 transition-all shadow-sm cursor-pointer appearance-none"
                     >
+                      <option value="manual">VietQR (Không dùng webhook)</option>
                       <option value="sepay">Sepay.vn (Khuyên dùng)</option>
                       <option value="casso">Casso.vn</option>
                       <option value="generic">Webhook tuỳ chỉnh</option>
-                      <option value="manual">Không dùng (Xác nhận thủ công)</option>
                     </select>
                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500">
                       <ChevronDown className="w-4 h-4" />
@@ -470,24 +486,33 @@ export function BankAccountsManager() {
                 </div>
               </div>
 
-              {/* Row 4: Webhook Secret (Full width to prevent truncation) */}
-              <div className="grid gap-1.5 w-full">
-                <Label htmlFor="ba-secret" className="font-bold text-xs text-zinc-600 dark:text-zinc-400">
-                  Webhook secret
-                </Label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500">
-                    <ShieldCheck className="w-4 h-4 text-violet-500" />
-                  </div>
-                  <Input
-                    id="ba-secret"
-                    value={form.webhook_secret}
-                    onChange={(e) => setForm((f) => ({ ...f, webhook_secret: e.target.value }))}
-                    placeholder="Mã bí mật tự động xác nhận chuyển khoản (để trống nếu tự tạo)"
-                    className="pl-9 h-11 rounded-xl font-mono text-xs border-zinc-200 dark:border-zinc-800 bg-background shadow-sm focus-visible:ring-violet-500"
-                  />
+              {form.webhook_provider === "manual" ? (
+                <div className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-4 text-xs leading-relaxed text-violet-800 dark:text-violet-200">
+                  <p className="font-bold">VietQR không cần webhook</p>
+                  <p className="mt-1">
+                    POS sẽ dùng thông tin ngân hàng này để tạo mã VietQR. Sau khi khách chuyển khoản, nhân viên xác nhận
+                    thanh toán thủ công trên màn hình bán hàng.
+                  </p>
                 </div>
-              </div>
+              ) : (
+                <div className="grid gap-1.5 w-full">
+                  <Label htmlFor="ba-secret" className="font-bold text-xs text-zinc-600 dark:text-zinc-400">
+                    Webhook secret
+                  </Label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500">
+                      <ShieldCheck className="w-4 h-4 text-violet-500" />
+                    </div>
+                    <Input
+                      id="ba-secret"
+                      value={form.webhook_secret}
+                      onChange={(e) => setForm((f) => ({ ...f, webhook_secret: e.target.value }))}
+                      placeholder="Mã bí mật tự động xác nhận chuyển khoản (để trống nếu tự tạo)"
+                      className="pl-9 h-11 rounded-xl font-mono text-xs border-zinc-200 dark:border-zinc-800 bg-background shadow-sm focus-visible:ring-violet-500"
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Row 5: Switch Cards (2 columns) */}
               <div className="grid gap-3 md:grid-cols-2 pt-2">

@@ -193,6 +193,13 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
     return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(amount);
   };
 
+  const formatCompactPrice = (amount: number) => {
+    if (amount >= 1000 && amount % 1000 === 0) {
+      return `${new Intl.NumberFormat("vi-VN").format(amount / 1000)}k`;
+    }
+    return new Intl.NumberFormat("vi-VN").format(amount) + "đ";
+  };
+
   const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
   const total = subtotal;
 
@@ -371,30 +378,36 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
               {filteredProducts.map((prod) => (
                 <Card 
                   key={prod.id} 
-                  className="overflow-hidden border border-muted/50 rounded-lg active:scale-[0.97] transition-all bg-card flex flex-col justify-between"
+                  className="flex flex-col justify-between gap-0 overflow-hidden rounded-xl border border-muted/50 bg-card py-0 shadow-sm transition-all active:scale-[0.97]"
                   onClick={() => addToCart(prod)}
                 >
-                  <div className="aspect-square bg-muted relative overflow-hidden">
+                  <div className="relative aspect-square overflow-hidden bg-zinc-100 dark:bg-zinc-900">
                     <img 
                       src={prod.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=200&auto=format&fit=crop"} 
                       alt={prod.name} 
-                      className="w-full h-full object-cover"
+                      className="h-full w-full object-cover"
                       onError={(e)=>{
                         (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=200&auto=format&fit=crop";
                       }}
                     />
-                    <Badge className="absolute top-2 right-2 bg-black/50 backdrop-blur-xs text-[9px] border-none font-bold">
-                      Tồn {prod.stock ?? 0}
-                    </Badge>
-                  </div>
-                  <CardContent className="p-3.5 space-y-1.5">
-                    <div className="space-y-0.5">
-                      <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider leading-none">{prod.category}</p>
-                      <h4 className="font-extrabold text-xs text-foreground line-clamp-1 leading-snug">{prod.name}</h4>
+                    <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-2 pt-10">
+                      <div className="flex items-end justify-between gap-2">
+                        <span className="min-w-0 truncate rounded-full bg-white/90 px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide text-zinc-700 shadow-sm backdrop-blur dark:bg-zinc-950/80 dark:text-zinc-200">
+                          {prod.category}
+                        </span>
+                        <span className="shrink-0 rounded-full bg-zinc-950/85 px-2 py-0.5 text-[9px] font-semibold text-white shadow-sm backdrop-blur">
+                          {prod.stock ?? 0}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center gap-1">
-                      <span className="text-xs font-black text-primary font-mono">{formatCurrency(prod.price)}</span>
-                      <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground shrink-0">
+                  </div>
+                  <CardContent className="p-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <h4 className="min-h-[32px] text-xs font-medium leading-tight text-foreground line-clamp-2">{prod.name}</h4>
+                        <span className="mt-1 block text-[15px] font-semibold leading-none tracking-tight text-primary">{formatCompactPrice(prod.price)}</span>
+                      </div>
+                      <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                         <Plus className="w-3.5 h-3.5" />
                       </div>
                     </div>
@@ -423,7 +436,7 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
                     <p className="text-[9px] text-muted-foreground font-semibold uppercase">{prod.category} • Tồn: {prod.stock}</p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-xs font-black text-primary font-mono">{formatCurrency(prod.price)}</span>
+                    <span className="text-xs font-black text-primary font-mono">{formatCompactPrice(prod.price)}</span>
                     <div className="w-7 h-7 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                       <Plus className="w-4 h-4" />
                     </div>

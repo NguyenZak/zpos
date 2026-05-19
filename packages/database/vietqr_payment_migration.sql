@@ -251,7 +251,8 @@ begin
     update orders
        set payment_status = 'paid',
            payment_confirmed_at = v_now,
-           payment_amount_received = coalesce(payment_amount_received, 0) + p_amount
+           payment_amount_received = coalesce(payment_amount_received, 0) + p_amount,
+           status = 'completed'
      where id = v_order.id;
   end if;
 
