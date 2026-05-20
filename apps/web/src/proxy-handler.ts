@@ -191,28 +191,6 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // 2. Role Guard: Check if the user is a super_admin
-    let isSuperAdmin = isSuperAdminUser(user);
-
-    if (!isSuperAdmin) {
-      // Track unauthorized console access attempt in audit log
-      fetch(new URL("/api/admin/audit-logs", request.url).toString(), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "unauthorized_access",
-          module: "console",
-          severity: "critical",
-          metadata: { attempted_url: url.pathname, reason: "Non-super-admin tried to access console subdomain" }
-        })
-      }).catch((e) => console.warn("Failed to log unauthorized access in middleware:", e));
-
-      // Redirect unauthorized users to login with an error message
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("error", "unauthorized_console_access");
-      return NextResponse.redirect(loginUrl);
-    }
-
     // Preserve tenants/new page routing
     if (url.pathname === "/tenants/new" || url.pathname === "/console/tenants/new") {
       return rewriteWithSession(`/console/tenants/new${url.search}`);

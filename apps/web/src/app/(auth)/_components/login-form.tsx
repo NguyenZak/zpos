@@ -93,9 +93,9 @@ export function LoginForm() {
       const params = new URLSearchParams(window.location.search);
       const errorParam = params.get("error");
       if (errorParam === "unauthorized_console_access") {
-        toast.error("Truy cập bị từ chối!", {
-          description: "Tài khoản của bạn không có quyền truy cập vào trang kiểm soát tổng Console.",
-        });
+        params.delete("error");
+        const nextQuery = params.toString();
+        window.history.replaceState(null, "", `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ""}`);
       } else if (errorParam === "tenant_access_denied") {
         toast.error("Truy cập bị từ chối!", {
           description: "Tài khoản của bạn không thuộc về chi nhánh/tenant này.",
@@ -185,6 +185,18 @@ export function LoginForm() {
         return;
       }
 
+      const isConsoleSubdomain =
+        window.location.hostname.startsWith("console.") ||
+        window.location.hostname === "console.localhost";
+
+      if (isConsoleSubdomain) {
+        const consoleUrl = isLocal
+          ? "/console"
+          : `https://console.${getMainDomain()}/dashboard`;
+        window.location.href = consoleUrl;
+        return;
+      }
+
       // 1. Query profiles/organizations to find associated tenant slug first
       const { data: profile } = await supabase
         .from("profiles")
@@ -205,10 +217,6 @@ export function LoginForm() {
       }
 
       // 3. If NOT a tenant, check if user is a super_admin
-      const isConsoleSubdomain = 
-        window.location.hostname.startsWith("console.") || 
-        window.location.hostname === "console.localhost";
-
       const isSuperAdmin = isSuperAdminUser(authData.user);
 
       if (isSuperAdmin) {
