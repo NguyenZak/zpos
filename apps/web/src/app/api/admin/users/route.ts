@@ -2,7 +2,7 @@ import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 
-import { isSuperAdminEmail } from "@/utils/super-admin";
+import { isSuperAdminUser } from "@/utils/super-admin";
 import { createClient as createServerSupabase } from "@/utils/supabase/server";
 
 function getServiceClient() {
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     data: { user: adminUser },
   } = await authClient.auth.getUser();
 
-  if (!isSuperAdminEmail(adminUser?.email)) {
+  if (!isSuperAdminUser(adminUser)) {
     return NextResponse.json({ success: false, error: "Không có quyền tạo/cập nhật user." }, { status: 403 });
   }
 

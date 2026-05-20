@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 import { updateSession } from "@/utils/supabase/middleware";
-import { isSuperAdminEmail } from "@/utils/super-admin";
+import { isSuperAdminUser } from "@/utils/super-admin";
 
 function resolveMainDomain(hostname: string) {
   let mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || "localhost:3000";
@@ -192,7 +192,7 @@ export async function proxy(request: NextRequest) {
     }
 
     // 2. Role Guard: Check if the user is a super_admin
-    let isSuperAdmin = isSuperAdminEmail(user.email);
+    let isSuperAdmin = isSuperAdminUser(user);
 
     if (!isSuperAdmin) {
       // Track unauthorized console access attempt in audit log
@@ -256,7 +256,7 @@ export async function proxy(request: NextRequest) {
     // Validate live Supabase user tenant membership
     let hasAccess = false;
     if (user) {
-      const isLiveSuperAdmin = isSuperAdminEmail(user.email);
+      const isLiveSuperAdmin = isSuperAdminUser(user);
 
       if (isLiveSuperAdmin) {
         hasAccess = true;

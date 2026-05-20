@@ -29,3 +29,18 @@ export function isSuperAdminEmail(email?: string | null): boolean {
   if (!email) return false;
   return SUPER_ADMIN_EMAILS.includes(email.toLowerCase().trim());
 }
+
+export function isSuperAdminUser(user?: {
+  email?: string | null;
+  user_metadata?: Record<string, unknown> | null;
+  app_metadata?: Record<string, unknown> | null;
+} | null): boolean {
+  if (!user) return false;
+  if (isSuperAdminEmail(user.email)) return true;
+
+  const userRole = String(user.user_metadata?.role || user.user_metadata?.global_role || "").toLowerCase();
+  const appRole = String(user.app_metadata?.role || user.app_metadata?.global_role || "").toLowerCase();
+  const metadataFlag = user.user_metadata?.is_super_admin === true || user.app_metadata?.is_super_admin === true;
+
+  return metadataFlag || userRole === "super_admin" || appRole === "super_admin";
+}
