@@ -60,6 +60,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { AddCustomerDialog } from "./_components/add-customer-dialog";
+import { EditCustomerDialog } from "./_components/edit-customer-dialog";
 import { posService } from "@/services/pos.service";
 
 const formatCurrency = (amount: number) => {
@@ -73,6 +74,8 @@ export default function CustomersPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [alertOpen, setAlertOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<any>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
   const loadCustomers = async () => {
     setLoading(true);
@@ -186,7 +189,14 @@ export default function CustomersPage() {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Chỉnh sửa</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setEditingCustomer(row.original);
+                setEditOpen(true);
+              }}
+            >
+              Chỉnh sửa
+            </DropdownMenuItem>
             <DropdownMenuItem 
               className="text-destructive" 
               onClick={() => {
@@ -354,6 +364,16 @@ export default function CustomersPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <EditCustomerDialog
+        customer={editingCustomer}
+        open={editOpen}
+        onOpenChange={(open) => {
+          setEditOpen(open);
+          if (!open) setEditingCustomer(null);
+        }}
+        onUpdated={loadCustomers}
+      />
 
       <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
         <AlertDialogContent>

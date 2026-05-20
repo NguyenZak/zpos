@@ -16,6 +16,7 @@ import { AIFloatingWidget } from "./ai-floating-widget";
 import { PermissionGuard } from "@/components/permission-guard";
 import { MobileBottomNav } from "./mobile/mobile-bottom-nav";
 import { TelegramScheduler } from "./telegram-scheduler";
+import { ShiftGate } from "./shift-gate";
 
 interface ResponsiveLayoutProps {
   children: React.ReactNode;
@@ -71,7 +72,7 @@ export function ResponsiveLayout({
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto px-4 pb-20 pt-2 min-h-screen">
           <PermissionGuard>
-            {children}
+            <ShiftGate>{children}</ShiftGate>
           </PermissionGuard>
         </main>
         
@@ -129,7 +130,7 @@ export function ResponsiveLayout({
         </header>
         <div className="h-full p-3 md:p-4">
           <PermissionGuard>
-            {children}
+            <ShiftGate>{children}</ShiftGate>
           </PermissionGuard>
         </div>
         {showAIWidget && <AIFloatingWidget />}

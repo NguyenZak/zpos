@@ -82,6 +82,39 @@ const clearClientMockSession = () => {
   });
 };
 
+const getAuthErrorMessage = (err: any) => {
+  const rawMessage =
+    err?.message ||
+    err?.error_description ||
+    (typeof err === "object" ? JSON.stringify(err) : String(err)) ||
+    "Vui lòng kiểm tra lại email và mật khẩu.";
+  const normalized = rawMessage.toLowerCase();
+
+  if (normalized.includes("invalid login credentials")) {
+    return "Email hoặc mật khẩu không đúng.";
+  }
+
+  if (normalized.includes("email not confirmed")) {
+    return "Email chưa được xác nhận. Vui lòng xác nhận email trước khi đăng nhập.";
+  }
+
+  return rawMessage;
+};
+
+const isExpectedAuthFailure = (err: any) => {
+  const rawMessage =
+    err?.message ||
+    err?.error_description ||
+    (typeof err === "object" ? JSON.stringify(err) : String(err)) ||
+    "";
+  const normalized = rawMessage.toLowerCase();
+
+  return (
+    normalized.includes("invalid login credentials") ||
+    normalized.includes("email not confirmed")
+  );
+};
+
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -231,12 +264,11 @@ export function LoginForm() {
       window.location.href = "/app";
 
     } catch (err: any) {
-      console.error("Auth Exception Caught:", err);
-      const rawErrMsg = err?.message || err?.error_description || (typeof err === 'object' ? JSON.stringify(err) : String(err)) || "Vui lòng kiểm tra lại email và mật khẩu.";
-      const isEmailUnconfirmed = rawErrMsg.toLowerCase().includes("email not confirmed");
-      const errMsg = isEmailUnconfirmed
-        ? "Email chưa được xác nhận trong Supabase Auth. Hãy mở Console và lưu lại user này bằng API admin mới, hoặc confirm email trực tiếp trong Supabase Dashboard."
-        : rawErrMsg;
+      const errMsg = getAuthErrorMessage(err);
+
+      if (!isExpectedAuthFailure(err)) {
+        console.error("Auth Exception Caught:", err);
+      }
       
       // Track failed login
       fetch("/api/admin/audit-logs", {
@@ -266,7 +298,7 @@ export function LoginForm() {
         <div className="p-3.5 bg-rose-500/10 border border-rose-500/20 text-rose-200 text-xs font-mono rounded-xl flex items-start gap-2.5 shadow-md">
           <ShieldAlert className="size-4 text-rose-400 shrink-0 mt-0.5" />
           <div className="space-y-0.5 text-left">
-            <p className="font-extrabold uppercase tracking-wider text-[10px] text-rose-400">Auth Exception Caught</p>
+            <p className="font-extrabold uppercase tracking-wider text-[10px] text-rose-400">Không thể đăng nhập</p>
             <p className="leading-normal">{loginError}</p>
           </div>
         </div>

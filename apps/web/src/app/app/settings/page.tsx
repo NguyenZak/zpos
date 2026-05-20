@@ -32,6 +32,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { posService } from '@/services/pos.service';
+import { permissionService } from '@/services/permission.service';
 import { BankAccountsManager } from './_components/bank-accounts-manager';
 import { EInvoiceManager } from './_components/einvoice-manager';
 import { ZaloManager } from './_components/zalo-manager';
@@ -72,6 +73,15 @@ export default function SettingsPage() {
   const [loading, setLoading] = React.useState(false);
   const [bankList, setBankList] = React.useState<any[]>(VIETNAMESE_BANKS);
   const [activeTab, setActiveTab] = React.useState('business');
+  const [isOwner, setIsOwner] = React.useState(false);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    permissionService.isCurrentUserOwner().then((value) => {
+      if (!cancelled) setIsOwner(value);
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   // Brand / Store State
   const [bizName, setBizName] = React.useState('ZPOS Retail Store');
@@ -719,14 +729,22 @@ export default function SettingsPage() {
                     Phân quyền vai trò & Quyền hạn nhân sự (RBAC)
                   </h4>
                   <p className="text-xs text-muted-foreground">
-                    Thiết lập ma trận quyền hạn cho các vai trò mặc định (Owner, Manager, Cashier...) và cấu hình các vai trò tùy chỉnh.
+                    {isOwner
+                      ? "Thiết lập ma trận quyền hạn cho các vai trò mặc định (Owner, Manager, Cashier...) và cấu hình các vai trò tùy chỉnh."
+                      : "Chỉ chủ doanh nghiệp (Owner) mới có thể truy cập trang Phân quyền. Liên hệ Owner nếu cần thay đổi vai trò hoặc quyền hạn."}
                   </p>
                 </div>
-                <Button variant="outline" size="sm" className="h-9 gap-1.5 border-primary text-primary hover:bg-primary/5 hover:text-primary" asChild>
-                  <Link href="/settings/roles">
-                    Thiết lập vai trò & phân quyền
-                  </Link>
-                </Button>
+                {isOwner ? (
+                  <Button variant="outline" size="sm" className="h-9 gap-1.5 border-primary text-primary hover:bg-primary/5 hover:text-primary" asChild>
+                    <Link href="/settings/roles">
+                      Thiết lập vai trò & phân quyền
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" disabled className="h-9 gap-1.5">
+                    Bạn không có quyền truy cập
+                  </Button>
+                )}
               </div>
             </CardContent>
             <CardFooter className="border-t bg-muted/20 px-6 py-4 flex justify-end">

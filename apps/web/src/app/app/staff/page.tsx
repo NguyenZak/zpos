@@ -69,10 +69,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { AddStaffDialog } from "./_components/add-staff-dialog";
+import { CashRegistersManager } from "./_components/cash-registers-manager";
 import { posService } from "@/services/pos.service";
 import { permissionService, Role } from "@/services/permission.service";
+import { createClient } from "@/utils/supabase/client";
 
 export default function StaffPage() {
   const [data, setData] = useState<any[]>([]);
@@ -96,15 +99,41 @@ export default function StaffPage() {
       const allRoles = await permissionService.getRoles();
       setRolesList(allRoles);
 
-      // Map roles to staff
+      // Đọc thêm organization_members theo profile_id để có role_id thật (DB).
+      const profileIds = (staff || [])
+        .map((e: any) => e.profile_id)
+        .filter((id: any) => typeof id === "string" && id);
+      const memberByProfile: Record<string, { role: string; role_id: string | null }> = {};
+      if (profileIds.length > 0) {
+        try {
+          const supabase = createClient();
+          const orgId = await permissionService.getActiveOrgId();
+          const { data: members } = await supabase
+            .from("organization_members")
+            .select("profile_id, role, role_id")
+            .eq("organization_id", orgId)
+            .in("profile_id", profileIds);
+          (members || []).forEach((m: any) => {
+            memberByProfile[m.profile_id] = { role: m.role, role_id: m.role_id };
+          });
+        } catch (e) {
+          console.warn("Could not load organization_members for staff:", e);
+        }
+      }
+
       const mapped = (staff || []).map((emp: any) => {
+        const dbMember = emp.profile_id ? memberByProfile[emp.profile_id] : null;
         const localRole = permissionService.getLocalMemberRole(emp.id);
-        const activeRoleObj = allRoles.find(r => r.id === localRole.roleId || r.name.toLowerCase() === emp.role.toLowerCase());
-        
+        const activeRoleObj = allRoles.find((r) =>
+          (dbMember?.role_id && r.id === dbMember.role_id) ||
+          r.id === localRole.roleId ||
+          r.name.toLowerCase() === (dbMember?.role || emp.role || "").toLowerCase()
+        );
+
         return {
           ...emp,
-          roleId: activeRoleObj?.id || null,
-          roleName: activeRoleObj?.name || emp.role
+          roleId: activeRoleObj?.id || dbMember?.role_id || null,
+          roleName: activeRoleObj?.name || dbMember?.role || emp.role,
         };
       });
       setData(mapped);
@@ -301,11 +330,19 @@ export default function StaffPage() {
 
   return (
     <div className="flex flex-col gap-4 animate-in fade-in duration-300">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-3xl leading-none tracking-tight font-semibold">Nhân viên</h1>
-          <p className="text-muted-foreground text-sm">Quản lý đội ngũ nhân sự và cấu hình gán quyền vai trò hệ thống.</p>
-        </div>
+      <div className="flex flex-col gap-1">
+        <h1 className="text-3xl leading-none tracking-tight font-semibold">Nhân viên & Quầy thu ngân</h1>
+        <p className="text-muted-foreground text-sm">Quản lý đội ngũ nhân sự, phân quyền vai trò và cấu hình máy thu ngân theo chi nhánh.</p>
+      </div>
+
+      <Tabs defaultValue="staff" className="w-full">
+        <TabsList>
+          <TabsTrigger value="staff">Nhân viên</TabsTrigger>
+          <TabsTrigger value="registers">Máy thu ngân</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="staff" className="flex flex-col gap-4 pt-3">
+      <div className="flex justify-end">
         <AddStaffDialog onShowSuccess={loadStaff} />
       </div>
 
@@ -457,6 +494,12 @@ export default function StaffPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+        </TabsContent>
+
+        <TabsContent value="registers" className="pt-3">
+          <CashRegistersManager />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

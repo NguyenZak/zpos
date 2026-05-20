@@ -2,9 +2,13 @@ import { createClient } from "@/utils/supabase/client";
 
 export interface Permission {
   id: string;
+  key?: string;
+  module?: string;
+  action?: string;
   name: string;
   group_name: string;
   description: string;
+  sort_order?: number;
 }
 
 export interface Role {
@@ -13,6 +17,7 @@ export interface Role {
   name: string;
   description: string;
   is_system: boolean;
+  is_owner?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -38,65 +43,290 @@ export interface AuditLog {
 }
 
 export const DEFAULT_PERMISSIONS: Permission[] = [
-  { id: 'dashboard.view', name: 'Xem tổng quan báo cáo', group_name: 'Dashboard', description: 'Xem bảng số liệu kinh doanh, doanh số và doanh thu tổng quan' },
-  
-  { id: 'pos.view', name: 'Truy cập màn hình POS', group_name: 'POS', description: 'Truy cập và xem màn hình bán hàng tại quầy' },
-  { id: 'pos.create', name: 'Tạo đơn hàng POS', group_name: 'POS', description: 'Thanh toán đơn hàng và in hóa đơn tại quầy' },
-  
-  { id: 'products.view', name: 'Xem danh sách sản phẩm', group_name: 'Products', description: 'Xem thông tin sản phẩm và phân loại danh mục' },
-  { id: 'products.manage', name: 'Quản lý sản phẩm', group_name: 'Products', description: 'Tạo mới, chỉnh sửa, xóa sản phẩm và phân loại danh mục' },
-  
-  { id: 'inventory.view', name: 'Xem tồn kho', group_name: 'Inventory', description: 'Theo dõi số lượng hàng tồn, lịch sử nhập xuất của các chi nhánh' },
-  { id: 'inventory.manage', name: 'Quản lý tồn kho', group_name: 'Inventory', description: 'Điều chỉnh số lượng kho, thiết lập định mức tồn kho tối thiểu' },
-  
-  { id: 'orders.view', name: 'Xem danh sách hóa đơn', group_name: 'Orders', description: 'Xem lịch sử hóa đơn bán lẻ của cửa hàng' },
-  { id: 'orders.manage', name: 'Quản lý hóa đơn', group_name: 'Orders', description: 'Hủy hóa đơn, xử lý hoàn tiền hóa đơn' },
-  
-  { id: 'returns.view', name: 'Xem danh sách trả hàng', group_name: 'Returns', description: 'Xem danh sách phiếu trả hàng từ khách hàng' },
-  { id: 'returns.manage', name: 'Quản lý trả hàng', group_name: 'Returns', description: 'Tạo và duyệt phiếu trả hàng, hoàn tiền, thu hồi kho' },
-  
-  { id: 'customers.view', name: 'Xem khách hàng', group_name: 'Customers', description: 'Xem thông tin khách hàng thành viên, điểm tích lũy' },
-  { id: 'customers.manage', name: 'Quản lý khách hàng', group_name: 'Customers', description: 'Tạo mới, sửa thông tin, xóa khách hàng và quản lý công nợ' },
-  
-  { id: 'suppliers.view', name: 'Xem nhà cung cấp', group_name: 'Suppliers', description: 'Xem thông tin danh bạ nhà cung cấp hàng hóa' },
-  { id: 'suppliers.manage', name: 'Quản lý nhà cung cấp', group_name: 'Suppliers', description: 'Tạo mới, sửa đổi thông tin, xóa nhà cung cấp' },
-  
-  { id: 'purchases.view', name: 'Xem đơn nhập hàng', group_name: 'Purchases', description: 'Xem danh sách đơn đặt hàng từ nhà cung cấp và nhập kho' },
-  { id: 'purchases.manage', name: 'Quản lý nhập hàng', group_name: 'Purchases', description: 'Tạo đơn đặt hàng nhập, thực hiện nhận hàng, nhập kho' },
-  
-  { id: 'finance.view', name: 'Xem tài chính', group_name: 'Finance', description: 'Xem dòng tiền, lợi nhuận, chi phí của doanh nghiệp' },
-  { id: 'finance.manage', name: 'Quản lý tài chính', group_name: 'Finance', description: 'Ghi nhận chi phí, bảng lương nhân viên, thu chi dòng tiền' },
-  
-  { id: 'staff.view', name: 'Xem danh sách nhân viên', group_name: 'Staff', description: 'Xem thông tin và liên hệ của các nhân viên trong tổ chức' },
-  { id: 'staff.manage', name: 'Quản lý tài khoản nhân viên', group_name: 'Staff', description: 'Tạo mới, cập nhật thông tin và khóa tài khoản nhân viên' },
-  { id: 'staff.permissions.manage', name: 'Quản lý phân quyền', group_name: 'Staff', description: 'Tạo vai trò tùy chỉnh và gán quyền hạn truy cập cho các vai trò' },
-  
-  { id: 'reports.view', name: 'Xem báo cáo chi tiết', group_name: 'Reports', description: 'Xem báo cáo doanh thu, sản phẩm bán chạy, báo cáo kho chi tiết' },
-  
-  { id: 'settings.view', name: 'Xem thiết lập', group_name: 'Settings', description: 'Xem thông tin cấu hình cửa hàng, chi nhánh' },
-  { id: 'settings.manage', name: 'Quản lý thiết lập', group_name: 'Settings', description: 'Thay đổi cấu hình hệ thống, thông tin doanh nghiệp, thuế suất' },
-  
-  { id: 'ai.view', name: 'Sử dụng trợ lý AI', group_name: 'AI', description: 'Sử dụng chatbot AI và trợ lý giọng nói để phân tích, hỗ trợ vận hành' }
+  // ===== Tổng quan =====
+  { id: 'dashboard.view', name: 'Xem bảng điều khiển', group_name: 'Tổng quan', description: 'Truy cập trang Dashboard và các thẻ số liệu tổng quan' },
+  { id: 'dashboard.revenue.view', name: 'Xem doanh thu trên Dashboard', group_name: 'Tổng quan', description: 'Hiển thị số liệu doanh thu, doanh số trên Dashboard' },
+  { id: 'dashboard.profit.view', name: 'Xem lợi nhuận trên Dashboard', group_name: 'Tổng quan', description: 'Hiển thị số liệu lợi nhuận / giá vốn trên Dashboard (quyền nhạy cảm)' },
+
+  // ===== POS / Bán hàng tại quầy =====
+  { id: 'pos.access', name: 'Truy cập màn hình POS', group_name: 'POS - Bán hàng', description: 'Mở màn hình bán hàng tại quầy' },
+  { id: 'pos.sell', name: 'Tạo đơn & thanh toán', group_name: 'POS - Bán hàng', description: 'Chọn hàng, thanh toán và chốt đơn tại quầy' },
+  { id: 'pos.price.override', name: 'Sửa giá bán tại quầy', group_name: 'POS - Bán hàng', description: 'Chỉnh giá bán của sản phẩm ngay trên màn hình POS' },
+  { id: 'pos.discount.apply', name: 'Áp dụng giảm giá', group_name: 'POS - Bán hàng', description: 'Áp dụng giảm giá theo % hoặc số tiền cho đơn POS' },
+  { id: 'pos.discount.approve', name: 'Duyệt giảm giá vượt ngưỡng', group_name: 'POS - Bán hàng', description: 'Phê duyệt phiếu giảm giá vượt ngưỡng cho phép của thu ngân' },
+  { id: 'pos.void_item', name: 'Hủy dòng sản phẩm trong đơn', group_name: 'POS - Bán hàng', description: 'Bỏ một dòng hàng khỏi đơn đang lập' },
+  { id: 'pos.cancel_order', name: 'Hủy đơn đang lập', group_name: 'POS - Bán hàng', description: 'Hủy bỏ toàn bộ đơn hàng đang lập tại quầy' },
+  { id: 'pos.refund', name: 'Hoàn tiền tại quầy', group_name: 'POS - Bán hàng', description: 'Thực hiện hoàn tiền cho khách ngay tại màn hình POS' },
+  { id: 'pos.print_receipt', name: 'In hóa đơn', group_name: 'POS - Bán hàng', description: 'In hoặc xuất hóa đơn cho khách sau khi chốt đơn' },
+  { id: 'pos.reprint_receipt', name: 'In lại hóa đơn cũ', group_name: 'POS - Bán hàng', description: 'In lại hóa đơn cho đơn hàng đã hoàn tất' },
+
+  // ===== Ca làm việc & Quầy thu ngân =====
+  { id: 'shifts.view', name: 'Xem ca làm việc', group_name: 'Ca làm việc', description: 'Xem danh sách ca làm và lịch sử mở/đóng ca' },
+  { id: 'shifts.open', name: 'Mở ca làm việc', group_name: 'Ca làm việc', description: 'Tạo phiên ca mới với số dư đầu ca' },
+  { id: 'shifts.close', name: 'Đóng ca làm việc', group_name: 'Ca làm việc', description: 'Chốt số liệu cuối ca và nộp tiền quầy' },
+  { id: 'shifts.cash_in', name: 'Thu tiền vào quầy', group_name: 'Ca làm việc', description: 'Ghi nhận thu tiền mặt phát sinh trong ca' },
+  { id: 'shifts.cash_out', name: 'Chi tiền từ quầy', group_name: 'Ca làm việc', description: 'Ghi nhận chi tiền mặt phát sinh trong ca' },
+  { id: 'shifts.adjust', name: 'Điều chỉnh chênh lệch quỹ', group_name: 'Ca làm việc', description: 'Quyền duyệt chênh lệch số tiền cuối ca (quyền nhạy cảm)' },
+
+  // ===== Sản phẩm =====
+  { id: 'products.view', name: 'Xem danh sách sản phẩm', group_name: 'Sản phẩm', description: 'Xem danh sách sản phẩm trong hệ thống' },
+  { id: 'products.detail.view', name: 'Xem chi tiết sản phẩm', group_name: 'Sản phẩm', description: 'Xem trang chi tiết của một sản phẩm' },
+  { id: 'products.create', name: 'Tạo sản phẩm mới', group_name: 'Sản phẩm', description: 'Thêm sản phẩm mới vào danh mục' },
+  { id: 'products.update', name: 'Cập nhật sản phẩm', group_name: 'Sản phẩm', description: 'Chỉnh sửa thông tin sản phẩm có sẵn' },
+  { id: 'products.delete', name: 'Xóa sản phẩm', group_name: 'Sản phẩm', description: 'Xóa sản phẩm khỏi hệ thống (quyền nhạy cảm)' },
+  { id: 'products.import', name: 'Nhập sản phẩm từ Excel', group_name: 'Sản phẩm', description: 'Tải lên file Excel/CSV để thêm hàng loạt sản phẩm' },
+  { id: 'products.export', name: 'Xuất sản phẩm ra Excel', group_name: 'Sản phẩm', description: 'Xuất danh sách sản phẩm ra file Excel/CSV' },
+  { id: 'products.price.update', name: 'Cập nhật giá bán', group_name: 'Sản phẩm', description: 'Thay đổi giá bán của sản phẩm' },
+  { id: 'products.cost.view', name: 'Xem giá vốn', group_name: 'Sản phẩm', description: 'Xem giá vốn / giá nhập của sản phẩm (quyền nhạy cảm)' },
+  { id: 'products.cost.update', name: 'Cập nhật giá vốn', group_name: 'Sản phẩm', description: 'Thay đổi giá vốn / giá nhập của sản phẩm (quyền nhạy cảm)' },
+
+  // ===== Danh mục =====
+  { id: 'categories.view', name: 'Xem danh mục sản phẩm', group_name: 'Danh mục', description: 'Xem danh sách danh mục sản phẩm' },
+  { id: 'categories.create', name: 'Tạo danh mục mới', group_name: 'Danh mục', description: 'Thêm danh mục sản phẩm mới' },
+  { id: 'categories.update', name: 'Cập nhật danh mục', group_name: 'Danh mục', description: 'Chỉnh sửa tên / cấu trúc danh mục' },
+  { id: 'categories.delete', name: 'Xóa danh mục', group_name: 'Danh mục', description: 'Xóa danh mục khỏi hệ thống' },
+
+  // ===== Tồn kho =====
+  { id: 'inventory.view', name: 'Xem tồn kho', group_name: 'Tồn kho', description: 'Xem số lượng tồn theo từng chi nhánh' },
+  { id: 'inventory.history.view', name: 'Xem lịch sử nhập / xuất kho', group_name: 'Tồn kho', description: 'Xem toàn bộ phát sinh nhập xuất kho' },
+  { id: 'inventory.adjust', name: 'Điều chỉnh tồn kho', group_name: 'Tồn kho', description: 'Tăng / giảm tồn thủ công kèm lý do (quyền nhạy cảm)' },
+  { id: 'inventory.transfer', name: 'Chuyển kho giữa chi nhánh', group_name: 'Tồn kho', description: 'Tạo phiếu chuyển kho qua lại giữa các chi nhánh' },
+  { id: 'inventory.audit', name: 'Kiểm kê kho', group_name: 'Tồn kho', description: 'Tạo phiếu kiểm kê và cân đối tồn' },
+  { id: 'inventory.threshold.manage', name: 'Cấu hình tồn kho tối thiểu', group_name: 'Tồn kho', description: 'Thiết lập định mức cảnh báo tồn kho cho từng sản phẩm' },
+  { id: 'inventory.import', name: 'Nhập tồn từ file', group_name: 'Tồn kho', description: 'Nhập tồn kho ban đầu từ file Excel/CSV' },
+  { id: 'inventory.export', name: 'Xuất tồn kho ra Excel', group_name: 'Tồn kho', description: 'Xuất số liệu tồn kho ra file' },
+
+  // ===== Đơn hàng =====
+  { id: 'orders.view', name: 'Xem danh sách hóa đơn', group_name: 'Đơn hàng', description: 'Xem danh sách hóa đơn đã chốt' },
+  { id: 'orders.detail.view', name: 'Xem chi tiết hóa đơn', group_name: 'Đơn hàng', description: 'Xem chi tiết dòng hàng / thanh toán của hóa đơn' },
+  { id: 'orders.create', name: 'Tạo hóa đơn ngoài quầy', group_name: 'Đơn hàng', description: 'Tạo hóa đơn từ trang quản lý đơn (không qua POS)' },
+  { id: 'orders.update', name: 'Cập nhật hóa đơn', group_name: 'Đơn hàng', description: 'Chỉnh sửa thông tin / dòng hàng hóa đơn' },
+  { id: 'orders.cancel', name: 'Hủy hóa đơn đã chốt', group_name: 'Đơn hàng', description: 'Hủy hóa đơn sau khi đã chốt (quyền nhạy cảm)' },
+  { id: 'orders.delete', name: 'Xóa hóa đơn', group_name: 'Đơn hàng', description: 'Xóa cứng hóa đơn khỏi hệ thống (quyền nhạy cảm)' },
+  { id: 'orders.refund', name: 'Hoàn tiền hóa đơn', group_name: 'Đơn hàng', description: 'Tạo phiếu hoàn tiền cho hóa đơn đã chốt' },
+  { id: 'orders.discount.approve', name: 'Duyệt giảm giá hóa đơn', group_name: 'Đơn hàng', description: 'Phê duyệt giảm giá vượt ngưỡng trên hóa đơn' },
+  { id: 'orders.print', name: 'In / tải hóa đơn', group_name: 'Đơn hàng', description: 'In lại hoặc tải PDF hóa đơn' },
+  { id: 'orders.export', name: 'Xuất danh sách hóa đơn', group_name: 'Đơn hàng', description: 'Xuất hóa đơn ra file Excel/CSV' },
+
+  // ===== Trả hàng =====
+  { id: 'returns.view', name: 'Xem phiếu trả hàng', group_name: 'Trả hàng', description: 'Xem danh sách phiếu trả hàng' },
+  { id: 'returns.create', name: 'Tạo phiếu trả hàng', group_name: 'Trả hàng', description: 'Khởi tạo phiếu trả hàng từ khách' },
+  { id: 'returns.update', name: 'Cập nhật phiếu trả', group_name: 'Trả hàng', description: 'Chỉnh sửa thông tin / dòng hàng trên phiếu trả' },
+  { id: 'returns.approve', name: 'Duyệt phiếu trả hàng', group_name: 'Trả hàng', description: 'Phê duyệt phiếu trả hàng' },
+  { id: 'returns.refund', name: 'Hoàn tiền cho khách', group_name: 'Trả hàng', description: 'Ghi nhận hoàn tiền cho phiếu trả' },
+
+  // ===== Khách hàng =====
+  { id: 'customers.view', name: 'Xem khách hàng', group_name: 'Khách hàng', description: 'Xem danh sách khách hàng' },
+  { id: 'customers.detail.view', name: 'Xem chi tiết khách hàng', group_name: 'Khách hàng', description: 'Xem hồ sơ chi tiết của một khách hàng' },
+  { id: 'customers.create', name: 'Thêm khách hàng', group_name: 'Khách hàng', description: 'Tạo hồ sơ khách hàng mới' },
+  { id: 'customers.update', name: 'Cập nhật khách hàng', group_name: 'Khách hàng', description: 'Chỉnh sửa thông tin khách hàng' },
+  { id: 'customers.delete', name: 'Xóa khách hàng', group_name: 'Khách hàng', description: 'Xóa hồ sơ khách hàng khỏi hệ thống' },
+  { id: 'customers.merge', name: 'Gộp khách hàng trùng', group_name: 'Khách hàng', description: 'Hợp nhất các hồ sơ khách hàng bị trùng' },
+  { id: 'customers.import', name: 'Nhập khách hàng từ Excel', group_name: 'Khách hàng', description: 'Tải lên file để thêm khách hàng hàng loạt' },
+  { id: 'customers.export', name: 'Xuất khách hàng ra Excel', group_name: 'Khách hàng', description: 'Xuất danh sách khách hàng ra file' },
+  { id: 'customers.debt.view', name: 'Xem công nợ khách hàng', group_name: 'Khách hàng', description: 'Xem số dư công nợ của từng khách hàng' },
+  { id: 'customers.debt.collect', name: 'Thu công nợ khách hàng', group_name: 'Khách hàng', description: 'Ghi nhận thu nợ từ khách hàng' },
+
+  // ===== Nhà cung cấp =====
+  { id: 'suppliers.view', name: 'Xem nhà cung cấp', group_name: 'Nhà cung cấp', description: 'Xem danh sách nhà cung cấp' },
+  { id: 'suppliers.create', name: 'Thêm nhà cung cấp', group_name: 'Nhà cung cấp', description: 'Tạo hồ sơ nhà cung cấp mới' },
+  { id: 'suppliers.update', name: 'Cập nhật nhà cung cấp', group_name: 'Nhà cung cấp', description: 'Chỉnh sửa thông tin nhà cung cấp' },
+  { id: 'suppliers.delete', name: 'Xóa nhà cung cấp', group_name: 'Nhà cung cấp', description: 'Xóa hồ sơ nhà cung cấp' },
+  { id: 'suppliers.debt.view', name: 'Xem công nợ NCC', group_name: 'Nhà cung cấp', description: 'Xem số dư công nợ với nhà cung cấp' },
+  { id: 'suppliers.debt.pay', name: 'Thanh toán công nợ NCC', group_name: 'Nhà cung cấp', description: 'Ghi nhận thanh toán cho nhà cung cấp' },
+
+  // ===== Nhập hàng =====
+  { id: 'purchases.view', name: 'Xem đơn nhập hàng', group_name: 'Nhập hàng', description: 'Xem danh sách đơn đặt hàng nhập' },
+  { id: 'purchases.create', name: 'Tạo đơn nhập hàng', group_name: 'Nhập hàng', description: 'Tạo đơn đặt hàng từ nhà cung cấp' },
+  { id: 'purchases.update', name: 'Cập nhật đơn nhập', group_name: 'Nhập hàng', description: 'Chỉnh sửa đơn nhập trước khi nhận hàng' },
+  { id: 'purchases.delete', name: 'Xóa đơn nhập', group_name: 'Nhập hàng', description: 'Xóa đơn nhập khỏi hệ thống' },
+  { id: 'purchases.receive', name: 'Nhận hàng / nhập kho', group_name: 'Nhập hàng', description: 'Xác nhận đã nhận hàng và nhập vào kho' },
+  { id: 'purchases.cancel', name: 'Hủy đơn nhập', group_name: 'Nhập hàng', description: 'Hủy đơn nhập đã tạo' },
+  { id: 'purchases.return', name: 'Trả hàng cho NCC', group_name: 'Nhập hàng', description: 'Tạo phiếu trả hàng cho nhà cung cấp' },
+  { id: 'purchases.approve', name: 'Duyệt đơn nhập', group_name: 'Nhập hàng', description: 'Phê duyệt đơn nhập trước khi đặt hàng NCC' },
+
+  // ===== Tài chính =====
+  { id: 'finance.overview.view', name: 'Xem tổng quan tài chính', group_name: 'Tài chính', description: 'Truy cập trang tổng quan tài chính' },
+  { id: 'finance.cashflow.view', name: 'Xem dòng tiền', group_name: 'Tài chính', description: 'Xem báo cáo dòng tiền vào / ra' },
+  { id: 'finance.cashflow.create', name: 'Ghi nhận giao dịch dòng tiền', group_name: 'Tài chính', description: 'Tạo bản ghi thu / chi vào dòng tiền' },
+  { id: 'finance.expenses.view', name: 'Xem chi phí', group_name: 'Tài chính', description: 'Xem danh sách chi phí của doanh nghiệp' },
+  { id: 'finance.expenses.create', name: 'Ghi nhận chi phí', group_name: 'Tài chính', description: 'Thêm chi phí phát sinh mới' },
+  { id: 'finance.expenses.delete', name: 'Xóa chi phí', group_name: 'Tài chính', description: 'Xóa bản ghi chi phí (quyền nhạy cảm)' },
+  { id: 'finance.recurring.view', name: 'Xem chi phí định kỳ', group_name: 'Tài chính', description: 'Xem các khoản chi phí định kỳ tự động' },
+  { id: 'finance.recurring.manage', name: 'Quản lý chi phí định kỳ', group_name: 'Tài chính', description: 'Tạo / cập nhật / xóa khoản chi phí định kỳ' },
+  { id: 'finance.profit.view', name: 'Xem lợi nhuận', group_name: 'Tài chính', description: 'Truy cập báo cáo lợi nhuận & lỗ (quyền nhạy cảm)' },
+  { id: 'finance.payroll.view', name: 'Xem bảng lương', group_name: 'Tài chính', description: 'Xem bảng lương nhân viên (quyền nhạy cảm)' },
+  { id: 'finance.payroll.manage', name: 'Quản lý bảng lương', group_name: 'Tài chính', description: 'Tạo và chốt bảng lương nhân viên' },
+  { id: 'finance.bank_accounts.manage', name: 'Quản lý tài khoản ngân hàng', group_name: 'Tài chính', description: 'Thêm / sửa / xóa tài khoản ngân hàng nhận tiền' },
+
+  // ===== Công nợ =====
+  { id: 'debt.view', name: 'Xem công nợ', group_name: 'Công nợ', description: 'Truy cập trang quản lý công nợ' },
+  { id: 'debt.create', name: 'Ghi nhận công nợ', group_name: 'Công nợ', description: 'Tạo phiếu công nợ mới' },
+  { id: 'debt.collect', name: 'Thu công nợ', group_name: 'Công nợ', description: 'Ghi nhận thu / trả công nợ' },
+  { id: 'debt.write_off', name: 'Xóa nợ', group_name: 'Công nợ', description: 'Xóa nợ khó đòi (quyền nhạy cảm)' },
+
+  // ===== Hóa đơn điện tử =====
+  { id: 'einvoice.view', name: 'Xem hóa đơn điện tử', group_name: 'Hóa đơn điện tử', description: 'Xem danh sách hóa đơn điện tử đã phát hành' },
+  { id: 'einvoice.issue', name: 'Phát hành hóa đơn điện tử', group_name: 'Hóa đơn điện tử', description: 'Phát hành hóa đơn điện tử cho khách hàng' },
+  { id: 'einvoice.configure', name: 'Cấu hình hóa đơn điện tử', group_name: 'Hóa đơn điện tử', description: 'Cấu hình kết nối nhà cung cấp HĐĐT' },
+
+  // ===== Thanh toán VietQR =====
+  { id: 'payments.view', name: 'Xem giao dịch thanh toán', group_name: 'Thanh toán VietQR', description: 'Xem lịch sử giao dịch chuyển khoản / VietQR' },
+  { id: 'payments.refund', name: 'Hoàn tiền giao dịch', group_name: 'Thanh toán VietQR', description: 'Ghi nhận hoàn tiền cho giao dịch VietQR' },
+  { id: 'payments.configure', name: 'Cấu hình cổng thanh toán', group_name: 'Thanh toán VietQR', description: 'Thiết lập tài khoản nhận VietQR / webhook' },
+
+  // ===== Báo cáo =====
+  { id: 'reports.dashboard.view', name: 'Báo cáo tổng quan', group_name: 'Báo cáo', description: 'Báo cáo doanh thu / hoạt động tổng hợp' },
+  { id: 'reports.sales.view', name: 'Báo cáo bán hàng', group_name: 'Báo cáo', description: 'Báo cáo chi tiết doanh thu, sản phẩm bán chạy' },
+  { id: 'reports.product.view', name: 'Báo cáo sản phẩm', group_name: 'Báo cáo', description: 'Báo cáo tồn kho, sản phẩm theo thời gian' },
+  { id: 'reports.inventory.view', name: 'Báo cáo kho', group_name: 'Báo cáo', description: 'Báo cáo nhập / xuất / tồn kho chi tiết' },
+  { id: 'reports.staff.view', name: 'Báo cáo nhân viên', group_name: 'Báo cáo', description: 'Báo cáo doanh số theo nhân viên' },
+  { id: 'reports.export', name: 'Xuất báo cáo', group_name: 'Báo cáo', description: 'Xuất file PDF / Excel cho mọi báo cáo' },
+
+  // ===== Nhân viên =====
+  { id: 'staff.view', name: 'Xem nhân viên', group_name: 'Nhân viên', description: 'Xem danh sách nhân viên trong tổ chức' },
+  { id: 'staff.create', name: 'Tạo nhân viên', group_name: 'Nhân viên', description: 'Cấp tài khoản đăng nhập cho nhân viên mới' },
+  { id: 'staff.update', name: 'Cập nhật nhân viên', group_name: 'Nhân viên', description: 'Chỉnh sửa thông tin nhân viên' },
+  { id: 'staff.deactivate', name: 'Khóa nhân viên', group_name: 'Nhân viên', description: 'Tạm ngưng / khóa tài khoản nhân viên' },
+  { id: 'staff.assign_role', name: 'Gán vai trò', group_name: 'Nhân viên', description: 'Gán vai trò truy cập cho nhân viên' },
+  { id: 'staff.permissions.manage', name: 'Quản lý phân quyền', group_name: 'Nhân viên', description: 'Tạo vai trò tùy chỉnh và gán quyền hạn (chỉ Owner)' },
+
+  // ===== Vai trò & phân quyền =====
+  { id: 'roles.view', name: 'Xem vai trò', group_name: 'Vai trò & Phân quyền', description: 'Xem danh sách vai trò và ma trận quyền' },
+  { id: 'roles.create', name: 'Tạo vai trò', group_name: 'Vai trò & Phân quyền', description: 'Tạo vai trò mới cho tổ chức' },
+  { id: 'roles.update', name: 'Cập nhật vai trò', group_name: 'Vai trò & Phân quyền', description: 'Đổi tên, mô tả và cấu hình vai trò' },
+  { id: 'roles.delete', name: 'Xóa vai trò', group_name: 'Vai trò & Phân quyền', description: 'Xóa vai trò tùy chỉnh khỏi tổ chức' },
+  { id: 'roles.manage', name: 'Quản lý ma trận phân quyền', group_name: 'Vai trò & Phân quyền', description: 'Tick/untick và lưu quyền cho các vai trò' },
+
+  // ===== Tích điểm & Loyalty =====
+  { id: 'loyalty.view', name: 'Xem cấu hình tích điểm', group_name: 'Tích điểm & Loyalty', description: 'Xem quy tắc tích điểm và lịch sử điểm khách hàng' },
+  { id: 'loyalty.configure', name: 'Cấu hình tích điểm', group_name: 'Tích điểm & Loyalty', description: 'Thiết lập quy tắc tích / đổi điểm, hạng thành viên' },
+  { id: 'loyalty.redeem', name: 'Đổi điểm thanh toán', group_name: 'Tích điểm & Loyalty', description: 'Áp dụng điểm tích lũy để thanh toán đơn hàng' },
+  { id: 'loyalty.adjust', name: 'Điều chỉnh điểm thủ công', group_name: 'Tích điểm & Loyalty', description: 'Cộng / trừ điểm khách hàng thủ công kèm lý do' },
+  { id: 'loyalty.campaign.manage', name: 'Quản lý chiến dịch loyalty', group_name: 'Tích điểm & Loyalty', description: 'Tạo và quản lý chiến dịch khuyến mãi tích điểm' },
+
+  // ===== Tin nhắn Zalo =====
+  { id: 'zalo.view', name: 'Xem tin nhắn Zalo', group_name: 'Tin nhắn Zalo', description: 'Xem lịch sử tin nhắn với khách qua Zalo' },
+  { id: 'zalo.send', name: 'Gửi tin nhắn Zalo', group_name: 'Tin nhắn Zalo', description: 'Gửi tin nhắn chăm sóc khách qua Zalo' },
+  { id: 'zalo.configure', name: 'Cấu hình Zalo OA', group_name: 'Tin nhắn Zalo', description: 'Cấu hình kết nối Zalo Official Account' },
+
+  // ===== Trợ lý AI =====
+  { id: 'ai.chat', name: 'Sử dụng trợ lý AI Chat', group_name: 'Trợ lý AI', description: 'Trò chuyện với trợ lý AI để hỏi đáp vận hành' },
+  { id: 'ai.voice', name: 'Sử dụng trợ lý giọng nói', group_name: 'Trợ lý AI', description: 'Sử dụng AI giọng nói (TTS) trong cửa hàng' },
+  { id: 'ai.product_image', name: 'Tạo ảnh sản phẩm bằng AI', group_name: 'Trợ lý AI', description: 'Sinh ảnh sản phẩm tự động bằng AI' },
+
+  // ===== Đồng bộ offline =====
+  { id: 'sync.view', name: 'Xem trạng thái đồng bộ', group_name: 'Đồng bộ offline', description: 'Xem trạng thái đồng bộ giữa thiết bị và server' },
+  { id: 'sync.manage', name: 'Điều khiển đồng bộ offline', group_name: 'Đồng bộ offline', description: 'Kích hoạt / dừng / xử lý xung đột đồng bộ' },
+
+  // ===== Cài đặt =====
+  { id: 'settings.business.view', name: 'Xem thông tin doanh nghiệp', group_name: 'Cài đặt', description: 'Xem thông tin chung của doanh nghiệp / cửa hàng' },
+  { id: 'settings.business.update', name: 'Cập nhật thông tin doanh nghiệp', group_name: 'Cài đặt', description: 'Chỉnh sửa thông tin, logo, mã số thuế' },
+  { id: 'settings.branches.manage', name: 'Quản lý chi nhánh', group_name: 'Cài đặt', description: 'Tạo / sửa / xóa chi nhánh, quầy thu ngân' },
+  { id: 'settings.branch.update', name: 'Cập nhật chi nhánh', group_name: 'Cài đặt', description: 'Cập nhật cấu hình chi nhánh' },
+  { id: 'settings.printers.manage', name: 'Cấu hình máy in', group_name: 'Cài đặt', description: 'Cấu hình máy in hóa đơn, máy in bếp' },
+  { id: 'settings.printer.update', name: 'Cập nhật máy in', group_name: 'Cài đặt', description: 'Cập nhật cấu hình máy in' },
+  { id: 'settings.billing.update', name: 'Cập nhật thanh toán & gói dịch vụ', group_name: 'Cài đặt', description: 'Cập nhật cấu hình thanh toán, hóa đơn và gói dịch vụ' },
+  { id: 'settings.tax.manage', name: 'Cấu hình thuế suất', group_name: 'Cài đặt', description: 'Thiết lập thuế suất và quy tắc tính thuế' },
+  { id: 'settings.payments.manage', name: 'Cấu hình phương thức thanh toán', group_name: 'Cài đặt', description: 'Thiết lập phương thức thanh toán & ngân hàng' },
+  { id: 'settings.security.manage', name: 'Cấu hình bảo mật', group_name: 'Cài đặt', description: 'Cấu hình 2FA, giới hạn IP, chính sách mật khẩu' },
+  { id: 'settings.integrations.manage', name: 'Quản lý tích hợp', group_name: 'Cài đặt', description: 'Cấu hình tích hợp với bên thứ ba (Telegram, GHN, GHTK…)' },
+
+  // ===== Nhật ký & Bảo mật =====
+  { id: 'audit.view', name: 'Xem nhật ký hoạt động', group_name: 'Nhật ký & Bảo mật', description: 'Xem audit log toàn hệ thống' },
+  { id: 'audit.export', name: 'Xuất nhật ký hoạt động', group_name: 'Nhật ký & Bảo mật', description: 'Xuất audit log ra file để báo cáo / compliance' },
+  { id: 'security.sessions.manage', name: 'Quản lý phiên đăng nhập', group_name: 'Nhật ký & Bảo mật', description: 'Xem và đóng phiên đăng nhập đang hoạt động' },
 ];
 
 export const DEFAULT_ROLES_PERMISSIONS: Record<string, string[]> = {
+  // Owner: toàn quyền toàn hệ thống
   'Owner': DEFAULT_PERMISSIONS.map(p => p.id),
+
+  // Manager: vận hành toàn bộ cửa hàng nhưng không quản lý phân quyền và không xem bảng lương
   'Manager': [
-    'dashboard.view', 'pos.view', 'pos.create', 'products.view', 'products.manage',
-    'inventory.view', 'inventory.manage', 'orders.view', 'orders.manage',
-    'returns.view', 'returns.manage', 'customers.view', 'customers.manage',
-    'suppliers.view', 'suppliers.manage', 'purchases.view', 'purchases.manage',
-    'finance.view', 'staff.view', 'reports.view', 'settings.view', 'ai.view'
+    'dashboard.view', 'dashboard.revenue.view', 'dashboard.profit.view',
+    'pos.access', 'pos.sell', 'pos.price.override', 'pos.discount.apply', 'pos.discount.approve',
+    'pos.void_item', 'pos.cancel_order', 'pos.refund', 'pos.print_receipt', 'pos.reprint_receipt',
+    'shifts.view', 'shifts.open', 'shifts.close', 'shifts.cash_in', 'shifts.cash_out', 'shifts.adjust',
+    'products.view', 'products.detail.view', 'products.create', 'products.update', 'products.import',
+    'products.export', 'products.price.update', 'products.cost.view', 'products.cost.update',
+    'categories.view', 'categories.create', 'categories.update', 'categories.delete',
+    'inventory.view', 'inventory.history.view', 'inventory.adjust', 'inventory.transfer',
+    'inventory.audit', 'inventory.threshold.manage', 'inventory.import', 'inventory.export',
+    'orders.view', 'orders.detail.view', 'orders.create', 'orders.update', 'orders.cancel',
+    'orders.refund', 'orders.discount.approve', 'orders.print', 'orders.export',
+    'returns.view', 'returns.create', 'returns.update', 'returns.approve', 'returns.refund',
+    'customers.view', 'customers.detail.view', 'customers.create', 'customers.update',
+    'customers.merge', 'customers.import', 'customers.export',
+    'customers.debt.view', 'customers.debt.collect',
+    'suppliers.view', 'suppliers.create', 'suppliers.update',
+    'suppliers.debt.view', 'suppliers.debt.pay',
+    'purchases.view', 'purchases.create', 'purchases.update', 'purchases.receive',
+    'purchases.cancel', 'purchases.return', 'purchases.approve',
+    'finance.overview.view', 'finance.cashflow.view', 'finance.cashflow.create',
+    'finance.expenses.view', 'finance.expenses.create',
+    'finance.recurring.view', 'finance.recurring.manage', 'finance.profit.view',
+    'debt.view', 'debt.create', 'debt.collect',
+    'einvoice.view', 'einvoice.issue',
+    'payments.view', 'payments.refund',
+    'reports.dashboard.view', 'reports.sales.view', 'reports.product.view',
+    'reports.inventory.view', 'reports.staff.view', 'reports.export',
+    'staff.view', 'staff.assign_role',
+    'roles.view',
+    'loyalty.view', 'loyalty.configure', 'loyalty.redeem', 'loyalty.adjust', 'loyalty.campaign.manage',
+    'zalo.view', 'zalo.send',
+    'ai.chat', 'ai.voice', 'ai.product_image',
+    'sync.view',
+    'settings.business.view',
   ],
+
+  // Cashier: bán hàng tại quầy
   'Cashier': [
-    'dashboard.view', 'pos.view', 'pos.create', 'orders.view', 'customers.view', 'customers.manage'
+    'dashboard.view',
+    'pos.access', 'pos.sell', 'pos.discount.apply',
+    'pos.void_item', 'pos.cancel_order', 'pos.print_receipt', 'pos.reprint_receipt',
+    'shifts.view', 'shifts.open', 'shifts.close', 'shifts.cash_in', 'shifts.cash_out',
+    'products.view', 'products.detail.view',
+    'orders.view', 'orders.detail.view', 'orders.print',
+    'returns.view', 'returns.create',
+    'customers.view', 'customers.detail.view', 'customers.create', 'customers.update',
+    'customers.debt.view',
+    'loyalty.view', 'loyalty.redeem',
+    'ai.chat',
   ],
+
+  // Warehouse Staff: kho và nhập hàng
   'Warehouse Staff': [
-    'products.view', 'inventory.view', 'inventory.manage', 'suppliers.view', 'purchases.view', 'purchases.manage'
+    'products.view', 'products.detail.view', 'products.create', 'products.update',
+    'products.import', 'products.export', 'products.cost.view',
+    'categories.view', 'categories.create', 'categories.update',
+    'inventory.view', 'inventory.history.view', 'inventory.adjust', 'inventory.transfer',
+    'inventory.audit', 'inventory.threshold.manage', 'inventory.import', 'inventory.export',
+    'suppliers.view', 'suppliers.create', 'suppliers.update',
+    'purchases.view', 'purchases.create', 'purchases.update', 'purchases.receive',
+    'purchases.cancel', 'purchases.return',
+    'reports.product.view', 'reports.inventory.view', 'reports.export',
   ],
+
+  // Accountant: tài chính, kế toán, báo cáo
   'Accountant': [
-    'dashboard.view', 'orders.view', 'purchases.view', 'finance.view', 'finance.manage', 'reports.view'
-  ]
+    'dashboard.view', 'dashboard.revenue.view', 'dashboard.profit.view',
+    'orders.view', 'orders.detail.view', 'orders.export',
+    'purchases.view',
+    'finance.overview.view', 'finance.cashflow.view', 'finance.cashflow.create',
+    'finance.expenses.view', 'finance.expenses.create', 'finance.expenses.delete',
+    'finance.recurring.view', 'finance.recurring.manage',
+    'finance.profit.view', 'finance.payroll.view', 'finance.payroll.manage',
+    'finance.bank_accounts.manage',
+    'debt.view', 'debt.create', 'debt.collect',
+    'customers.debt.view', 'customers.debt.collect',
+    'suppliers.debt.view', 'suppliers.debt.pay',
+    'einvoice.view', 'einvoice.issue', 'einvoice.configure',
+    'payments.view', 'payments.refund',
+    'reports.dashboard.view', 'reports.sales.view', 'reports.product.view',
+    'reports.inventory.view', 'reports.staff.view', 'reports.export',
+    'audit.view', 'audit.export',
+  ],
 };
 
 // Local storage key prefix
@@ -209,16 +439,89 @@ export const permissionService = {
     }
   },
 
-  async createRole(name: string, description: string): Promise<Role> {
+  async assertCanManageRoles(requestedPermissionIds: string[] = []): Promise<void> {
+    const member = await this.getCurrentMemberRoleAndPermissions();
+    const isOwner = String(member.role || "").toLowerCase() === "owner";
+    const canManage = isOwner || member.permissions.includes("roles.manage") || member.permissions.includes("staff.permissions.manage");
+    if (!canManage) {
+      throw new Error("Bạn cần quyền roles.manage để quản lý vai trò và phân quyền.");
+    }
+
+    if (isOwner || requestedPermissionIds.length === 0) return;
+
+    this.assertPermissionSubset(member.permissions, requestedPermissionIds);
+  },
+
+  assertPermissionSubset(ownPermissionIds: string[], requestedPermissionIds: string[]): void {
+    const ownPermissions = new Set(ownPermissionIds);
+    const denied = requestedPermissionIds.filter((permissionId) => !ownPermissions.has(permissionId));
+    if (denied.length > 0) {
+      throw new Error(`Không thể cấp quyền cao hơn quyền hiện có: ${denied.slice(0, 5).join(", ")}`);
+    }
+  },
+
+  async assertCanGrantPermissions(requestedPermissionIds: string[] = []): Promise<void> {
+    const member = await this.getCurrentMemberRoleAndPermissions();
+    const isOwner = String(member.role || "").toLowerCase() === "owner";
+    if (isOwner || requestedPermissionIds.length === 0) return;
+
+    const ownPermissions = new Set(member.permissions);
+    const denied = requestedPermissionIds.filter((permissionId) => !ownPermissions.has(permissionId));
+    if (denied.length > 0) {
+      throw new Error(`Không thể cấp quyền cao hơn quyền hiện có: ${denied.slice(0, 5).join(", ")}`);
+    }
+  },
+
+  async ensureDefaultPermissionsPersisted(): Promise<void> {
+    const supabase = createClient();
+    try {
+      const payload = this.getNormalizedDefaultPermissions().map((permission, index) => ({
+        id: permission.id,
+        key: permission.key || permission.id,
+        module: permission.module,
+        action: permission.action,
+        name: permission.name,
+        group_name: permission.group_name,
+        description: permission.description,
+        sort_order: permission.sort_order ?? index + 1,
+      }));
+      await supabase.from("permissions").upsert(payload, { onConflict: "id" });
+    } catch {
+      // Older databases may not have the expanded permission columns yet. The UI still has local defaults.
+    }
+  },
+
+  async createRole(name: string, description: string, permissionIds: string[] = []): Promise<Role> {
     const supabase = createClient();
     const orgId = await this.getActiveOrgId();
     const profileId = await this.getActiveUserId();
-    
+
+    await this.assertCanManageRoles(permissionIds);
+    await this.ensureDefaultPermissionsPersisted();
+
     const rolePayload = {
       organization_id: orgId,
       name,
       description,
-      is_system: false
+      is_system: false,
+      is_owner: false
+    };
+
+    const persistPermissions = async (roleId: string) => {
+      if (!permissionIds.length) return;
+      try {
+        const rpPayloads = permissionIds.map(pId => ({
+          organization_id: orgId,
+          role_id: roleId,
+          permission_id: pId,
+        }));
+        await supabase.from('role_permissions').insert(rpPayloads);
+      } catch (err) {
+        // Lưu fallback cục bộ để UI vẫn hiển thị đúng
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(STORAGE_PREFIX + "role_permissions_" + roleId, JSON.stringify(permissionIds));
+        }
+      }
     };
 
     try {
@@ -227,17 +530,28 @@ export const permissionService = {
         .insert([rolePayload])
         .select()
         .single();
-        
+
       if (error) {
-        if (this.isTableMissingError(error)) return this.createLocalRole(rolePayload);
+        if (this.isTableMissingError(error)) {
+          const localRole = this.createLocalRole(rolePayload);
+          if (permissionIds.length && typeof window !== 'undefined') {
+            localStorage.setItem(STORAGE_PREFIX + "role_permissions_" + localRole.id, JSON.stringify(permissionIds));
+          }
+          await this.createAuditLog(orgId, profileId, 'role.create', { name, description, role_id: localRole.id, permissions_count: permissionIds.length });
+          return localRole;
+        }
         throw error;
       }
 
-      await this.createAuditLog(orgId, profileId, 'role.create', { name, description, role_id: data.id });
+      await persistPermissions(data.id);
+      await this.createAuditLog(orgId, profileId, 'role.create', { name, description, role_id: data.id, permissions_count: permissionIds.length });
       return data;
     } catch (e) {
       const role = this.createLocalRole(rolePayload);
-      await this.createAuditLog(orgId, profileId, 'role.create', { name, description, role_id: role.id });
+      if (permissionIds.length && typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_PREFIX + "role_permissions_" + role.id, JSON.stringify(permissionIds));
+      }
+      await this.createAuditLog(orgId, profileId, 'role.create', { name, description, role_id: role.id, permissions_count: permissionIds.length });
       return role;
     }
   },
@@ -248,10 +562,13 @@ export const permissionService = {
     const profileId = await this.getActiveUserId();
 
     const role = await this.getRole(roleId);
-    if (role?.is_system && role.name === 'Owner') {
+    if (role?.is_owner || role?.name === 'Owner') {
       // Owner permission check: Owner permissions cannot be modified
       throw new Error("Không thể thay đổi quyền hạn của chủ doanh nghiệp (Owner)");
     }
+
+    await this.assertCanManageRoles(permissionIds);
+    await this.ensureDefaultPermissionsPersisted();
 
     try {
       const { data, error } = await supabase
@@ -294,6 +611,12 @@ export const permissionService = {
     const profileId = await this.getActiveUserId();
 
     const role = await this.getRole(roleId);
+    if (role?.is_owner || role?.name === 'Owner') {
+      throw new Error("Không thể xóa vai trò Owner.");
+    }
+
+    await this.assertCanManageRoles();
+
     if (role?.is_system) {
       throw new Error("Không thể xóa vai trò hệ thống mặc định");
     }
@@ -325,16 +648,40 @@ export const permissionService = {
       const { data, error } = await supabase
         .from('permissions')
         .select('*')
-        .order('group_name');
+        .order('sort_order', { ascending: true })
+        .order('group_name', { ascending: true });
         
       if (error) {
         if (this.isTableMissingError(error)) return DEFAULT_PERMISSIONS;
         throw error;
       }
-      return data && data.length > 0 ? data : DEFAULT_PERMISSIONS;
+      if (!data || data.length === 0) return this.getNormalizedDefaultPermissions();
+      const byId = new Map<string, Permission>();
+      for (const permission of this.getNormalizedDefaultPermissions()) byId.set(permission.id, permission);
+      for (const permission of data.map((item: any) => this.normalizePermission(item))) byId.set(permission.id, permission);
+      return Array.from(byId.values()).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.group_name.localeCompare(b.group_name));
     } catch {
-      return DEFAULT_PERMISSIONS;
+      return this.getNormalizedDefaultPermissions();
     }
+  },
+
+  normalizePermission(permission: any): Permission {
+    const key = permission.key || permission.id;
+    const [module = permission.module || "general", ...actionParts] = String(key).split(".");
+    return {
+      id: key,
+      key,
+      module: permission.module || module,
+      action: permission.action || actionParts.join(".") || key,
+      name: permission.name,
+      group_name: permission.group_name || permission.module || module,
+      description: permission.description || "",
+      sort_order: permission.sort_order ?? 0,
+    };
+  },
+
+  getNormalizedDefaultPermissions(): Permission[] {
+    return DEFAULT_PERMISSIONS.map((permission, index) => this.normalizePermission({ ...permission, sort_order: index + 1 }));
   },
 
   async getRolePermissions(roleId: string): Promise<string[]> {
@@ -410,50 +757,179 @@ export const permissionService = {
   },
 
   async hasPermission(permission: string): Promise<boolean> {
-    const { permissions } = await this.getCurrentMemberRoleAndPermissions();
+    const { role, permissions } = await this.getCurrentMemberRoleAndPermissions();
+    if (String(role || "").toLowerCase() === "owner") return true;
     return permissions.includes(permission);
   },
 
+  // Chỉ Owner (hoặc super-admin @zpos.click) mới được vào trang Phân quyền.
+  async isCurrentUserOwner(): Promise<boolean> {
+    const supabase = createClient();
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      const email = (user.email || "").toLowerCase();
+      if (email.endsWith("@zpos.click")) return true;
+
+      const metaRole = String(
+        (user.user_metadata as any)?.role ||
+        (user.app_metadata as any)?.role ||
+        ""
+      ).toLowerCase();
+      if (metaRole === "super_admin") return true;
+
+      const { role, roleId } = await this.getCurrentMemberRoleAndPermissions();
+      if (String(role || "").toLowerCase() === "owner") return true;
+      if (!roleId) return false;
+      const roleData = await this.getRole(roleId);
+      return Boolean(roleData?.is_owner || roleData?.name === "Owner");
+    } catch {
+      return false;
+    }
+  },
+
   // 4. Staff Role Assignment
-  async assignStaffRole(memberId: string, roleId: string | null): Promise<boolean> {
+  // employeeOrMemberId có thể là employees.id (UI staff) hoặc organization_members.id
+  // — hàm tự dò ra organization_members.id đúng để update.
+  async assignStaffRole(employeeOrMemberId: string, roleId: string | null): Promise<boolean> {
     const supabase = createClient();
     const orgId = await this.getActiveOrgId();
     const profileId = await this.getActiveUserId();
 
-    // Check staff.permissions.manage permission
-    const canManage = await this.hasPermission('staff.permissions.manage');
-    if (!canManage) {
-      throw new Error("Bạn không có quyền gán vai trò nhân sự.");
+    // Cho Owner bypass — Owner luôn được gán quyền cho nhân sự
+    const isOwner = await this.isCurrentUserOwner();
+    if (!isOwner) {
+      const canManage = await this.hasPermission('roles.manage') || await this.hasPermission('staff.assign_role') || await this.hasPermission('staff.permissions.manage');
+      if (!canManage) {
+        throw new Error("Bạn không có quyền gán vai trò nhân sự.");
+      }
     }
 
-    let roleText = 'staff';
+    // Tên role custom (Cashier, Manager Chi nhánh A…) — chỉ dùng cho audit, không
+    // ghi thẳng vào cột organization_members.role vì cột này có CHECK constraint
+    // chỉ chấp nhận 4 giá trị 'owner', 'admin', 'manager', 'staff'.
+    let roleDisplayName = 'staff';
+    let roleTier: 'owner' | 'admin' | 'manager' | 'staff' = 'staff';
     if (roleId) {
       const roleObj = await this.getRole(roleId);
       if (roleObj) {
-        roleText = roleObj.name.toLowerCase();
+        const targetPermissions = await this.getRolePermissions(roleObj.id);
+        await this.assertCanGrantPermissions(targetPermissions);
+        roleDisplayName = roleObj.name;
+        const lower = roleObj.name.toLowerCase();
+        if (lower === 'owner') roleTier = 'owner';
+        else if (lower === 'admin') roleTier = 'admin';
+        else if (lower === 'manager' || lower.includes('quản lý')) roleTier = 'manager';
+        else roleTier = 'staff';
       }
     }
 
-    try {
-      const { error } = await supabase
-        .from('organization_members')
-        .update({ 
-          role_id: roleId,
-          role: roleText
-        })
-        .eq('id', memberId);
+    // Dò organization_members row tương ứng. Thử các nguồn:
+    //  1) employeeOrMemberId là member.id trực tiếp
+    //  2) employeeOrMemberId là employees.id → tra profile_id → tìm member
+    //  3) Lookup theo email từ employees → tìm profile → tìm member
+    const resolveMemberId = async (): Promise<string | null> => {
+      try {
+        const { data: directMember } = await supabase
+          .from('organization_members')
+          .select('id')
+          .eq('id', employeeOrMemberId)
+          .eq('organization_id', orgId)
+          .maybeSingle();
+        if (directMember?.id) return directMember.id;
+      } catch {}
 
-      if (error) {
-        if (this.isTableMissingError(error)) return this.assignLocalStaffRole(memberId, roleId, roleText);
-        throw error;
+      let candidateProfileId: string | null = null;
+      let candidateEmail: string | null = null;
+      try {
+        const { data: emp } = await supabase
+          .from('employees')
+          .select('id, profile_id, email')
+          .eq('id', employeeOrMemberId)
+          .maybeSingle();
+        candidateProfileId = (emp as any)?.profile_id || null;
+        candidateEmail = emp?.email || null;
+      } catch {}
+
+      if (candidateProfileId) {
+        const { data: member } = await supabase
+          .from('organization_members')
+          .select('id')
+          .eq('organization_id', orgId)
+          .eq('profile_id', candidateProfileId)
+          .maybeSingle();
+        if (member?.id) return member.id;
       }
 
-      await this.createAuditLog(orgId, profileId, 'member.role_assign', { member_id: memberId, role_id: roleId, role_name: roleText });
+      if (candidateEmail) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', candidateEmail.toLowerCase())
+          .maybeSingle();
+        if (profile?.id) {
+          const { data: member } = await supabase
+            .from('organization_members')
+            .select('id')
+            .eq('organization_id', orgId)
+            .eq('profile_id', profile.id)
+            .maybeSingle();
+          if (member?.id) return member.id;
+        }
+      }
+
+      return null;
+    };
+
+    let memberId: string | null = null;
+    try {
+      memberId = await resolveMemberId();
+    } catch {
+      memberId = null;
+    }
+
+    if (!memberId) {
+      throw new Error(
+        "Nhân viên này chưa có tài khoản đăng nhập vào hệ thống. Hãy mở thẻ Nhân viên → Thêm nhân viên để cấp email/mật khẩu trước khi gán vai trò."
+      );
+    }
+
+    try {
+      const { error, data } = await supabase
+        .from('organization_members')
+        .update({
+          role_id: roleId,
+          role: roleTier,
+        })
+        .eq('id', memberId)
+        .eq('organization_id', orgId)
+        .select('id');
+
+      if (error) {
+        if (this.isTableMissingError(error)) return this.assignLocalStaffRole(memberId, roleId, roleDisplayName);
+        throw error;
+      }
+      if (!data || data.length === 0) {
+        throw new Error("Không cập nhật được vai trò: phiên đăng nhập có thể không có quyền (RLS).");
+      }
+
+      // Đồng bộ localStorage để UI staff (đang đọc qua getLocalMemberRole)
+      // hiển thị ngay vai trò mới mà không cần reload toàn bộ.
+      this.assignLocalStaffRole(employeeOrMemberId, roleId, roleDisplayName);
+      this.assignLocalStaffRole(memberId, roleId, roleDisplayName);
+
+      await this.createAuditLog(orgId, profileId, 'member.role_assign', {
+        member_id: memberId,
+        employee_id: employeeOrMemberId,
+        role_id: roleId,
+        role_name: roleDisplayName,
+        role_tier: roleTier,
+      });
       return true;
-    } catch (e) {
-      const res = this.assignLocalStaffRole(memberId, roleId, roleText);
-      await this.createAuditLog(orgId, profileId, 'member.role_assign', { member_id: memberId, role_id: roleId, role_name: roleText });
-      return res;
+    } catch (e: any) {
+      // Bubble lên cho UI hiển thị — không silently fallback local để tránh giả "thành công"
+      throw new Error(e?.message || "Không thể gán vai trò nhân sự.");
     }
   },
 
@@ -508,13 +984,15 @@ export const permissionService = {
 
     for (const [roleName, permissions] of Object.entries(DEFAULT_ROLES_PERMISSIONS)) {
       try {
+        await this.ensureDefaultPermissionsPersisted();
         const { data: role, error: rErr } = await supabase
           .from('roles')
           .insert([{
             organization_id: orgId,
             name: roleName,
-            description: `Vai trò mặc định ${roleName}`,
-            is_system: true
+        description: `Vai trò mặc định ${roleName}`,
+            is_system: true,
+            is_owner: roleName === "Owner"
           }])
           .select()
           .single();
@@ -528,7 +1006,9 @@ export const permissionService = {
           role_id: role.id,
           permission_id: pId
         }));
-        await supabase.from('role_permissions').insert(rpPayloads);
+        if (rpPayloads.length > 0) {
+          await supabase.from('role_permissions').insert(rpPayloads);
+        }
       } catch (e) {
         console.error("Seeding error for role: " + roleName, e);
       }
@@ -566,6 +1046,7 @@ export const permissionService = {
       name,
       description: `Vai trò mặc định ${name}`,
       is_system: true,
+      is_owner: name === "Owner",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }));

@@ -239,10 +239,14 @@ export async function POST(request: NextRequest) {
     if (profileError) throw profileError;
 
     if (role !== "super_admin" && organizationId) {
+      // organization_members.role is constrained to ('owner','admin','manager','staff').
+      // Custom roles live in roles table (role_id); collapse anything else to 'staff' tier.
+      const ALLOWED_ROLE_TIERS = new Set(["owner", "admin", "manager", "staff"]);
+      const roleTier = ALLOWED_ROLE_TIERS.has(role.toLowerCase()) ? role.toLowerCase() : "staff";
       const membershipPayload = {
         organization_id: organizationId,
         profile_id: profileId,
-        role,
+        role: roleTier,
         ...(roleId ? { role_id: roleId } : {}),
       };
 

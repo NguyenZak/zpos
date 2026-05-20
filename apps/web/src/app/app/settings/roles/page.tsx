@@ -2,20 +2,21 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { 
-  Shield, 
-  Plus, 
-  Trash2, 
-  Edit, 
-  ShieldCheck, 
-  Users, 
-  Activity, 
-  Search, 
+import {
+  Shield,
+  Plus,
+  Trash2,
+  Edit,
+  ShieldCheck,
+  Users,
+  Activity,
+  Search,
   Loader2,
   Lock,
   Clock,
   User,
-  Info
+  Info,
+  ShieldX
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -50,7 +51,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { permissionService, Role, AuditLog } from "@/services/permission.service";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card } from "@/components/ui/card";
+import { permissionService, Role, AuditLog, Permission } from "@/services/permission.service";
 
 export default function RolesPage() {
   const [roles, setRoles] = useState<Role[]>([]);
@@ -59,12 +62,19 @@ export default function RolesPage() {
   const [logsLoading, setLogsLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("roles");
+  const [ownerCheck, setOwnerCheck] = useState<"pending" | "allowed" | "denied">("pending");
   
   // Dialog states
   const [createOpen, setCreateOpen] = useState(false);
   const [newRoleName, setNewRoleName] = useState("");
   const [newRoleDesc, setNewRoleDesc] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // Permission picker state (create dialog)
+  const [permList, setPermList] = useState<Permission[]>([]);
+  const [permLoading, setPermLoading] = useState(false);
+  const [selectedPerms, setSelectedPerms] = useState<string[]>([]);
+  const [permSearch, setPermSearch] = useState("");
 
   // Delete confirmation state
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -96,7 +106,21 @@ export default function RolesPage() {
   };
 
   useEffect(() => {
-    fetchRoles();
+    let cancelled = false;
+    (async () => {
+      try {
+        await permissionService.assertCanManageRoles();
+      } catch {
+        if (cancelled) return;
+        setOwnerCheck("denied");
+        setLoading(false);
+        return;
+      }
+      if (cancelled) return;
+      setOwnerCheck("allowed");
+      fetchRoles();
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   const handleTabChange = (value: string) => {
@@ -114,20 +138,77 @@ export default function RolesPage() {
       toast.error("Tên vai trò không được bỏ trống");
       return;
     }
+    if (selectedPerms.length === 0) {
+      toast.error("Vui lòng tick chọn ít nhất 1 quyền cho vai trò này");
+      return;
+    }
 
     setSubmitting(true);
     try {
-      await permissionService.createRole(newRoleName.trim(), newRoleDesc.trim());
-      toast.success("Tạo vai trò thành công");
+      await permissionService.createRole(newRoleName.trim(), newRoleDesc.trim(), selectedPerms);
+      toast.success(`Đã tạo vai trò "${newRoleName.trim()}" với ${selectedPerms.length} quyền`);
       setCreateOpen(false);
       setNewRoleName("");
       setNewRoleDesc("");
+      setSelectedPerms([]);
+      setPermSearch("");
       fetchRoles();
     } catch (e: any) {
       toast.error(e.message || "Lỗi khi tạo vai trò");
     } finally {
       setSubmitting(false);
     }
+  };
+
+  useEffect(() => {
+    if (!createOpen) return;
+    let cancelled = false;
+    setPermLoading(true);
+    permissionService.getPermissions()
+      .then((data) => {
+        if (cancelled) return;
+        setPermList(data || []);
+      })
+      .catch((err) => {
+        if (!cancelled) toast.error("Không tải được danh sách quyền: " + (err?.message || ""));
+      })
+      .finally(() => {
+        if (!cancelled) setPermLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [createOpen]);
+
+  const togglePermission = (permId: string) => {
+    setSelectedPerms((prev) =>
+      prev.includes(permId) ? prev.filter((id) => id !== permId) : [...prev, permId]
+    );
+  };
+
+  const toggleGroupPerms = (groupPerms: Permission[]) => {
+    const groupIds = groupPerms.map((p) => p.id);
+    const allChecked = groupIds.every((id) => selectedPerms.includes(id));
+    setSelectedPerms((prev) =>
+      allChecked
+        ? prev.filter((id) => !groupIds.includes(id))
+        : Array.from(new Set([...prev, ...groupIds]))
+    );
+  };
+
+  const groupedPerms = permList.reduce<Record<string, Permission[]>>((acc, perm) => {
+    if (!acc[perm.group_name]) acc[perm.group_name] = [];
+    acc[perm.group_name].push(perm);
+    return acc;
+  }, {});
+
+  const matchesSearch = (perm: Permission) => {
+    if (!permSearch.trim()) return true;
+    const q = permSearch.toLowerCase();
+    return (
+      perm.name.toLowerCase().includes(q) ||
+      perm.id.toLowerCase().includes(q) ||
+      perm.description.toLowerCase().includes(q) ||
+      perm.group_name.toLowerCase().includes(q)
+    );
   };
 
   const handleDeleteRole = async () => {
@@ -181,6 +262,34 @@ export default function RolesPage() {
     }
   };
 
+  if (ownerCheck === "pending") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-2">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <span className="text-muted-foreground text-sm">Đang kiểm tra quyền truy cập...</span>
+      </div>
+    );
+  }
+
+  if (ownerCheck === "denied") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 animate-in fade-in duration-300">
+        <div className="p-4 rounded-2xl bg-destructive/10 text-destructive">
+          <ShieldX className="w-12 h-12" />
+        </div>
+        <div className="flex flex-col items-center gap-1 text-center max-w-md">
+          <h1 className="text-2xl font-semibold tracking-tight">Bạn chưa có quyền quản lý phân quyền</h1>
+          <p className="text-muted-foreground text-sm">
+            Trang Quản lý vai trò & Phân quyền yêu cầu quyền roles.manage. Vui lòng liên hệ chủ doanh nghiệp nếu bạn cần điều chỉnh quyền hạn.
+          </p>
+        </div>
+        <Button asChild variant="outline" className="gap-2">
+          <Link href="/settings">Quay lại Cài đặt</Link>
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-300">
       {/* Header */}
@@ -196,52 +305,190 @@ export default function RolesPage() {
         </div>
 
         {activeTab === "roles" && (
-          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-            <DialogTrigger asChild>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline" className="gap-2">
+              <Link href="/settings/roles/new">
+                <Plus className="w-4 h-4" />
+                Trang tạo vai trò
+              </Link>
+            </Button>
+            <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+              <DialogTrigger asChild>
               <Button className="gap-2 bg-primary hover:bg-primary/95 text-primary-foreground shadow-sm">
                 <Plus className="w-4 h-4" />
                 Thêm vai trò mới
               </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <form onSubmit={handleCreateRole}>
-                <DialogHeader>
-                  <DialogTitle>Thêm vai trò mới</DialogTitle>
+              </DialogTrigger>
+            <DialogContent className="sm:max-w-[900px] max-h-[90vh] flex flex-col p-0 gap-0">
+              <form onSubmit={handleCreateRole} className="flex flex-col flex-1 min-h-0">
+                <DialogHeader className="px-6 pt-6 pb-4 border-b">
+                  <DialogTitle className="flex items-center gap-2">
+                    <Shield className="w-5 h-5 text-primary" />
+                    Thêm vai trò mới
+                  </DialogTitle>
                   <DialogDescription>
-                    Thiết lập tên và mô tả cho vai trò tùy chỉnh. Sau khi tạo, bạn có thể gán quyền hạn chi tiết.
+                    Đặt tên vai trò và tick chọn từng quyền hạn mà vai trò này được phép sử dụng.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <label htmlFor="name" className="text-sm font-medium">Tên vai trò <span className="text-destructive">*</span></label>
-                    <Input
-                      id="name"
-                      placeholder="Ví dụ: Quản lý chi nhánh, Thu ngân chính..."
-                      value={newRoleName}
-                      onChange={(e) => setNewRoleName(e.target.value)}
-                      required
-                    />
+
+                <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 flex flex-col gap-5">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid gap-2">
+                      <label htmlFor="name" className="text-sm font-medium">Tên vai trò <span className="text-destructive">*</span></label>
+                      <Input
+                        id="name"
+                        placeholder="Ví dụ: Quản lý chi nhánh, Thu ngân chính..."
+                        value={newRoleName}
+                        onChange={(e) => setNewRoleName(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <label htmlFor="description" className="text-sm font-medium">Mô tả vai trò</label>
+                      <Input
+                        id="description"
+                        placeholder="Ví dụ: Có toàn quyền quản lý kho và xem hóa đơn..."
+                        value={newRoleDesc}
+                        onChange={(e) => setNewRoleDesc(e.target.value)}
+                      />
+                    </div>
                   </div>
-                  <div className="grid gap-2">
-                    <label htmlFor="description" className="text-sm font-medium">Mô tả vai trò</label>
-                    <Input
-                      id="description"
-                      placeholder="Ví dụ: Có toàn quyền quản lý kho và xem hóa đơn..."
-                      value={newRoleDesc}
-                      onChange={(e) => setNewRoleDesc(e.target.value)}
-                    />
+
+                  <div className="flex flex-col gap-3 border-t pt-4">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex flex-col">
+                        <h3 className="text-sm font-semibold">Ma trận phân quyền</h3>
+                        <p className="text-[11px] text-muted-foreground">
+                          Đã chọn <span className="font-bold text-primary">{selectedPerms.length}</span> / {permList.length} quyền.
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-[11px]"
+                          onClick={() => setSelectedPerms(permList.map((p) => p.id))}
+                          disabled={permLoading || permList.length === 0}
+                        >
+                          Chọn tất cả
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-[11px] text-destructive hover:bg-destructive/10"
+                          onClick={() => setSelectedPerms([])}
+                          disabled={permLoading || selectedPerms.length === 0}
+                        >
+                          Bỏ chọn tất cả
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                      <Input
+                        placeholder="Tìm quyền theo tên, mô tả, key hoặc nhóm..."
+                        value={permSearch}
+                        onChange={(e) => setPermSearch(e.target.value)}
+                        className="pl-10 h-9"
+                      />
+                    </div>
+
+                    {permLoading ? (
+                      <div className="flex flex-col items-center justify-center gap-2 py-10">
+                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                        <span className="text-xs text-muted-foreground">Đang tải danh sách quyền...</span>
+                      </div>
+                    ) : (
+                      <div className="grid gap-3 md:grid-cols-2">
+                        {Object.entries(groupedPerms).map(([group, groupPermissions]) => {
+                          const visiblePerms = groupPermissions.filter(matchesSearch);
+                          if (visiblePerms.length === 0) return null;
+
+                          const groupIds = groupPermissions.map((p) => p.id);
+                          const checkedInGroup = groupIds.filter((id) => selectedPerms.includes(id)).length;
+                          const allChecked = checkedInGroup === groupIds.length;
+
+                          return (
+                            <Card key={group} className="border-muted bg-card shadow-xs overflow-hidden">
+                              <div className="bg-muted/30 px-3.5 py-2.5 border-b flex items-center justify-between">
+                                <h4 className="font-semibold text-xs text-foreground flex items-center gap-2">
+                                  <span className="w-1 h-3 rounded-full bg-primary" />
+                                  {group}
+                                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-muted font-mono">
+                                    {checkedInGroup}/{groupIds.length}
+                                  </Badge>
+                                </h4>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 text-[10px] text-muted-foreground hover:text-primary px-2"
+                                  onClick={() => toggleGroupPerms(groupPermissions)}
+                                >
+                                  {allChecked ? "Bỏ nhóm" : "Chọn cả nhóm"}
+                                </Button>
+                              </div>
+                              <div className="divide-y divide-muted/30">
+                                {visiblePerms.map((perm) => {
+                                  const isChecked = selectedPerms.includes(perm.id);
+                                  const isSensitive = /(nhạy cảm)/i.test(perm.description);
+                                  return (
+                                    <label
+                                      key={perm.id}
+                                      className={`p-3 flex items-start gap-2.5 hover:bg-muted/10 transition-colors cursor-pointer ${isChecked ? 'bg-primary/5' : ''}`}
+                                    >
+                                      <Checkbox
+                                        checked={isChecked}
+                                        onCheckedChange={() => togglePermission(perm.id)}
+                                        className="mt-0.5"
+                                      />
+                                      <div className="grid gap-0.5 leading-tight">
+                                        <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                                          {perm.name}
+                                          {isSensitive && (
+                                            <Badge className="bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border-none text-[8px] px-1 py-0">
+                                              Nhạy cảm
+                                            </Badge>
+                                          )}
+                                        </span>
+                                        <span className="text-[11px] text-muted-foreground leading-normal">
+                                          {perm.description}
+                                        </span>
+                                        <span className="text-[9px] font-mono text-muted-foreground/50 uppercase select-none mt-0.5">
+                                          KEY: {perm.id}
+                                        </span>
+                                      </div>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            </Card>
+                          );
+                        })}
+                        {Object.entries(groupedPerms).every(([, perms]) => perms.filter(matchesSearch).length === 0) && (
+                          <div className="col-span-full text-center py-8 text-sm text-muted-foreground">
+                            Không tìm thấy quyền nào khớp với "{permSearch}".
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
-                <DialogFooter>
+
+                <DialogFooter className="px-6 py-4 border-t bg-muted/20">
                   <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>Hủy</Button>
-                  <Button type="submit" disabled={submitting}>
-                    {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                    Tạo vai trò
+                  <Button type="submit" disabled={submitting || permLoading} className="gap-2">
+                    {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Tạo vai trò ({selectedPerms.length} quyền)
                   </Button>
                 </DialogFooter>
               </form>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          </div>
         )}
       </div>
 
@@ -348,7 +595,7 @@ export default function RolesPage() {
                               className="h-8 gap-1 text-xs border-muted hover:border-primary hover:text-primary transition-all duration-200"
                               asChild
                             >
-                              <Link href={`/settings/roles/${role.id}`}>
+                              <Link href={`/settings/roles/${role.id}/permissions`}>
                                 <Edit className="w-3.5 h-3.5" />
                                 Phân quyền
                               </Link>

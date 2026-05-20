@@ -23,6 +23,8 @@ import {
   MessageCircle,
   Database,
   Coins,
+  Award,
+  ClipboardCheck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -62,10 +64,9 @@ export const sidebarItems: NavGroup[] = [
         icon: LayoutDashboard,
       },
       {
-        title: "Bán hàng (POS)",
-        url: "/pos",
-        icon: ShoppingCart,
-        isNew: true,
+        title: "Báo cáo",
+        url: "/reports",
+        icon: BarChart3,
       },
       {
         title: "Trợ lý AI",
@@ -77,7 +78,47 @@ export const sidebarItems: NavGroup[] = [
   },
   {
     id: 2,
-    label: "Kho hàng",
+    label: "Bán hàng & CRM",
+    items: [
+      {
+        title: "Bán hàng (POS)",
+        url: "/pos",
+        icon: ShoppingCart,
+        isNew: true,
+      },
+      {
+        title: "Ca làm việc",
+        url: "/shifts",
+        icon: ClipboardCheck,
+        isNew: true,
+      },
+      {
+        title: "Đơn hàng",
+        url: "/orders",
+        icon: ClipboardList,
+      },
+      {
+        title: "Khách hàng",
+        url: "/customers",
+        icon: Users,
+      },
+      {
+        title: "Tích điểm & Loyalty",
+        url: "/loyalty",
+        icon: Award,
+        isNew: true,
+      },
+      {
+        title: "Tin nhắn Zalo",
+        url: "/crm/zalo-messages",
+        icon: MessageCircle,
+        isNew: true,
+      },
+    ],
+  },
+  {
+    id: 3,
+    label: "Kho & Mua hàng",
     items: [
       {
         title: "Sản phẩm",
@@ -95,80 +136,35 @@ export const sidebarItems: NavGroup[] = [
         icon: Boxes,
       },
       {
-        title: "Đơn hàng",
-        url: "/orders",
-        icon: ClipboardList,
-      },
-      {
-        title: "Hoá đơn điện tử",
-        url: "/invoices",
-        icon: FileText,
-        isNew: true,
-      },
-    ],
-  },
-  {
-    id: 3,
-    label: "Đối tác",
-    items: [
-      {
-        title: "Khách hàng",
-        url: "/customers",
-        icon: Users,
+        title: "Nhập hàng",
+        url: "/purchases",
+        icon: Store,
       },
       {
         title: "Nhà cung cấp",
         url: "/suppliers",
         icon: Truck,
       },
-      {
-        title: "Tin nhắn Zalo",
-        url: "/crm/zalo-messages",
-        icon: MessageCircle,
-        isNew: true,
-      },
-      {
-        title: "Nhân viên",
-        url: "/staff",
-        icon: UserCog,
-      },
     ],
   },
   {
     id: 4,
-    label: "Quản lý",
-    items: [
-      {
-        title: "Nhập hàng",
-        url: "/purchases",
-        icon: Store,
-      },
-      {
-        title: "Báo cáo",
-        url: "/reports",
-        icon: BarChart3,
-      },
-      {
-        title: "Đồng bộ offline",
-        url: "/sync",
-        icon: Database,
-        isNew: true,
-      },
-      {
-        title: "Cài đặt",
-        url: "/settings",
-        icon: Settings,
-      },
-    ],
-  },
-  {
-    id: 5,
     label: "Tài chính",
     items: [
       {
-        title: "Tổng quan",
+        title: "Tổng quan tài chính",
         url: "/finance",
         icon: Landmark,
+      },
+      {
+        title: "Dòng tiền",
+        url: "/finance/cashflow",
+        icon: Wallet,
+      },
+      {
+        title: "Lợi nhuận & Lỗ",
+        url: "/finance/profit-loss",
+        icon: PieChart,
       },
       {
         title: "Chi phí",
@@ -181,22 +177,6 @@ export const sidebarItems: NavGroup[] = [
         icon: Activity,
       },
       {
-        title: "Bảng lương",
-        url: "/finance/payroll",
-        icon: UserCheck,
-      },
-      {
-        title: "Dòng tiền",
-        url: "/finance/cashflow",
-        icon: Wallet,
-      },
-      {
-        title: "Giao dịch VietQR",
-        url: "/finance/payments",
-        icon: QrCode,
-        isNew: true,
-      },
-      {
         title: "Công nợ",
         url: "/debt",
         icon: Coins,
@@ -204,14 +184,42 @@ export const sidebarItems: NavGroup[] = [
       },
       {
         title: "Hoá đơn điện tử",
-        url: "/finance/invoices",
+        url: "/invoices",
         icon: FileText,
         isNew: true,
       },
       {
-        title: "Lợi nhuận & Lỗ",
-        url: "/finance/profit-loss",
-        icon: PieChart,
+        title: "Giao dịch VietQR",
+        url: "/finance/payments",
+        icon: QrCode,
+        isNew: true,
+      },
+    ],
+  },
+  {
+    id: 5,
+    label: "Nhân sự & Vận hành",
+    items: [
+      {
+        title: "Nhân viên",
+        url: "/staff",
+        icon: UserCog,
+      },
+      {
+        title: "Bảng lương",
+        url: "/finance/payroll",
+        icon: UserCheck,
+      },
+      {
+        title: "Đồng bộ offline",
+        url: "/sync",
+        icon: Database,
+        isNew: true,
+      },
+      {
+        title: "Cài đặt",
+        url: "/settings",
+        icon: Settings,
       },
     ],
   },

@@ -1,5 +1,416 @@
 [
   {
+    "id": "log-1779286331872-2nentu1rl",
+    "tenant_id": null,
+    "user_id": "4d1a5899-7302-4fe1-8cad-30ea1f864a46",
+    "user_email": "classicx@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T14:12:11.872Z"
+  },
+  {
+    "id": "log-1779286293455-i35v77z5g",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "classicx@zpos.click",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "warning",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Email hoặc mật khẩu không đúng.",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T14:11:33.455Z"
+  },
+  {
+    "id": "log-1779286138860-4ihqiega8",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "classicx@zpos.click",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "warning",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Invalid login credentials",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T14:08:58.860Z"
+  },
+  {
+    "id": "log-1779285812550-4t38avwzs",
+    "tenant_id": null,
+    "user_id": "04512e3f-e46f-4342-9712-bcdd16c4948d",
+    "user_email": "thungan@classicx.vn",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T14:03:32.550Z"
+  },
+  {
+    "id": "log-1779283228200-m59rom4sl",
+    "tenant_id": null,
+    "user_id": "4d1a5899-7302-4fe1-8cad-30ea1f864a46",
+    "user_email": "classicx@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T13:20:28.200Z"
+  },
+  {
+    "id": "log-1779282425645-whv4r6w5s",
+    "tenant_id": null,
+    "user_id": "4d1a5899-7302-4fe1-8cad-30ea1f864a46",
+    "user_email": "classicx@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T13:07:05.645Z"
+  },
+  {
+    "id": "log-1779282402510-iba7knzhm",
+    "tenant_id": null,
+    "user_id": "04512e3f-e46f-4342-9712-bcdd16c4948d",
+    "user_email": "thungan@classicx.vn",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T13:06:42.510Z"
+  },
+  {
+    "id": "log-1779281991750-l1g2fg075",
+    "tenant_id": null,
+    "user_id": "04512e3f-e46f-4342-9712-bcdd16c4948d",
+    "user_email": "thungan@classicx.vn",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T12:59:51.750Z"
+  },
+  {
+    "id": "log-1779281938891-ckmwr0exv",
+    "tenant_id": null,
+    "user_id": "4d1a5899-7302-4fe1-8cad-30ea1f864a46",
+    "user_email": "classicx@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T12:58:58.891Z"
+  },
+  {
+    "id": "log-1779281925838-zmmeucu4f",
+    "tenant_id": null,
+    "user_id": "04512e3f-e46f-4342-9712-bcdd16c4948d",
+    "user_email": "thungan@classicx.vn",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T12:58:45.838Z"
+  },
+  {
+    "id": "log-1779281857092-07uqkp50e",
+    "tenant_id": null,
+    "user_id": "4d1a5899-7302-4fe1-8cad-30ea1f864a46",
+    "user_email": "classicx@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T12:57:37.092Z"
+  },
+  {
+    "id": "log-1779281832502-h3bbii2yu",
+    "tenant_id": null,
+    "user_id": "04512e3f-e46f-4342-9712-bcdd16c4948d",
+    "user_email": "thungan@classicx.vn",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T12:57:12.502Z"
+  },
+  {
+    "id": "log-1779276722667-it96ymksq",
+    "tenant_id": null,
+    "user_id": "4d1a5899-7302-4fe1-8cad-30ea1f864a46",
+    "user_email": "classicx@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T11:32:02.667Z"
+  },
+  {
+    "id": "log-1779276680816-r7eepk60p",
+    "tenant_id": null,
+    "user_id": "04512e3f-e46f-4342-9712-bcdd16c4948d",
+    "user_email": "thungan@classicx.vn",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T11:31:20.816Z"
+  },
+  {
+    "id": "log-1779276659543-jzuy35wz2",
+    "tenant_id": null,
+    "user_id": "4d1a5899-7302-4fe1-8cad-30ea1f864a46",
+    "user_email": "classicx@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T11:30:59.543Z"
+  },
+  {
+    "id": "log-1779276641534-lmim8u4qh",
+    "tenant_id": null,
+    "user_id": "04512e3f-e46f-4342-9712-bcdd16c4948d",
+    "user_email": "thungan@classicx.vn",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T11:30:41.534Z"
+  },
+  {
+    "id": "log-1779276358458-jzzet8lqv",
+    "tenant_id": null,
+    "user_id": "4d1a5899-7302-4fe1-8cad-30ea1f864a46",
+    "user_email": "classicx@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T11:25:58.458Z"
+  },
+  {
+    "id": "log-1779276318931-8n6s8he6s",
+    "tenant_id": null,
+    "user_id": "04512e3f-e46f-4342-9712-bcdd16c4948d",
+    "user_email": "thungan@classicx.vn",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T11:25:18.931Z"
+  },
+  {
+    "id": "log-1779275061324-7aw9glnlt",
+    "tenant_id": null,
+    "user_id": "4d1a5899-7302-4fe1-8cad-30ea1f864a46",
+    "user_email": "classicx@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T11:04:21.324Z"
+  },
+  {
+    "id": "log-1779275057231-xansidv54",
+    "tenant_id": null,
+    "user_id": null,
+    "user_email": "Zak@gmail.com",
+    "action": "login_failed",
+    "module": "auth",
+    "severity": "warning",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "error_message": "Invalid login credentials",
+      "password_attempted_length": "[MASKED]"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T11:04:17.231Z"
+  },
+  {
+    "id": "log-1779273751701-dygq87g2f",
+    "tenant_id": null,
+    "user_id": "14785931-42d6-4143-9291-a96dee12d42d",
+    "user_email": "hoa@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T10:42:31.701Z"
+  },
+  {
+    "id": "log-1779270264134-ln5va1lgh",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T09:44:24.134Z"
+  },
+  {
+    "id": "log-1779269257585-y8othju5u",
+    "tenant_id": null,
+    "user_id": "4d1a5899-7302-4fe1-8cad-30ea1f864a46",
+    "user_email": "classicx@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T09:27:37.585Z"
+  },
+  {
+    "id": "log-1779266736718-9nmn8znce",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T08:45:36.718Z"
+  },
+  {
     "id": "log-1779200170294-36rubtax5",
     "tenant_id": null,
     "user_id": "684c7db4-2262-463e-a925-821df523f81b",

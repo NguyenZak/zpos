@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/client";
+import { loyaltyService } from "@/services/loyalty.service";
 
 const UNIVERSAL_TENANTS = new Set(["www", "app", "console", "cms"]);
 const EMPTY_UUID = "00000000-0000-0000-0000-000000000000";
@@ -8,11 +9,11 @@ export function getTenantSlug(): string {
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname; // e.g. bibomart.localhost
     const mainDomain = (process.env.NEXT_PUBLIC_MAIN_DOMAIN || "localhost:3000").split(":")[0];
-    
+
     if (hostname === mainDomain || hostname === `www.${mainDomain}`) {
       return "app";
     }
-    
+
     const parts = hostname.split('.');
     if (parts.length > 1) {
       const subdomain = parts[0];
@@ -73,7 +74,7 @@ export async function getActiveOrganizationId(): Promise<string> {
     data: { user },
   } = await supabase.auth.getUser();
   const sessionKey = `${tenantSlug}:${user?.id || "anonymous"}`;
-  
+
   if (cachedOrgId && cachedTenantSlug === tenantSlug && cachedSessionKey === sessionKey) {
     return cachedOrgId;
   }
@@ -86,7 +87,7 @@ export async function getActiveOrganizationId(): Promise<string> {
         .select('id')
         .eq('slug', tenantSlug)
         .maybeSingle();
-      
+
       if (org?.id) {
         cachedOrgId = org.id;
         cachedTenantSlug = tenantSlug;
@@ -131,7 +132,7 @@ export const posService = {
   async getProducts() {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
       throw new Error("Supabase environment variables are missing");
     }
@@ -145,7 +146,7 @@ export const posService = {
       `)
       .eq('organization_id', orgId)
       .eq('is_active', true);
-    
+
     if (error) {
       console.error("Supabase error (getProducts):", error.message, error.details);
       throw error;
@@ -160,7 +161,7 @@ export const posService = {
       if (p.description && p.description.includes('::')) {
         const parts = p.description.split('::');
         const descWithoutTenant = parts.slice(1).join('::');
-        
+
         const costMatch = descWithoutTenant.match(/^\[cost_price:(\d+(\.\d+)?)\]/);
         if (costMatch) {
           costPrice = parseFloat(costMatch[1]);
@@ -199,13 +200,13 @@ export const posService = {
   async getCategories() {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     const { data, error } = await supabase
       .from('categories')
       .select('id, name, description')
       .eq('organization_id', orgId)
       .order('name', { ascending: true });
-    
+
     if (error) {
       console.error("Supabase error (getCategories):", error.message);
       throw error;
@@ -227,24 +228,24 @@ export const posService = {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
     const tenantSlug = getTenantSlug();
-    
+
     const costPart = productData.cost_price !== undefined ? `[cost_price:${productData.cost_price}]` : '';
     const { cost_price, ...restProductData } = productData;
-    
+
     const preparedData = {
       ...restProductData,
       organization_id: orgId,
       description: `${tenantSlug}::${costPart}${productData.description || ''}`
     };
-    
+
     const { data, error } = await supabase
       .from('products')
       .insert([preparedData])
       .select()
       .single();
-    
+
     if (error) throw error;
-    
+
     // Clean up description for UI
     let costPrice = 0;
     if (data && data.description && data.description.includes('::')) {
@@ -284,13 +285,13 @@ export const posService = {
     try {
       const costPart = productData.cost_price !== undefined ? `[cost_price:${productData.cost_price}]` : '';
       const { cost_price, ...restProductData } = productData;
-      
+
       const preparedData = { ...restProductData };
       preparedData.organization_id = orgId;
       if (productData.description !== undefined || productData.cost_price !== undefined) {
         preparedData.description = `${tenantSlug}::${costPart}${productData.description || ''}`;
       }
-      
+
       const { data, error } = await supabase
         .from('products')
         .update(preparedData)
@@ -298,7 +299,7 @@ export const posService = {
         .eq('organization_id', orgId)
         .select()
         .single();
-      
+
       if (!error && data) {
         if (productData.min_stock !== undefined) {
           data.min_stock = productData.min_stock;
@@ -357,13 +358,13 @@ export const posService = {
   async deleteProduct(id: string) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     const { error } = await supabase
       .from('products')
       .update({ is_active: false }) // Soft delete
       .eq('id', id)
       .eq('organization_id', orgId);
-    
+
     if (error) throw error;
   },
 
@@ -408,26 +409,12 @@ export const posService = {
         if (dbData) data = dbData;
       }
 
-      // Auto-seed only when the DB query succeeded with truly zero customers.
-      if (dbQueryOk && (!dbData || dbData.length === 0) && !query.trim()) {
-        const mockToSeed = [
-          { organization_id: orgId, name: 'Nguyễn Văn A', phone: '0901234567', email: 'vana@gmail.com', loyalty_points: 1250, address: 'app::123 Lê Lợi, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh' },
-          { organization_id: orgId, name: 'Trần Thị B', phone: '0912345678', email: 'thib@gmail.com', loyalty_points: 800, address: 'app::456 Nguyễn Thị Minh Khai, Phường 6, Quận 3, TP. Hồ Chí Minh' },
-          { organization_id: orgId, name: 'Lê Văn C', phone: '0923456789', email: 'vanc@gmail.com', loyalty_points: 2100, address: 'app::789 Điện Biên Phủ, Phường 25, Quận Bình Thạnh, TP. Hồ Chí Minh' }
-        ];
-        const { data: seededData, error: seedErr } = await supabase.from('customers').insert(mockToSeed).select();
-        if (seedErr) {
-          console.warn('customers auto-seed failed:', seedErr.message);
-        } else if (seededData && seededData.length > 0) {
-          data = seededData;
-        }
-      }
     } catch (e) {
       console.error('Supabase customers query threw:', (e as any)?.message || e);
     }
-    
+
     let filteredData = data || [];
-    
+
     // Clean up address and map fields for UI compatibility (points, debt).
     // Debt comes from customer_credit_accounts (joined above), not from the
     // customers table — that table has no `debt` column. Falling back to
@@ -448,7 +435,7 @@ export const posService = {
         address: cleanAddress
       };
     });
-    
+
     // Merge from local storage fallback — ONLY when the DB query failed
     // outright (network down / RLS broken). If the DB returned successfully
     // with zero rows, we trust that the tenant actually has no customers,
@@ -482,28 +469,28 @@ export const posService = {
   async saveTelegramSettings(settings: any) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     // 1. Fetch current organization branding
     const { data: org, error: fetchError } = await supabase
       .from('organizations')
       .select('branding')
       .eq('id', orgId)
       .single();
-      
+
     if (fetchError) throw fetchError;
-    
+
     const currentBranding = org?.branding || {};
     const updatedBranding = {
       ...currentBranding,
       telegram: settings
     };
-    
+
     // 2. Update branding in DB
     const { error: updateError } = await supabase
       .from('organizations')
       .update({ branding: updatedBranding })
       .eq('id', orgId);
-      
+
     if (updateError) throw updateError;
   },
 
@@ -512,9 +499,9 @@ export const posService = {
     const enabled = localStorage.getItem('zpos_telegram_enabled') === 'true';
     const token = localStorage.getItem('zpos_telegram_token');
     const chatId = localStorage.getItem('zpos_telegram_chat_id');
-    
+
     if (!enabled || !token || !chatId) return;
-    
+
     try {
       const url = `https://api.telegram.org/bot${token}/sendMessage`;
       await fetch(url, {
@@ -576,45 +563,112 @@ export const posService = {
         }
       }
     }
-    
+
     // Validate branch_id or auto-create main branch
     let branchId = orderData.branch_id;
     if (!branchId || !isValidUUID(branchId) || branchId === '00000000-0000-0000-0000-000000000000') {
-      try {
-        const { data: branches, error: selectErr } = await supabase
-          .from('branches')
-          .select('id')
-          .eq('organization_id', orgId)
-          .limit(1);
-          
-        if (!selectErr && branches && branches.length > 0) {
-          branchId = branches[0].id;
-        } else {
-          // Auto-create a main branch if missing
-          const { data: newBranch, error: insertErr } = await supabase
-            .from('branches')
-            .insert([{
-              organization_id: orgId,
-              name: 'Chi nhánh chính',
-              is_main_branch: true,
-              address: 'Trụ sở chính'
-            }])
-            .select('id')
-            .single();
-            
-          if (!insertErr && newBranch?.id) {
-            branchId = newBranch.id;
+      // 1. Try to read from localStorage first (currently selected branch by switcher or saved branches fallback)
+      if (typeof window !== 'undefined') {
+        try {
+          const selected = localStorage.getItem(`zpos_selected_branch_id_${getTenantSlug()}`);
+          if (selected && isValidUUID(selected)) {
+            branchId = selected;
           } else {
-            console.warn("Branches insertion failed or table does not exist, using fallback UUID");
+            const local = localStorage.getItem(getTenantStorageKey('zpos_branches'));
+            if (local) {
+              const parsed = JSON.parse(local);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                const mainBranch = parsed.find((b: any) => b.status === "Chính" || b.is_main_branch);
+                const localBranch = mainBranch || parsed[0];
+                if (localBranch?.id && isValidUUID(localBranch.id)) {
+                  branchId = localBranch.id;
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.warn("Failed to resolve branchId from localStorage:", e);
+        }
+      }
+
+      // 2. Query Supabase database to verify or resolve branch if needed
+      if (!branchId || !isValidUUID(branchId) || branchId === '00000000-0000-0000-0000-000000000000') {
+        try {
+          const { data: branches, error: selectErr } = await supabase
+            .from('branches')
+            .select('id')
+            .eq('organization_id', orgId)
+            .limit(1);
+
+          if (!selectErr && branches && branches.length > 0) {
+            branchId = branches[0].id;
+          } else {
+            // Self-healing: If database is empty but we have local branches in localStorage, sync them!
+            let syncedBranchId = null;
+            if (typeof window !== 'undefined') {
+              try {
+                const local = localStorage.getItem(getTenantStorageKey('zpos_branches'));
+                if (local) {
+                  const parsed = JSON.parse(local);
+                  if (Array.isArray(parsed) && parsed.length > 0) {
+                    const branchesToSync = parsed.map((b: any) => {
+                      const { status, ...dbB } = b;
+                      return {
+                        ...dbB,
+                        organization_id: orgId,
+                        is_main_branch: status === "Chính" || b.is_main_branch || false
+                      };
+                    });
+                    const { data: inserted, error: syncError } = await supabase
+                      .from('branches')
+                      .insert(branchesToSync)
+                      .select('id');
+                    if (!syncError && inserted && inserted.length > 0) {
+                      syncedBranchId = inserted[0].id;
+                    }
+                  }
+                }
+              } catch (syncErr) {
+                console.warn("Error during self-healing branches sync:", syncErr);
+              }
+            }
+
+            if (syncedBranchId && isValidUUID(syncedBranchId)) {
+              branchId = syncedBranchId;
+            } else if (getTenantSlug() === 'app') {
+              // Auto-create a main branch if missing (demo only)
+              const { data: newBranch, error: insertErr } = await supabase
+                .from('branches')
+                .insert([{
+                  organization_id: orgId,
+                  name: 'Chi nhánh chính',
+                  is_main_branch: true,
+                  address: 'Trụ sở chính'
+                }])
+                .select('id')
+                .single();
+
+              if (!insertErr && newBranch?.id) {
+                branchId = newBranch.id;
+              } else {
+                console.warn("Branches insertion failed or table does not exist, using fallback UUID");
+                branchId = '00000000-0000-0000-0000-000000000000';
+              }
+            } else {
+              throw new Error("Không tìm thấy chi nhánh hoạt động. Vui lòng thiết lập chi nhánh trong phần Cài đặt trước khi tạo đơn hàng.");
+            }
+          }
+        } catch (e: any) {
+          console.warn("Branches table not available or error occurred:", e);
+          if (getTenantSlug() === 'app') {
             branchId = '00000000-0000-0000-0000-000000000000';
+          } else {
+            throw new Error(e?.message || "Không tìm thấy chi nhánh hoạt động. Vui lòng thiết lập chi nhánh trong phần Cài đặt trước khi tạo đơn hàng.");
           }
         }
-      } catch (e) {
-        console.warn("Branches table not available, using default branch ID fallback:", e);
-        branchId = '00000000-0000-0000-0000-000000000000';
       }
     }
-    
+
     // Validate customer_id: must be a real UUID AND must exist in DB, otherwise
     // the FK orders_customer_id_fkey will reject the insert. Stale UUIDs from
     // localStorage are a common cause of this — defensively null them out.
@@ -658,8 +712,15 @@ export const posService = {
     }
 
     // Ensure active tenant organization and valid branch/customer are linked
+    const {
+      loyalty_points_redeemed = 0,
+      loyalty_discount_applied = 0,
+      loyalty_points_earned = 0,
+      ...rawOrderData
+    } = orderData;
+
     const preparedOrderData = {
-      ...orderData,
+      ...rawOrderData,
       organization_id: orgId,
       branch_id: branchId,
       customer_id: customerId
@@ -760,12 +821,26 @@ export const posService = {
       throw wrapped;
     }
 
+    // Process Loyalty points if customer is linked
+    if (customerId) {
+      try {
+        if (loyalty_points_redeemed > 0) {
+          await loyaltyService.applyRedemption(customerId, order.id, loyalty_points_redeemed, loyalty_discount_applied);
+        }
+        if (loyalty_points_earned > 0) {
+          await loyaltyService.applyEarning(customerId, order.id, loyalty_points_earned, order.total_amount);
+        }
+      } catch (loyaltyErr) {
+        console.warn("Failed to apply loyalty points updates:", loyaltyErr);
+      }
+    }
+
     // 3. Deduct stock from products (actual inventory update)
     for (const item of items) {
       // Use original item.id since that corresponds to the product.id
       const productId = item.id;
       if (!isValidUUID(productId)) continue;
-      
+
       try {
       const { data: productData } = await supabase
           .from('products')
@@ -773,7 +848,7 @@ export const posService = {
           .eq('id', productId)
           .eq('organization_id', orgId)
           .single();
-          
+
         if (productData) {
           const newStock = Math.max(0, (productData.stock || 0) - (item.quantity || 1));
           await supabase
@@ -781,7 +856,7 @@ export const posService = {
             .update({ stock: newStock })
             .eq('id', productId)
             .eq('organization_id', orgId);
-            
+
           // Telegram Notification: Low Stock Check
           const notifyStock = localStorage.getItem('zpos_telegram_notify_stock') === 'true';
           if (notifyStock && newStock <= 5) {
@@ -801,7 +876,7 @@ export const posService = {
         const orderNum = order.order_number || `DH-${order.id.slice(0, 8)}`;
         const totalFormatted = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.total_amount);
         const paymentMethod = order.payment_method === 'cash' ? '💵 Tiền mặt' : (order.payment_method === 'qr' || order.payment_method === 'bank' ? '💳 Chuyển khoản (VietQR)' : '💰 Khác');
-        
+
         let itemsList = '';
         items.forEach((item, index) => {
           itemsList += `${index + 1}. <b>${item.name}</b> x${item.quantity} - ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price * item.quantity)}\n`;
@@ -813,7 +888,7 @@ export const posService = {
           `🔹 Tổng tiền: <b>${totalFormatted}</b>\n\n` +
           `📋 <b>Chi tiết sản phẩm:</b>\n${itemsList}\n` +
           `⚡️ <i>Cảm ơn quý khách đã mua sắm tại ZPOS!</i>`;
-          
+
         posService.sendTelegramNotification(telegramMsg);
       } catch (telErr) {
         console.warn("Failed to compose and send order Telegram message:", telErr);
@@ -826,7 +901,7 @@ export const posService = {
   async getOrders() {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     // 1. Fetch orders with customer details and basic order items details
     const { data: orders, error } = await supabase
       .from('orders')
@@ -842,7 +917,7 @@ export const posService = {
       `)
       .eq('organization_id', orgId)
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     if (!orders || orders.length === 0) return [];
 
@@ -894,7 +969,7 @@ export const posService = {
       .from('order_items')
       .select('*')
       .eq('order_id', orderId);
-    
+
     if (error) throw error;
     return data;
   },
@@ -902,7 +977,7 @@ export const posService = {
   async updateOrder(id: string, orderData: any) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     const { data, error } = await supabase
       .from('orders')
       .update({
@@ -913,25 +988,25 @@ export const posService = {
       .eq('organization_id', orgId)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
 
   async updateOrderItems(orderId: string, items: any[]) {
     const supabase = createClient();
-    
+
     // 1. Get existing items from the database
     const { data: existingItems, error: fetchError } = await supabase
       .from('order_items')
       .select('id')
       .eq('order_id', orderId);
-      
+
     if (fetchError) throw fetchError;
-    
+
     const existingIds = existingItems?.map((i: any) => i.id) || [];
     const currentIds = items.filter((i: any) => i.id).map((i: any) => i.id);
-    
+
     // 2. Identify items to delete
     const idsToDelete = existingIds.filter(id => !currentIds.includes(id));
     if (idsToDelete.length > 0) {
@@ -941,7 +1016,7 @@ export const posService = {
         .in('id', idsToDelete);
       if (delError) throw delError;
     }
-    
+
     // 3. Insert new items and update existing ones
     for (const item of items) {
       if (item.id && existingIds.includes(item.id)) {
@@ -974,26 +1049,26 @@ export const posService = {
   async cancelOrder(id: string) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     const { error } = await supabase
       .from('orders')
       .update({ status: 'cancelled' })
       .eq('id', id)
       .eq('organization_id', orgId);
-    
+
     if (error) throw error;
   },
 
   async deleteOrder(id: string) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     // Delete associated order_items first
     const { error: itemsError } = await supabase
       .from('order_items')
       .delete()
       .eq('order_id', id);
-      
+
     if (itemsError) throw itemsError;
 
     // Delete the order itself
@@ -1002,14 +1077,14 @@ export const posService = {
       .delete()
       .eq('id', id)
       .eq('organization_id', orgId);
-      
+
     if (orderError) throw orderError;
   },
 
   async getOrderDetails(id: string) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     const { data: order, error } = await supabase
       .from('orders')
       .select(`
@@ -1026,7 +1101,7 @@ export const posService = {
       .eq('id', id)
       .eq('organization_id', orgId)
       .single();
-    
+
     if (error) throw error;
     if (!order) return null;
 
@@ -1065,7 +1140,7 @@ export const posService = {
     const supabase = createClient();
     const tenantSlug = getTenantSlug();
     const orgId = await getActiveOrganizationId();
-    
+
     const newId = customerData.id || crypto.randomUUID();
     const finalData = {
       id: newId,
@@ -1106,7 +1181,7 @@ export const posService = {
         .insert([dbPayload])
         .select()
         .single();
-      
+
       if (!error && data) {
         if (data.address && data.address.includes('::')) {
           data.address = data.address.split('::').slice(1).join('::');
@@ -1160,12 +1235,12 @@ export const posService = {
   async getSuppliers(query: string = "") {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     let q = supabase
       .from('suppliers')
       .select('*')
       .eq('organization_id', orgId);
-      
+
     if (query) {
       q = q.or(`name.ilike.%${query}%,contact_name.ilike.%${query}%`);
     }
@@ -1177,7 +1252,7 @@ export const posService = {
   async createSupplier(supplierData: any) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     const { data, error } = await supabase
       .from('suppliers')
       .insert([{
@@ -1186,7 +1261,7 @@ export const posService = {
       }])
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -1194,7 +1269,7 @@ export const posService = {
   async getPurchaseOrders() {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     const { data, error } = await supabase
       .from('purchase_orders')
       .select(`
@@ -1203,7 +1278,7 @@ export const posService = {
       `)
       .eq('organization_id', orgId)
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return data;
   },
@@ -1211,7 +1286,7 @@ export const posService = {
   async createPurchaseOrder(purchaseData: any, items: any[]) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     // 1. Create purchase order record
     const { data: purchase, error: pError } = await supabase
       .from('purchase_orders')
@@ -1221,7 +1296,7 @@ export const posService = {
       }])
       .select()
       .single();
-    
+
     if (pError) throw pError;
 
     // 2. Create purchase order items
@@ -1242,7 +1317,7 @@ export const posService = {
     const { error: itemsError } = await supabase
       .from('purchase_order_items')
       .insert(pItems);
-    
+
     if (itemsError) {
       await supabase.from('purchase_orders').delete().eq('id', purchase.id);
       throw itemsError;
@@ -1254,7 +1329,7 @@ export const posService = {
   async getPurchaseOrderDetail(id: string) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     const { data, error } = await supabase
       .from('purchase_orders')
       .select(`
@@ -1268,7 +1343,7 @@ export const posService = {
       .eq('id', id)
       .eq('organization_id', orgId)
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -1276,7 +1351,7 @@ export const posService = {
   async receiveStock(purchaseOrderId: string, items: { itemId: string, receivedQty: number }[]) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     for (const item of items) {
       // 1. Update received quantity in purchase_order_items
       const { data: orderItem } = await supabase
@@ -1285,7 +1360,7 @@ export const posService = {
         .eq('id', item.itemId)
         .eq('purchase_orders.organization_id', orgId)
         .single();
-      
+
       if (orderItem) {
         const newReceivedQty = (orderItem.received_quantity || 0) + item.receivedQty;
         await supabase
@@ -1316,7 +1391,7 @@ export const posService = {
       .eq('purchase_order_id', purchaseOrderId)
       .eq('purchase_orders.organization_id', orgId);
     const fullyReceived = allItems?.every(i => i.received_quantity >= i.quantity);
-    
+
     await supabase
       .from('purchase_orders')
       .update({ status: fullyReceived ? 'received' : 'receiving' })
@@ -1327,14 +1402,14 @@ export const posService = {
   async updateStock(productId: string, delta: number) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     const { data: product } = await supabase
       .from('products')
       .select('stock')
       .eq('id', productId)
       .eq('organization_id', orgId)
       .single();
-    
+
     if (product) {
       const newStock = (product.stock || 0) + delta;
       await supabase
@@ -1348,21 +1423,21 @@ export const posService = {
   async getEmployees() {
     const supabase = createClient();
     const tenantSlug = getTenantSlug();
-    
+
     const { data, error } = await supabase
       .from('employees')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
-    
+
     let filteredData = data || [];
     if (tenantSlug === 'app') {
       filteredData = filteredData.filter((e: any) => !e.name || !e.name.includes('::') || e.name.startsWith('app::'));
     } else {
       filteredData = filteredData.filter((e: any) => e.name && e.name.startsWith(`${tenantSlug}::`));
     }
-    
+
     return filteredData.map((e: any) => {
       let cleanName = e.name;
       if (e.name && e.name.includes('::')) {
@@ -1378,20 +1453,20 @@ export const posService = {
   async createEmployee(employeeData: any) {
     const supabase = createClient();
     const tenantSlug = getTenantSlug();
-    
+
     const preparedData = {
       ...employeeData,
       name: `${tenantSlug}::${employeeData.name}`
     };
-    
+
     const { data, error } = await supabase
       .from('employees')
       .insert([preparedData])
       .select()
       .single();
-    
+
     if (error) throw error;
-    
+
     if (data && data.name && data.name.includes('::')) {
       data.name = data.name.split('::').slice(1).join('::');
     }
@@ -1410,11 +1485,11 @@ export const posService = {
     const productsCount = products.length;
 
     const { count: ordersCount } = await supabase.from('orders').select('*', { count: 'exact', head: true }).eq('organization_id', orgId).neq('status', 'cancelled');
-    
+
     const { data: allCustomers } = await supabase.from('customers').select('id, created_at').eq('organization_id', orgId);
     let customers = allCustomers || [];
     const customersCount = customers.length;
-    
+
     const { data: orders } = await supabase
       .from('orders')
       .select('id, created_at, total_amount, payment_method, payment_status, payment_amount_received, debt_amount')
@@ -1566,7 +1641,7 @@ export const posService = {
           .from('order_items')
           .select('order_id, total_price, quantity, variant_id')
           .in('order_id', orderIds);
-        
+
         if (!itemsErr && orderItems && orderItems.length > 0) {
           const { data: products } = await supabase
             .from('products')
@@ -1646,11 +1721,11 @@ export const posService = {
         .select('name, description')
         .eq('organization_id', orgId)
         .eq('is_active', true);
-      
+
       let filteredCats = dbCats || [];
-      
+
       filteredCats = filteredCats.slice(0, 5);
-      
+
       if (filteredCats.length > 0) {
         dynamicCategorySales = filteredCats.map((c: any) => {
           let cleanName = c.name;
@@ -1701,7 +1776,7 @@ export const posService = {
   async getRecentSales() {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     const { data, error } = await supabase
       .from('orders')
       .select(`
@@ -1712,20 +1787,20 @@ export const posService = {
       .neq('status', 'cancelled')
       .order('created_at', { ascending: false })
       .limit(5);
-    
+
     if (error) throw error;
     return data;
   },
 
   async updateCustomerPoints(id: string, points: number) {
     const supabase = createClient();
-    
+
     const { data: customer } = await supabase
       .from('customers')
       .select('loyalty_points')
       .eq('id', id)
       .single();
-      
+
     if (customer) {
       const newPoints = (customer.loyalty_points || 0) + points;
       await supabase
@@ -1784,17 +1859,17 @@ export const posService = {
   async getCategoryList() {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     const { data, error } = await supabase
       .from('categories')
       .select('*, products(id)')
       .eq('organization_id', orgId)
       .eq('is_active', true);
-    
+
     if (error) throw error;
-    
+
     const filteredData = data || [];
-    
+
     return filteredData.map(cat => {
       let cleanDesc = cat.description;
       if (cat.description && cat.description.includes('::')) {
@@ -1812,21 +1887,21 @@ export const posService = {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
     const tenantSlug = getTenantSlug();
-    
+
     const preparedData = {
       ...categoryData,
       organization_id: orgId,
       description: `${tenantSlug}::${categoryData.description || ''}`
     };
-    
+
     const { data, error } = await supabase
       .from('categories')
       .insert([preparedData])
       .select()
       .single();
-    
+
     if (error) throw error;
-    
+
     if (data && data.description && data.description.includes('::')) {
       data.description = data.description.split('::').slice(1).join('::');
     }
@@ -1837,12 +1912,12 @@ export const posService = {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
     const tenantSlug = getTenantSlug();
-    
+
     const preparedData = { ...categoryData };
     if (categoryData.description !== undefined) {
       preparedData.description = `${tenantSlug}::${categoryData.description || ''}`;
     }
-    
+
     const { data, error } = await supabase
       .from('categories')
       .update(preparedData)
@@ -1850,9 +1925,9 @@ export const posService = {
       .eq('organization_id', orgId)
       .select()
       .single();
-    
+
     if (error) throw error;
-    
+
     if (data && data.description && data.description.includes('::')) {
       data.description = data.description.split('::').slice(1).join('::');
     }
@@ -1862,20 +1937,20 @@ export const posService = {
   async deleteCategory(id: string) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     const { error } = await supabase
       .from('categories')
       .update({ is_active: false })
       .eq('id', id)
       .eq('organization_id', orgId);
-      
+
     if (error) throw error;
   },
 
   async deleteCustomer(id: string) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     if (typeof window !== 'undefined') {
       try {
         const local = localStorage.getItem(getTenantStorageKey('zpos_customers'));
@@ -1904,7 +1979,7 @@ export const posService = {
   async updateSupplier(id: string, data: any) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     const { data: supplier, error } = await supabase
       .from('suppliers')
       .update({
@@ -1915,7 +1990,7 @@ export const posService = {
       .eq('organization_id', orgId)
       .select()
       .single();
-      
+
     if (error) throw error;
     return supplier;
   },
@@ -1923,31 +1998,31 @@ export const posService = {
   async deleteSupplier(id: string) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     const { error } = await supabase
       .from('suppliers')
       .delete()
       .eq('id', id)
       .eq('organization_id', orgId);
-      
+
     if (error) throw error;
   },
 
   async deleteEmployee(id: string) {
     const supabase = createClient();
-    
+
     const { error } = await supabase
       .from('employees')
       .delete()
       .eq('id', id);
-      
+
     if (error) throw error;
   },
 
   async getGoal(month: number, year: number) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     const { data, error } = await supabase
       .from('organization_goals')
       .select('*')
@@ -1956,7 +2031,7 @@ export const posService = {
       .eq('period_year', year)
       .eq('goal_type', 'revenue')
       .maybeSingle();
-    
+
     if (error) throw error;
     return data;
   },
@@ -1964,7 +2039,7 @@ export const posService = {
   async updateGoal(targetValue: number, month: number, year: number) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     const { data, error } = await supabase
       .from('organization_goals')
       .upsert({
@@ -1979,7 +2054,7 @@ export const posService = {
       })
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -1987,13 +2062,13 @@ export const posService = {
   async getExpenseCategories() {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     const { data, error } = await supabase
       .from('expense_categories')
       .select('*')
       .or(`organization_id.eq.${orgId},organization_id.is.null`)
       .order('name');
-      
+
     if (error) throw error;
     return data || [];
   },
@@ -2001,19 +2076,19 @@ export const posService = {
   async getExpenses(filters?: { categoryId?: string; search?: string }) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     let query = supabase
       .from('expenses')
       .select('*, category:expense_categories(name)')
       .eq('organization_id', orgId);
-    
+
     if (filters?.categoryId && filters.categoryId !== 'all') {
       query = query.eq('category_id', filters.categoryId);
     }
     if (filters?.search) {
       query = query.ilike('title', `%${filters.search}%`);
     }
-    
+
     const { data, error } = await query.order('expense_date', { ascending: false });
     if (error) throw error;
     return data || [];
@@ -2022,7 +2097,7 @@ export const posService = {
   async createExpense(expense: any) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     let branchId = expense.branch_id;
     if (!branchId || branchId === '00000000-0000-0000-0000-000000000000') {
       const { data: branches } = await supabase.from('branches').select('id').eq('organization_id', orgId).limit(1);
@@ -2032,7 +2107,7 @@ export const posService = {
         branchId = null;
       }
     }
-    
+
     const { data, error } = await supabase
       .from('expenses')
       .insert([{
@@ -2042,7 +2117,7 @@ export const posService = {
       }])
       .select()
       .single();
-    
+
     if (error) throw error;
 
     if (expense.status === 'paid') {
@@ -2178,13 +2253,13 @@ export const posService = {
   async getCashflowTransactions() {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     const { data, error } = await supabase
       .from('cashflow_transactions')
       .select('*')
       .eq('organization_id', orgId)
       .order('transaction_date', { ascending: false });
-      
+
     if (error) throw error;
     return data || [];
   },
@@ -2196,13 +2271,13 @@ export const posService = {
   async getRecurringExpenses() {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     const { data, error } = await supabase
       .from('recurring_expenses')
       .select('*, category:expense_categories(name)')
       .eq('organization_id', orgId)
       .order('created_at', { ascending: false });
-      
+
     if (error) throw error;
     return data || [];
   },
@@ -2210,7 +2285,7 @@ export const posService = {
   async createRecurringExpense(recurring: any) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     let branchId = recurring.branch_id;
     if (!branchId || branchId === '00000000-0000-0000-0000-000000000000') {
       const { data: branches } = await supabase.from('branches').select('id').eq('organization_id', orgId).limit(1);
@@ -2220,7 +2295,7 @@ export const posService = {
         branchId = null;
       }
     }
-    
+
     const { data, error } = await supabase
       .from('recurring_expenses')
       .insert([{
@@ -2231,7 +2306,7 @@ export const posService = {
       }])
       .select()
       .single();
-      
+
     if (error) throw error;
     return data;
   },
@@ -2240,26 +2315,26 @@ export const posService = {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
     const newStatus = currentStatus === 'active' ? 'paused' : 'active';
-    
+
     const { error } = await supabase
       .from('recurring_expenses')
       .update({ status: newStatus })
       .eq('id', id)
       .eq('organization_id', orgId);
-      
+
     if (error) throw error;
   },
 
   async getPayroll() {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     const { data, error } = await supabase
       .from('payroll')
       .select('*, employee:employees(*)')
       .eq('organization_id', orgId)
       .order('created_at', { ascending: false });
-      
+
     if (error) throw error;
     return data || [];
   },
@@ -2267,7 +2342,7 @@ export const posService = {
   async createPayroll(payrollData: any) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     let branchId = payrollData.branch_id;
     if (!branchId || branchId === '00000000-0000-0000-0000-000000000000') {
       const { data: branches } = await supabase.from('branches').select('id').eq('organization_id', orgId).limit(1);
@@ -2277,7 +2352,7 @@ export const posService = {
         branchId = null;
       }
     }
-    
+
     const { data, error } = await supabase
       .from('payroll')
       .insert([{
@@ -2287,7 +2362,7 @@ export const posService = {
       }])
       .select('*, employee:employees(*)')
       .single();
-      
+
     if (error) throw error;
 
     if (payrollData.payment_status === 'paid') {
@@ -2310,12 +2385,12 @@ export const posService = {
   async updatePayrollStatus(id: string, status: string, paymentDate?: string) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     const updateData: any = { payment_status: status };
     if (status === 'paid') {
       updateData.payment_date = paymentDate || new Date().toISOString().split('T')[0];
     }
-    
+
     const { data, error } = await supabase
       .from('payroll')
       .update(updateData)
@@ -2323,7 +2398,7 @@ export const posService = {
       .eq('organization_id', orgId)
       .select('*, employee:employees(*)')
       .single();
-      
+
     if (error) throw error;
 
     if (status === 'paid') {
@@ -2345,14 +2420,19 @@ export const posService = {
   async getBranches() {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     try {
       const { data, error } = await supabase
         .from('branches')
         .select('*')
         .eq('organization_id', orgId);
-        
-      if (!error && data && data.length > 0) return data;
+
+      if (!error && data && data.length > 0) {
+        return data.map((b: any) => ({
+          ...b,
+          status: b.is_main_branch ? "Chính" : "Phụ"
+        }));
+      }
     } catch (e) {
       console.warn("Supabase branches table error, using local storage fallback", e);
     }
@@ -2360,71 +2440,93 @@ export const posService = {
     if (typeof window !== 'undefined') {
       const local = localStorage.getItem(getTenantStorageKey('zpos_branches'));
       if (!local) {
-        const defaultBranches = [
-          { id: crypto.randomUUID(), organization_id: orgId, name: "Chi nhánh Quận 1", address: "123 Đường ABC, Quận 1, TP.HCM", status: "Chính" },
-          { id: crypto.randomUUID(), organization_id: orgId, name: "Chi nhánh Ba Đình", address: "456 Đường XYZ, Ba Đình, Hà Nội", status: "Phụ" }
-        ];
-        localStorage.setItem(getTenantStorageKey('zpos_branches'), JSON.stringify(defaultBranches));
-        return defaultBranches;
+        return [];
       }
-      return JSON.parse(local);
+      try {
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed)) {
+          // If it contains the mock branches, let's filter them out/clear it
+          const hasMock = parsed.some((b: any) => b.name === "Chi nhánh Quận 1" || b.name === "Chi nhánh Ba Đình");
+          if (hasMock) {
+            localStorage.removeItem(getTenantStorageKey('zpos_branches'));
+            return [];
+          }
+          return parsed;
+        }
+      } catch (e) {
+        console.error("Failed to parse local branches", e);
+      }
+      return [];
     }
-    
-    return [
-      { id: "1", organization_id: orgId, name: "Chi nhánh Quận 1", address: "123 Đường ABC, Quận 1, TP.HCM", status: "Chính" },
-      { id: "2", organization_id: orgId, name: "Chi nhánh Ba Đình", address: "456 Đường XYZ, Ba Đình, Hà Nội", status: "Phụ" }
-    ];
+
+    return [];
   },
 
   async saveBranch(branch: any) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
-    const preparedBranch = {
-      ...branch,
+
+    // Map UI "status" to DB "is_main_branch" and omit status from DB payload to prevent bad request
+    const { status, ...dbBranch } = branch;
+    const isMainBranch = status === "Chính" || branch.is_main_branch || false;
+
+    const preparedBranchForDB = {
+      ...dbBranch,
+      is_main_branch: isMainBranch,
       organization_id: orgId
     };
-    
+
+    const preparedBranchForUI = {
+      ...branch,
+      is_main_branch: isMainBranch,
+      organization_id: orgId
+    };
+
     try {
       const { data, error } = await supabase
         .from('branches')
-        .upsert(preparedBranch)
+        .upsert(preparedBranchForDB)
         .select()
         .single();
-        
-      if (!error && data) return data;
+
+      if (!error && data) {
+        return {
+          ...data,
+          status: data.is_main_branch ? "Chính" : "Phụ"
+        };
+      }
+      if (error) {
+        console.error("Supabase branches upsert error details:", error.message, error.details, error.hint);
+      }
     } catch (e) {
-      console.warn("Supabase branches table upsert error, using local storage fallback", e);
+      console.warn("Supabase branches table upsert exception, using local storage fallback", e);
     }
 
     if (typeof window !== 'undefined') {
       const local = localStorage.getItem(getTenantStorageKey('zpos_branches'));
-      let branches = local ? JSON.parse(local) : [
-        { id: "1", organization_id: orgId, name: "Chi nhánh Quận 1", address: "123 Đường ABC, Quận 1, TP.HCM", status: "Chính" },
-        { id: "2", organization_id: orgId, name: "Chi nhánh Ba Đình", address: "456 Đường XYZ, Ba Đình, Hà Nội", status: "Phụ" }
-      ];
-      
+      let branches = local ? JSON.parse(local) : [];
+
       if (branch.id) {
-        branches = branches.map((b: any) => b.id === branch.id ? preparedBranch : b);
+        branches = branches.map((b: any) => b.id === branch.id ? preparedBranchForUI : b);
       } else {
-        const newBranch = { 
-          ...preparedBranch, 
+        const newBranch = {
+          ...preparedBranchForUI,
           id: crypto.randomUUID(),
           status: branches.length === 0 ? "Chính" : "Phụ"
         };
         branches.push(newBranch);
       }
-      
+
       localStorage.setItem(getTenantStorageKey('zpos_branches'), JSON.stringify(branches));
-      return preparedBranch;
+      return preparedBranchForUI;
     }
-    return preparedBranch;
+    return preparedBranchForUI;
   },
 
   async deleteBranch(id: string) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     try {
       await supabase
         .from('branches')

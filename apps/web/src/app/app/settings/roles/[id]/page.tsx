@@ -3,23 +3,23 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { 
-  Shield, 
-  ArrowLeft, 
-  Save, 
-  Lock, 
-  CheckSquare, 
-  Square,
-  Loader2
+import {
+  Shield,
+  ArrowLeft,
+  Save,
+  Lock,
+  Loader2,
+  ShieldX,
+  ExternalLink
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { permissionService, Permission, Role } from "@/services/permission.service";
+import { PermissionMatrix } from "../_components/permission-matrix";
 
 export default function EditRolePage() {
   const params = useParams();
@@ -29,17 +29,29 @@ export default function EditRolePage() {
   const [role, setRole] = useState<Role | null>(null);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [assignedPerms, setAssignedPerms] = useState<string[]>([]);
-  
+  const [initialPerms, setInitialPerms] = useState<string[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  
+  const [accessCheck, setAccessCheck] = useState<"pending" | "allowed" | "denied">("pending");
+
   const [roleName, setRoleName] = useState("");
   const [roleDesc, setRoleDesc] = useState("");
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       try {
+        try {
+          await permissionService.assertCanManageRoles();
+        } catch {
+          setAccessCheck("denied");
+          setLoading(false);
+          return;
+        }
+        setAccessCheck("allowed");
+
         const roleData = await permissionService.getRole(roleId);
         if (!roleData) {
           toast.error("Không tìm thấy vai trò");
@@ -56,6 +68,7 @@ export default function EditRolePage() {
 
         const activeAssigned = await permissionService.getRolePermissions(roleId);
         setAssignedPerms(activeAssigned || []);
+        setInitialPerms(activeAssigned || []);
       } catch (e: any) {
         toast.error("Lỗi khi tải dữ liệu: " + e.message);
       } finally {
@@ -66,36 +79,7 @@ export default function EditRolePage() {
     loadData();
   }, [roleId, router]);
 
-  const handleCheckboxChange = (permId: string, checked: boolean) => {
-    if (role?.name === 'Owner') return; // Protect Owner permissions from change
-
-    if (checked) {
-      setAssignedPerms(prev => [...prev, permId]);
-    } else {
-      setAssignedPerms(prev => prev.filter(id => id !== permId));
-    }
-  };
-
-  const toggleGroup = (groupName: string, groupPerms: Permission[]) => {
-    if (role?.name === 'Owner') return;
-    
-    const groupPermIds = groupPerms.map(p => p.id);
-    const allChecked = groupPermIds.every(id => assignedPerms.includes(id));
-    
-    if (allChecked) {
-      // Uncheck all in group
-      setAssignedPerms(prev => prev.filter(id => !groupPermIds.includes(id)));
-    } else {
-      // Check all in group
-      setAssignedPerms(prev => {
-        const filtered = prev.filter(id => !groupPermIds.includes(id));
-        return [...filtered, ...groupPermIds];
-      });
-    }
-  };
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async () => {
     if (!roleName.trim()) {
       toast.error("Tên vai trò không được để trống");
       return;
@@ -105,7 +89,7 @@ export default function EditRolePage() {
     try {
       await permissionService.updateRole(roleId, roleName.trim(), roleDesc.trim(), assignedPerms);
       toast.success("Cập nhật vai trò & quyền hạn thành công");
-      router.push("/settings/roles");
+      setInitialPerms(assignedPerms);
     } catch (e: any) {
       toast.error(e.message || "Lỗi khi lưu vai trò");
     } finally {
@@ -113,7 +97,26 @@ export default function EditRolePage() {
     }
   };
 
-  if (loading) {
+  if (accessCheck === "denied") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 animate-in fade-in duration-300">
+        <div className="p-4 rounded-2xl bg-destructive/10 text-destructive">
+          <ShieldX className="w-12 h-12" />
+        </div>
+        <div className="flex flex-col items-center gap-1 text-center max-w-md">
+          <h1 className="text-2xl font-semibold tracking-tight">Bạn chưa có quyền quản lý vai trò</h1>
+          <p className="text-muted-foreground text-sm">
+            Bạn cần quyền roles.manage để chỉnh sửa ma trận phân quyền cho vai trò này.
+          </p>
+        </div>
+        <Button asChild variant="outline" className="gap-2">
+          <Link href="/settings">Quay lại Cài đặt</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  if (loading || accessCheck === "pending") {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-2">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -122,14 +125,7 @@ export default function EditRolePage() {
     );
   }
 
-  // Group permissions by group_name
-  const groupedPerms = permissions.reduce<Record<string, Permission[]>>((acc, perm) => {
-    if (!acc[perm.group_name]) acc[perm.group_name] = [];
-    acc[perm.group_name].push(perm);
-    return acc;
-  }, {});
-
-  const isOwner = role?.name === 'Owner';
+  const isOwner = Boolean(role?.is_owner || role?.name === 'Owner');
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-300">
@@ -165,7 +161,7 @@ export default function EditRolePage() {
         )}
       </div>
 
-      <form onSubmit={handleSave} className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6">
         {/* Role Information Card */}
         <Card className="shadow-xs border-muted">
           <CardHeader>
@@ -198,104 +194,31 @@ export default function EditRolePage() {
           </CardContent>
         </Card>
 
-        {/* Permissions Checkbox Matrix */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col">
-              <h2 className="text-lg font-semibold tracking-tight">Ma trận phân quyền chi tiết</h2>
-              <p className="text-muted-foreground text-xs">Tick chọn để bật các chức năng được phép truy cập.</p>
-            </div>
-            {!isOwner && (
-              <div className="flex gap-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm"
-                  className="h-8 text-xs border-muted"
-                  onClick={() => setAssignedPerms(permissions.map(p => p.id))}
-                >
-                  Chọn tất cả quyền
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm"
-                  className="h-8 text-xs border-muted text-destructive hover:bg-destructive/10"
-                  onClick={() => setAssignedPerms([])}
-                >
-                  Xóa tất cả
-                </Button>
-              </div>
-            )}
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            {Object.entries(groupedPerms).map(([group, groupPermissions]) => {
-              const groupPermIds = groupPermissions.map(p => p.id);
-              const allChecked = groupPermIds.every(id => assignedPerms.includes(id)) || isOwner;
-              const someChecked = groupPermIds.some(id => assignedPerms.includes(id)) && !allChecked;
-
-              return (
-                <Card key={group} className="border-muted bg-card shadow-xs overflow-hidden hover:shadow-md transition-shadow">
-                  <div className="bg-muted/30 px-4 py-3 border-b flex items-center justify-between">
-                    <h3 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                      <span className="w-1.5 h-3 rounded-full bg-primary" />
-                      {group}
-                    </h3>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-7 text-[11px] text-muted-foreground hover:text-primary px-2"
-                      onClick={() => toggleGroup(group, groupPermissions)}
-                      disabled={isOwner}
-                    >
-                      {allChecked ? "Bỏ chọn tất cả" : "Chọn nhóm này"}
-                    </Button>
-                  </div>
-                  <div className="divide-y divide-muted/30">
-                    {groupPermissions.map((perm) => {
-                      const isChecked = assignedPerms.includes(perm.id) || isOwner;
-                      return (
-                        <div 
-                          key={perm.id} 
-                          className={`p-3.5 flex items-start gap-3 hover:bg-muted/10 transition-colors cursor-pointer ${isChecked ? 'bg-primary/5 dark:bg-primary/2' : ''}`}
-                          onClick={() => handleCheckboxChange(perm.id, !isChecked)}
-                        >
-                          <Checkbox 
-                            id={perm.id} 
-                            checked={isChecked}
-                            onCheckedChange={(checked) => handleCheckboxChange(perm.id, !!checked)}
-                            disabled={isOwner}
-                            className="mt-0.5"
-                          />
-                          <div className="grid gap-0.5 leading-none cursor-pointer">
-                            <span className="text-sm font-semibold text-foreground">
-                              {perm.name}
-                            </span>
-                            <span className="text-xs text-muted-foreground leading-normal">
-                              {perm.description}
-                            </span>
-                            <span className="text-[9px] font-mono text-muted-foreground/60 uppercase select-none mt-1">
-                              KEY: {perm.id}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
+        <PermissionMatrix
+          permissions={permissions}
+          selected={assignedPerms}
+          initialSelected={initialPerms}
+          search={search}
+          locked={isOwner}
+          saving={saving}
+          onSearchChange={setSearch}
+          onSelectedChange={setAssignedPerms}
+          onSave={handleSave}
+          onReset={() => setAssignedPerms(initialPerms)}
+        />
 
         {/* Footer Actions */}
         <div className="flex items-center justify-end gap-3 border-t pt-5">
           <Button type="button" variant="outline" asChild>
             <Link href="/settings/roles">Hủy bỏ</Link>
           </Button>
-          <Button type="submit" disabled={saving || isOwner} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/95">
+          <Button type="button" asChild variant="outline" className="gap-2">
+            <Link href={`/settings/roles/${roleId}/permissions`}>
+              Mở trang quyền riêng
+              <ExternalLink className="w-4 h-4" />
+            </Link>
+          </Button>
+          <Button type="button" onClick={handleSave} disabled={saving || isOwner} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/95">
             {saving ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
@@ -304,7 +227,7 @@ export default function EditRolePage() {
             Lưu thay đổi
           </Button>
         </div>
-      </form>
+      </div>
     </div>
   );
 }
