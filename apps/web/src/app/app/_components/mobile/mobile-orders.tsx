@@ -7,7 +7,6 @@ import {
   CalendarDays,
   Printer, 
   Coins, 
-  RotateCcw,
   ShoppingBag,
   Filter,
   CheckCircle2,
@@ -49,18 +48,6 @@ export function MobileOrders({ orders, loading = false }: MobileOrdersProps) {
 
   const handlePrintReceipt = () => {
     toast.success(`Đang gửi lệnh in hóa đơn ${selectedOrder?.order_number} qua Bluetooth!`);
-  };
-
-  const handleRefundOrder = () => {
-    toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 1000)),
-      {
-        loading: "Đang xử lý yêu cầu hoàn tiền...",
-        success: "Đã cập nhật trạng thái đơn hàng: Đã hoàn tiền",
-        error: "Hoàn tiền thất bại"
-      }
-    );
-    setDrawerOpen(false);
   };
 
   // Filter logic
@@ -284,24 +271,14 @@ export function MobileOrders({ orders, loading = false }: MobileOrdersProps) {
               </div>
 
               {/* ACTION FOOTER */}
-              <DrawerFooter className="px-6 gap-2 border-t pt-3 flex flex-row">
+              <DrawerFooter className="px-6 gap-2 border-t pt-3">
                 <Button 
                   onClick={handlePrintReceipt}
-                  className="h-12 text-sm font-bold flex-1 rounded-xl bg-primary text-primary-foreground shadow-lg flex items-center justify-center gap-2"
+                  className="h-12 text-sm font-bold w-full rounded-xl bg-primary text-primary-foreground shadow-lg flex items-center justify-center gap-2"
                 >
                   <Printer className="w-4.5 h-4.5" />
                   In hóa đơn
                 </Button>
-                {selectedOrder.status !== "refunded" && (
-                  <Button 
-                    variant="outline"
-                    onClick={handleRefundOrder}
-                    className="h-12 text-sm font-bold flex-1 rounded-xl text-destructive border-destructive/20 bg-destructive/5 hover:bg-destructive/10 hover:text-destructive flex items-center justify-center gap-2"
-                  >
-                    <RotateCcw className="w-4.5 h-4.5" />
-                    Hoàn tiền
-                  </Button>
-                )}
               </DrawerFooter>
             </>
           )}

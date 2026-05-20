@@ -586,7 +586,24 @@ export default function POSPage() {
   }, [cart, products]);
 
   const addToCart = (product: any) => {
+    const stock = Number(product.stock ?? 0);
     const existing = cart.find(item => item.id === product.id);
+    const currentQuantity = existing?.quantity || 0;
+
+    if (stock <= 0) {
+      toast.error("Sản phẩm đã hết hàng", {
+        description: product.name,
+      });
+      return;
+    }
+
+    if (currentQuantity >= stock) {
+      toast.error("Không đủ tồn kho", {
+        description: `${product.name} chỉ còn ${stock} sản phẩm`,
+      });
+      return;
+    }
+
     if (existing) {
       setCart(cart.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
     } else {
@@ -601,7 +618,15 @@ export default function POSPage() {
   const updateQuantity = (id: number, delta: number) => {
     setCart(cart.map(item => {
       if (item.id === id) {
+        const product = products.find(p => p.id === id);
+        const stock = Number(product?.stock ?? item.stock ?? 0);
         const newQty = Math.max(1, item.quantity + delta);
+        if (delta > 0 && newQty > stock) {
+          toast.error("Không đủ tồn kho", {
+            description: `${item.name} chỉ còn ${stock} sản phẩm`,
+          });
+          return item;
+        }
         return { ...item, quantity: newQty };
       }
       return item;
@@ -634,6 +659,19 @@ export default function POSPage() {
     : discountValue;
   const tax = 0;
   const total = Math.max(0, subtotal - discount + tax);
+  const getCartStockProblem = () => {
+    for (const item of cart) {
+      const product = products.find(p => p.id === item.id);
+      const stock = Number(product?.stock ?? item.stock ?? 0);
+      if (stock <= 0) {
+        return `${item.name} đã hết hàng, không thể bán tiếp.`;
+      }
+      if (item.quantity > stock) {
+        return `${item.name} chỉ còn ${stock} sản phẩm, không đủ để bán ${item.quantity}.`;
+      }
+    }
+    return null;
+  };
 
   useEffect(() => {
     if (checkoutOpen) {
@@ -687,6 +725,15 @@ export default function POSPage() {
   };
 
   const handleCheckout = async () => {
+    const stockProblem = getCartStockProblem();
+    if (stockProblem) {
+      toast.error("Không đủ tồn kho", {
+        description: stockProblem,
+        duration: 6000,
+      });
+      return;
+    }
+
     // For transfer mode: 2-stage flow (start → confirm).
     // If we're not yet waiting, start the pending order and listen for webhook.
     if (paymentMethod === 'transfer' && transferStatus === 'idle') {
@@ -700,7 +747,8 @@ export default function POSPage() {
     // Debt mode requires a customer (the ledger is keyed by customer_id).
     const isDebt = paymentMethod === 'debt';
     if (isDebt && !selectedCustomer?.id) {
-      toast.error('Phải chọn khách hàng khi bán ghi nợ');
+      setCustomerSearchOpen(true);
+      toast.error('Chọn khách hàng để ghi nợ đơn này');
       return;
     }
 
@@ -838,6 +886,15 @@ export default function POSPage() {
 
   // Create a pending order and start listening for the bank webhook to confirm it.
   const handleStartTransfer = async () => {
+    const stockProblem = getCartStockProblem();
+    if (stockProblem) {
+      toast.error("Không đủ tồn kho", {
+        description: stockProblem,
+        duration: 6000,
+      });
+      return;
+    }
+
     setIsProcessing(true);
     try {
       const orderNumber = orderId.toString().startsWith('ORD-')
@@ -1142,18 +1199,33 @@ export default function POSPage() {
         {/* Product Grid */}
         <ScrollArea className="flex-1">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pb-4 pr-4">
-            {filteredProducts.map(product => (
+            {filteredProducts.map(product => {
+              const isOutOfStock = Number(product.stock ?? 0) <= 0;
+              return (
               <Card 
                 key={product.id} 
-                className="group cursor-pointer gap-0 overflow-hidden rounded-xl border border-border/70 bg-card py-0 shadow-sm transition-all duration-200 hover:border-primary/50 hover:shadow-md"
+                aria-disabled={isOutOfStock}
+                title={isOutOfStock ? "Sản phẩm đã hết hàng" : undefined}
+                className={`group gap-0 overflow-hidden rounded-xl border border-border/70 bg-card py-0 shadow-sm transition-all duration-200 ${
+                  isOutOfStock
+                    ? "cursor-not-allowed opacity-45 grayscale"
+                    : "cursor-pointer hover:border-primary/50 hover:shadow-md"
+                }`}
                 onClick={() => addToCart(product)}
               >
                 <div className="relative aspect-square overflow-hidden bg-zinc-100 dark:bg-zinc-900">
                   <img
                     src={product.image}
                     alt={product.name}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.025]"
+                    className={`h-full w-full object-cover transition-transform duration-300 ${isOutOfStock ? "" : "group-hover:scale-[1.025]"}`}
                   />
+                  {isOutOfStock && (
+                    <div className="absolute inset-0 z-20 grid place-items-center bg-background/35">
+                      <span className="rounded-full bg-background/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground shadow-sm">
+                        Hết hàng
+                      </span>
+                    </div>
+                  )}
                   <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-2 pt-10">
                     <div className="flex items-end justify-between gap-2">
                       <span className="min-w-0 truncate rounded-full bg-white/90 px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide text-zinc-700 shadow-sm backdrop-blur dark:bg-zinc-950/80 dark:text-zinc-200">
@@ -1189,7 +1261,7 @@ export default function POSPage() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            )})}
           </div>
         </ScrollArea>
       </div>
@@ -1688,9 +1760,7 @@ export default function POSPage() {
                     </button>
                     <button
                       onClick={() => setPaymentMethod('debt')}
-                      disabled={!selectedCustomer}
-                      title={!selectedCustomer ? 'Cần chọn khách hàng để ghi nợ' : ''}
-                      className={`flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border-2 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed ${
+                      className={`flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border-2 transition-all duration-300 ${
                         paymentMethod === 'debt'
                           ? 'bg-amber-500/10 dark:bg-amber-500/20 border-amber-500 text-amber-700 dark:text-amber-400 font-bold scale-[1.02] shadow-sm'
                           : 'bg-muted/40 text-muted-foreground border-transparent hover:border-border hover:bg-muted/60'
@@ -1701,9 +1771,13 @@ export default function POSPage() {
                     </button>
                   </div>
                   {paymentMethod === 'debt' && !selectedCustomer && (
-                    <p className="text-[11px] font-bold text-amber-600">
-                      ⚠️ Vui lòng chọn khách hàng trước khi ghi nợ
-                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setCustomerSearchOpen(true)}
+                      className="text-[11px] font-bold text-amber-600 hover:underline"
+                    >
+                      Chọn khách hàng để ghi nợ đơn này
+                    </button>
                   )}
                 </div>
 
@@ -1774,7 +1848,7 @@ export default function POSPage() {
                 <Button
                   className="w-2/3 h-12 rounded-xl text-lg font-bold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-colors"
                   onClick={handleCheckout}
-                  disabled={isProcessing || (paymentMethod === 'cash' && receivedAmount < total) || (paymentMethod === 'debt' && !selectedCustomer)}
+                  disabled={isProcessing || (paymentMethod === 'cash' && receivedAmount < total)}
                 >
                   {paymentMethod === 'transfer' && transferStatus === 'idle' && (<>Tạo mã & chờ chuyển khoản <ArrowRight className="w-5 h-5" /></>)}
                   {paymentMethod === 'transfer' && transferStatus === 'waiting' && (<>Đã nhận tiền (thủ công) <Check className="w-5 h-5" /></>)}

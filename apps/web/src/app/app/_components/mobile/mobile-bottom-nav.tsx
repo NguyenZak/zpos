@@ -18,8 +18,7 @@ import {
   Store,
   ChevronRight,
   TrendingUp,
-  MapPin,
-  Bot,
+  Coins,
   Send
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -435,6 +434,19 @@ export function MobileBottomNav({ className }: BottomNavProps) {
                     <Users className="w-5 h-5" />
                   </div>
                   <span className="text-sm font-semibold text-foreground">Khách hàng (CRM)</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+
+              <button
+                onClick={() => { setDrawerOpen(false); router.push(`${prefix}/debt`); }}
+                className="w-full flex items-center justify-between p-3.5 rounded-xl hover:bg-muted/60 transition-colors text-left group active:bg-muted"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="p-2 bg-amber-500/10 text-amber-600 rounded-lg">
+                    <Coins className="w-5 h-5" />
+                  </div>
+                  <span className="text-sm font-semibold text-foreground">Công nợ</span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </button>

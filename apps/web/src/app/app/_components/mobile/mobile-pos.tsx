@@ -56,18 +56,20 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
   const [customerSearchOpen, setCustomerSearchOpen] = useState(false);
   const [customerQuery, setCustomerQuery] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
+  const createOrderNumber = () => `ORD-${Date.now().toString().slice(-6)}`;
+  const formatOrderNumber = (id: string | number) => id.toString().startsWith("ORD-") ? id.toString() : `ORD-${id}`;
 
   // Tabs State
   interface OrderTab {
     id: string;
     cart: any[];
     selectedCustomer: any | null;
-    orderId: number;
+    orderId: string | number;
     title: string;
   }
   
   const [tabs, setTabs] = useState<OrderTab[]>([
-    { id: '1', cart: [], selectedCustomer: null, orderId: Math.floor(Date.now() % 10000), title: 'Đơn 1' }
+    { id: '1', cart: [], selectedCustomer: null, orderId: createOrderNumber(), title: 'Đơn 1' }
   ]);
   const [activeTabId, setActiveTabId] = useState<string>('1');
 
@@ -94,7 +96,7 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
     }));
   };
 
-  const setOrderId = (id: number | ((prev: number) => number)) => {
+  const setOrderId = (id: string | number | ((prev: string | number) => string | number)) => {
     setTabs(prev => prev.map(tab => {
       if (tab.id === activeTabId) {
         return { ...tab, orderId: typeof id === 'function' ? id(tab.orderId) : id };
@@ -110,7 +112,7 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
       id: newId,
       cart: [],
       selectedCustomer: null,
-      orderId: Math.floor(Date.now() % 10000),
+      orderId: createOrderNumber(),
       title: newTitle
     }]);
     setActiveTabId(newId);
@@ -166,7 +168,24 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
   }, [activeTabId, isMounted]);
 
   const addToCart = (product: any) => {
+    const stock = Number(product.stock ?? 0);
     const existing = cart.find(item => item.id === product.id);
+    const currentQuantity = existing?.quantity || 0;
+
+    if (stock <= 0) {
+      toast.error("Sản phẩm đã hết hàng", {
+        description: product.name,
+      });
+      return;
+    }
+
+    if (currentQuantity >= stock) {
+      toast.error("Không đủ tồn kho", {
+        description: `${product.name} chỉ còn ${stock} sản phẩm`,
+      });
+      return;
+    }
+
     if (existing) {
       setCart(cart.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
     } else {
@@ -182,7 +201,15 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
   const updateQuantity = (id: number, delta: number) => {
     setCart(cart.map(item => {
       if (item.id === id) {
+        const product = products.find(p => p.id === id);
+        const stock = Number(product?.stock ?? item.stock ?? 0);
         const newQty = Math.max(1, item.quantity + delta);
+        if (delta > 0 && newQty > stock) {
+          toast.error("Không đủ tồn kho", {
+            description: `${item.name} chỉ còn ${stock} sản phẩm`,
+          });
+          return item;
+        }
         return { ...item, quantity: newQty };
       }
       return item;
@@ -218,7 +245,7 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
   const handleCheckoutSuccess = () => {
     setCart([]);
     setSelectedCustomer(null);
-    setOrderId(Math.floor(Date.now() % 10000));
+    setOrderId(createOrderNumber());
   };
 
   const handleBarcodeScan = () => {
@@ -252,7 +279,7 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
             <h1 className="text-xl font-black tracking-tight text-foreground flex items-center gap-2">
               Bán hàng POS
             </h1>
-            <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Mã đơn hàng: #{orderId}</p>
+            <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Mã đơn hàng: {formatOrderNumber(orderId)}</p>
           </div>
           
           <div className="flex gap-1.5">
@@ -375,10 +402,16 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
         {filteredProducts.length > 0 ? (
           viewMode === "grid" ? (
             <div className="grid grid-cols-2 gap-3 pb-24">
-              {filteredProducts.map((prod) => (
+              {filteredProducts.map((prod) => {
+                const isOutOfStock = Number(prod.stock ?? 0) <= 0;
+                return (
                 <Card 
                   key={prod.id} 
-                  className="flex flex-col justify-between gap-0 overflow-hidden rounded-xl border border-muted/50 bg-card py-0 shadow-sm transition-all active:scale-[0.97]"
+                  aria-disabled={isOutOfStock}
+                  title={isOutOfStock ? "Sản phẩm đã hết hàng" : undefined}
+                  className={`flex flex-col justify-between gap-0 overflow-hidden rounded-xl border border-muted/50 bg-card py-0 shadow-sm transition-all ${
+                    isOutOfStock ? "cursor-not-allowed opacity-45 grayscale" : "active:scale-[0.97]"
+                  }`}
                   onClick={() => addToCart(prod)}
                 >
                   <div className="relative aspect-square overflow-hidden bg-zinc-100 dark:bg-zinc-900">
@@ -390,6 +423,13 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
                         (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=200&auto=format&fit=crop";
                       }}
                     />
+                    {isOutOfStock && (
+                      <div className="absolute inset-0 z-20 grid place-items-center bg-background/35">
+                        <span className="rounded-full bg-background/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground shadow-sm">
+                          Hết hàng
+                        </span>
+                      </div>
+                    )}
                     <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-2 pt-10">
                       <div className="flex items-end justify-between gap-2">
                         <span className="min-w-0 truncate rounded-full bg-white/90 px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide text-zinc-700 shadow-sm backdrop-blur dark:bg-zinc-950/80 dark:text-zinc-200">
@@ -413,14 +453,20 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              )})}
             </div>
           ) : (
             <div className="space-y-2.5 pb-24">
-              {filteredProducts.map((prod) => (
+              {filteredProducts.map((prod) => {
+                const isOutOfStock = Number(prod.stock ?? 0) <= 0;
+                return (
                 <div 
                   key={prod.id} 
-                  className="flex items-center gap-3 bg-card border border-muted/50 rounded-lg p-3 active:scale-[0.98] transition-all"
+                  aria-disabled={isOutOfStock}
+                  title={isOutOfStock ? "Sản phẩm đã hết hàng" : undefined}
+                  className={`flex items-center gap-3 bg-card border border-muted/50 rounded-lg p-3 transition-all ${
+                    isOutOfStock ? "cursor-not-allowed opacity-45 grayscale" : "active:scale-[0.98]"
+                  }`}
                   onClick={() => addToCart(prod)}
                 >
                   <img 
@@ -437,12 +483,14 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <span className="text-xs font-black text-primary font-mono">{formatCompactPrice(prod.price)}</span>
-                    <div className="w-7 h-7 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                      <Plus className="w-4 h-4" />
+                    <div className={`w-7 h-7 rounded-xl flex items-center justify-center ${
+                      isOutOfStock ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"
+                    }`}>
+                      {isOutOfStock ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                     </div>
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
           )
         ) : (
@@ -513,6 +561,8 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
         total={total} 
         cart={cart} 
         selectedCustomer={selectedCustomer} 
+        customers={customers}
+        onSelectCustomer={setSelectedCustomer}
         onCheckoutSuccess={handleCheckoutSuccess} 
         orderId={orderId} 
       />

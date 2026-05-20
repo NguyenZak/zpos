@@ -117,12 +117,6 @@ export const sidebarItems: NavGroup[] = [
         icon: Users,
       },
       {
-        title: "Công nợ",
-        url: "/debt",
-        icon: Coins,
-        isNew: true,
-      },
-      {
         title: "Nhà cung cấp",
         url: "/suppliers",
         icon: Truck,

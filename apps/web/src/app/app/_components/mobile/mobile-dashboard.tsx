@@ -77,6 +77,9 @@ interface MobileDashboardProps {
   displayNetProfit: number;
   displayCOGS: number;
   displayExpenses: number;
+  displayDebtInvoiceCount?: number;
+  displayDebtOutstandingAmount?: number;
+  displayDebtSettledAmount?: number;
   financePieData: any[];
   dynamicRevenueData: any[];
   dynamicComparisonData: any[];
@@ -116,6 +119,9 @@ export function MobileDashboard({
   displayNetProfit,
   displayCOGS,
   displayExpenses,
+  displayDebtInvoiceCount = 0,
+  displayDebtOutstandingAmount = 0,
+  displayDebtSettledAmount = 0,
   financePieData,
   dynamicRevenueData,
   dynamicComparisonData,
@@ -277,76 +283,74 @@ export function MobileDashboard({
       </div>
 
       {/* SALES TARGET & MONTHLY GOAL CARD */}
-      {goal && (
-        <Card className="border border-muted/50 rounded-xl overflow-hidden shadow-xs bg-card relative">
-          <CardContent className="p-4 space-y-3.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-primary/10 rounded-lg text-primary">
-                  <Target className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="text-[11px] font-bold text-foreground uppercase tracking-wider">Mục tiêu kinh doanh</h4>
-                  <p className="text-[9px] text-muted-foreground font-semibold">Doanh thu tháng {new Date().getMonth() + 1}</p>
-                </div>
+      <Card className="border border-muted/50 rounded-xl overflow-hidden shadow-xs bg-card relative">
+        <CardContent className="p-4 space-y-3.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-primary/10 rounded-lg text-primary">
+                <Target className="w-4 h-4" />
               </div>
-              
-              <Dialog open={goalDialogOpen} onOpenChange={setGoalDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-7 text-[9px] font-bold border hover:bg-muted py-0.5 px-2">
-                    Thiết lập
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="w-[92vw] max-w-[400px] rounded-2xl p-5">
-                  <DialogHeader>
-                    <DialogTitle className="text-base font-bold flex items-center gap-2">
-                      <Target className="w-5 h-5 text-primary" />
-                      Cài đặt mục tiêu tháng {new Date().getMonth() + 1}
-                    </DialogTitle>
-                    <DialogDescription className="text-xs text-muted-foreground">
-                      Thiết lập mục tiêu doanh thu để theo dõi hiệu quả kinh doanh của bạn trên di động.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-3.5 py-3">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="mobile-target" className="text-[10px] font-bold text-muted-foreground uppercase">Mục tiêu doanh thu (₫)</Label>
-                      <Input 
-                        id="mobile-target" 
-                        type="text" 
-                        placeholder="Ví dụ: 500,000,000" 
-                        value={formatCurrencyValue(newTarget)}
-                        onChange={(e) => setNewTarget(parseCurrencyValue(e.target.value))}
-                        className="text-xs h-9.5"
-                      />
-                    </div>
+              <div>
+                <h4 className="text-[11px] font-bold text-foreground uppercase tracking-wider">Mục tiêu kinh doanh</h4>
+                <p className="text-[9px] text-muted-foreground font-semibold">Doanh thu tháng {new Date().getMonth() + 1}</p>
+              </div>
+            </div>
+            
+            <Dialog open={goalDialogOpen} onOpenChange={setGoalDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-7 text-[9px] font-bold border hover:bg-muted py-0.5 px-2">
+                  {goal ? "Sửa" : "Thiết lập"}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="w-[92vw] max-w-[400px] rounded-2xl p-5">
+                <DialogHeader>
+                  <DialogTitle className="text-base font-bold flex items-center gap-2">
+                    <Target className="w-5 h-5 text-primary" />
+                    Cài đặt mục tiêu tháng {new Date().getMonth() + 1}
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-muted-foreground">
+                    Thiết lập mục tiêu doanh thu để theo dõi hiệu quả kinh doanh của bạn trên di động.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-3.5 py-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="mobile-target" className="text-[10px] font-bold text-muted-foreground uppercase">Mục tiêu doanh thu (₫)</Label>
+                    <Input
+                      id="mobile-target"
+                      type="text"
+                      placeholder="Ví dụ: 500,000,000"
+                      value={formatCurrencyValue(newTarget)}
+                      onChange={(e) => setNewTarget(parseCurrencyValue(e.target.value))}
+                      className="text-xs h-9.5"
+                    />
                   </div>
-                  <DialogFooter className="flex flex-row gap-2 justify-end">
-                    <Button type="button" variant="outline" onClick={() => setGoalDialogOpen(false)} className="text-xs h-9 py-1 px-3">
-                      Hủy bỏ
-                    </Button>
-                    <Button type="button" onClick={handleUpdateGoal} className="text-xs h-9 font-bold py-1 px-4">
-                      Lưu mục tiêu
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
+                </div>
+                <DialogFooter className="flex flex-row gap-2 justify-end">
+                  <Button type="button" variant="outline" onClick={() => setGoalDialogOpen(false)} className="text-xs h-9 py-1 px-3">
+                    Hủy bỏ
+                  </Button>
+                  <Button type="button" onClick={handleUpdateGoal} className="text-xs h-9 font-bold py-1 px-4">
+                    Lưu mục tiêu
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
 
-            <div className="space-y-1.5">
-              <div className="flex justify-between items-end">
-                <span className="text-xs text-muted-foreground font-semibold">Hoàn thành:</span>
-                <span className="text-sm font-black text-primary">{Math.round(goalProgress)}%</span>
-              </div>
-              <Progress value={goalProgress} className="h-2 bg-muted indicator-primary shadow-xs" indicatorClassName="bg-primary animate-pulse" />
-              <div className="flex justify-between text-[9px] text-muted-foreground font-semibold pt-0.5">
-                <span>Hiện tại: {formatCurrency(displayRevenue)}</span>
-                <span>Mục tiêu: {formatCurrency(goal.target_value)}</span>
-              </div>
+          <div className="space-y-1.5">
+            <div className="flex justify-between items-end">
+              <span className="text-xs text-muted-foreground font-semibold">Hoàn thành:</span>
+              <span className="text-sm font-black text-primary">{goal ? `${Math.round(goalProgress)}%` : "Chưa thiết lập"}</span>
             </div>
-          </CardContent>
-          <div className="absolute -bottom-6 -right-6 w-16 h-16 bg-primary/5 rounded-full blur-xl" />
-        </Card>
-      )}
+            <Progress value={goal ? goalProgress : 0} className="h-2 bg-muted indicator-primary shadow-xs" indicatorClassName="bg-primary animate-pulse" />
+            <div className="flex justify-between text-[9px] text-muted-foreground font-semibold pt-0.5">
+              <span>Hiện tại: {formatCurrency(displayRevenue)}</span>
+              <span>Mục tiêu: {goal ? formatCurrency(goal.target_value) : "Chưa có"}</span>
+            </div>
+          </div>
+        </CardContent>
+        <div className="absolute -bottom-6 -right-6 w-16 h-16 bg-primary/5 rounded-full blur-xl" />
+      </Card>
 
       {/* METRICS DOUBLE-GRID WIDGET */}
       <div className="grid grid-cols-2 gap-3.5">
@@ -354,7 +358,7 @@ export function MobileDashboard({
         <Card className="border border-muted/50 rounded-xl bg-gradient-to-br from-primary to-primary/90 text-primary-foreground shadow-sm">
           <CardContent className="p-3.5 flex flex-col justify-between h-full space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[9px] font-extrabold tracking-widest uppercase text-primary-foreground/75 leading-none">Doanh thu</span>
+              <span className="text-[9px] font-extrabold tracking-widest uppercase text-primary-foreground/75 leading-none">Thực nhận</span>
               <div className="p-1.5 bg-primary-foreground/10 text-primary-foreground rounded-lg">
                 <DollarSign className="w-3.5 h-3.5" />
               </div>
@@ -407,6 +411,27 @@ export function MobileDashboard({
           </CardContent>
         </Card>
 
+        {/* Debt Invoices Card */}
+        <Card className="border border-muted/50 rounded-xl bg-card shadow-sm">
+          <CardContent className="p-3.5 flex flex-col justify-between h-full space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] font-extrabold tracking-widest uppercase text-muted-foreground leading-none">Hoá đơn nợ</span>
+              <div className="p-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg">
+                <Coins className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-black tracking-tight text-amber-600 dark:text-amber-500 leading-none">{displayDebtInvoiceCount} đơn</h3>
+              <div className="text-[9px] font-semibold text-muted-foreground leading-tight">
+                Còn nợ {formatCurrency(displayDebtOutstandingAmount)}
+              </div>
+              <div className="text-[9px] font-semibold text-amber-600 dark:text-amber-400 leading-tight">
+                Đã thu {formatCurrency(displayDebtSettledAmount)}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Customer Base Card */}
         <Card className="border border-muted/50 rounded-xl bg-card shadow-sm">
           <CardContent className="p-3.5 flex flex-col justify-between h-full space-y-3">
@@ -446,7 +471,7 @@ export function MobileDashboard({
             <TabsList className="grid grid-cols-3 gap-1 bg-muted p-1 rounded-lg mt-3 h-8.5">
               <TabsTrigger value="revenue" className="text-[9.5px] font-bold py-1 px-2.5 flex gap-1 items-center justify-center">
                 <LineIcon className="w-3 h-3" />
-                Doanh thu
+                Thực nhận
               </TabsTrigger>
               <TabsTrigger value="comparison" className="text-[9.5px] font-bold py-1 px-2.5 flex gap-1 items-center justify-center">
                 <TrendingUp className="w-3 h-3" />
@@ -470,7 +495,7 @@ export function MobileDashboard({
                       <YAxis tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} tick={{ fontSize: 9, fill: "#888888" }} axisLine={false} tickLine={false} />
                       <Tooltip 
                         contentStyle={{ background: "rgba(255,255,255,0.95)", border: "1px solid #e2e8f0", borderRadius: "10px", fontSize: "10px" }}
-                        formatter={(val: any) => [formatCurrency(Number(val) || 0), "Doanh thu"]}
+                        formatter={(val: any) => [formatCurrency(Number(val) || 0), "Doanh thu thực nhận"]}
                       />
                       <Line type="monotone" dataKey="sales" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={{ r: 3, strokeWidth: 1.5 }} activeDot={{ r: 5 }} />
                     </LineChart>
@@ -513,7 +538,7 @@ export function MobileDashboard({
                       <YAxis tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} tick={{ fontSize: 9, fill: "#888888" }} axisLine={false} tickLine={false} />
                       <Tooltip 
                         contentStyle={{ background: "rgba(255,255,255,0.95)", border: "1px solid #e2e8f0", borderRadius: "10px", fontSize: "10px" }}
-                        formatter={(val: any) => [formatCurrency(Number(val) || 0), "Doanh thu"]}
+                        formatter={(val: any) => [formatCurrency(Number(val) || 0), "Doanh thu thực nhận"]}
                       />
                       <defs>
                         <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">

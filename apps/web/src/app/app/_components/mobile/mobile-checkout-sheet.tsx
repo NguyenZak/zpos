@@ -5,6 +5,7 @@ import {
   Banknote, 
   QrCode, 
   CreditCard, 
+  Coins,
   Sparkles,
   ArrowRight,
   Loader2,
@@ -12,7 +13,9 @@ import {
   Copy,
   Check,
   X,
-  Download
+  Download,
+  SearchIcon,
+  User
 } from "lucide-react";
 import {
   Drawer,
@@ -31,6 +34,8 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { posService } from "@/services/pos.service";
+import { debtService } from "@/services/debt.service";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface MobileCheckoutSheetProps {
   open: boolean;
@@ -38,8 +43,10 @@ interface MobileCheckoutSheetProps {
   total: number;
   cart: any[];
   selectedCustomer: any | null;
+  customers: any[];
+  onSelectCustomer: (customer: any | null) => void;
   onCheckoutSuccess: () => void;
-  orderId: number;
+  orderId: string | number;
 }
 
 export function MobileCheckoutSheet({
@@ -48,14 +55,19 @@ export function MobileCheckoutSheet({
   total,
   cart,
   selectedCustomer,
+  customers,
+  onSelectCustomer,
   onCheckoutSuccess,
   orderId
 }: MobileCheckoutSheetProps) {
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "transfer">("cash");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "transfer" | "debt">("cash");
   const [receivedAmount, setReceivedAmount] = useState<number>(total);
   const [isProcessing, setIsProcessing] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [customerSearchOpen, setCustomerSearchOpen] = useState(false);
+  const [customerQuery, setCustomerQuery] = useState("");
+  const orderNumber = orderId.toString().startsWith("ORD-") ? orderId.toString() : `ORD-${orderId}`;
 
   const [qrSettings, setQrSettings] = useState({
     bankId: "vcb",
@@ -99,7 +111,7 @@ export function MobileCheckoutSheet({
   const handleSaveQR = async () => {
     setIsSavingQR(true);
     try {
-      const qrUrl = `https://img.vietqr.io/image/${qrSettings.bankId}-${qrSettings.accountNo}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(qrSettings.memoTemplate + orderId)}&accountName=${encodeURIComponent(qrSettings.accountName)}`;
+      const qrUrl = `https://img.vietqr.io/image/${qrSettings.bankId}-${qrSettings.accountNo}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(qrSettings.memoTemplate + orderNumber)}&accountName=${encodeURIComponent(qrSettings.accountName)}`;
       
       const response = await fetch(qrUrl);
       const blob = await response.blob();
@@ -107,7 +119,7 @@ export function MobileCheckoutSheet({
       
       const link = document.createElement("a");
       link.href = blobUrl;
-      link.download = `zpos-qr-${orderId}.png`;
+      link.download = `zpos-qr-${orderNumber}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -116,7 +128,7 @@ export function MobileCheckoutSheet({
     } catch (error) {
       console.error("Lưu mã QR thất bại", error);
       // Fallback: Open in a new tab so user can long-press to save
-      const qrUrl = `https://img.vietqr.io/image/${qrSettings.bankId}-${qrSettings.accountNo}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(qrSettings.memoTemplate + orderId)}&accountName=${encodeURIComponent(qrSettings.accountName)}`;
+      const qrUrl = `https://img.vietqr.io/image/${qrSettings.bankId}-${qrSettings.accountNo}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(qrSettings.memoTemplate + orderNumber)}&accountName=${encodeURIComponent(qrSettings.accountName)}`;
       window.open(qrUrl, "_blank");
       toast.info("Đã mở mã QR trong tab mới. Vui lòng nhấn đè để lưu ảnh!");
     } finally {
@@ -125,25 +137,58 @@ export function MobileCheckoutSheet({
   };
 
   const handleCheckoutSubmit = async () => {
+    const isDebt = paymentMethod === "debt";
+    if (isDebt && !selectedCustomer?.id) {
+      setCustomerSearchOpen(true);
+      toast.error("Chọn khách hàng để ghi nợ đơn này");
+      return;
+    }
+
+    for (const item of cart) {
+      const stock = Number(item.stock ?? 0);
+      if (stock <= 0 || item.quantity > stock) {
+        toast.error("Không thể thanh toán", {
+          description:
+            stock <= 0
+              ? `${item.name} đã hết hàng, không thể bán tiếp.`
+              : `${item.name} chỉ còn ${stock} sản phẩm, không đủ để bán ${item.quantity}.`,
+        });
+        return;
+      }
+    }
+
     setIsProcessing(true);
     try {
       const orderData = {
         organization_id: "00000000-0000-0000-0000-000000000000", // Placeholder
         branch_id: "00000000-0000-0000-0000-000000000000", // Placeholder
         customer_id: selectedCustomer?.id || null,
-        order_number: `ORD-${Date.now().toString().slice(-6)}`,
+        order_number: orderNumber,
         total_amount: total,
         payment_method: paymentMethod,
+        payment_status: isDebt ? "debt" : "paid",
+        payment_confirmed_at: isDebt ? null : new Date().toISOString(),
+        payment_amount_received: isDebt ? 0 : total,
         status: "completed"
       };
 
-      await posService.createOrder(orderData, cart);
+      const createdOrder = await posService.createOrder(orderData, cart);
+      if (isDebt && createdOrder?.id) {
+        await debtService.chargeOrderAsDebt(createdOrder.id, 30);
+      }
       
       onOpenChange(false);
       setSuccessOpen(true);
-      toast.success("Thanh toán đơn hàng thành công!");
+      toast.success(isDebt ? "Đã ghi nợ đơn hàng thành công!" : "Thanh toán đơn hàng thành công!");
     } catch (error) {
       console.error("Checkout failed on mobile:", error);
+      if ((error as any)?.code === "OUT_OF_STOCK") {
+        toast.error("Không thể thanh toán", {
+          description: (error as any)?.message || "Có sản phẩm đã hết hàng",
+        });
+        return;
+      }
+
       // Fallback: still show success modal in demo/offline mode if DB/network fails
       onOpenChange(false);
       setSuccessOpen(true);
@@ -168,6 +213,12 @@ export function MobileCheckoutSheet({
     { label: "500k", val: 500000 }
   ];
 
+  const filteredCustomers = customers.filter((c) => {
+    const q = customerQuery.trim().toLowerCase();
+    if (!q) return true;
+    return c.name?.toLowerCase().includes(q) || c.phone?.includes(q);
+  });
+
   return (
     <>
       <Drawer open={open} onOpenChange={onOpenChange}>
@@ -176,7 +227,7 @@ export function MobileCheckoutSheet({
             <div className="flex justify-between items-center mt-2">
               <div>
                 <DrawerTitle className="text-base font-black tracking-tight">Thanh toán đơn hàng</DrawerTitle>
-                <DrawerDescription className="text-xs text-muted-foreground">Mã hóa đơn: #{orderId}</DrawerDescription>
+                <DrawerDescription className="text-xs text-muted-foreground">Mã hóa đơn: {orderNumber}</DrawerDescription>
               </div>
               <DrawerClose asChild>
                 <button className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
@@ -190,11 +241,12 @@ export function MobileCheckoutSheet({
             {/* PAYMENT METHOD CHIPS */}
             <div className="space-y-2">
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Phương thức thanh toán</span>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 {[
                   { id: "cash", label: "Tiền mặt", icon: Banknote },
                   { id: "transfer", label: "C.Khoản QR", icon: QrCode },
-                  { id: "card", label: "Chạm thẻ", icon: CreditCard }
+                  { id: "card", label: "Chạm thẻ", icon: CreditCard },
+                  { id: "debt", label: "Ghi nợ", icon: Coins }
                 ].map((item) => {
                   const Icon = item.icon;
                   const isActive = paymentMethod === item.id;
@@ -205,17 +257,52 @@ export function MobileCheckoutSheet({
                       className={cn(
                         "flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl border-2 transition-all duration-200 active:scale-95",
                         isActive
-                          ? "bg-primary/5 border-primary text-primary font-bold shadow-xs"
+                          ? item.id === "debt"
+                            ? "bg-amber-500/10 border-amber-500 text-amber-700 dark:text-amber-400 font-bold shadow-xs"
+                            : "bg-primary/5 border-primary text-primary font-bold shadow-xs"
                           : "bg-muted/30 border-transparent text-muted-foreground hover:bg-muted"
                       )}
                     >
-                      <Icon className={cn("w-5 h-5", isActive && "scale-110 text-primary transition-transform")} />
+                      <Icon className={cn("w-5 h-5", isActive && "scale-110 transition-transform", isActive && item.id !== "debt" && "text-primary")} />
                       <span className="text-[10px] font-semibold">{item.label}</span>
                     </button>
                   );
                 })}
               </div>
             </div>
+
+            {paymentMethod === "debt" && (
+              <div className="space-y-3 animate-in fade-in duration-200">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none block">
+                  Khách hàng ghi nợ
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setCustomerSearchOpen(true)}
+                  className={cn(
+                    "w-full flex items-center justify-between rounded-xl border p-3.5 text-left active:scale-[0.98] transition-all",
+                    selectedCustomer
+                      ? "bg-amber-500/10 border-amber-500/30"
+                      : "bg-muted/30 border-dashed border-muted-foreground/30"
+                  )}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-9 w-9 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
+                      <User className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-foreground truncate">
+                        {selectedCustomer ? selectedCustomer.name : "Chọn khách hàng sau"}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground font-semibold truncate">
+                        {selectedCustomer?.phone || "Bắt buộc trước khi xác nhận ghi nợ"}
+                      </p>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                </button>
+              </div>
+            )}
 
             {/* DYNAMIC CALCULATOR ACCORDING TO PAYMENT METHOD */}
             {paymentMethod === "cash" && (
@@ -280,7 +367,7 @@ export function MobileCheckoutSheet({
                 
                 <div className="relative w-full max-w-[396px] aspect-square bg-white mx-auto flex items-center justify-center overflow-hidden">
                   <img 
-                    src={`https://img.vietqr.io/image/${qrSettings.bankId}-${qrSettings.accountNo}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(qrSettings.memoTemplate + orderId)}&accountName=${encodeURIComponent(qrSettings.accountName)}`} 
+                    src={`https://img.vietqr.io/image/${qrSettings.bankId}-${qrSettings.accountNo}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(qrSettings.memoTemplate + orderNumber)}&accountName=${encodeURIComponent(qrSettings.accountName)}`} 
                     alt="VietQR"
                     className="w-full h-full object-contain"
                   />
@@ -316,10 +403,10 @@ export function MobileCheckoutSheet({
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Nội dung chuyển khoản</span>
                     <button 
-                      onClick={() => handleCopy(`${qrSettings.memoTemplate}${orderId}`, "Nội dung")}
+                      onClick={() => handleCopy(`${qrSettings.memoTemplate}${orderNumber}`, "Nội dung")}
                       className="flex items-center gap-1 font-mono font-black text-foreground hover:underline"
                     >
-                      {qrSettings.memoTemplate}{orderId}
+                      {qrSettings.memoTemplate}{orderNumber}
                       {copiedField === "Nội dung" ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
                     </button>
                   </div>
@@ -354,6 +441,12 @@ export function MobileCheckoutSheet({
                   <span className="text-foreground">{selectedCustomer.name}</span>
                 </div>
               )}
+              {paymentMethod === "debt" && (
+                <div className="flex justify-between items-center text-[10px] font-bold text-amber-600 uppercase tracking-widest">
+                  <span>Hình thức</span>
+                  <span>Ghi nợ công nợ</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -371,12 +464,66 @@ export function MobileCheckoutSheet({
                 </>
               ) : (
                 <>
-                  Xác nhận thanh toán
+                  {paymentMethod === "debt" ? "Xác nhận ghi nợ" : "Xác nhận thanh toán"}
                   <ArrowRight className="w-4.5 h-4.5" />
                 </>
               )}
             </Button>
           </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer open={customerSearchOpen} onOpenChange={setCustomerSearchOpen}>
+        <DrawerContent className="pb-8 bg-background max-h-[85vh]">
+          <DrawerHeader className="text-left border-b pb-3 px-6">
+            <DrawerTitle className="text-base font-bold">Chọn khách ghi nợ</DrawerTitle>
+            <DrawerDescription className="text-xs text-muted-foreground">
+              Có thể chọn khách ngay tại bước thanh toán.
+            </DrawerDescription>
+          </DrawerHeader>
+
+          <div className="px-6 py-4 space-y-4">
+            <div className="relative">
+              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder="Tìm tên hoặc số điện thoại..."
+                className="pl-9 h-11 bg-muted/40 border-none rounded-xl"
+                value={customerQuery}
+                onChange={(e) => setCustomerQuery(e.target.value)}
+                autoFocus
+              />
+            </div>
+
+            <ScrollArea className="h-64 pr-2">
+              <div className="space-y-2">
+                {filteredCustomers.length > 0 ? (
+                  filteredCustomers.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => {
+                        onSelectCustomer(c);
+                        setCustomerSearchOpen(false);
+                      }}
+                      className="w-full flex items-center justify-between p-3.5 rounded-xl hover:bg-muted/50 border transition-colors text-left bg-card active:scale-[0.99]"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-foreground truncate">{c.name}</p>
+                        <p className="text-[10px] text-muted-foreground font-semibold mt-0.5">{c.phone}</p>
+                      </div>
+                      <Badge className="bg-amber-500/10 text-amber-700 border-none font-bold text-[9px]">
+                        {c.points ?? 0} điểm
+                      </Badge>
+                    </button>
+                  ))
+                ) : (
+                  <div className="text-center py-10">
+                    <p className="text-xs text-muted-foreground font-semibold">Không tìm thấy khách hàng nào</p>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
         </DrawerContent>
       </Drawer>
 
@@ -390,7 +537,7 @@ export function MobileCheckoutSheet({
             
             <div className="space-y-1">
               <DrawerTitle className="text-lg font-black tracking-tight text-foreground text-center">Giao dịch thành công!</DrawerTitle>
-              <DrawerDescription className="text-xs text-muted-foreground leading-relaxed text-center">Hóa đơn #{orderId} đã được xử lý thành công.</DrawerDescription>
+              <DrawerDescription className="text-xs text-muted-foreground leading-relaxed text-center">Hóa đơn {orderNumber} đã được xử lý thành công.</DrawerDescription>
             </div>
 
             {/* Mini Bill Preview */}
@@ -414,7 +561,7 @@ export function MobileCheckoutSheet({
               </div>
               <div className="flex justify-between text-muted-foreground">
                 <span>Hình thức</span>
-                <span className="uppercase">{paymentMethod === "transfer" ? "QR" : paymentMethod === "card" ? "MPOS" : "Tiền mặt"}</span>
+                <span className="uppercase">{paymentMethod === "transfer" ? "QR" : paymentMethod === "card" ? "MPOS" : paymentMethod === "debt" ? "Ghi nợ" : "Tiền mặt"}</span>
               </div>
             </div>
 

@@ -537,6 +537,45 @@ export const posService = {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
     const sessionState = await ensureWritableOrderSession(supabase, orgId);
+
+    const requestedByProductId = new Map<string, { quantity: number; name: string }>();
+    for (const item of items) {
+      const productId = item.id;
+      if (!isValidUUID(productId)) continue;
+      const quantity = Math.max(0, Number(item.quantity || 0));
+      const existing = requestedByProductId.get(productId);
+      requestedByProductId.set(productId, {
+        quantity: (existing?.quantity || 0) + quantity,
+        name: item.name || existing?.name || "Sản phẩm",
+      });
+    }
+
+    if (requestedByProductId.size > 0) {
+      const productIds = Array.from(requestedByProductId.keys());
+      const { data: stockRows, error: stockError } = await supabase
+        .from("products")
+        .select("id, name, stock")
+        .eq("organization_id", orgId)
+        .in("id", productIds);
+
+      if (stockError) throw stockError;
+
+      const stockById = new Map((stockRows || []).map((product: any) => [product.id, product]));
+      for (const [productId, requested] of requestedByProductId) {
+        const product = stockById.get(productId);
+        const stock = Number(product?.stock ?? 0);
+        if (!product || stock <= 0 || requested.quantity > stock) {
+          const productName = product?.name || requested.name;
+          const error = new Error(
+            stock <= 0
+              ? `${productName} đã hết hàng, không thể bán tiếp.`
+              : `${productName} chỉ còn ${stock} sản phẩm, không đủ để bán ${requested.quantity}.`,
+          );
+          (error as any).code = "OUT_OF_STOCK";
+          throw error;
+        }
+      }
+    }
     
     // Validate branch_id or auto-create main branch
     let branchId = orderData.branch_id;
@@ -1376,8 +1415,36 @@ export const posService = {
     let customers = allCustomers || [];
     const customersCount = customers.length;
     
-    const { data: orders } = await supabase.from('orders').select('id, created_at, total_amount, payment_method').eq('organization_id', orgId).neq('status', 'cancelled');
-    const totalRevenue = orders?.reduce((acc, curr) => acc + Number(curr.total_amount), 0) || 0;
+    const { data: orders } = await supabase
+      .from('orders')
+      .select('id, created_at, total_amount, payment_method, payment_status, payment_amount_received, debt_amount')
+      .eq('organization_id', orgId)
+      .neq('status', 'cancelled');
+
+    const { data: debtPayments } = await supabase
+      .from('debt_payments')
+      .select('id, amount, method, payment_date, created_at, status')
+      .eq('tenant_id', orgId)
+      .eq('status', 'completed');
+
+    const getOrderRealizedRevenue = (order: any) => {
+      const method = String(order.payment_method || '').toLowerCase();
+      const status = String(order.payment_status || '').toLowerCase();
+      if (method === 'debt' || status === 'debt' || status === 'partial_debt') return 0;
+      if (status && status !== 'paid') return 0;
+      const received = Number(order.payment_amount_received || 0);
+      return received > 0 ? received : Number(order.total_amount || 0);
+    };
+    const totalDebtPaymentRevenue = debtPayments?.reduce((acc, payment: any) => acc + Number(payment.amount || 0), 0) || 0;
+    const totalRevenue = (orders?.reduce((acc, curr) => acc + getOrderRealizedRevenue(curr), 0) || 0) + totalDebtPaymentRevenue;
+    const debtInvoices = (orders || []).filter((order: any) => {
+      const method = String(order.payment_method || '').toLowerCase();
+      const status = String(order.payment_status || '').toLowerCase();
+      return method === 'debt' || status === 'debt' || status === 'partial_debt' || Number(order.debt_amount || 0) > 0;
+    });
+    const debtInvoiceCount = debtInvoices.length;
+    const debtOutstandingAmount = debtInvoices.reduce((acc: number, order: any) => acc + Number(order.debt_amount || 0), 0);
+    const debtInvoiceTotalAmount = debtInvoices.reduce((acc: number, order: any) => acc + Number(order.total_amount || 0), 0);
 
     // Calculate real payment method percentages dynamically from orders
     let cashAmount = 0;
@@ -1385,11 +1452,23 @@ export const posService = {
     let cardAmount = 0;
 
     orders?.forEach((o: any) => {
-      const amt = Number(o.total_amount) || 0;
+      const amt = getOrderRealizedRevenue(o);
+      if (amt <= 0) return;
       const method = String(o.payment_method || '').toLowerCase();
       if (method === 'cash') {
         cashAmount += amt;
       } else if (method === 'bank_transfer' || method === 'transfer') {
+        bankAmount += amt;
+      } else {
+        cardAmount += amt;
+      }
+    });
+    debtPayments?.forEach((payment: any) => {
+      const amt = Number(payment.amount || 0);
+      const method = String(payment.method || '').toLowerCase();
+      if (method === 'cash') {
+        cashAmount += amt;
+      } else if (method === 'bank_transfer' || method === 'bank' || method === 'transfer' || method === 'vietqr') {
         bankAmount += amt;
       } else {
         cardAmount += amt;
@@ -1422,13 +1501,23 @@ export const posService = {
 
     orders?.forEach((o: any) => {
       const date = new Date(o.created_at);
-      const amt = Number(o.total_amount) || 0;
+      const amt = getOrderRealizedRevenue(o);
+      if (amt <= 0) return;
       if (date >= oneWeekAgo && date <= now) {
         thisWeekRevenue += amt;
         thisWeekOrders += 1;
       } else if (date >= twoWeeksAgo && date < oneWeekAgo) {
         lastWeekRevenue += amt;
         lastWeekOrders += 1;
+      }
+    });
+    debtPayments?.forEach((payment: any) => {
+      const date = new Date(payment.payment_date || payment.created_at);
+      const amt = Number(payment.amount || 0);
+      if (date >= oneWeekAgo && date <= now) {
+        thisWeekRevenue += amt;
+      } else if (date >= twoWeeksAgo && date < oneWeekAgo) {
+        lastWeekRevenue += amt;
       }
     });
 
@@ -1471,7 +1560,7 @@ export const posService = {
     let dynamicCategorySales: { name: string, value: number }[] = [];
     let dynamicTopProducts: any[] = [];
     try {
-      const orderIds = orders?.map((o: any) => o.id) || [];
+      const orderIds = orders?.filter((o: any) => getOrderRealizedRevenue(o) > 0).map((o: any) => o.id) || [];
       if (orderIds.length > 0) {
         const { data: orderItems, error: itemsErr } = await supabase
           .from('order_items')
@@ -1591,6 +1680,11 @@ export const posService = {
       thisWeekCustomers,
       lastWeekCustomers,
       ordersList: orders || [],
+      debtPayments: debtPayments || [],
+      debtInvoiceCount,
+      debtOutstandingAmount,
+      debtInvoiceTotalAmount,
+      debtSettledAmount: totalDebtPaymentRevenue,
       categorySales: dynamicCategorySales,
       topProducts: dynamicTopProducts,
       paymentStats: {
@@ -1975,10 +2069,17 @@ export const posService = {
     // Pull full rows with timestamps so we can split current vs prior period.
     const { data: orders, error: ordersError } = await supabase
       .from('orders')
-      .select('total_amount, created_at')
+      .select('total_amount, created_at, payment_method, payment_status, payment_amount_received')
       .eq('organization_id', orgId)
       .neq('status', 'cancelled');
     if (ordersError) throw ordersError;
+
+    const { data: debtPayments, error: debtPaymentsError } = await supabase
+      .from('debt_payments')
+      .select('amount, payment_date, created_at, status')
+      .eq('tenant_id', orgId)
+      .eq('status', 'completed');
+    if (debtPaymentsError) throw debtPaymentsError;
 
     const { data: purchases, error: purchasesError } = await supabase
       .from('purchase_orders')
@@ -1995,7 +2096,18 @@ export const posService = {
     if (expensesError) throw expensesError;
 
     // Total (all-time) figures shown in the big numbers.
-    const totalRevenue = orders?.reduce((s, o: any) => s + Number(o.total_amount || 0), 0) || 0;
+    const orderAmt = (o: any) => {
+      const method = String(o.payment_method || '').toLowerCase();
+      const status = String(o.payment_status || '').toLowerCase();
+      if (method === 'debt' || status === 'debt' || status === 'partial_debt') return 0;
+      if (status && status !== 'paid') return 0;
+      const received = Number(o.payment_amount_received || 0);
+      return received > 0 ? received : Number(o.total_amount || 0);
+    };
+    const debtPaymentAmt = (p: any) => Number(p.amount || 0);
+    const totalRevenue =
+      (orders?.reduce((s, o: any) => s + orderAmt(o), 0) || 0) +
+      (debtPayments?.reduce((s, p: any) => s + debtPaymentAmt(p), 0) || 0);
     const totalCOGS = purchases?.reduce((s, p: any) => s + Number(p.total_amount || 0), 0) || 0;
     const totalExpenses = expenses?.reduce((s, e: any) => s + Number(e.amount || 0), 0) || 0;
     const netProfit = totalRevenue - totalCOGS - totalExpenses;
@@ -2018,15 +2130,15 @@ export const posService = {
       return s;
     };
 
-    const orderAmt = (o: any) => o.total_amount;
     const orderDate = (o: any) => o.created_at;
+    const debtPaymentDate = (p: any) => p.payment_date || p.created_at;
     const purchaseAmt = (p: any) => p.total_amount;
     const purchaseDate = (p: any) => p.created_at;
     const expenseAmt = (e: any) => e.amount;
     const expenseDate = (e: any) => e.expense_date || e.created_at;
 
-    const revCur = sumWindow(orders, orderDate, orderAmt, d30, now);
-    const revPrev = sumWindow(orders, orderDate, orderAmt, d60, d30);
+    const revCur = sumWindow(orders, orderDate, orderAmt, d30, now) + sumWindow(debtPayments, debtPaymentDate, debtPaymentAmt, d30, now);
+    const revPrev = sumWindow(orders, orderDate, orderAmt, d60, d30) + sumWindow(debtPayments, debtPaymentDate, debtPaymentAmt, d60, d30);
     const cogsCur = sumWindow(purchases, purchaseDate, purchaseAmt, d30, now);
     const cogsPrev = sumWindow(purchases, purchaseDate, purchaseAmt, d60, d30);
     const expCur = sumWindow(expenses, expenseDate, expenseAmt, d30, now);

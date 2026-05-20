@@ -506,6 +506,27 @@ export default function DashboardPage() {
       return orderDate >= bounds.start && orderDate <= bounds.end;
     });
   }, [stats?.ordersList, timeRange, startDate, endDate]);
+  const isDebtOrder = (order: any) => {
+    const method = String(order.payment_method || '').toLowerCase();
+    const status = String(order.payment_status || '').toLowerCase();
+    return method === 'debt' || status === 'debt' || status === 'partial_debt' || Number(order.debt_amount || 0) > 0;
+  };
+  const getOrderRealizedRevenue = (order: any) => {
+    if (isDebtOrder(order)) return 0;
+    const status = String(order.payment_status || '').toLowerCase();
+    if (status && status !== 'paid') return 0;
+    const received = Number(order.payment_amount_received || 0);
+    return received > 0 ? received : Number(order.total_amount || 0);
+  };
+  const getDebtPaymentDate = (payment: any) => new Date(payment.payment_date || payment.created_at);
+
+  const filteredDebtPayments = React.useMemo(() => {
+    if (!stats?.debtPayments || !Array.isArray(stats.debtPayments)) return [];
+    return stats.debtPayments.filter((payment: any) => {
+      const paymentDate = getDebtPaymentDate(payment);
+      return paymentDate >= bounds.start && paymentDate <= bounds.end;
+    });
+  }, [stats?.debtPayments, timeRange, startDate, endDate]);
 
   // Aggregate stats using filtered orders
   let displayRevenue = 0;
@@ -514,12 +535,15 @@ export default function DashboardPage() {
   let displayCashAmount = 0;
   let displayBankAmount = 0;
   let displayCardAmount = 0;
+  let displayDebtInvoiceCount = 0;
+  let displayDebtOutstandingAmount = 0;
+  let displayDebtSettledAmount = 0;
 
   if (stats?.ordersList && Array.isArray(stats.ordersList)) {
     // Process all orders to aggregate data for charts & comparisons
     stats.ordersList.forEach((o: any) => {
       const orderDate = new Date(o.created_at);
-      const amt = Number(o.total_amount) || 0;
+      const amt = getOrderRealizedRevenue(o);
 
       // 1. Fill dynamic revenue (within current bounds range)
       const revMatch = dynamicRevenueData.find(day => {
@@ -528,7 +552,7 @@ export default function DashboardPage() {
                d.getMonth() === orderDate.getMonth() &&
                d.getDate() === orderDate.getDate();
       });
-      if (revMatch) {
+      if (revMatch && amt > 0) {
         revMatch.sales += amt;
         revMatch.orders += 1;
       }
@@ -540,7 +564,7 @@ export default function DashboardPage() {
                d.getMonth() === orderDate.getMonth() &&
                d.getDate() === orderDate.getDate();
       });
-      if (currMatch) {
+      if (currMatch && amt > 0) {
         currMatch.sales += amt;
       }
 
@@ -551,12 +575,12 @@ export default function DashboardPage() {
                d.getMonth() === orderDate.getMonth() &&
                d.getDate() === orderDate.getDate();
       });
-      if (prevMatch) {
+      if (prevMatch && amt > 0) {
         prevMatch.sales += amt;
       }
 
       // 4. Fill hourly sales distribution (only within current range)
-      if (orderDate >= bounds.start && orderDate <= bounds.end) {
+      if (orderDate >= bounds.start && orderDate <= bounds.end && amt > 0) {
         const orderHour = orderDate.getHours();
         const hourMatch = dynamicHourlyData.find(h => orderHour >= h.minHour && orderHour < h.maxHour);
         if (hourMatch) {
@@ -567,7 +591,11 @@ export default function DashboardPage() {
 
     // Compute display KPI statistics from filtered orders
     filteredOrders.forEach((o: any) => {
-      const amt = Number(o.total_amount) || 0;
+      const amt = getOrderRealizedRevenue(o);
+      if (isDebtOrder(o)) {
+        displayDebtInvoiceCount += 1;
+        displayDebtOutstandingAmount += Number(o.debt_amount || 0);
+      }
       displayRevenue += amt;
       displayOrders += 1;
 
@@ -579,6 +607,54 @@ export default function DashboardPage() {
       } else {
         displayCardAmount += amt;
       }
+    });
+
+    filteredDebtPayments.forEach((payment: any) => {
+      const amt = Number(payment.amount || 0);
+      const paymentDate = getDebtPaymentDate(payment);
+      displayRevenue += amt;
+      displayDebtSettledAmount += amt;
+
+      const revMatch = dynamicRevenueData.find(day => {
+        const d = new Date(day.dateStr);
+        return d.getFullYear() === paymentDate.getFullYear() &&
+               d.getMonth() === paymentDate.getMonth() &&
+               d.getDate() === paymentDate.getDate();
+      });
+      if (revMatch) revMatch.sales += amt;
+
+      const currMatch = currentRangeDays.find(day => {
+        const d = new Date(day.dateStr);
+        return d.getFullYear() === paymentDate.getFullYear() &&
+               d.getMonth() === paymentDate.getMonth() &&
+               d.getDate() === paymentDate.getDate();
+      });
+      if (currMatch) currMatch.sales += amt;
+
+      const orderHour = paymentDate.getHours();
+      const hourMatch = dynamicHourlyData.find(h => orderHour >= h.minHour && orderHour < h.maxHour);
+      if (hourMatch) hourMatch.sales += amt;
+
+      const method = String(payment.method || '').toLowerCase();
+      if (method === 'cash') {
+        displayCashAmount += amt;
+      } else if (method === 'bank_transfer' || method === 'bank' || method === 'transfer' || method === 'vietqr') {
+        displayBankAmount += amt;
+      } else {
+        displayCardAmount += amt;
+      }
+    });
+
+    stats.debtPayments?.forEach((payment: any) => {
+      const amt = Number(payment.amount || 0);
+      const paymentDate = getDebtPaymentDate(payment);
+      const prevMatch = previousRangeDays.find(day => {
+        const d = new Date(day.dateStr);
+        return d.getFullYear() === paymentDate.getFullYear() &&
+               d.getMonth() === paymentDate.getMonth() &&
+               d.getDate() === paymentDate.getDate();
+      });
+      if (prevMatch) prevMatch.sales += amt;
     });
 
     // Approximate customer metrics within active range
@@ -739,6 +815,9 @@ export default function DashboardPage() {
           displayNetProfit={displayNetProfit}
           displayCOGS={displayCOGS}
           displayExpenses={displayExpenses}
+          displayDebtInvoiceCount={displayDebtInvoiceCount}
+          displayDebtOutstandingAmount={displayDebtOutstandingAmount}
+          displayDebtSettledAmount={displayDebtSettledAmount}
           financePieData={financePieData}
           dynamicRevenueData={dynamicRevenueData}
           dynamicComparisonData={dynamicComparisonData}
@@ -877,12 +956,12 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* FINANCE OVERVIEW KEY PERFORMANCE INDICATORS (4 CARDS) */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* FINANCE OVERVIEW KEY PERFORMANCE INDICATORS */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         {/* Total Revenue Card - Premium Gradient Style */}
         <Card className="relative overflow-hidden border-none bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-bold tracking-widest uppercase text-primary-foreground/80">Tổng doanh thu</CardTitle>
+            <CardTitle className="text-xs font-bold tracking-widest uppercase text-primary-foreground/80">Doanh thu thực nhận</CardTitle>
             <div className="p-2 bg-primary-foreground/10 rounded-lg animate-pulse">
               <DollarSign className="h-4 w-4 text-primary-foreground" />
             </div>
@@ -943,6 +1022,25 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
+        {/* Debt Invoices Card */}
+        <Card className="border shadow-sm transition-all duration-300 hover:scale-[1.02] bg-card">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-xs font-bold tracking-widest uppercase text-muted-foreground">Hoá đơn nợ</CardTitle>
+            <div className="p-2 bg-amber-50 dark:bg-amber-950/30 rounded-lg">
+              <Coins className="h-4 w-4 text-amber-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-extrabold text-amber-600 dark:text-amber-500">
+              {displayDebtInvoiceCount}
+            </div>
+            <div className="mt-1 space-y-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+              <div>Còn nợ: {formatCurrency(displayDebtOutstandingAmount)}</div>
+              <div>Đã thu kỳ này: {formatCurrency(displayDebtSettledAmount)}</div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Customer Base Card */}
         <Card className="border shadow-sm transition-all duration-300 hover:scale-[1.02] bg-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -978,7 +1076,7 @@ export default function DashboardPage() {
               <TabsList className="bg-muted p-1 rounded-lg">
                 <TabsTrigger value="revenue" className="text-xs font-bold px-3 py-1.5 flex gap-1 items-center">
                   <LineIcon className="w-3.5 h-3.5" />
-                  Doanh thu
+                  Thực nhận
                 </TabsTrigger>
                 <TabsTrigger value="comparison" className="text-xs font-bold px-3 py-1.5 flex gap-1 items-center">
                   <TrendingUp className="w-3.5 h-3.5" />
@@ -1011,7 +1109,7 @@ export default function DashboardPage() {
                       <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickMargin={10} />
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} />
                       <ChartTooltip content={<ChartTooltipContent />} />
-                      <Area type="monotone" dataKey="sales" name="Doanh thu (₫)" stroke="var(--color-sales)" strokeWidth={3} fillOpacity={1} fill="url(#colorSales1)" />
+                  <Area type="monotone" dataKey="sales" name="Doanh thu thực nhận (₫)" stroke="var(--color-sales)" strokeWidth={3} fillOpacity={1} fill="url(#colorSales1)" />
                     </AreaChart>
                   </ResponsiveContainer>
                 </ChartContainer>
@@ -1043,7 +1141,7 @@ export default function DashboardPage() {
                       <XAxis dataKey="hour" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickMargin={10} />
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} />
                       <Tooltip formatter={(value: any) => formatCurrency(value)} contentStyle={{ backgroundColor: 'hsl(var(--card))', borderRadius: '8px', borderColor: 'hsl(var(--border))' }} />
-                      <Bar dataKey="sales" name="Doanh thu theo giờ" fill="url(#primaryGradient)" radius={[6, 6, 0, 0]}>
+                      <Bar dataKey="sales" name="Doanh thu thực nhận theo giờ" fill="url(#primaryGradient)" radius={[6, 6, 0, 0]}>
                         {dynamicHourlySalesList.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={index === 4 ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.6)"} />
                         ))}
