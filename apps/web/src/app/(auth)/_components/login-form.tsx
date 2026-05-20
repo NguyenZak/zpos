@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/utils/supabase/client";
-import { isSuperAdminEmail } from "@/utils/super-admin";
+import { isSuperAdminUser } from "@/utils/super-admin";
 import { ShieldAlert, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 const formSchema = z.object({
@@ -209,7 +209,7 @@ export function LoginForm() {
         window.location.hostname.startsWith("console.") || 
         window.location.hostname === "console.localhost";
 
-      const isSuperAdmin = isSuperAdminEmail(data.email);
+      const isSuperAdmin = isSuperAdminUser(authData.user);
 
       if (isSuperAdmin) {
         const consoleUrl = isLocal 

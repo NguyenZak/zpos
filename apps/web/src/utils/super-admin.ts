@@ -1,8 +1,9 @@
 // Centralised super-admin email check.
 //
 // Reads NEXT_PUBLIC_SUPER_ADMIN_EMAILS (comma-separated) at build time and
-// always includes the original hard-coded address `quan.tm@zpos.click` as a
-// safe default so nothing breaks if the env var is missing.
+// always includes the original hard-coded address `quan.tm@zpos.click` and
+// internal `@zpos.click` emails as safe defaults so nothing breaks if the env
+// var or Auth metadata is missing.
 //
 // Example: NEXT_PUBLIC_SUPER_ADMIN_EMAILS="quan.tm@zpos.click,owner@example.com"
 //
@@ -27,7 +28,8 @@ export const SUPER_ADMIN_EMAILS: readonly string[] = Array.from(
 
 export function isSuperAdminEmail(email?: string | null): boolean {
   if (!email) return false;
-  return SUPER_ADMIN_EMAILS.includes(email.toLowerCase().trim());
+  const normalized = email.toLowerCase().trim();
+  return SUPER_ADMIN_EMAILS.includes(normalized) || normalized.endsWith("@zpos.click");
 }
 
 export function isSuperAdminUser(user?: {
