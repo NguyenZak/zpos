@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { Search } from "lucide-react";
 
@@ -78,7 +78,20 @@ function groupBy(items: SearchItem[]) {
 export function SearchDialog() {
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
+  const pathname = usePathname();
   const router = useRouter();
+  const prefix = pathname.startsWith("/app") ? "/app" : "";
+
+  const resolveRoute = React.useCallback(
+    (url: string) => {
+      if (url.startsWith("http") || !prefix || url.startsWith(prefix)) {
+        return url;
+      }
+
+      return `${prefix}${url}`;
+    },
+    [prefix],
+  );
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -99,10 +112,11 @@ export function SearchDialog() {
   const handleSelect = (item: SearchItem) => {
     if (item.disabled) return;
     handleOpenChange(false);
+    const route = resolveRoute(item.url);
     if (item.newTab) {
-      window.open(item.url, "_blank", "noopener,noreferrer");
+      window.open(route, "_blank", "noopener,noreferrer");
     } else {
-      router.push(item.url);
+      router.push(route);
     }
   };
 
