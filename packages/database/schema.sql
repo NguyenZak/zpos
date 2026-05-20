@@ -70,6 +70,7 @@ create table products (
   base_price decimal(12,2) default 0,
   sku text,
   barcode text,
+  barcode_type text,
   is_active boolean default true,
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now()
@@ -82,6 +83,7 @@ create table product_variants (
   name text not null,
   sku text,
   barcode text,
+  barcode_type text,
   price decimal(12,2) default 0,
   cost_price decimal(12,2) default 0,
   attributes jsonb default '{}'::jsonb,

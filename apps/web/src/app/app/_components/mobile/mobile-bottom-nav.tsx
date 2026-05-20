@@ -321,7 +321,7 @@ export function MobileBottomNav({ className }: BottomNavProps) {
   };
 
   return (
-    <div className={cn("fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t h-16 flex items-center justify-around px-2 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.2)] md:hidden", className)}>
+    <div className={cn("fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t h-16 flex items-center justify-around px-2 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.2)] md:hidden print:hidden", className)}>
       {tabs.map((tab) => {
         const Icon = tab.icon;
         return (

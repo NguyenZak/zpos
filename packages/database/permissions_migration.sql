@@ -73,6 +73,7 @@ alter table audit_logs enable row level security;
 
 -- Basic RLS Policies
 -- Permissions table is readable by any authenticated user
+drop policy if exists "Allow read access to all authenticated users" on permissions;
 create policy "Allow read access to all authenticated users" on permissions
   for select using (auth.role() = 'authenticated');
 
@@ -101,6 +102,7 @@ as $$
 $$;
 
 -- Roles are scoped by organization_id
+drop policy if exists "Users can view roles in their organization" on roles;
 create policy "Users can view roles in their organization" on roles
   for select using (
     exists (
@@ -110,6 +112,7 @@ create policy "Users can view roles in their organization" on roles
     )
   );
 
+drop policy if exists "Owners and managers can manage roles" on roles;
 create policy "Owners and managers can manage roles" on roles
   for all using (
     exists (
@@ -124,6 +127,7 @@ create policy "Owners and managers can manage roles" on roles
   );
 
 -- Role Permissions are scoped by organization_id
+drop policy if exists "Users can view role permissions in their organization" on role_permissions;
 create policy "Users can view role permissions in their organization" on role_permissions
   for select using (
     exists (
@@ -133,6 +137,7 @@ create policy "Users can view role permissions in their organization" on role_pe
     )
   );
 
+drop policy if exists "Owners and managers can manage role permissions" on role_permissions;
 create policy "Owners and managers can manage role permissions" on role_permissions
   for all using (
     exists (
@@ -147,6 +152,7 @@ create policy "Owners and managers can manage role permissions" on role_permissi
   );
 
 -- Audit logs are scoped by organization_id
+drop policy if exists "Users can view audit logs in their organization" on audit_logs;
 create policy "Users can view audit logs in their organization" on audit_logs
   for select using (
     exists (
@@ -156,6 +162,7 @@ create policy "Users can view audit logs in their organization" on audit_logs
     )
   );
 
+drop policy if exists "System can create audit logs" on audit_logs;
 create policy "System can create audit logs" on audit_logs
   for insert with check (auth.role() = 'authenticated');
 
@@ -174,7 +181,9 @@ insert into permissions (id, key, module, action, name, group_name, description,
   ('products.delete', 'products.delete', 'products', 'delete', 'Delete products', 'Sản phẩm', 'Delete products from catalog', 103),
   ('products.import', 'products.import', 'products', 'import', 'Import products', 'Sản phẩm', 'Import products from spreadsheet', 104),
   ('products.export', 'products.export', 'products', 'export', 'Export products', 'Sản phẩm', 'Export product data', 105),
+  ('products.barcode.generate', 'products.barcode.generate', 'products', 'barcode.generate', 'Tạo mã vạch', 'Sản phẩm', 'Tự động tạo mã vạch cho sản phẩm', 1051),
   ('products.barcode.update', 'products.barcode.update', 'products', 'barcode.update', 'Update barcode', 'Sản phẩm', 'Update product barcode', 106),
+  ('products.barcode.print', 'products.barcode.print', 'products', 'barcode.print', 'In tem mã vạch', 'Sản phẩm', 'In tem nhãn mã vạch cho sản phẩm', 1061),
   ('products.price.update', 'products.price.update', 'products', 'price.update', 'Update price', 'Sản phẩm', 'Update product selling price', 107),
 
   ('inventory.view', 'inventory.view', 'inventory', 'view', 'View inventory', 'Tồn kho', 'View stock levels by branch', 200),

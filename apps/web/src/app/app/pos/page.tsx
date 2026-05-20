@@ -30,7 +30,9 @@ import {
   Pencil,
   RefreshCw,
   Loader2,
-  Wallet
+  Wallet,
+  Clock,
+  Monitor
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -69,6 +71,8 @@ import { useOnlineStatus } from '@/hooks/use-online-status';
 import { OfflineStatus } from '@/components/offline-status';
 import { MobilePOS } from '../_components/mobile/mobile-pos';
 import { PrintInvoice } from './_components/print-invoice';
+import { PrintDialog } from './_components/print-dialog';
+import { PrintType, printService } from '@/services/print.service';
 import { BarcodeScannerDialog } from '@/components/barcode-scanner-dialog';
 import { loyaltyService } from '@/services/loyalty.service';
 import { shiftService, type Shift } from '@/services/shift.service';
@@ -138,6 +142,58 @@ export default function POSPage() {
     return () => mediaQuery.removeEventListener("change", handler);
   }, []);
 
+  // Idle Screen Logic
+  const [showIdleScreen, setShowIdleScreen] = useState(false);
+  const [idleMessage, setIdleMessage] = useState('Chúc quý khách một ngày tốt lành!');
+  const [currentTimeStr, setCurrentTimeStr] = useState('');
+  
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    // Load config
+    const isEnabled = localStorage.getItem('zpos_pos_idle_screen') !== 'false'; // default true
+    if (!isEnabled) return;
+    
+    const timeoutMins = parseInt(localStorage.getItem('zpos_pos_idle_timeout') || '5');
+    const timeoutMs = timeoutMins * 60 * 1000;
+    
+    const msg = localStorage.getItem('zpos_welcome_message') || 'Chúc một ngày kinh doanh thuận lợi, bùng nổ doanh thu.';
+    setIdleMessage(msg);
+    
+    let timer: NodeJS.Timeout;
+    const resetTimer = () => {
+      if (showIdleScreen) setShowIdleScreen(false);
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        setCurrentTimeStr(new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }));
+        setShowIdleScreen(true);
+      }, timeoutMs);
+    };
+    
+    // Timer interval to update time clock
+    const clockInterval = setInterval(() => {
+      if (showIdleScreen) {
+        setCurrentTimeStr(new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }));
+      }
+    }, 10000);
+    
+    window.addEventListener('mousemove', resetTimer);
+    window.addEventListener('keydown', resetTimer);
+    window.addEventListener('touchstart', resetTimer);
+    window.addEventListener('click', resetTimer);
+    
+    resetTimer(); // init
+    
+    return () => {
+      clearTimeout(timer);
+      clearInterval(clockInterval);
+      window.removeEventListener('mousemove', resetTimer);
+      window.removeEventListener('keydown', resetTimer);
+      window.removeEventListener('touchstart', resetTimer);
+      window.removeEventListener('click', resetTimer);
+    };
+  }, [showIdleScreen]);
+
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<string[]>(['Tất cả']);
   const [loading, setLoading] = useState(true);
@@ -153,8 +209,12 @@ export default function POSPage() {
     discountValue?: number;
   }
 
+  const generateOrderId = () => {
+    return `ORD-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+  };
+
   const [tabs, setTabs] = useState<OrderTab[]>([
-    { id: '1', cart: [], selectedCustomer: null, orderId: `ORD-${Date.now().toString().slice(-6)}`, title: 'Đơn 1', discountType: 'fixed', discountValue: 0 }
+    { id: '1', cart: [], selectedCustomer: null, orderId: generateOrderId(), title: 'Đơn 1', discountType: 'fixed', discountValue: 0 }
   ]);
   const [activeTabId, setActiveTabId] = useState<string>('1');
 
@@ -263,7 +323,7 @@ export default function POSPage() {
       id: newId,
       cart: [],
       selectedCustomer: null,
-      orderId: `ORD-${Date.now().toString().slice(-6)}`,
+      orderId: generateOrderId(),
       title: newTitle,
       discountType: 'fixed',
       discountValue: 0
@@ -293,7 +353,12 @@ export default function POSPage() {
         try {
           const parsed = JSON.parse(savedTabs);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setTabs(parsed);
+            // Force regenerate orderId for restored tabs to prevent old duplicate IDs from persisting
+            const sanitizedTabs = parsed.map(tab => ({
+              ...tab,
+              orderId: generateOrderId()
+            }));
+            setTabs(sanitizedTabs);
           }
         } catch (e) {
           console.error("Error loading draft tabs from localStorage:", e);
@@ -323,15 +388,81 @@ export default function POSPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const [tempPrice, setTempPrice] = useState<string>('');
+  const [editingQtyId, setEditingQtyId] = useState<number | null>(null);
+  const [tempQty, setTempQty] = useState<string>('');
   const [activeCategory, setActiveCategory] = useState('Tất cả');
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const isProcessingRef = useRef(false);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'transfer' | 'debt'>('cash');
   const [creditAccount, setCreditAccount] = useState<CreditAccount | null>(null);
   const [debtDueDays, setDebtDueDays] = useState<number>(30);
   const [successOpen, setSuccessOpen] = useState(false);
   const [lastOrder, setLastOrder] = useState<any>(null);
+  const [printType, setPrintType] = useState<'payment' | 'provisional' | PrintType>('payment');
+  const [provisionalOrder, setProvisionalOrder] = useState<any>(null);
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
+  const [enableProvisionalPrint, setEnableProvisionalPrint] = useState(true);
+  const [enableKitchenPrint, setEnableKitchenPrint] = useState(true);
+  const [enableBarPrint, setEnableBarPrint] = useState(true);
+  const [enableFinalPrint, setEnableFinalPrint] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const handleStorageUpdate = () => {
+        setEnableProvisionalPrint(localStorage.getItem('zpos_invoice_enable_provisional') !== 'false');
+        setEnableKitchenPrint(localStorage.getItem('zpos_invoice_enable_kitchen') !== 'false');
+        setEnableBarPrint(localStorage.getItem('zpos_invoice_enable_bar') !== 'false');
+        setEnableFinalPrint(localStorage.getItem('zpos_invoice_enable_final') !== 'false');
+      };
+      
+      handleStorageUpdate();
+      window.addEventListener('zpos_settings_updated', handleStorageUpdate);
+      return () => window.removeEventListener('zpos_settings_updated', handleStorageUpdate);
+    }
+  }, []);
+
+  const handlePrintProvisional = () => {
+    setProvisionalOrder({
+      orderId: orderId,
+      createdAt: new Date().toISOString(),
+      total: finalTotal,
+      subtotal: subtotal,
+      discount: discount + pointsDiscount,
+      paymentMethod: 'Chưa thanh toán',
+      cart: [...cart],
+      customer: selectedCustomer
+    });
+
+    const enabledOptionsCount = [enableProvisionalPrint, enableKitchenPrint, enableBarPrint, enableFinalPrint].filter(Boolean).length;
+    
+    if (enabledOptionsCount === 1) {
+      // Bypass dialog if only 1 option is enabled
+      const type: PrintType = enableProvisionalPrint ? 'temp_bill' : enableKitchenPrint ? 'kitchen_ticket' : enableBarPrint ? 'bar_ticket' : 'final_receipt';
+      setPrintType(type);
+      setTimeout(() => window.print(), 100);
+
+      const orderIdStr = orderId.toString().startsWith('ORD-') ? orderId.toString() : `ORD-${orderId}`;
+      printService.logPrint({
+        orderId: orderIdStr,
+        type: type,
+      }).catch(console.warn);
+    } else {
+      setPrintDialogOpen(true);
+    }
+  };
+
+  const getPrintButtonText = () => {
+    const enabledOptionsCount = [enableProvisionalPrint, enableKitchenPrint, enableBarPrint, enableFinalPrint].filter(Boolean).length;
+    if (enabledOptionsCount === 1) {
+      if (enableProvisionalPrint) return 'Tạm tính';
+      if (enableKitchenPrint) return 'In bếp';
+      if (enableBarPrint) return 'In bar';
+      if (enableFinalPrint) return 'In cuối';
+    }
+    return 'In ấn';
+  };
 
   // Load VietQR Settings dynamically from localStorage (or defaults)
   const [qrSettings, setQrSettings] = useState({
@@ -348,10 +479,15 @@ export default function POSPage() {
   const [invoiceIssuing, setInvoiceIssuing] = useState(false);
   const [issuedInvoice, setIssuedInvoice] = useState<any>(null);
 
-  // Cashier shift gating
+  // Cashier shift gating — no blocking spinner, check silently in background
   const [activeShift, setActiveShift] = useState<Shift | null>(null);
-  const [shiftLoading, setShiftLoading] = useState(true);
+  const [shiftChecked, setShiftChecked] = useState(false);
   const [openShiftDialog, setOpenShiftDialog] = useState(false);
+
+  // Use a ref to track the active shift ID for the close-event handler
+  // so the useEffect doesn't depend on activeShift (which would loop).
+  const activeShiftIdRef = useRef<string | null>(null);
+  useEffect(() => { activeShiftIdRef.current = activeShift?.id ?? null; }, [activeShift?.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -361,16 +497,19 @@ export default function POSPage() {
         const s = await shiftService.getActiveShift();
         if (!cancelled) {
           setActiveShift(s);
+          setShiftChecked(true);
           if (!s && showOpenDialog) setOpenShiftDialog(true);
           if (s) setOpenShiftDialog(false);
         }
-      } finally {
-        if (!cancelled) setShiftLoading(false);
+      } catch {
+        if (!cancelled) setShiftChecked(true);
       }
     };
 
+    // Load once on mount
     loadActiveShift(true);
 
+    // Only refresh on tab re-focus (silently, no spinner)
     const refreshWhenVisible = () => {
       if (document.visibilityState === "visible") {
         loadActiveShift(false);
@@ -379,12 +518,12 @@ export default function POSPage() {
 
     window.addEventListener("focus", refreshWhenVisible);
     document.addEventListener("visibilitychange", refreshWhenVisible);
+
     const handleShiftClosed = (event: Event) => {
       const closedShiftId = (event as CustomEvent<{ shiftId?: string }>).detail?.shiftId;
-      if (!closedShiftId || activeShift?.id === closedShiftId) {
+      if (!closedShiftId || activeShiftIdRef.current === closedShiftId) {
         setActiveShift(null);
         setOpenShiftDialog(true);
-        setShiftLoading(false);
       }
     };
     window.addEventListener("zpos_shift_closed", handleShiftClosed);
@@ -395,7 +534,8 @@ export default function POSPage() {
       document.removeEventListener("visibilitychange", refreshWhenVisible);
       window.removeEventListener("zpos_shift_closed", handleShiftClosed);
     };
-  }, [activeShift?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Debt mode: load credit account whenever the customer changes during checkout
   useEffect(() => {
@@ -762,6 +902,24 @@ export default function POSPage() {
     }));
   };
 
+  const setQuantity = (id: number, newQty: number) => {
+    setCart(cart.map(item => {
+      if (item.id === id) {
+        const product = products.find(p => p.id === id);
+        const stock = Number(product?.stock ?? item.stock ?? 0);
+        const safe = Math.max(1, Math.floor(newQty) || 1);
+        if (safe > stock) {
+          toast.error("Không đủ tồn kho", {
+            description: `${item.name} chỉ còn ${stock} sản phẩm`,
+          });
+          return { ...item, quantity: stock > 0 ? stock : 1 };
+        }
+        return { ...item, quantity: safe };
+      }
+      return item;
+    }));
+  };
+
   const updatePrice = (id: number, newPrice: number) => {
     setCart(cart.map(item => {
       if (item.id === id) {
@@ -807,6 +965,7 @@ export default function POSPage() {
   // Reset the POS state + close dialogs after a successful checkout.
   const finishCheckoutSuccess = (snapshot: any) => {
     setLastOrder(snapshot);
+    setPrintType('payment');
     setProducts(prevProducts =>
       prevProducts.map(p => {
         const cartItem = cart.find(c => c.id === p.id);
@@ -850,6 +1009,8 @@ export default function POSPage() {
   };
 
   const handleCheckout = async () => {
+    if (isProcessingRef.current) return;
+    
     const stockProblem = getCartStockProblem();
     if (stockProblem) {
       toast.error("Không đủ tồn kho", {
@@ -902,6 +1063,7 @@ export default function POSPage() {
       cash_register_id: isValidUUID(activeShift.cash_register_id) ? activeShift.cash_register_id : null,
     };
 
+    isProcessingRef.current = true;
     setIsProcessing(true);
     try {
       // Offline mode: queue the order to IndexedDB and continue as if it succeeded.
@@ -924,7 +1086,19 @@ export default function POSPage() {
         return;
       }
 
-      const createdOrder = await posService.createOrder(orderData, cart);
+      let createdOrder: any = null;
+      if (pendingOrderId) {
+        // If an order was already created as a pending transfer and the user switched to Cash/Card/Debt
+        createdOrder = await posService.updateOrder(pendingOrderId, {
+          payment_method: paymentMethod,
+          payment_status: isDebt ? 'debt' : 'paid',
+          payment_confirmed_at: isDebt ? null : new Date().toISOString(),
+          payment_amount_received: isDebt ? 0 : finalTotal,
+          status: 'completed'
+        });
+      } else {
+        createdOrder = await posService.createOrder(orderData, cart);
+      }
 
       // Debt mode: record the charge in the customer credit ledger so the
       // order shows up as a receivable on the customer / debtors screens.
@@ -1046,12 +1220,14 @@ export default function POSPage() {
         duration: 8000,
       });
     } finally {
+      isProcessingRef.current = false;
       setIsProcessing(false);
     }
   };
 
   // Create a pending order and start listening for the bank webhook to confirm it.
   const handleStartTransfer = async () => {
+    if (isProcessingRef.current) return;
     const stockProblem = getCartStockProblem();
     if (stockProblem) {
       toast.error("Không đủ tồn kho", {
@@ -1061,6 +1237,7 @@ export default function POSPage() {
       return;
     }
 
+    isProcessingRef.current = true;
     setIsProcessing(true);
     try {
       const orderNumber = orderId.toString().startsWith('ORD-')
@@ -1117,11 +1294,35 @@ export default function POSPage() {
       // Realtime: listen for the order being flipped to "paid" by the webhook RPC
       transferUnsubRef.current = vietQRService.subscribeOrderPayment(order.id, () => {
         toast.success("Khách đã chuyển khoản thành công!");
+
+        // Apply loyalty points on transfer confirmation (best-effort)
+        if (selectedCustomer?.id && order?.id) {
+          if (pointsRedeemed > 0 && pointsDiscount > 0) {
+            loyaltyService.applyRedemption(selectedCustomer.id, order.id, pointsRedeemed, pointsDiscount).catch(console.warn);
+          }
+          if (pointsToEarn > 0) {
+            loyaltyService.applyEarning(selectedCustomer.id, order.id, pointsToEarn, finalTotal).catch(console.warn);
+          }
+        }
+
+        // Log shift transaction (best-effort)
+        if (activeShift) {
+          shiftService.addTransaction({
+            shift_id: activeShift.id,
+            type: 'sale',
+            amount: finalTotal,
+            payment_method: 'bank_transfer' as any,
+            reference_type: 'order',
+            reference_id: order.id,
+            note: `Bán hàng CK #${orderNumber}`,
+          }).catch(console.warn);
+        }
+
         finishCheckoutSuccess({
           cart: [...cart],
           subtotal,
           discount,
-          total,
+          total: finalTotal,
           orderId: orderNumber,
           dbOrderId: order.id,
           paymentMethod: 'transfer',
@@ -1136,22 +1337,48 @@ export default function POSPage() {
       console.error("Failed to start transfer:", e);
       toast.error("Không thể bắt đầu thanh toán chuyển khoản");
     } finally {
+      isProcessingRef.current = false;
       setIsProcessing(false);
     }
   };
 
   // Cashier-side fallback: manually mark the pending transfer order as paid.
   const handleManualConfirmTransfer = async () => {
-    if (!pendingOrderId) return;
+    if (!pendingOrderId || isProcessingRef.current) return;
+    isProcessingRef.current = true;
     setIsProcessing(true);
     try {
-      await vietQRService.confirmOrderPaymentManually(pendingOrderId, total);
+      await vietQRService.confirmOrderPaymentManually(pendingOrderId, finalTotal);
       toast.success("Đã xác nhận nhận tiền thủ công");
+
+      // Apply loyalty points on manual transfer confirmation (best-effort)
+      if (selectedCustomer?.id && pendingOrderId) {
+        if (pointsRedeemed > 0 && pointsDiscount > 0) {
+          loyaltyService.applyRedemption(selectedCustomer.id, pendingOrderId, pointsRedeemed, pointsDiscount).catch(console.warn);
+        }
+        if (pointsToEarn > 0) {
+          loyaltyService.applyEarning(selectedCustomer.id, pendingOrderId, pointsToEarn, finalTotal).catch(console.warn);
+        }
+      }
+
+      // Log shift transaction (best-effort)
+      if (activeShift) {
+        shiftService.addTransaction({
+          shift_id: activeShift.id,
+          type: 'sale',
+          amount: finalTotal,
+          payment_method: 'bank_transfer' as any,
+          reference_type: 'order',
+          reference_id: pendingOrderId,
+          note: `Bán hàng CK (xác nhận thủ công) #${orderId}`,
+        }).catch(console.warn);
+      }
+
       finishCheckoutSuccess({
         cart: [...cart],
         subtotal,
         discount,
-        total,
+        total: finalTotal,
         orderId: orderId.toString().startsWith('ORD-') ? orderId.toString() : `ORD-${orderId}`,
         dbOrderId: pendingOrderId,
         paymentMethod: 'transfer',
@@ -1163,6 +1390,7 @@ export default function POSPage() {
       console.error("manual confirm failed:", e);
       toast.error("Xác nhận thủ công thất bại");
     } finally {
+      isProcessingRef.current = false;
       setIsProcessing(false);
     }
   };
@@ -1283,18 +1511,7 @@ export default function POSPage() {
 
   const filteredCustomers = customers;
 
-  if (shiftLoading) {
-    return (
-      <div className="flex min-h-[calc(100vh-120px)] items-center justify-center print:hidden">
-        <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
-          <Loader2 className="size-8 animate-spin text-primary" />
-          <span>Đang kiểm tra ca làm việc...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (!activeShift) {
+  if (shiftChecked && !activeShift) {
     return (
       <div className="flex min-h-[calc(100vh-120px)] items-center justify-center p-4 print:hidden">
         <Card className="w-full max-w-md border-muted shadow-xs">
@@ -1329,16 +1546,57 @@ export default function POSPage() {
 
   if (isMobile) {
     return (
-      <MobilePOS
-        products={products}
-        customers={customers}
-        loading={loading}
-      />
+      <>
+        {showIdleScreen && (
+          <div 
+            className="fixed inset-0 z-[99999] bg-slate-950/95 flex flex-col items-center justify-center cursor-pointer animate-in fade-in duration-1000"
+            onClick={() => setShowIdleScreen(false)}
+          >
+            <div className="absolute top-12 text-slate-400 font-mono tracking-widest text-sm uppercase">ZPOS System Standby</div>
+            <Clock className="w-16 h-16 text-primary mb-6 animate-pulse" />
+            <h1 className="text-6xl font-black text-white mb-4 tracking-tight drop-shadow-lg">
+              {currentTimeStr}
+            </h1>
+            <p className="text-xl text-slate-300 font-medium text-center max-w-2xl px-6">
+              {idleMessage}
+            </p>
+            <div className="absolute bottom-12 text-slate-500 text-sm flex items-center gap-2">
+              <Monitor className="w-4 h-4" />
+              <span>Chạm vào màn hình để sử dụng máy</span>
+            </div>
+          </div>
+        )}
+        <MobilePOS
+          products={products}
+          customers={customers}
+          loading={loading}
+        />
+      </>
     );
   }
 
   return (
     <>
+      {showIdleScreen && (
+        <div 
+          className="fixed inset-0 z-[99999] bg-slate-950/95 flex flex-col items-center justify-center cursor-pointer animate-in fade-in duration-1000"
+          onClick={() => setShowIdleScreen(false)}
+        >
+          <div className="absolute top-12 text-slate-400 font-mono tracking-widest text-sm uppercase">ZPOS System Standby</div>
+          <Clock className="w-16 h-16 text-primary mb-6 animate-pulse" />
+          <h1 className="text-8xl md:text-[10rem] font-black text-white mb-6 tracking-tight drop-shadow-2xl">
+            {currentTimeStr}
+          </h1>
+          <p className="text-2xl md:text-3xl text-slate-300 font-medium text-center max-w-4xl px-8 leading-snug">
+            {idleMessage}
+          </p>
+          <div className="absolute bottom-12 text-slate-500 text-sm md:text-base flex items-center gap-2 animate-bounce">
+            <Monitor className="w-5 h-5 md:w-6 md:h-6" />
+            <span>Chạm vào màn hình để bắt đầu / tiếp tục bán hàng</span>
+          </div>
+        </div>
+      )}
+
       <div className="flex h-[calc(100vh-80px)] gap-4 overflow-hidden print:hidden">
 
         {/* Left Column: Product Selection */}
@@ -1388,7 +1646,7 @@ export default function POSPage() {
           )}
 
           {/* Shift status banner */}
-          {!shiftLoading && (
+          {shiftChecked && (
             activeShift ? (
               <div className="flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-xs">
                 <span className="text-emerald-700 dark:text-emerald-400">
@@ -1576,7 +1834,17 @@ export default function POSPage() {
                 </div>
               </div>
               {selectedCustomer ? (
-                <X className="w-4 h-4 text-muted-foreground hover:text-destructive" onClick={(e) => { e.stopPropagation(); setSelectedCustomer(null); }} />
+                <div 
+                  className="p-1 hover:bg-destructive/10 rounded-full transition-colors cursor-pointer flex-shrink-0"
+                  onClick={(e) => { 
+                    e.preventDefault();
+                    e.stopPropagation(); 
+                    setSelectedCustomer(null); 
+                  }}
+                  onPointerDown={(e) => e.stopPropagation()}
+                >
+                  <X className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                </div>
               ) : (
                 <Plus className="w-4 h-4 text-muted-foreground" />
               )}
@@ -1629,7 +1897,46 @@ export default function POSPage() {
                           >
                             <Minus className="w-3 h-3" />
                           </button>
-                          <span className="text-xs font-bold w-7 text-center">{item.quantity}</span>
+                          {editingQtyId === item.id ? (
+                            <input
+                              type="number"
+                              min={1}
+                              value={tempQty}
+                              onChange={(e) => setTempQty(e.target.value)}
+                              onBlur={() => {
+                                const val = Number(tempQty);
+                                if (!isNaN(val) && val >= 1) {
+                                  setQuantity(item.id, val);
+                                }
+                                setEditingQtyId(null);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  const val = Number(tempQty);
+                                  if (!isNaN(val) && val >= 1) {
+                                    setQuantity(item.id, val);
+                                  }
+                                  setEditingQtyId(null);
+                                } else if (e.key === 'Escape') {
+                                  setEditingQtyId(null);
+                                }
+                              }}
+                              className="w-10 bg-transparent border-none text-center text-xs font-bold focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              autoFocus
+                              onFocus={(e) => e.currentTarget.select()}
+                            />
+                          ) : (
+                            <span
+                              className="text-xs font-bold w-7 text-center cursor-pointer hover:text-primary transition-colors select-none"
+                              onClick={() => {
+                                setEditingQtyId(item.id);
+                                setTempQty(item.quantity.toString());
+                              }}
+                              title="Click để nhập số lượng"
+                            >
+                              {item.quantity}
+                            </span>
+                          )}
                           <button
                             className="w-6 h-6 flex items-center justify-center hover:bg-card rounded-full transition-colors"
                             onClick={() => updateQuantity(item.id, 1)}
@@ -1779,13 +2086,33 @@ export default function POSPage() {
               </div>
             </div>
 
-            <Button
-              className="w-full h-14 bg-primary-foreground text-primary hover:bg-primary-foreground/90 text-lg font-bold rounded-xl shadow-lg disabled:opacity-50 transition-all active:scale-[0.98]"
-              disabled={cart.length === 0}
-              onClick={() => setCheckoutOpen(true)}
-            >
-              Thanh toán (F10)
-            </Button>
+            {(enableProvisionalPrint || enableKitchenPrint || enableBarPrint || enableFinalPrint) ? (
+              <div className="flex gap-2 w-full">
+                <Button
+                  className="w-1/3 h-14 bg-background hover:bg-background/90 text-primary text-sm font-bold rounded-xl shadow-sm transition-all active:scale-[0.98]"
+                  disabled={cart.length === 0}
+                  onClick={handlePrintProvisional}
+                >
+                  <Printer className="w-4 h-4 mr-2" />
+                  {getPrintButtonText()}
+                </Button>
+                <Button
+                  className="w-2/3 h-14 bg-primary-foreground text-primary hover:bg-primary-foreground/90 text-lg font-bold rounded-xl shadow-lg disabled:opacity-50 transition-all active:scale-[0.98]"
+                  disabled={cart.length === 0}
+                  onClick={() => setCheckoutOpen(true)}
+                >
+                  Thanh toán (F10)
+                </Button>
+              </div>
+            ) : (
+              <Button
+                className="w-full h-14 bg-primary-foreground text-primary hover:bg-primary-foreground/90 text-lg font-bold rounded-xl shadow-lg disabled:opacity-50 transition-all active:scale-[0.98]"
+                disabled={cart.length === 0}
+                onClick={() => setCheckoutOpen(true)}
+              >
+                Thanh toán (F10)
+              </Button>
+            )}
           </div>
         </div>
 
@@ -1950,14 +2277,45 @@ export default function POSPage() {
               {/* Left Panel: Inputs & Method Selector (55%) */}
               <div className="w-full md:w-[55%] p-8 flex flex-col justify-between border-b md:border-b-0 md:border-r">
                 <div className="space-y-6">
-                  <div>
-                    <h2 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
-                      <Coins className="w-6 h-6 text-primary" />
-                      Thanh toán đơn hàng
-                    </h2>
-                    <p className="text-muted-foreground text-xs font-semibold uppercase mt-1">
-                      Hóa đơn: {orderId ? (orderId.toString().startsWith('ORD-') ? orderId : '#' + orderId) : '....'}
-                    </p>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h2 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
+                        <Coins className="w-6 h-6 text-primary" />
+                        Thanh toán đơn hàng
+                      </h2>
+                      <p className="text-muted-foreground text-xs font-semibold uppercase mt-1">
+                        Hóa đơn: {orderId ? (orderId.toString().startsWith('ORD-') ? orderId : '#' + orderId) : '....'}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="justify-between h-10 rounded-lg border-dashed hover:bg-muted/50 px-3 max-w-[180px]"
+                      onClick={() => setCustomerSearchOpen(true)}
+                    >
+                      <div className="flex items-center gap-2 overflow-hidden w-full">
+                        <User className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        <div className="text-left min-w-0 flex-1 truncate">
+                          <p className="text-xs font-semibold truncate">
+                            {selectedCustomer ? selectedCustomer.name : "Chọn khách hàng"}
+                          </p>
+                        </div>
+                      </div>
+                      {selectedCustomer ? (
+                        <div 
+                          className="p-1 hover:bg-destructive/10 rounded-full transition-colors cursor-pointer flex-shrink-0 ml-2"
+                          onClick={(e) => { 
+                            e.preventDefault();
+                            e.stopPropagation(); 
+                            setSelectedCustomer(null); 
+                          }}
+                          onPointerDown={(e) => e.stopPropagation()}
+                        >
+                          <X className="w-3 h-3 text-muted-foreground hover:text-destructive" />
+                        </div>
+                      ) : (
+                        <Plus className="w-3 h-3 text-muted-foreground ml-2 flex-shrink-0" />
+                      )}
+                    </Button>
                   </div>
 
                   {/* Method selector */}
@@ -2468,7 +2826,10 @@ export default function POSPage() {
                   <Button
                     variant="outline"
                     className="h-11 rounded-xl gap-2 font-semibold text-xs border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all active:scale-[0.98]"
-                    onClick={() => window.print()}
+                    onClick={() => {
+                      setPrintType('payment');
+                      setTimeout(() => window.print(), 100);
+                    }}
                   >
                     <Printer className="w-3.5 h-3.5" />
                     In hoá đơn
@@ -2481,7 +2842,7 @@ export default function POSPage() {
       </div>
 
       {/* Hidden Print Area */}
-      {lastOrder && (
+      {printType === 'payment' && lastOrder && (
         <PrintInvoice order={{
           order_number: lastOrder.orderId,
           created_at: lastOrder.createdAt,
@@ -2496,6 +2857,56 @@ export default function POSPage() {
           customer: lastOrder.customer ? { name: lastOrder.customer.name, phone: lastOrder.customer.phone } : undefined
         }} />
       )}
+
+      {['provisional', 'temp_bill', 'kitchen_ticket', 'bar_ticket', 'final_receipt'].includes(printType) && provisionalOrder && (
+        <PrintInvoice 
+          isProvisional={printType === 'provisional' || printType === 'temp_bill'}
+          printType={printType as any}
+          order={{
+            order_number: provisionalOrder.orderId,
+            created_at: provisionalOrder.createdAt,
+            items: provisionalOrder.cart.map((item: any) => ({
+              product_name: item.name,
+              quantity: item.quantity,
+              unit_price: item.price,
+              total_price: item.price * item.quantity
+            })),
+            total_amount: provisionalOrder.total,
+            payment_method: provisionalOrder.paymentMethod,
+            customer: provisionalOrder.customer ? { name: provisionalOrder.customer.name, phone: provisionalOrder.customer.phone } : undefined
+          }} 
+        />
+      )}
+
+      <PrintDialog
+        open={printDialogOpen}
+        onOpenChange={setPrintDialogOpen}
+        enableProvisionalPrint={enableProvisionalPrint}
+        enableKitchenPrint={enableKitchenPrint}
+        enableBarPrint={enableBarPrint}
+        enableFinalPrint={enableFinalPrint}
+        orderInfo={{
+          orderId: orderId,
+          cart,
+          subtotal,
+          discount: discount + pointsDiscount,
+          total: finalTotal,
+          customer: selectedCustomer
+        }}
+        onPrintPreview={(type) => {
+          setPrintType(type);
+          setProvisionalOrder({
+            orderId: orderId,
+            createdAt: new Date().toISOString(),
+            total: finalTotal,
+            subtotal: subtotal,
+            discount: discount + pointsDiscount,
+            paymentMethod: 'Chưa thanh toán',
+            cart: [...cart],
+            customer: selectedCustomer
+          });
+        }}
+      />
 
       <BarcodeScannerDialog
         open={scannerOpen}

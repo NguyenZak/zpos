@@ -1,11 +1,15 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { trackEvent, getLocalLogs, cleanLocalLogsByRetention } from "@/utils/audit-logger";
+
 import { createClient } from "@supabase/supabase-js";
-import fs from "fs";
-import path from "path";
+
+import { requireSuperAdmin } from "@/utils/admin-auth";
+import { cleanLocalLogsByRetention, getLocalLogs, trackEvent } from "@/utils/audit-logger";
 
 // GET handler: retrieves, filters, merges, and displays logs in the admin console
 export async function GET(request: NextRequest) {
+  const auth = await requireSuperAdmin();
+  if (auth.error) return auth.error;
+
   const { searchParams } = new URL(request.url);
   const tenant = searchParams.get("tenant") || "all";
   const user = searchParams.get("user") || "all";
@@ -24,9 +28,9 @@ export async function GET(request: NextRequest) {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
       const supabase = createClient(supabaseUrl, supabaseKey!);
-      
-      let query = supabase.from("audit_logs").select("*").order("created_at", { ascending: false });
-      
+
+      const query = supabase.from("audit_logs").select("*").order("created_at", { ascending: false });
+
       const { data, error } = await query;
       if (!error && data) {
         logs = [...data];
@@ -39,7 +43,7 @@ export async function GET(request: NextRequest) {
   // 2. Fetch local JSON logs and merge (prevent duplicates using id)
   const localLogs = getLocalLogs();
   const existingIds = new Set(logs.map((l) => l.id).filter(Boolean));
-  
+
   for (const localLog of localLogs) {
     if (!existingIds.has(localLog.id)) {
       logs.push(localLog);
@@ -54,36 +58,30 @@ export async function GET(request: NextRequest) {
 
   if (tenant !== "all") {
     filteredLogs = filteredLogs.filter(
-      (log) => 
+      (log) =>
         (log.tenant_id && log.tenant_id.toLowerCase() === tenant.toLowerCase()) ||
-        (log.metadata?.tenant_slug && log.metadata.tenant_slug.toLowerCase() === tenant.toLowerCase())
+        (log.metadata?.tenant_slug && log.metadata.tenant_slug.toLowerCase() === tenant.toLowerCase()),
     );
   }
 
   if (user !== "all") {
     filteredLogs = filteredLogs.filter(
-      (log) => 
-        (log.user_email && log.user_email.toLowerCase() === user.toLowerCase()) || 
-        (log.user_id && log.user_id.toLowerCase() === user.toLowerCase())
+      (log) =>
+        (log.user_email && log.user_email.toLowerCase() === user.toLowerCase()) ||
+        (log.user_id && log.user_id.toLowerCase() === user.toLowerCase()),
     );
   }
 
   if (moduleParam !== "all") {
-    filteredLogs = filteredLogs.filter(
-      (log) => log.module && log.module.toLowerCase() === moduleParam.toLowerCase()
-    );
+    filteredLogs = filteredLogs.filter((log) => log.module && log.module.toLowerCase() === moduleParam.toLowerCase());
   }
 
   if (severity !== "all") {
-    filteredLogs = filteredLogs.filter(
-      (log) => log.severity && log.severity.toLowerCase() === severity.toLowerCase()
-    );
+    filteredLogs = filteredLogs.filter((log) => log.severity && log.severity.toLowerCase() === severity.toLowerCase());
   }
 
   if (action !== "all") {
-    filteredLogs = filteredLogs.filter(
-      (log) => log.action && log.action.toLowerCase() === action.toLowerCase()
-    );
+    filteredLogs = filteredLogs.filter((log) => log.action && log.action.toLowerCase() === action.toLowerCase());
   }
 
   if (startDate) {
@@ -104,7 +102,7 @@ export async function GET(request: NextRequest) {
         (log.user_email && log.user_email.toLowerCase().includes(search)) ||
         (log.alert_reason && log.alert_reason.toLowerCase().includes(search)) ||
         (log.ip_address && log.ip_address.includes(search)) ||
-        (log.metadata && JSON.stringify(log.metadata).toLowerCase().includes(search))
+        (log.metadata && JSON.stringify(log.metadata).toLowerCase().includes(search)),
     );
   }
 
@@ -125,7 +123,7 @@ export async function GET(request: NextRequest) {
     }
 
     tenantRiskMap[tSlug].count++;
-    
+
     // Weight severities to get a risk score
     if (log.severity === "critical") tenantRiskMap[tSlug].score += 10;
     else if (log.severity === "error") tenantRiskMap[tSlug].score += 5;
@@ -160,7 +158,23 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const newLog = await trackEvent(body);
+    const action = String(body?.action || "");
+
+    if (action !== "login_success" && action !== "login_failed") {
+      const auth = await requireSuperAdmin();
+      if (auth.error) return auth.error;
+    }
+
+    const newLog = await trackEvent({
+      ...body,
+      ...(action === "login_success" || action === "login_failed"
+        ? {
+            action,
+            module: "auth",
+            severity: action === "login_failed" ? "warning" : "info",
+          }
+        : {}),
+    });
     return NextResponse.json({ success: true, data: newLog });
   } catch (e: any) {
     return NextResponse.json({ success: false, error: e.message }, { status: 400 });
@@ -169,6 +183,9 @@ export async function POST(request: NextRequest) {
 
 // DELETE handler: enforces the retention policy across both remote Supabase & local JSON store
 export async function DELETE(request: NextRequest) {
+  const auth = await requireSuperAdmin();
+  if (auth.error) return auth.error;
+
   let supabaseDeleted = 0;
   let localDeleted = 0;
 
@@ -183,7 +200,7 @@ export async function DELETE(request: NextRequest) {
       const supabase = createClient(supabaseUrl, supabaseKey!);
 
       const now = new Date();
-      
+
       const retentionConfigs = [
         { severity: "info", days: 30 },
         { severity: "warning", days: 90 },

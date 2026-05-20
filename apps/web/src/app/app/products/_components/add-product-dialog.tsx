@@ -18,23 +18,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { posService } from "@/services/pos.service";
 import { convertToWebP } from "@/lib/image-utils";
-import { BarcodeScannerDialog } from "@/components/barcode-scanner-dialog";
 
+import { ProductBarcodeField } from "./product-barcode-field";
 
 export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [scannerOpen, setScannerOpen] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
+    barcode: "",
     price: "",
     stock: "",
     category_id: "",
-    image: ""
+    image: "",
+    barcode_type: "CODE128"
   });
+  
+  const [barcodeValid, setBarcodeValid] = useState(true);
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -152,21 +155,31 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
         }
       }
 
+      if (!barcodeValid) {
+        toast.error("Mã vạch không hợp lệ hoặc đã tồn tại. Vui lòng kiểm tra lại.");
+        setLoading(false);
+        return;
+      }
+
       await posService.createProduct({
         name: formData.name,
-        barcode: formData.sku,
+        sku: formData.sku,
+        barcode: formData.barcode,
         category_id: formData.category_id || null,
         price: parseFloat(formData.price),
         stock: parseInt(formData.stock),
-        image: finalImageUrl || null
+        image: finalImageUrl || null,
+        barcode_type: formData.barcode_type
       });
       
       toast.success("Đã thêm sản phẩm thành công!");
       setOpen(false);
-      setFormData({ name: "", sku: "", price: "", stock: "", category_id: "", image: "" });
+      setFormData({ name: "", sku: "", barcode: "", barcode_type: "CODE128", price: "", stock: "", category_id: "", image: "" });
       if (onShowSuccess) onShowSuccess();
-    } catch (error) {
-      toast.error("Lỗi khi thêm sản phẩm");
+    } catch (error: any) {
+      console.error("createProduct error:", error);
+      const msg = error?.message || error?.details || error?.hint || "Không rõ nguyên nhân";
+      toast.error(`Lỗi khi thêm sản phẩm: ${msg}`);
     } finally {
       setLoading(false);
     }
@@ -281,30 +294,31 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="sku">Mã SKU / Barcode</Label>
+                <Label htmlFor="sku">Mã SKU</Label>
                 <div className="flex gap-2">
                   <Input 
                     id="sku" 
-                    placeholder="Mã SP hoặc Mã vạch" 
+                    placeholder="Mã SP (Ví dụ: SP0001)" 
                     className="uppercase flex-1"
                     value={formData.sku}
                     onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                   />
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="icon" 
-                    className="h-9 w-9 text-purple-500 bg-purple-500/5 border-purple-500/10 hover:bg-purple-500/15 shrink-0"
-                    onClick={() => setScannerOpen(true)}
-                    title="Quét mã vạch bằng camera"
-                  >
-                    <Barcode className="h-4 w-4" />
-                  </Button>
                   <Button type="button" variant="outline" size="sm" onClick={generateSKU}>
                     Tự tạo
                   </Button>
                 </div>
               </div>
+              <div className="grid gap-2 mt-[-1rem]">
+                <ProductBarcodeField 
+                  value={formData.barcode}
+                  onChange={(val) => setFormData({ ...formData, barcode: val })}
+                  onValidationChange={setBarcodeValid}
+                  barcodeType={formData.barcode_type}
+                  onBarcodeTypeChange={(val) => setFormData({ ...formData, barcode_type: val })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="category">Danh mục</Label>
                 <Select onValueChange={(val) => setFormData({ ...formData, category_id: val })}>
@@ -354,11 +368,6 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
             </Button>
           </DialogFooter>
         </form>
-        <BarcodeScannerDialog
-          open={scannerOpen}
-          onOpenChange={setScannerOpen}
-          onRawScan={(code) => setFormData(prev => ({ ...prev, sku: code }))}
-        />
       </DialogContent>
     </Dialog>
   );

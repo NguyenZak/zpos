@@ -29,7 +29,7 @@ function createProxySupabase(request: NextRequest) {
   const hostname = request.headers.get("host") || "";
   const mainDomain = resolveMainDomain(hostname);
 
-  let cookieDomain: string | undefined = undefined;
+  let cookieDomain: string | undefined;
   if (!isDev) {
     if (hostname.endsWith(mainDomain)) {
       cookieDomain = `.${mainDomain}`;
@@ -73,7 +73,9 @@ export async function proxy(request: NextRequest) {
 
   // --- Auth Session Check (Supabase only) ---
   const supabase = createProxySupabase(request);
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // Helper: rewrite + preserve session cookies & clean up trailing slashes
   const rewriteWithSession = (path: string) => {
@@ -111,8 +113,19 @@ export async function proxy(request: NextRequest) {
   // Development Fallback: Allow path-based access on localhost
   if (!subdomain && isLocal) {
     // 1. Pass-through known routes to avoid rewriting console/cms/api
+    if (url.pathname.startsWith("/console")) {
+      if (!user) {
+        const loginUrl = new URL("/login", request.url);
+        loginUrl.searchParams.set("redirectTo", url.pathname);
+        return NextResponse.redirect(loginUrl);
+      }
+      if (!isSuperAdminUser(user)) {
+        return rewriteWithSession("/unauthorized");
+      }
+      return response;
+    }
+
     if (
-      url.pathname.startsWith("/console") ||
       url.pathname.startsWith("/cms") ||
       url.pathname.startsWith("/api") ||
       url.pathname.startsWith("/_next") ||
@@ -191,6 +204,10 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
+    if (!isSuperAdminUser(user)) {
+      return rewriteWithSession("/unauthorized");
+    }
+
     // Preserve tenants/new page routing
     if (url.pathname === "/tenants/new" || url.pathname === "/console/tenants/new") {
       return rewriteWithSession(`/console/tenants/new${url.search}`);
@@ -257,7 +274,7 @@ export async function proxy(request: NextRequest) {
 
     // Root path → send to /login or /app
     if (url.pathname === "/") {
-      return NextResponse.redirect(new URL((user && hasAccess) ? "/app" : "/login", request.url));
+      return NextResponse.redirect(new URL(user && hasAccess ? "/app" : "/login", request.url));
     }
 
     // Auth guard: unauthenticated or unauthorized attempting /app/* → redirect to /login

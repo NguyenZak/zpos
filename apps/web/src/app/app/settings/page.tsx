@@ -37,6 +37,7 @@ import { BankAccountsManager } from './_components/bank-accounts-manager';
 import { EInvoiceManager } from './_components/einvoice-manager';
 import { ZaloManager } from './_components/zalo-manager';
 import { DebtSettingsManager } from './_components/debt-settings-manager';
+import { InvoiceTemplateManager } from './_components/invoice-template-manager';
 import { Coins, MessageCircle } from 'lucide-react';
 import { 
   Card, 
@@ -105,6 +106,8 @@ export default function SettingsPage() {
   // Security Settings State
   const [enable2FA, setEnable2FA] = React.useState(false);
   const [restrictIP, setRestrictIP] = React.useState(false);
+  const [enableIdleScreen, setEnableIdleScreen] = React.useState(true);
+  const [idleTimeoutMinutes, setIdleTimeoutMinutes] = React.useState(5);
 
   // Shipping Settings State
   const [shippingProvider, setShippingProvider] = React.useState('ghn');
@@ -200,7 +203,7 @@ export default function SettingsPage() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab');
-      if (tab && ['business', 'branch', 'payment', 'einvoice', 'printer', 'security', 'telegram', 'zalo', 'shipping'].includes(tab)) {
+      if (tab && ['business', 'branch', 'payment', 'einvoice', 'printer', 'security', 'telegram', 'zalo', 'shipping', 'debt'].includes(tab)) {
         setActiveTab(tab);
       }
 
@@ -221,6 +224,8 @@ export default function SettingsPage() {
 
       setEnable2FA(localStorage.getItem('zpos_security_2fa') === 'true');
       setRestrictIP(localStorage.getItem('zpos_security_ip') === 'true');
+      setEnableIdleScreen(localStorage.getItem('zpos_pos_idle_screen') !== 'false');
+      setIdleTimeoutMinutes(parseInt(localStorage.getItem('zpos_pos_idle_timeout') || '5'));
 
       // Telegram Configurations
       setTelegramEnabled(localStorage.getItem('zpos_telegram_enabled') === 'true');
@@ -271,6 +276,8 @@ export default function SettingsPage() {
 
       localStorage.setItem('zpos_security_2fa', String(enable2FA));
       localStorage.setItem('zpos_security_ip', String(restrictIP));
+      localStorage.setItem('zpos_pos_idle_screen', String(enableIdleScreen));
+      localStorage.setItem('zpos_pos_idle_timeout', String(idleTimeoutMinutes));
 
       // Telegram Configurations
       localStorage.setItem('zpos_telegram_enabled', String(telegramEnabled));
@@ -453,8 +460,8 @@ export default function SettingsPage() {
               Hoá đơn điện tử
             </TabsTrigger>
             <TabsTrigger value="printer" className="gap-2 shrink-0">
-              <Printer className="w-4 h-4" />
-              Máy in & Hóa đơn
+              <Printer className="w-4 h-4 text-primary" />
+              Template Hoá đơn
             </TabsTrigger>
             <TabsTrigger value="security" className="gap-2 shrink-0">
               <ShieldCheck className="w-4 h-4" />
@@ -623,62 +630,7 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="printer" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Cấu hình máy in & Hóa đơn</CardTitle>
-              <CardDescription>Thiết lập khổ giấy và nội dung hiển thị trên hóa đơn.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Tự động in hóa đơn</Label>
-                  <p className="text-xs text-muted-foreground italic">Máy in sẽ tự động in ngay sau khi bấm thanh toán.</p>
-                </div>
-                <Switch 
-                  checked={autoPrint} 
-                  onCheckedChange={setAutoPrint} 
-                />
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="grid gap-2">
-                  <Label>Khổ giấy in</Label>
-                  <select
-                    value={paperSize}
-                    onChange={(e) => setPaperSize(e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-bold"
-                  >
-                    <option value="K80 (80mm)">K80 (80mm)</option>
-                    <option value="K57 (57mm)">K57 (57mm)</option>
-                    <option value="A4">Khổ A4</option>
-                    <option value="A5">Khổ A5</option>
-                  </select>
-                </div>
-                <div className="grid gap-2">
-                  <Label>Số liên in</Label>
-                  <Input 
-                    type="number" 
-                    value={printCopies} 
-                    onChange={(e) => setPrintCopies(Math.max(1, parseInt(e.target.value) || 1))}
-                  />
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <Label>Lời chào chân trang (Footer text)</Label>
-                <Textarea 
-                  placeholder="Cảm ơn quý khách. Hẹn gặp lại!" 
-                  value={footerText}
-                  onChange={(e) => setFooterText(e.target.value)}
-                />
-              </div>
-            </CardContent>
-            <CardFooter className="border-t bg-muted/20 px-6 py-4 flex justify-end">
-              <Button size="sm" onClick={handleSave} disabled={loading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                <Save className="mr-2 h-4 w-4" />
-                Lưu cấu hình
-              </Button>
-            </CardFooter>
-          </Card>
+          <InvoiceTemplateManager />
         </TabsContent>
 
         <TabsContent value="security" className="space-y-4">
@@ -721,6 +673,33 @@ export default function SettingsPage() {
                     }
                   }}
                 />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Màn hình chờ POS (Screensaver)</Label>
+                  <p className="text-xs text-muted-foreground italic">Tự động hiển thị màn hình chờ khi POS không được thao tác.</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  {enableIdleScreen && (
+                    <select 
+                      className="h-8 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      value={idleTimeoutMinutes}
+                      onChange={(e) => setIdleTimeoutMinutes(Number(e.target.value))}
+                    >
+                      <option value={1}>Sau 1 phút</option>
+                      <option value={3}>Sau 3 phút</option>
+                      <option value={5}>Sau 5 phút</option>
+                      <option value={15}>Sau 15 phút</option>
+                      <option value={30}>Sau 30 phút</option>
+                    </select>
+                  )}
+                  <Switch 
+                    checked={enableIdleScreen}
+                    onCheckedChange={(val) => {
+                      setEnableIdleScreen(val);
+                    }}
+                  />
+                </div>
               </div>
               <div className="border-t pt-6 space-y-4">
                 <div className="flex flex-col gap-1">

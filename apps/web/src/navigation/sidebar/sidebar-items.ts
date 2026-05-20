@@ -126,6 +126,12 @@ export const sidebarItems: NavGroup[] = [
         icon: Package,
       },
       {
+        title: "Mã vạch",
+        url: "/products/barcodes",
+        icon: QrCode,
+        isNew: true,
+      },
+      {
         title: "Danh mục",
         url: "/categories",
         icon: Tag,

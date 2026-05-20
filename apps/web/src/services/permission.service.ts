@@ -79,6 +79,10 @@ export const DEFAULT_PERMISSIONS: Permission[] = [
   { id: 'products.price.update', name: 'Cập nhật giá bán', group_name: 'Sản phẩm', description: 'Thay đổi giá bán của sản phẩm' },
   { id: 'products.cost.view', name: 'Xem giá vốn', group_name: 'Sản phẩm', description: 'Xem giá vốn / giá nhập của sản phẩm (quyền nhạy cảm)' },
   { id: 'products.cost.update', name: 'Cập nhật giá vốn', group_name: 'Sản phẩm', description: 'Thay đổi giá vốn / giá nhập của sản phẩm (quyền nhạy cảm)' },
+  { id: 'products.barcode.scan', name: 'Quét mã vạch', group_name: 'Sản phẩm', description: 'Quét mã vạch sản phẩm' },
+  { id: 'products.barcode.generate', name: 'Tạo mã vạch', group_name: 'Sản phẩm', description: 'Tự động tạo mã vạch cho sản phẩm' },
+  { id: 'products.barcode.update', name: 'Cập nhật mã vạch', group_name: 'Sản phẩm', description: 'Cập nhật mã vạch cho sản phẩm / phiên bản' },
+  { id: 'products.barcode.print', name: 'In tem mã vạch', group_name: 'Sản phẩm', description: 'In tem nhãn mã vạch cho sản phẩm' },
 
   // ===== Danh mục =====
   { id: 'categories.view', name: 'Xem danh mục sản phẩm', group_name: 'Danh mục', description: 'Xem danh sách danh mục sản phẩm' },
@@ -106,6 +110,10 @@ export const DEFAULT_PERMISSIONS: Permission[] = [
   { id: 'orders.refund', name: 'Hoàn tiền hóa đơn', group_name: 'Đơn hàng', description: 'Tạo phiếu hoàn tiền cho hóa đơn đã chốt' },
   { id: 'orders.discount.approve', name: 'Duyệt giảm giá hóa đơn', group_name: 'Đơn hàng', description: 'Phê duyệt giảm giá vượt ngưỡng trên hóa đơn' },
   { id: 'orders.print', name: 'In / tải hóa đơn', group_name: 'Đơn hàng', description: 'In lại hoặc tải PDF hóa đơn' },
+  { id: 'orders.print_temp', name: 'In tạm tính', group_name: 'Đơn hàng', description: 'In hóa đơn tạm tính trước khi thanh toán' },
+  { id: 'orders.print_final', name: 'In hóa đơn thanh toán', group_name: 'Đơn hàng', description: 'In hóa đơn chính thức sau thanh toán' },
+  { id: 'orders.print_kitchen', name: 'In phiếu bếp', group_name: 'Đơn hàng', description: 'In phiếu yêu cầu chế biến xuống bếp' },
+  { id: 'orders.print_bar', name: 'In phiếu bar', group_name: 'Đơn hàng', description: 'In phiếu yêu cầu pha chế xuống quầy bar' },
   { id: 'orders.export', name: 'Xuất danh sách hóa đơn', group_name: 'Đơn hàng', description: 'Xuất hóa đơn ra file Excel/CSV' },
 
   // ===== Trả hàng =====
@@ -250,11 +258,12 @@ export const DEFAULT_ROLES_PERMISSIONS: Record<string, string[]> = {
     'shifts.view', 'shifts.open', 'shifts.close', 'shifts.cash_in', 'shifts.cash_out', 'shifts.adjust',
     'products.view', 'products.detail.view', 'products.create', 'products.update', 'products.import',
     'products.export', 'products.price.update', 'products.cost.view', 'products.cost.update',
+    'products.barcode.scan', 'products.barcode.generate', 'products.barcode.update', 'products.barcode.print',
     'categories.view', 'categories.create', 'categories.update', 'categories.delete',
     'inventory.view', 'inventory.history.view', 'inventory.adjust', 'inventory.transfer',
     'inventory.audit', 'inventory.threshold.manage', 'inventory.import', 'inventory.export',
     'orders.view', 'orders.detail.view', 'orders.create', 'orders.update', 'orders.cancel',
-    'orders.refund', 'orders.discount.approve', 'orders.print', 'orders.export',
+    'orders.refund', 'orders.discount.approve', 'orders.print', 'orders.print_temp', 'orders.print_final', 'orders.print_kitchen', 'orders.print_bar', 'orders.export',
     'returns.view', 'returns.create', 'returns.update', 'returns.approve', 'returns.refund',
     'customers.view', 'customers.detail.view', 'customers.create', 'customers.update',
     'customers.merge', 'customers.import', 'customers.export',
@@ -286,8 +295,8 @@ export const DEFAULT_ROLES_PERMISSIONS: Record<string, string[]> = {
     'pos.access', 'pos.sell', 'pos.discount.apply',
     'pos.void_item', 'pos.cancel_order', 'pos.print_receipt', 'pos.reprint_receipt',
     'shifts.view', 'shifts.open', 'shifts.close', 'shifts.cash_in', 'shifts.cash_out',
-    'products.view', 'products.detail.view',
-    'orders.view', 'orders.detail.view', 'orders.print',
+    'products.view', 'products.detail.view', 'products.barcode.scan', 'products.barcode.print',
+    'orders.view', 'orders.detail.view', 'orders.print', 'orders.print_temp', 'orders.print_final', 'orders.print_kitchen', 'orders.print_bar',
     'returns.view', 'returns.create',
     'customers.view', 'customers.detail.view', 'customers.create', 'customers.update',
     'customers.debt.view',
@@ -299,6 +308,7 @@ export const DEFAULT_ROLES_PERMISSIONS: Record<string, string[]> = {
   'Warehouse Staff': [
     'products.view', 'products.detail.view', 'products.create', 'products.update',
     'products.import', 'products.export', 'products.cost.view',
+    'products.barcode.scan', 'products.barcode.generate', 'products.barcode.update', 'products.barcode.print',
     'categories.view', 'categories.create', 'categories.update',
     'inventory.view', 'inventory.history.view', 'inventory.adjust', 'inventory.transfer',
     'inventory.audit', 'inventory.threshold.manage', 'inventory.import', 'inventory.export',
@@ -509,51 +519,51 @@ export const permissionService = {
 
     const persistPermissions = async (roleId: string) => {
       if (!permissionIds.length) return;
-      try {
-        const rpPayloads = permissionIds.map(pId => ({
-          organization_id: orgId,
-          role_id: roleId,
-          permission_id: pId,
-        }));
-        await supabase.from('role_permissions').insert(rpPayloads);
-      } catch (err) {
-        // Lưu fallback cục bộ để UI vẫn hiển thị đúng
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(STORAGE_PREFIX + "role_permissions_" + roleId, JSON.stringify(permissionIds));
-        }
-      }
-    };
-
-    try {
-      const { data, error } = await supabase
-        .from('roles')
-        .insert([rolePayload])
-        .select()
-        .single();
-
+      const rpPayloads = permissionIds.map(pId => ({
+        organization_id: orgId,
+        role_id: roleId,
+        permission_id: pId,
+      }));
+      const { error } = await supabase.from('role_permissions').insert(rpPayloads);
       if (error) {
         if (this.isTableMissingError(error)) {
-          const localRole = this.createLocalRole(rolePayload);
-          if (permissionIds.length && typeof window !== 'undefined') {
-            localStorage.setItem(STORAGE_PREFIX + "role_permissions_" + localRole.id, JSON.stringify(permissionIds));
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(STORAGE_PREFIX + "role_permissions_" + roleId, JSON.stringify(permissionIds));
           }
-          await this.createAuditLog(orgId, profileId, 'role.create', { name, description, role_id: localRole.id, permissions_count: permissionIds.length });
-          return localRole;
+          return;
         }
         throw error;
       }
-
-      await persistPermissions(data.id);
-      await this.createAuditLog(orgId, profileId, 'role.create', { name, description, role_id: data.id, permissions_count: permissionIds.length });
-      return data;
-    } catch (e) {
-      const role = this.createLocalRole(rolePayload);
-      if (permissionIds.length && typeof window !== 'undefined') {
-        localStorage.setItem(STORAGE_PREFIX + "role_permissions_" + role.id, JSON.stringify(permissionIds));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_PREFIX + "role_permissions_" + roleId, JSON.stringify(permissionIds));
       }
-      await this.createAuditLog(orgId, profileId, 'role.create', { name, description, role_id: role.id, permissions_count: permissionIds.length });
-      return role;
+    };
+
+    const { data, error } = await supabase
+      .from('roles')
+      .insert([rolePayload])
+      .select()
+      .single();
+
+    if (error) {
+      if (this.isTableMissingError(error)) {
+        const localRole = this.createLocalRole(rolePayload);
+        if (permissionIds.length && typeof window !== 'undefined') {
+          localStorage.setItem(STORAGE_PREFIX + "role_permissions_" + localRole.id, JSON.stringify(permissionIds));
+        }
+        await this.createAuditLog(orgId, profileId, 'role.create', { name, description, role_id: localRole.id, permissions_count: permissionIds.length });
+        return localRole;
+      }
+      throw new Error("Lỗi tạo vai trò: " + (error.message || "unknown"));
     }
+
+    try {
+      await persistPermissions(data.id);
+    } catch (permErr: any) {
+      throw new Error("Đã tạo vai trò nhưng không lưu được phân quyền: " + (permErr?.message || "unknown"));
+    }
+    await this.createAuditLog(orgId, profileId, 'role.create', { name, description, role_id: data.id, permissions_count: permissionIds.length });
+    return data;
   },
 
   async updateRole(roleId: string, name: string, description: string, permissionIds: string[]): Promise<Role> {
@@ -577,7 +587,7 @@ export const permissionService = {
         .eq('id', roleId)
         .select()
         .single();
-        
+
       if (error) {
         if (this.isTableMissingError(error)) return this.updateLocalRole(roleId, name, description, permissionIds);
         throw error;
@@ -585,7 +595,14 @@ export const permissionService = {
 
       // Update role permissions
       // First, delete old ones
-      await supabase.from('role_permissions').delete().eq('role_id', roleId);
+      const { error: deleteError } = await supabase
+        .from('role_permissions')
+        .delete()
+        .eq('role_id', roleId);
+      if (deleteError) {
+        if (this.isTableMissingError(deleteError)) return this.updateLocalRole(roleId, name, description, permissionIds);
+        throw deleteError;
+      }
       // Insert new ones
       if (permissionIds.length > 0) {
         const rpPayloads = permissionIds.map(pId => ({
@@ -593,15 +610,22 @@ export const permissionService = {
           role_id: roleId,
           permission_id: pId
         }));
-        await supabase.from('role_permissions').insert(rpPayloads);
+        const { error: insertError } = await supabase.from('role_permissions').insert(rpPayloads);
+        if (insertError) {
+          if (this.isTableMissingError(insertError)) return this.updateLocalRole(roleId, name, description, permissionIds);
+          throw insertError;
+        }
+      }
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_PREFIX + "role_permissions_" + roleId, JSON.stringify(permissionIds));
       }
 
       await this.createAuditLog(orgId, profileId, 'role.update', { role_id: roleId, name, permissions_count: permissionIds.length });
       return data;
-    } catch (e) {
-      const updated = this.updateLocalRole(roleId, name, description, permissionIds);
-      await this.createAuditLog(orgId, profileId, 'role.update', { role_id: roleId, name, permissions_count: permissionIds.length });
-      return updated;
+    } catch (e: any) {
+      const message = e?.message || e?.error_description || "Không thể lưu vai trò";
+      throw new Error("Lỗi lưu phân quyền: " + message);
     }
   },
 
@@ -668,13 +692,43 @@ export const permissionService = {
   normalizePermission(permission: any): Permission {
     const key = permission.key || permission.id;
     const [module = permission.module || "general", ...actionParts] = String(key).split(".");
+    
+    let group_name = permission.group_name || permission.module || module;
+    
+    // Normalize group names from English database seeds to Vietnamese UI groups
+    const groupNameMap: Record<string, string> = {
+      'Dashboard': 'Tổng quan',
+      'POS': 'POS - Bán hàng',
+      'Shifts': 'Ca làm việc',
+      'shifts': 'Ca làm việc',
+      'Products': 'Sản phẩm',
+      'Inventory': 'Tồn kho',
+      'Orders': 'Đơn hàng',
+      'Returns': 'Trả hàng',
+      'Customers': 'Khách hàng',
+      'Suppliers': 'Nhà cung cấp',
+      'Purchases': 'Nhập hàng',
+      'Finance': 'Tài chính',
+      'Staff': 'Nhân viên',
+      'Reports': 'Báo cáo',
+      'Settings': 'Cài đặt',
+      'AI': 'Trợ lý AI',
+      'Loyalty': 'Tích điểm & Loyalty',
+      'Zalo': 'Tin nhắn Zalo',
+      'Sync': 'Đồng bộ offline',
+    };
+
+    if (groupNameMap[group_name]) {
+      group_name = groupNameMap[group_name];
+    }
+
     return {
       id: key,
       key,
       module: permission.module || module,
       action: permission.action || actionParts.join(".") || key,
       name: permission.name,
-      group_name: permission.group_name || permission.module || module,
+      group_name,
       description: permission.description || "",
       sort_order: permission.sort_order ?? 0,
     };

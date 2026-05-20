@@ -1,13 +1,19 @@
 import { type NextRequest, NextResponse } from "next/server";
+
+import { requireSuperAdmin } from "@/utils/admin-auth";
 import { trackEvent } from "@/utils/audit-logger";
 
 export async function POST(request: NextRequest) {
+  const auth = await requireSuperAdmin();
+  if (auth.error) return auth.error;
+
   try {
     const { type, tenantSlug } = await request.json();
     const ts = tenantSlug || "bibomart";
 
-    let ipAddress = "118.70.147.202"; // Standard Hanoi IP
-    let userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+    const ipAddress = "118.70.147.202"; // Standard Hanoi IP
+    const userAgent =
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
     if (type === "brute_force") {
       // Simulate 3 consecutive failed logins to trigger the rule
@@ -66,7 +72,7 @@ export async function POST(request: NextRequest) {
         ip_address: ipAddress,
         user_agent: userAgent,
         metadata: {
-          file_name: `inventory_report_${new Date().toISOString().slice(0,10)}.csv`,
+          file_name: `inventory_report_${new Date().toISOString().slice(0, 10)}.csv`,
           record_count: recordCount,
           format: "CSV",
         },
@@ -188,12 +194,48 @@ export async function POST(request: NextRequest) {
 
     if (type === "standard_logs") {
       const standardEvents = [
-        { action: "login_success", module: "auth", severity: "info", email: "quynh.chi@bibomart.vn", msg: "User logged in successfully" },
-        { action: "create_product", module: "products", severity: "info", email: "quynh.chi@bibomart.vn", msg: "Created product 'Sữa bột Meiji số 0'" },
-        { action: "update_inventory", module: "inventory", severity: "info", email: "quynh.chi@bibomart.vn", msg: "Stock in +200 units for SKU MEIJI-0" },
-        { action: "checkout_completed", module: "billing", severity: "info", email: "pos_terminal_03@bibomart.vn", msg: "POS Checkout completed, invoice #INV-29012" },
-        { action: "webhook_failed", module: "billing", severity: "error", email: "system_gateway", msg: "Momo gateway payment notification failed, signature mismatch" },
-        { action: "cron_sync_completed", module: "system", severity: "info", email: "system_cron", msg: "Successfully synchronized POS offline logs to Supabase" },
+        {
+          action: "login_success",
+          module: "auth",
+          severity: "info",
+          email: "quynh.chi@bibomart.vn",
+          msg: "User logged in successfully",
+        },
+        {
+          action: "create_product",
+          module: "products",
+          severity: "info",
+          email: "quynh.chi@bibomart.vn",
+          msg: "Created product 'Sữa bột Meiji số 0'",
+        },
+        {
+          action: "update_inventory",
+          module: "inventory",
+          severity: "info",
+          email: "quynh.chi@bibomart.vn",
+          msg: "Stock in +200 units for SKU MEIJI-0",
+        },
+        {
+          action: "checkout_completed",
+          module: "billing",
+          severity: "info",
+          email: "pos_terminal_03@bibomart.vn",
+          msg: "POS Checkout completed, invoice #INV-29012",
+        },
+        {
+          action: "webhook_failed",
+          module: "billing",
+          severity: "error",
+          email: "system_gateway",
+          msg: "Momo gateway payment notification failed, signature mismatch",
+        },
+        {
+          action: "cron_sync_completed",
+          module: "system",
+          severity: "info",
+          email: "system_cron",
+          msg: "Successfully synchronized POS offline logs to Supabase",
+        },
       ];
 
       const simulatedLogs = [];

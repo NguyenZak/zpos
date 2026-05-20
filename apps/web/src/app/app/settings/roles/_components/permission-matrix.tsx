@@ -23,13 +23,30 @@ type PermissionMatrixProps = {
 };
 
 const GROUP_DESCRIPTIONS: Record<string, string> = {
+  "Tổng quan": "Bảng điều khiển kinh doanh, doanh số và doanh thu tổng quan.",
+  "POS - Bán hàng": "Giao diện bán hàng tại quầy, chiết khấu, in bill, hủy đơn và hoàn tiền.",
+  "Ca làm việc": "Mở/đóng ca làm việc, quản lý quỹ tiền mặt tại quầy và điều chỉnh chênh lệch.",
   "Sản phẩm": "Danh mục hàng hóa, barcode, giá bán và nhập/xuất dữ liệu sản phẩm.",
+  "Danh mục": "Quản lý nhóm sản phẩm, danh mục hàng hóa.",
   "Tồn kho": "Tồn chi nhánh, nhập xuất, chuyển kho, điều chỉnh và kiểm kê.",
   "Đơn hàng": "Hóa đơn bán hàng, hoàn tiền, in hóa đơn và xuất dữ liệu đơn.",
+  "Trả hàng": "Xử lý trả hàng từ khách hàng và hoàn tiền hàng trả.",
+  "Khách hàng": "Quản lý thông tin khách hàng, lịch sử mua hàng và công nợ khách hàng.",
+  "Nhà cung cấp": "Quản lý thông tin nhà cung cấp và công nợ với nhà cung cấp.",
+  "Nhập hàng": "Tạo và duyệt đơn nhập hàng từ nhà cung cấp, nhận hàng vào kho.",
   "Tài chính": "Chi phí, dòng tiền, báo cáo lợi nhuận và quyền tài chính nhạy cảm.",
+  "Công nợ": "Quản lý và ghi nhận công nợ, thu nợ, xóa nợ khó đòi.",
+  "Hóa đơn điện tử": "Phát hành và cấu hình kết nối hóa đơn điện tử.",
+  "Thanh toán VietQR": "Cấu hình tài khoản ngân hàng và đối soát giao dịch VietQR.",
+  "Báo cáo": "Xem và xuất báo cáo bán hàng, kho, doanh thu và nhân viên.",
   "Nhân viên": "Tài khoản nhân sự, trạng thái làm việc và gán vai trò.",
   "Vai trò & Phân quyền": "Tạo vai trò, chỉnh ma trận quyền và bảo vệ Owner.",
+  "Tích điểm & Loyalty": "Cấu hình tích điểm, đổi điểm thanh toán và hạng thành viên.",
+  "Tin nhắn Zalo": "Gửi tin nhắn chăm sóc khách hàng qua Zalo OA.",
+  "Trợ lý AI": "Trò chuyện với chatbot AI và sử dụng các tính năng thông minh bằng AI.",
+  "Đồng bộ offline": "Xem trạng thái và kiểm soát đồng bộ dữ liệu ngoại tuyến.",
   "Cài đặt": "Thiết lập doanh nghiệp, chi nhánh, máy in, thanh toán và bảo mật.",
+  "Nhật ký & Bảo mật": "Xem lịch sử hoạt động hệ thống và quản lý phiên đăng nhập.",
 };
 
 function describeGroup(group: string) {

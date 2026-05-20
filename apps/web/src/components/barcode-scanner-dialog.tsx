@@ -114,13 +114,28 @@ export function BarcodeScannerDialog({
     if (open) {
       requestCameraPermissions();
     } else {
+      // If it was closed externally without handleOpenChange
       stopScanner();
     }
 
     return () => {
-      stopScanner();
+      // Cleanup on unmount
+      if (scannerRef.current && scannerRef.current.isScanning) {
+        scannerRef.current.stop().catch(() => {});
+      }
     };
   }, [open]);
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen && scannerRef.current && scannerRef.current.isScanning) {
+      // Stop scanner first to avoid "play() interrupted" DOM removal errors
+      stopScanner().finally(() => {
+        onOpenChange(false);
+      });
+    } else {
+      onOpenChange(newOpen);
+    }
+  };
 
   const requestCameraPermissions = async () => {
     try {
@@ -250,7 +265,7 @@ export function BarcodeScannerDialog({
         </div>,
         { duration: 2000 }
       );
-      onOpenChange(false);
+      handleOpenChange(false);
       return;
     }
 
@@ -292,7 +307,7 @@ export function BarcodeScannerDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md border border-white/10 bg-zinc-950 p-6 text-white backdrop-blur-2xl">
         <DialogHeader className="flex flex-row items-center justify-between pb-2 border-b border-white/5">
           <DialogTitle className="flex items-center gap-2 text-lg font-semibold tracking-wide text-zinc-100">

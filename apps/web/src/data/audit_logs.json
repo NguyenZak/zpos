@@ -1,5 +1,158 @@
 [
   {
+    "id": "log-1779305370524-6oplt00xb",
+    "tenant_id": null,
+    "user_id": "04512e3f-e46f-4342-9712-bcdd16c4948d",
+    "user_email": "thungan@classicx.vn",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T19:29:30.524Z"
+  },
+  {
+    "id": "log-1779305217101-x54314sg3",
+    "tenant_id": null,
+    "user_id": "4d1a5899-7302-4fe1-8cad-30ea1f864a46",
+    "user_email": "classicx@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T19:26:57.101Z"
+  },
+  {
+    "id": "log-1779305187947-pom4fikx4",
+    "tenant_id": null,
+    "user_id": "04512e3f-e46f-4342-9712-bcdd16c4948d",
+    "user_email": "thungan@classicx.vn",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T19:26:27.947Z"
+  },
+  {
+    "id": "log-1779305107853-epjzcbc5a",
+    "tenant_id": null,
+    "user_id": "4d1a5899-7302-4fe1-8cad-30ea1f864a46",
+    "user_email": "classicx@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T19:25:07.853Z"
+  },
+  {
+    "id": "log-1779305089932-jnfz1yhn9",
+    "tenant_id": null,
+    "user_id": "04512e3f-e46f-4342-9712-bcdd16c4948d",
+    "user_email": "thungan@classicx.vn",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T19:24:49.933Z"
+  },
+  {
+    "id": "log-1779295701166-lqita3pks",
+    "tenant_id": null,
+    "user_id": "4d1a5899-7302-4fe1-8cad-30ea1f864a46",
+    "user_email": "classicx@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T16:48:21.166Z"
+  },
+  {
+    "id": "log-1779295651031-u1spqjr26",
+    "tenant_id": null,
+    "user_id": "04512e3f-e46f-4342-9712-bcdd16c4948d",
+    "user_email": "thungan@classicx.vn",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T16:47:31.031Z"
+  },
+  {
+    "id": "log-1779293704937-w8mgnl30n",
+    "tenant_id": null,
+    "user_id": "4d1a5899-7302-4fe1-8cad-30ea1f864a46",
+    "user_email": "classicx@zpos.click",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T16:15:04.937Z"
+  },
+  {
+    "id": "log-1779292922121-kugv66mk6",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-20T16:02:02.121Z"
+  },
+  {
     "id": "log-1779286331872-2nentu1rl",
     "tenant_id": null,
     "user_id": "4d1a5899-7302-4fe1-8cad-30ea1f864a46",

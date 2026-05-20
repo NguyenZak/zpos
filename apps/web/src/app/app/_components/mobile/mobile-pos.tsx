@@ -271,7 +271,7 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
   };
 
   return (
-    <div className="flex flex-col h-full bg-background pb-12 animate-in fade-in duration-300">
+    <div className="flex flex-col h-full bg-background pb-12 animate-in fade-in duration-300 print:hidden">
       {/* POS HEADER */}
       <div className="flex flex-col gap-3.5 border-b pb-4">
         <div className="flex items-center justify-between mt-2">

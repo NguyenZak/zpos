@@ -14,7 +14,8 @@ import {
   XCircle,
   Edit,
   Printer,
-  RefreshCcw
+  RefreshCcw,
+  CircleAlert
 } from 'lucide-react';
 import {
   Select,
@@ -84,6 +85,7 @@ export type Order = {
   payment_method: string;
   payment_status?: string;
   payment_amount_received?: number;
+  debt_amount?: number;
   created_at: string;
   branch_id?: string;
   order_items?: any[];
@@ -241,26 +243,59 @@ export default function OrdersPage() {
       cell: ({ row }) => {
         const method = row.getValue("payment_method") as string;
         const status = row.original.payment_status;
+        
         const isDebt = method === 'debt' || status === 'debt' || status === 'partial_debt';
+        const isPaid = status === 'paid';
+        
+        if (isDebt) {
+          const unpaidAmount = row.original.debt_amount !== undefined && row.original.debt_amount !== null
+            ? row.original.debt_amount
+            : (row.original.total_amount - (row.original.payment_amount_received || 0));
+            
+          if (isPaid) {
+            return (
+              <div className="flex flex-col gap-1">
+                <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20 font-bold capitalize w-fit">
+                  Nợ đã trả
+                </Badge>
+                {method !== 'debt' && (
+                  <span className="text-[10px] font-semibold uppercase text-muted-foreground">
+                    Qua {method === 'cash' ? 'Tiền mặt' : method === 'card' ? 'Thẻ' : method === 'transfer' ? 'Chuyển khoản' : method}
+                  </span>
+                )}
+              </div>
+            );
+          } else {
+            const isPartial = status === 'partial_debt' || (unpaidAmount < row.original.total_amount && unpaidAmount > 0);
+            return (
+              <div className="flex flex-col gap-1">
+                <Badge className="bg-rose-500 hover:bg-rose-600 text-white font-bold capitalize w-fit">
+                  {isPartial ? 'Nợ trả một phần' : 'Nợ chưa trả'}
+                </Badge>
+                {unpaidAmount > 0 && (
+                  <span className="text-[10px] font-extrabold uppercase text-amber-600">
+                    Còn nợ: {formatCurrency(unpaidAmount)}
+                  </span>
+                )}
+              </div>
+            );
+          }
+        }
+        
         const label =
           method === 'cash' ? 'Tiền mặt' :
           method === 'card' ? 'Thẻ' :
           method === 'transfer' ? 'Chuyển khoản' :
-          method === 'debt' ? 'Ghi nợ' :
           method || '—';
+          
         return (
           <div className="flex flex-col gap-1">
-            <Badge
-              variant={isDebt ? "destructive" : "outline"}
-              className="capitalize w-fit"
-            >
+            <Badge variant="outline" className="capitalize w-fit">
               {label}
             </Badge>
             {status && status !== 'paid' && (
               <span className="text-[10px] font-bold uppercase text-muted-foreground">
-                {status === 'debt' ? 'Chưa trả' :
-                  status === 'partial_debt' ? 'Trả một phần' :
-                  status === 'pending' ? 'Chờ thanh toán' :
+                {status === 'pending' ? 'Chờ thanh toán' :
                   status === 'refunded' ? 'Đã hoàn' :
                   status}
               </span>
@@ -370,7 +405,20 @@ export default function OrdersPage() {
       if (statusFilter !== 'all' && o.status !== statusFilter) return false;
 
       // 3. Payment method filter
-      if (paymentFilter !== 'all' && o.payment_method !== paymentFilter) return false;
+      if (paymentFilter !== 'all') {
+        const isDebt = o.payment_method === 'debt' || o.payment_status === 'debt' || o.payment_status === 'partial_debt';
+        const isPaid = o.payment_status === 'paid';
+        
+        if (paymentFilter === 'debt_unpaid') {
+          if (!isDebt || isPaid) return false;
+        } else if (paymentFilter === 'debt_paid') {
+          if (!isDebt || !isPaid) return false;
+        } else if (paymentFilter === 'debt') {
+          if (!isDebt) return false;
+        } else {
+          if (o.payment_method !== paymentFilter) return false;
+        }
+      }
 
       // 4. Branch filter
       if (branchFilter !== 'all' && o.branch_id !== branchFilter) return false;
@@ -410,13 +458,17 @@ export default function OrdersPage() {
     const completedCount = filteredData.filter(o => o.status === 'completed').length;
     const completedRevenue = filteredData.filter(o => o.status === 'completed').reduce((sum, o) => sum + (o.total_amount || 0), 0);
     const cancelledCount = filteredData.filter(o => o.status === 'cancelled').length;
+    const totalDebt = filteredData
+      .filter(o => o.status !== 'cancelled')
+      .reduce((sum, o) => sum + (o.debt_amount || 0), 0);
     
     return {
       totalCount,
       totalRevenue,
       completedCount,
       completedRevenue,
-      cancelledCount
+      cancelledCount,
+      totalDebt
     };
   }, [filteredData]);
 
@@ -454,6 +506,7 @@ export default function OrdersPage() {
         payment_method: o.payment_method,
         payment_status: o.payment_status,
         payment_amount_received: o.payment_amount_received,
+        debt_amount: o.debt_amount !== undefined && o.debt_amount !== null ? o.debt_amount : (o.payment_method === 'debt' || o.payment_status === 'debt' || o.payment_status === 'partial_debt' ? o.total_amount - (o.payment_amount_received || 0) : 0),
         created_at: o.created_at,
         branch_id: o.branch_id,
         order_items: o.order_items || []
@@ -545,7 +598,7 @@ export default function OrdersPage() {
 
         {/* Payment Method Filter Selector */}
         <Select value={paymentFilter} onValueChange={setPaymentFilter}>
-          <SelectTrigger className="w-[155px] h-9">
+          <SelectTrigger className="w-[180px] h-9">
             <SelectValue placeholder="Thanh toán" />
           </SelectTrigger>
           <SelectContent>
@@ -553,7 +606,9 @@ export default function OrdersPage() {
             <SelectItem value="cash">Tiền mặt</SelectItem>
             <SelectItem value="card">Thẻ</SelectItem>
             <SelectItem value="transfer">Chuyển khoản</SelectItem>
-            <SelectItem value="debt">Ghi nợ</SelectItem>
+            <SelectItem value="debt">Ghi nợ (Tất cả)</SelectItem>
+            <SelectItem value="debt_unpaid">Nợ chưa trả</SelectItem>
+            <SelectItem value="debt_paid">Nợ đã trả</SelectItem>
           </SelectContent>
         </Select>
 
@@ -591,7 +646,7 @@ export default function OrdersPage() {
       </div>
 
       {/* Real-time Filter Summary Statistics */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 my-2">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 my-2">
         {/* Card 1: Total count */}
         <div className="rounded-xl border bg-card p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between pb-2">
@@ -628,7 +683,19 @@ export default function OrdersPage() {
           <p className="text-[10px] text-ash mt-1">Từ {stats.completedCount} đơn hoàn tất</p>
         </div>
 
-        {/* Card 4: Cancelled count */}
+        {/* Card 4: Total Debt */}
+        <div className="rounded-xl border bg-card p-5 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between pb-2">
+            <span className="text-[10px] font-bold text-ash uppercase tracking-wider">Doanh số ghi nợ</span>
+            <div className="h-7 w-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
+              <CircleAlert className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-amber-600">{formatCurrency(stats.totalDebt)}</div>
+          <p className="text-[10px] text-ash mt-1">Tổng nợ cần thu hồi</p>
+        </div>
+
+        {/* Card 5: Cancelled count */}
         <div className="rounded-xl border bg-card p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between pb-2">
             <span className="text-[10px] font-bold text-ash uppercase tracking-wider">Đơn bị hủy</span>

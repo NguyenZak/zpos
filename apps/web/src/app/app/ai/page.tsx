@@ -557,7 +557,7 @@ export default function AIChatPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 h-[calc(100vh-120px)] md:h-[calc(100vh-140px)] animate-in fade-in duration-500">
+    <div className="flex flex-col gap-6 h-auto lg:h-[calc(100vh-140px)] lg:max-h-[calc(100vh-140px)] lg:min-h-0 animate-in fade-in duration-500">
       
       {/* PAGE HEADER (SYNCHRONIZED WITH THE ORIGINAL REPOSITORY UI) */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between border-b pb-4">
@@ -611,7 +611,7 @@ export default function AIChatPage() {
       <div className="flex-grow flex flex-col lg:flex-row gap-6 min-h-0">
         
         {/* LEFT PANEL: Chat Conversation Interface */}
-        <div className="flex-1 flex flex-col bg-card rounded-lg border shadow-sm overflow-hidden h-full">
+        <div className="flex-1 flex flex-col bg-card rounded-lg border shadow-sm overflow-hidden h-[600px] lg:h-full min-h-0">
           {/* Subtle panel header */}
           <div className="px-4 py-3 border-b bg-muted/40 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -761,7 +761,7 @@ export default function AIChatPage() {
         </div>
 
         {/* RIGHT PANEL: Live Finance Stats & Instruction widgets */}
-        <div className="w-full lg:w-[320px] flex flex-col gap-4 overflow-y-auto pr-1 lg:h-full lg:max-h-full">
+        <div className="w-full lg:w-[320px] flex flex-col gap-4 overflow-y-auto pr-1 lg:h-full lg:max-h-full min-h-0">
           
           {/* Instant Financial Overview Grid Card */}
           <Card className="border shadow-sm rounded-lg overflow-hidden bg-card">

@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { posService } from '@/services/pos.service';
+import { ProductBarcodeField } from "./product-barcode-field";
 
 interface EditProductDialogProps {
   product: any;
@@ -43,12 +44,16 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess }: Ed
   const [categories, setCategories] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     name: product.name,
-    sku: product.barcode || '',
+    sku: product.sku || '',
+    barcode: product.barcode || '',
     category_id: product.category_id || '',
     price: product.price,
     stock: product.stock,
-    image: product.image || ''
+    image: product.image || '',
+    barcode_type: product.barcode_type || 'CODE128'
   });
+  
+  const [barcodeValid, setBarcodeValid] = useState(true);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -60,11 +65,13 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess }: Ed
       // Reset form to active product's values to prevent stale state issues
       setFormData({
         name: product.name,
-        sku: product.barcode || '',
+        sku: product.sku || '',
+        barcode: product.barcode || '',
         category_id: product.category_id || '',
         price: product.price,
         stock: product.stock,
-        image: product.image || ''
+        image: product.image || '',
+        barcode_type: product.barcode_type || 'CODE128'
       });
     }
   }, [open, product]);
@@ -162,13 +169,21 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess }: Ed
         }
       }
 
+      if (!barcodeValid) {
+        toast.error("Mã vạch không hợp lệ hoặc đã tồn tại. Vui lòng kiểm tra lại.");
+        setLoading(false);
+        return;
+      }
+
       await posService.updateProduct(product.id, {
         name: formData.name,
-        barcode: formData.sku,
+        sku: formData.sku,
+        barcode: formData.barcode,
         category_id: formData.category_id || null,
         price: parseFloat(formData.price.toString()),
         stock: parseInt(formData.stock.toString()),
-        image: finalImageUrl || null
+        image: finalImageUrl || null,
+        barcode_type: formData.barcode_type
       });
       toast.success("Cập nhật sản phẩm thành công!");
       onOpenChange(false);
@@ -274,14 +289,30 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess }: Ed
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="edit-sku">Mã SKU / Barcode</Label>
+                <Label htmlFor="edit-sku">Mã SKU</Label>
                 <Input 
                   id="edit-sku" 
-                  className="uppercase"
+                  className="uppercase bg-muted"
+                  placeholder="Mã SP"
                   value={formData.sku}
                   onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                  disabled
+                  title="Mã SKU không thể thay đổi sau khi tạo"
                 />
               </div>
+              <div className="grid gap-2 mt-[-1rem]">
+                <ProductBarcodeField 
+                  value={formData.barcode}
+                  onChange={(val) => setFormData({ ...formData, barcode: val })}
+                  originalBarcode={product.barcode}
+                  onValidationChange={setBarcodeValid}
+                  disabled={true}
+                  barcodeType={formData.barcode_type}
+                  onBarcodeTypeChange={(val) => setFormData({ ...formData, barcode_type: val })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="edit-category">Danh mục</Label>
                 <Select 

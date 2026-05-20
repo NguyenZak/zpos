@@ -1,9 +1,8 @@
-import { createClient as createServiceClient } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 
-import { isSuperAdminEmail } from "@/utils/super-admin";
-import { createClient as createServerSupabase } from "@/utils/supabase/server";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
+
+import { requireSuperAdmin } from "@/utils/admin-auth";
 
 function getServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -18,15 +17,8 @@ function getServiceClient() {
 }
 
 export async function POST(request: NextRequest) {
-  const cookieStore = await cookies();
-  const authClient = createServerSupabase(cookieStore);
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-
-  if (!isSuperAdminEmail(user?.email)) {
-    return NextResponse.json({ success: false, error: "Không có quyền cập nhật owner tenant." }, { status: 403 });
-  }
+  const auth = await requireSuperAdmin();
+  if (auth.error) return auth.error;
 
   const supabase = getServiceClient();
   if (!supabase) {
@@ -38,11 +30,16 @@ export async function POST(request: NextRequest) {
     const organizationId = String(body.organizationId || "");
     const profileId = String(body.profileId || "");
     const fullName = String(body.fullName || "").trim() || "Chủ doanh nghiệp";
-    const email = String(body.email || "").trim().toLowerCase();
+    const email = String(body.email || "")
+      .trim()
+      .toLowerCase();
     const password = String(body.password || "");
 
     if (!organizationId || !profileId || !email) {
-      return NextResponse.json({ success: false, error: "Thiếu organizationId, profileId hoặc email." }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "Thiếu organizationId, profileId hoặc email." },
+        { status: 400 },
+      );
     }
 
     const { data: ownerMember, error: ownerMemberError } = await supabase
@@ -77,8 +74,7 @@ export async function POST(request: NextRequest) {
 
     const profileIsShared = (profileMemberships || []).some((m) => m.organization_id !== organizationId);
     const ownerChanged =
-      (currentProfile?.email || "").toLowerCase() !== email ||
-      (currentProfile?.full_name || "") !== fullName;
+      (currentProfile?.email || "").toLowerCase() !== email || (currentProfile?.full_name || "") !== fullName;
 
     if (profileIsShared && ownerChanged) {
       const { data: existingTargetProfile, error: existingTargetError } = await supabase
@@ -123,7 +119,8 @@ export async function POST(request: NextRequest) {
           full_name: fullName,
           email,
           avatar_url:
-            currentProfile?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fullName)}`,
+            currentProfile?.avatar_url ||
+            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fullName)}`,
         });
 
         if (profileInsertError) throw profileInsertError;

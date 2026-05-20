@@ -1,0 +1,10 @@
+{
+  "botToken": "8911230211:AAFVkjI9RW-9kRfeldmPvnMoKQMc0JaGIsg",
+  "chatId": "-1003921307195",
+  "messageThreadId": "3921307195",
+  "threadIdAudit": "1",
+  "threadIdTickets": "3",
+  "threadIdLogbugs": "2",
+  "logEnabled": true,
+  "logMinSeverity": "info"
+}

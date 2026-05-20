@@ -605,12 +605,12 @@ do $$
 begin
   if exists (select 1 from information_schema.tables where table_schema='public' and table_name='permissions') then
     insert into permissions (id, name, group_name, description) values
-      ('shifts.view',   'Xem ca làm việc', 'Shifts', 'Xem danh sách ca thu ngân và chi tiết từng ca'),
-      ('shifts.open',   'Mở ca làm việc', 'Shifts', 'Cho phép thu ngân mở ca và khai báo tiền đầu ca'),
-      ('shifts.close',  'Đóng ca làm việc', 'Shifts', 'Cho phép thu ngân đóng ca và đối soát tiền cuối ca'),
-      ('shifts.review', 'Duyệt ca làm việc', 'Shifts', 'Cho phép quản lý xem & duyệt ca, cảnh báo chênh lệch tiền'),
-      ('shifts.adjust', 'Điều chỉnh ca', 'Shifts', 'Cho phép sửa số liệu chênh lệch và điều chỉnh ngân quỹ'),
-      ('shifts.export', 'Xuất báo cáo ca', 'Shifts', 'Cho phép xuất báo cáo ca dưới dạng PDF/Excel hoặc in')
+      ('shifts.view',   'Xem ca làm việc', 'Ca làm việc', 'Xem danh sách ca thu ngân và chi tiết từng ca'),
+      ('shifts.open',   'Mở ca làm việc', 'Ca làm việc', 'Cho phép thu ngân mở ca và khai báo tiền đầu ca'),
+      ('shifts.close',  'Đóng ca làm việc', 'Ca làm việc', 'Cho phép thu ngân đóng ca và đối soát tiền cuối ca'),
+      ('shifts.review', 'Duyệt ca làm việc', 'Ca làm việc', 'Cho phép quản lý xem & duyệt ca, cảnh báo chênh lệch tiền'),
+      ('shifts.adjust', 'Điều chỉnh ca', 'Ca làm việc', 'Cho phép sửa số liệu chênh lệch và điều chỉnh ngân quỹ'),
+      ('shifts.export', 'Xuất báo cáo ca', 'Ca làm việc', 'Cho phép xuất báo cáo ca dưới dạng PDF/Excel hoặc in')
     on conflict (id) do update set
       name = excluded.name,
       group_name = excluded.group_name,

@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+
 import fs from "fs/promises";
 import path from "path";
+
+import { requireSuperAdmin } from "@/utils/admin-auth";
 
 const DATA_DIR = path.join(process.cwd(), "src/data");
 const INQUIRIES_FILE = path.join(DATA_DIR, "inquiries.json");
@@ -20,40 +23,37 @@ async function readInquiries() {
           customerName: "Hoàng Đức Trung",
           customerEmail: "trung.hd@bibomart.com.vn",
           customerPhone: "0912 345 678",
-          message: "Tôi muốn nhận báo giá hệ thống POS quản lý chuỗi 15 chi nhánh siêu thị mẹ và bé tại Hà Nội. Yêu cầu tích hợp xuất hóa đơn đỏ và chuyển kho nội bộ tức thời.",
+          message:
+            "Tôi muốn nhận báo giá hệ thống POS quản lý chuỗi 15 chi nhánh siêu thị mẹ và bé tại Hà Nội. Yêu cầu tích hợp xuất hóa đơn đỏ và chuyển kho nội bộ tức thời.",
           status: "new",
           date: "2026-05-17 18:35",
-          notes: [
-            "Khách hàng là đại diện chuỗi BiboMart Hà Nội.",
-            "Cần demo hệ thống trực tiếp vào chiều thứ 4 này."
-          ]
+          notes: ["Khách hàng là đại diện chuỗi BiboMart Hà Nội.", "Cần demo hệ thống trực tiếp vào chiều thứ 4 này."],
         },
         {
           id: "inq-2",
           customerName: "Lâm Mỹ Lệ",
           customerEmail: "le.lam@thecoffeehouse.vn",
           customerPhone: "0977 888 999",
-          message: "Tìm hiểu giải pháp Voice AI order cho quầy cafe take-away. Hệ thống có hỗ trợ máy in nhiệt bếp không?",
+          message:
+            "Tìm hiểu giải pháp Voice AI order cho quầy cafe take-away. Hệ thống có hỗ trợ máy in nhiệt bếp không?",
           status: "contacted",
           date: "2026-05-16 11:20",
           notes: [
             "Đã gọi điện tư vấn buổi sáng 16/5.",
-            "Khách hàng phản hồi rất quan tâm đến trợ lý Voice AI nhưng lo ngại tiếng ồn tại quầy."
-          ]
+            "Khách hàng phản hồi rất quan tâm đến trợ lý Voice AI nhưng lo ngại tiếng ồn tại quầy.",
+          ],
         },
         {
           id: "inq-3",
           customerName: "Phạm Minh Hoàng",
           customerEmail: "hoangpm@tocotocotea.com",
           customerPhone: "0909 112 233",
-          message: "Cần tích hợp ZPOS với phần mềm ERP SAP có sẵn của doanh nghiệp. Xin gửi tài liệu hướng dẫn API SDK.",
+          message:
+            "Cần tích hợp ZPOS với phần mềm ERP SAP có sẵn của doanh nghiệp. Xin gửi tài liệu hướng dẫn API SDK.",
           status: "completed",
           date: "2026-05-14 09:45",
-          notes: [
-            "Đã bàn giao bộ tài liệu API Swagger.",
-            "Kỹ thuật hai bên đã kết nối thử nghiệm Sandbox thành công."
-          ]
-        }
+          notes: ["Đã bàn giao bộ tài liệu API Swagger.", "Kỹ thuật hai bên đã kết nối thử nghiệm Sandbox thành công."],
+        },
       ];
       await fs.writeFile(INQUIRIES_FILE, JSON.stringify(initialInquiries, null, 2), "utf-8");
       return initialInquiries;
@@ -75,6 +75,9 @@ async function writeInquiries(inquiries: any[]) {
 }
 
 export async function GET() {
+  const auth = await requireSuperAdmin();
+  if (auth.error) return auth.error;
+
   const inquiries = await readInquiries();
   return NextResponse.json({ success: true, data: inquiries });
 }
@@ -94,10 +97,12 @@ export async function POST(req: Request) {
       customerName: name,
       customerEmail: email || `${name.toLowerCase().replace(/\s+/g, "")}@example.com`,
       customerPhone: phone,
-      message: message || `Yêu cầu dùng thử POS mô hình ${businessType || "Chưa rõ"} (Quy mô: ${scale || "1-5"}), Tên thương hiệu: ${storeName || "Chưa rõ"}`,
+      message:
+        message ||
+        `Yêu cầu dùng thử POS mô hình ${businessType || "Chưa rõ"} (Quy mô: ${scale || "1-5"}), Tên thương hiệu: ${storeName || "Chưa rõ"}`,
       status: "new",
       date: new Date().toISOString().slice(0, 16).replace("T", " "),
-      notes: []
+      notes: [],
     };
 
     inquiries.unshift(newInquiry);
@@ -110,6 +115,9 @@ export async function POST(req: Request) {
 }
 
 export async function PUT(req: Request) {
+  const auth = await requireSuperAdmin();
+  if (auth.error) return auth.error;
+
   try {
     const body = await req.json();
     const { id, status, notes } = body;
@@ -137,6 +145,9 @@ export async function PUT(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  const auth = await requireSuperAdmin();
+  if (auth.error) return auth.error;
+
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");

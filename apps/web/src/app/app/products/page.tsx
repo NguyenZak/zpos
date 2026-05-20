@@ -58,7 +58,9 @@ import { exportToCSV } from "@/lib/export-utils";
 
 import { AddProductDialog } from "./_components/add-product-dialog";
 import { EditProductDialog } from "./_components/edit-product-dialog";
+import { BarcodePrintDialog } from "./_components/barcode-print-dialog";
 import { posService } from "@/services/pos.service";
+import { RequirePermission } from "@/components/auth/require-permission";
 
 export default function ProductsPage() {
   const [data, setData] = useState<any[]>([]);
@@ -189,52 +191,63 @@ export default function ProductsPage() {
         console.error("Could not load categories for mapping", e);
       }
 
+      const delimiter = rows[0].includes(';') && !rows[0].includes(',') ? ';' : ',';
+      const splitRegex = new RegExp(`${delimiter}(?=(?:(?:[^"]*"){2})*[^"]*$)`);
+
+      // Pre-flight validation: check for missing categories
+      const missingCategories = new Set<string>();
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i].trim();
+        if (!row) continue;
+        const cols = row.split(splitRegex).map(s => s.replace(/(^"|"$)/g, '').trim());
+        if (cols.length >= 6 && cols[0] && cols[3]) {
+          const catName = cols[3].trim();
+          if (catName && !catMap.has(catName.toLowerCase())) {
+            missingCategories.add(catName);
+          }
+        }
+      }
+
+      if (missingCategories.size > 0) {
+        toast.dismiss(toastId);
+        const missingList = Array.from(missingCategories).join(', ');
+        toast.error(`Vui lòng thêm danh mục sản phẩm "${missingList}" trước khi import!`, { duration: 10000 });
+        setLoading(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i].trim();
         if (!row) continue;
         
-        // Parse CSV row ignoring commas inside quotes
-        const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.replace(/(^"|"$)/g, '').trim());
+        // Parse CSV row ignoring delimiter inside quotes
+        const cols = row.split(splitRegex).map(s => s.replace(/(^"|"$)/g, '').trim());
         
-        // Expecting format: Tên SP (0), Danh mục (1), Giá nhập (2), Giá bán (3), Tồn kho (4), SKU/Barcode (5), Tồn tối thiểu (6)
-        if (cols.length >= 5 && cols[0]) {
+        // Expecting format: Tên SP (0), Mã SKU (1), Mã vạch (2), Danh mục (3), Giá bán (4), Tồn kho ban đầu (5), Link Hình ảnh (6)
+        if (cols.length >= 6 && cols[0]) {
           let catId = null;
-          if (cols[1]) {
-            const catName = cols[1].trim();
+          if (cols[3]) {
+            const catName = cols[3].trim();
             const cNameLower = catName.toLowerCase();
             if (catMap.has(cNameLower)) {
               catId = catMap.get(cNameLower);
-            } else {
-              // Dynamically create category
-              try {
-                const orgId = await posService.getActiveOrganizationId();
-                const newCat = await posService.createCategory({
-                  name: catName,
-                  slug: slugify(catName),
-                  organization_id: orgId
-                });
-                catId = newCat.id;
-                catMap.set(cNameLower, catId);
-              } catch (catErr) {
-                console.error("Could not dynamically create category during import", catName, catErr);
-              }
             }
           }
 
           try {
             await posService.createProduct({
               name: cols[0],
+              sku: cols[1] || '',
+              barcode: cols[2] || '',
               category_id: catId,
-              cost_price: parseFloat(cols[2]) || 0,
-              price: parseFloat(cols[3]) || 0,
-              stock: parseInt(cols[4]) || 0,
-              barcode: cols[5] || '',
-              min_stock: parseInt(cols[6]) || 5,
-              description: 'Imported from CSV'
+              price: parseFloat(cols[4].replace(/,/g, '')) || 0,
+              stock: parseInt(cols[5].replace(/,/g, '')) || 0,
+              image: cols[6] || null
             });
             successCount++;
-          } catch (err) {
-            console.error('Error importing row:', i, err);
+          } catch (err: any) {
+            console.error('Error importing row:', i, err?.message || err);
           }
         }
       }
@@ -250,9 +263,9 @@ export default function ProductsPage() {
   };
 
   const handleDownloadTemplate = () => {
-    const headers = ["Tên sản phẩm", "Danh mục", "Giá nhập", "Giá bán", "Tồn kho", "Mã SKU", "Tồn tối thiểu"];
-    const sampleRow1 = ["Cà phê sữa đá", "Cà phê", "12000", "25000", "100", "CF001", "10"];
-    const sampleRow2 = ["Bạc xỉu", "Cà phê", "15000", "30000", "50", "BX001", "5"];
+    const headers = ["Tên sản phẩm", "Mã SKU", "Mã vạch", "Danh mục", "Giá bán", "Tồn kho ban đầu", "Link Hình ảnh"];
+    const sampleRow1 = ["Cà phê sữa đá", "SP0001", "8931234567890", "Cà phê", "25000", "100", "https://example.com/image1.jpg"];
+    const sampleRow2 = ["Bạc xỉu", "SP0002", "", "Cà phê", "30000", "50", ""];
     const csvContent = "\uFEFF" + [headers.join(","), sampleRow1.join(","), sampleRow2.join(",")].join("\n");
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -344,6 +357,15 @@ export default function ProductsPage() {
           >
             <Pencil className="w-4 h-4" />
           </Button>
+          <RequirePermission requiredPermission="products.barcode.print">
+            <BarcodePrintDialog 
+              productName={row.original.name}
+              sku={row.original.sku}
+              barcode={row.original.barcode}
+              barcodeType={row.original.barcode_type}
+              price={row.original.price}
+            />
+          </RequirePermission>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="ghost" size="icon-sm" className="text-destructive hover:bg-destructive/10">

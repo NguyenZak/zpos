@@ -16,7 +16,7 @@ import { AIFloatingWidget } from "./ai-floating-widget";
 import { PermissionGuard } from "@/components/permission-guard";
 import { MobileBottomNav } from "./mobile/mobile-bottom-nav";
 import { TelegramScheduler } from "./telegram-scheduler";
-import { ShiftGate } from "./shift-gate";
+
 
 interface ResponsiveLayoutProps {
   children: React.ReactNode;
@@ -72,7 +72,7 @@ export function ResponsiveLayout({
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto px-4 pb-20 pt-2 min-h-screen">
           <PermissionGuard>
-            <ShiftGate>{children}</ShiftGate>
+            {children}
           </PermissionGuard>
         </main>
         
@@ -105,7 +105,7 @@ export function ResponsiveLayout({
         className="[html[data-content-layout=centered]_&>*]:mx-auto [html[data-content-layout=centered]_&>*]:w-full [html[data-content-layout=centered]_&>*]:max-w-screen-2xl peer-data-[variant=inset]:border"
       >
         <header
-          className="flex h-12 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 [html[data-navbar-style=sticky]_&]:sticky [html[data-navbar-style=sticky]_&]:top-0 [html[data-navbar-style=sticky]_&]:z-50 [html[data-navbar-style=sticky]_&]:overflow-hidden [html[data-navbar-style=sticky]_&]:rounded-t-[inherit] [html[data-navbar-style=sticky]_&]:bg-background/50 [html[data-navbar-style=sticky]_&]:backdrop-blur-md"
+          className="print:hidden flex h-12 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 [html[data-navbar-style=sticky]_&]:sticky [html[data-navbar-style=sticky]_&]:top-0 [html[data-navbar-style=sticky]_&]:z-50 [html[data-navbar-style=sticky]_&]:overflow-hidden [html[data-navbar-style=sticky]_&]:rounded-t-[inherit] [html[data-navbar-style=sticky]_&]:bg-background/50 [html[data-navbar-style=sticky]_&]:backdrop-blur-md"
         >
           <div className="flex w-full items-center justify-between px-4 lg:px-6">
             <div className="flex items-center gap-1 lg:gap-2">
@@ -128,9 +128,9 @@ export function ResponsiveLayout({
             </div>
           </div>
         </header>
-        <div className="h-full p-3 md:p-4">
+        <div className="h-full p-3 md:p-4 print:p-0">
           <PermissionGuard>
-            <ShiftGate>{children}</ShiftGate>
+            {children}
           </PermissionGuard>
         </div>
         {showAIWidget && <AIFloatingWidget />}

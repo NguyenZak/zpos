@@ -1,10 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 
+import { sendAuditLogToTelegram } from "@/lib/telegram-logbug";
+
 // Types for Audit Log
 export interface AuditLog {
   id?: string;
   tenant_id: string | null; // organization id or slug
-  user_id: string | null;   // user id or email
+  user_id: string | null; // user id or email
   user_email?: string | null;
   action: string;
   module: string;
@@ -153,8 +155,8 @@ export async function trackEvent(params: {
   user_agent?: string | null;
   metadata?: Record<string, any>;
 }): Promise<AuditLog> {
-  let severity = params.severity || "info";
-  let metadata = params.metadata ? maskSensitiveData(params.metadata) : {};
+  let severity = params.severity ?? "info";
+  const metadata = params.metadata ? maskSensitiveData(params.metadata) : {};
   let ip_address = params.ip_address || null;
   let user_agent = params.user_agent || null;
   let is_alert = false;
@@ -167,9 +169,7 @@ export async function trackEvent(params: {
       const reqHeaders = headers();
       if (!ip_address) {
         ip_address =
-          reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() ||
-          reqHeaders.get("x-real-ip") ||
-          "127.0.0.1";
+          reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || reqHeaders.get("x-real-ip") || "127.0.0.1";
       }
       if (!user_agent) {
         user_agent = reqHeaders.get("user-agent") || "Unknown Browser";
@@ -194,7 +194,7 @@ export async function trackEvent(params: {
         (l) =>
           l.action === "login_failed" &&
           (l.user_email === params.user_email || l.ip_address === ip_address) &&
-          new Date(l.created_at || new Date()) > tenMinutesAgo
+          new Date(l.created_at || new Date()) > tenMinutesAgo,
       ).length;
     } catch (_) {}
 
@@ -237,9 +237,7 @@ export async function trackEvent(params: {
   if (action === "login_success" && ip_address) {
     try {
       const recentLogs = getLocalLogs();
-      const pastLogins = recentLogs.filter(
-        (l) => l.action === "login_success" && l.user_email === params.user_email
-      );
+      const pastLogins = recentLogs.filter((l) => l.action === "login_success" && l.user_email === params.user_email);
       if (pastLogins.length > 0) {
         const knownIps = new Set(pastLogins.map((l) => l.ip_address).filter(Boolean));
         if (knownIps.size > 0 && !knownIps.has(ip_address)) {
@@ -303,6 +301,13 @@ export async function trackEvent(params: {
     }
   } else {
     await saveToLocalJson(newLog);
+  }
+
+  if (typeof window === "undefined") {
+    const telegram = await sendAuditLogToTelegram(newLog);
+    if (!telegram.ok) {
+      console.warn("Telegram audit log notification failed:", telegram.error);
+    }
   }
 
   return newLog;

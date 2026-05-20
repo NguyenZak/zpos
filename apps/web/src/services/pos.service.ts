@@ -237,6 +237,8 @@ export const posService = {
       organization_id: orgId,
       description: `${tenantSlug}::${costPart}${productData.description || ''}`
     };
+    if (preparedData.barcode === '') preparedData.barcode = null;
+    if (preparedData.sku === '') preparedData.sku = null;
 
     const { data, error } = await supabase
       .from('products')
@@ -291,6 +293,8 @@ export const posService = {
       if (productData.description !== undefined || productData.cost_price !== undefined) {
         preparedData.description = `${tenantSlug}::${costPart}${productData.description || ''}`;
       }
+      if (preparedData.barcode === '') preparedData.barcode = null;
+      if (preparedData.sku === '') preparedData.sku = null;
 
       const { data, error } = await supabase
         .from('products')
@@ -2545,5 +2549,82 @@ export const posService = {
         localStorage.setItem(getTenantStorageKey('zpos_branches'), JSON.stringify(branches));
       }
     }
+  },
+
+  async checkBarcodeExists(barcode: string, organizationId: string): Promise<boolean> {
+    const supabase = createClient();
+    
+    // Check in products
+    const { data: pData } = await supabase
+      .from('products')
+      .select('id')
+      .eq('organization_id', organizationId)
+      .eq('barcode', barcode)
+      .limit(1);
+      
+    if (pData && pData.length > 0) return true;
+
+    // Check in product_variants
+    const { data: pvData } = await supabase
+      .from('product_variants')
+      .select('id, products!inner(organization_id)')
+      .eq('barcode', barcode)
+      .eq('products.organization_id', organizationId)
+      .limit(1);
+
+    if (pvData && pvData.length > 0) return true;
+
+    return false;
+  },
+
+  async assignBarcodeToProduct(productId: string, barcode: string) {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+    
+    if (barcode) {
+      const exists = await this.checkBarcodeExists(barcode, orgId);
+      if (exists) {
+        throw new Error("Mã vạch đã tồn tại trong hệ thống. Vui lòng sử dụng mã khác.");
+      }
+    }
+
+    const { error } = await supabase
+      .from('products')
+      .update({ barcode })
+      .eq('id', productId)
+      .eq('organization_id', orgId);
+
+    if (error) throw error;
+  },
+
+  async assignBarcodeToVariant(variantId: string, barcode: string) {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+
+    if (barcode) {
+      const exists = await this.checkBarcodeExists(barcode, orgId);
+      if (exists) {
+        throw new Error("Mã vạch đã tồn tại trong hệ thống. Vui lòng sử dụng mã khác.");
+      }
+    }
+
+    // Need to verify variant belongs to organization
+    const { data: verifyData } = await supabase
+      .from('product_variants')
+      .select('id, products!inner(organization_id)')
+      .eq('id', variantId)
+      .eq('products.organization_id', orgId)
+      .single();
+
+    if (!verifyData) {
+      throw new Error("Phiên bản không hợp lệ hoặc không thuộc về tổ chức này.");
+    }
+
+    const { error } = await supabase
+      .from('product_variants')
+      .update({ barcode })
+      .eq('id', variantId);
+
+    if (error) throw error;
   }
 };

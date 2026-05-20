@@ -769,17 +769,24 @@ export const loyaltyService = {
     };
 
     try {
-      const { error: txErr } = await supabase.from("loyalty_transactions").insert([rowTx]);
+      const { data, error: txErr } = await supabase.from("loyalty_transactions").insert([rowTx]).select().single();
       if (txErr) {
+        console.error('[Loyalty] applyRedemption INSERT failed:', JSON.stringify(txErr, Object.getOwnPropertyNames(txErr)));
         if (this.isTableMissing(txErr)) {
+          this.applyLocalRedemption(orgId, customerId, orderId, pointsRedeemed, discountApplied);
+          return;
+        }
+        if (txErr.code === '42501') {
+          console.warn('[Loyalty] RLS blocked applyRedemption — run loyalty_fix_v2.sql in Supabase Dashboard. Falling back to localStorage.');
           this.applyLocalRedemption(orgId, customerId, orderId, pointsRedeemed, discountApplied);
           return;
         }
         throw txErr;
       }
       await supabase.from("loyalty_redemptions").insert([rowRedeem]);
+      console.info('[Loyalty] ✅ Redeemed', pointsRedeemed, 'points for customer', customerId, 'order', orderId.slice(0, 8));
     } catch (e) {
-      console.warn("Database applyRedemption error, running locally:", e);
+      console.error("[Loyalty] applyRedemption exception:", e);
       this.applyLocalRedemption(orgId, customerId, orderId, pointsRedeemed, discountApplied);
     }
   },
@@ -801,16 +808,23 @@ export const loyaltyService = {
     };
 
     try {
-      const { error: txErr } = await supabase.from("loyalty_transactions").insert([rowTx]);
+      const { data, error: txErr } = await supabase.from("loyalty_transactions").insert([rowTx]).select().single();
       if (txErr) {
+        console.error('[Loyalty] applyEarning INSERT failed. Error:', JSON.stringify(txErr, Object.getOwnPropertyNames(txErr)), 'Payload:', JSON.stringify(rowTx));
         if (this.isTableMissing(txErr)) {
+          this.applyLocalEarning(orgId, customerId, orderId, pointsEarned, amountSpent);
+          return;
+        }
+        if (txErr.code === '42501') {
+          console.warn('[Loyalty] RLS blocked applyEarning — run loyalty_fix_v2.sql in Supabase Dashboard. Falling back to localStorage.');
           this.applyLocalEarning(orgId, customerId, orderId, pointsEarned, amountSpent);
           return;
         }
         throw txErr;
       }
+      console.info('[Loyalty] ✅ Earned', pointsEarned, 'points for customer', customerId, 'order', orderId.slice(0, 8));
     } catch (e) {
-      console.warn("Database applyEarning error, running locally:", e);
+      console.error("[Loyalty] applyEarning exception:", e);
       this.applyLocalEarning(orgId, customerId, orderId, pointsEarned, amountSpent);
     }
   },

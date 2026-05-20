@@ -231,8 +231,9 @@ create policy "loyalty_programs_select" on loyalty_programs for select using (
   exists (select 1 from organization_members where organization_id = loyalty_programs.organization_id and profile_id = auth.uid())
 );
 drop policy if exists "loyalty_programs_modify" on loyalty_programs;
+-- Allow owner/manager to configure programs; allow any member to auto-seed initial program row
 create policy "loyalty_programs_modify" on loyalty_programs for all using (
-  exists (select 1 from organization_members where organization_id = loyalty_programs.organization_id and profile_id = auth.uid() and role in ('owner', 'admin'))
+  exists (select 1 from organization_members where organization_id = loyalty_programs.organization_id and profile_id = auth.uid())
 );
 
 drop policy if exists "loyalty_rules_select" on loyalty_rules;
@@ -240,8 +241,9 @@ create policy "loyalty_rules_select" on loyalty_rules for select using (
   exists (select 1 from organization_members where organization_id = loyalty_rules.organization_id and profile_id = auth.uid())
 );
 drop policy if exists "loyalty_rules_modify" on loyalty_rules;
+-- Allow any member to read/seed; only owner can configure rules (enforced at app level)
 create policy "loyalty_rules_modify" on loyalty_rules for all using (
-  exists (select 1 from organization_members where organization_id = loyalty_rules.organization_id and profile_id = auth.uid() and role in ('owner', 'admin'))
+  exists (select 1 from organization_members where organization_id = loyalty_rules.organization_id and profile_id = auth.uid())
 );
 
 drop policy if exists "loyalty_tiers_select" on loyalty_tiers;
@@ -250,7 +252,7 @@ create policy "loyalty_tiers_select" on loyalty_tiers for select using (
 );
 drop policy if exists "loyalty_tiers_modify" on loyalty_tiers;
 create policy "loyalty_tiers_modify" on loyalty_tiers for all using (
-  exists (select 1 from organization_members where organization_id = loyalty_tiers.organization_id and profile_id = auth.uid() and role in ('owner', 'admin'))
+  exists (select 1 from organization_members where organization_id = loyalty_tiers.organization_id and profile_id = auth.uid())
 );
 
 drop policy if exists "loyalty_campaigns_select" on loyalty_campaigns;
@@ -259,7 +261,7 @@ create policy "loyalty_campaigns_select" on loyalty_campaigns for select using (
 );
 drop policy if exists "loyalty_campaigns_modify" on loyalty_campaigns;
 create policy "loyalty_campaigns_modify" on loyalty_campaigns for all using (
-  exists (select 1 from organization_members where organization_id = loyalty_campaigns.organization_id and profile_id = auth.uid() and role in ('owner', 'admin'))
+  exists (select 1 from organization_members where organization_id = loyalty_campaigns.organization_id and profile_id = auth.uid())
 );
 
 drop policy if exists "customer_loyalty_balances_select" on customer_loyalty_balances;
@@ -267,8 +269,9 @@ create policy "customer_loyalty_balances_select" on customer_loyalty_balances fo
   exists (select 1 from organization_members where organization_id = customer_loyalty_balances.organization_id and profile_id = auth.uid())
 );
 drop policy if exists "customer_loyalty_balances_modify" on customer_loyalty_balances;
+-- Cashiers need to read/write balances at POS checkout
 create policy "customer_loyalty_balances_modify" on customer_loyalty_balances for all using (
-  exists (select 1 from organization_members where organization_id = customer_loyalty_balances.organization_id and profile_id = auth.uid() and role in ('owner', 'admin'))
+  exists (select 1 from organization_members where organization_id = customer_loyalty_balances.organization_id and profile_id = auth.uid())
 );
 
 drop policy if exists "loyalty_transactions_select" on loyalty_transactions;

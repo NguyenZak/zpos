@@ -303,6 +303,17 @@ export default function ConsoleDashboard() {
   const [aiProvider, setAiProvider] = useState("groq");
   const [smtpEnabled, setSmtpEnabled] = useState(true);
 
+  // Telegram settings
+  const [telegramBotToken, setTelegramBotToken] = useState("");
+  const [telegramChatId, setTelegramChatId] = useState("");
+  const [telegramMessageThreadId, setTelegramMessageThreadId] = useState("");
+  const [telegramThreadIdAudit, setTelegramThreadIdAudit] = useState("");
+  const [telegramThreadIdTickets, setTelegramThreadIdTickets] = useState("");
+  const [telegramThreadIdLogbugs, setTelegramThreadIdLogbugs] = useState("");
+  const [telegramLogEnabled, setTelegramLogEnabled] = useState(true);
+  const [telegramLogMinSeverity, setTelegramLogMinSeverity] = useState<"info" | "warning" | "error" | "critical">("warning");
+  const [isSavingTelegram, setIsSavingTelegram] = useState(false);
+
   // Inline forms state
   const [tenantViewMode, setTenantViewMode] = useState<"list" | "add" | "edit">("list");
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
@@ -1329,6 +1340,233 @@ export default function ConsoleDashboard() {
         ? "Mọi tenant truy cập sẽ nhận được thông báo 503 Service Unavailable ngoại trừ Super Admin."
         : "Hệ thống hoạt động bình thường trở lại.",
       icon: checked ? <AlertTriangle className="text-amber-500" /> : <CheckCircle2 className="text-green-500" />,
+    });
+  };
+
+  // Telegram Settings Handlers
+  const handleSaveTelegramSettings = async () => {
+    if (!telegramBotToken.trim() || !telegramChatId.trim()) {
+      toast.error("Vui lòng điền đầy đủ Bot Token và Chat ID!");
+      return;
+    }
+
+    setIsSavingTelegram(true);
+    try {
+      // Save to server
+      const res = await fetch("/api/admin/telegram-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          botToken: telegramBotToken.trim(),
+          chatId: telegramChatId.trim(),
+          messageThreadId: telegramMessageThreadId.trim(),
+          threadIdAudit: telegramThreadIdAudit.trim(),
+          threadIdTickets: telegramThreadIdTickets.trim(),
+          threadIdLogbugs: telegramThreadIdLogbugs.trim(),
+          logEnabled: telegramLogEnabled,
+          logMinSeverity: telegramLogMinSeverity,
+        }),
+      });
+      const result = await res.json();
+      if (!result.success) throw new Error(result.error || "Lỗi lưu cấu hình lên server");
+
+      // Save to localStorage for client-side persistence
+      localStorage.setItem("zpos_telegram_bot_token", telegramBotToken.trim());
+      localStorage.setItem("zpos_telegram_chat_id", telegramChatId.trim());
+      localStorage.setItem("zpos_telegram_thread_id", telegramMessageThreadId.trim());
+      localStorage.setItem("zpos_telegram_thread_id_audit", telegramThreadIdAudit.trim());
+      localStorage.setItem("zpos_telegram_thread_id_tickets", telegramThreadIdTickets.trim());
+      localStorage.setItem("zpos_telegram_thread_id_logbugs", telegramThreadIdLogbugs.trim());
+      localStorage.setItem("zpos_telegram_log_enabled", String(telegramLogEnabled));
+      localStorage.setItem("zpos_telegram_log_min_severity", telegramLogMinSeverity);
+
+      toast.success("Đã lưu cấu hình Telegram thành công!");
+      
+      const newLog: LogItem = {
+        id: "log-" + Date.now(),
+        timestamp: new Date().toLocaleTimeString("vi-VN"),
+        level: "info",
+        service: "TELEGRAM",
+        message: `Cấu hình Telegram Logging được cập nhật. Log enabled: ${telegramLogEnabled}, Min severity: ${telegramLogMinSeverity}. Thread IDs: Audit=${telegramThreadIdAudit || "main"}, Tickets=${telegramThreadIdTickets || "main"}, Logbugs=${telegramThreadIdLogbugs || "main"}`,
+      };
+      setLogs((prev) => [...prev, newLog]);
+    } catch (e: any) {
+      toast.error("Không thể lưu cấu hình Telegram", { description: e?.message });
+    } finally {
+      setIsSavingTelegram(false);
+    }
+  };
+
+  const handleTestTelegramConnection = async (threadIdParam?: string | any, threadLabel: string = "chính/forum topic") => {
+    if (!telegramBotToken.trim() || !telegramChatId.trim()) {
+      toast.error("Vui lòng điền đầy đủ Bot Token và Chat ID!");
+      return;
+    }
+
+    const isThreadParamValid = typeof threadIdParam === "string";
+    const threadId = isThreadParamValid ? threadIdParam : telegramMessageThreadId;
+    const label = isThreadParamValid ? threadLabel : "chính/forum topic";
+
+    setIsSavingTelegram(true);
+    try {
+      const response = await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: telegramChatId,
+          text: `🧪 <b>ZPOS Test Connection</b>\n\nCấu hình Telegram logging cho thread <b>${label}</b> (${threadId || "main"}) đang hoạt động tốt.`,
+          parse_mode: "HTML",
+          message_thread_id: threadId ? Number(threadId) : undefined,
+        }),
+      });
+
+      const result = await response.json();
+      if (result.ok) {
+        toast.success(`Kết nối Telegram thành công tới thread ${label}! ✅`);
+        const newLog: LogItem = {
+          id: "log-" + Date.now(),
+          timestamp: new Date().toLocaleTimeString("vi-VN"),
+          level: "info",
+          service: "TELEGRAM",
+          message: `Test kết nối Telegram thành công tới thread [${label}]. Message ID: ${result.result.message_id}`,
+        };
+        setLogs((prev) => [...prev, newLog]);
+      } else {
+        throw new Error(result.description || "Lỗi khi gửi tin nhắn");
+      }
+    } catch (e: any) {
+      toast.error(`Lỗi kết nối Telegram (thread ${label})`, { 
+        description: e?.message || "Kiểm tra lại Bot Token, Chat ID hoặc Thread ID" 
+      });
+      const newLog: LogItem = {
+        id: "log-" + Date.now(),
+        timestamp: new Date().toLocaleTimeString("vi-VN"),
+        level: "error",
+        service: "TELEGRAM",
+        message: `Test kết nối Telegram tới thread [${label}] thất bại: ${e?.message}`,
+      };
+      setLogs((prev) => [...prev, newLog]);
+    } finally {
+      setIsSavingTelegram(false);
+    }
+  };
+
+  const handleLoadTelegramSettings = async () => {
+    try {
+      const res = await fetch("/api/admin/telegram-settings");
+      const result = await res.json();
+      if (result.success && result.data && Object.keys(result.data).length > 0) {
+        const data = result.data;
+        setTelegramBotToken(data.botToken || "");
+        setTelegramChatId(data.chatId || "");
+        setTelegramMessageThreadId(data.messageThreadId || "");
+        setTelegramThreadIdAudit(data.threadIdAudit || "");
+        setTelegramThreadIdTickets(data.threadIdTickets || "");
+        setTelegramThreadIdLogbugs(data.threadIdLogbugs || "");
+        setTelegramLogEnabled(data.logEnabled !== undefined ? data.logEnabled : true);
+        setTelegramLogMinSeverity(data.logMinSeverity || "warning");
+        return;
+      }
+    } catch (e) {
+      console.warn("Could not load Telegram settings from server:", e);
+    }
+
+    const savedToken = localStorage.getItem("zpos_telegram_bot_token") || "";
+    const savedChatId = localStorage.getItem("zpos_telegram_chat_id") || "";
+    const savedThreadId = localStorage.getItem("zpos_telegram_thread_id") || "";
+    const savedThreadAudit = localStorage.getItem("zpos_telegram_thread_id_audit") || "";
+    const savedThreadTickets = localStorage.getItem("zpos_telegram_thread_id_tickets") || "";
+    const savedThreadLogbugs = localStorage.getItem("zpos_telegram_thread_id_logbugs") || "";
+    const savedEnabled = localStorage.getItem("zpos_telegram_log_enabled") !== "false";
+    const savedSeverity = (localStorage.getItem("zpos_telegram_log_min_severity") || "warning") as "info" | "warning" | "error" | "critical";
+
+    setTelegramBotToken(savedToken);
+    setTelegramChatId(savedChatId);
+    setTelegramMessageThreadId(savedThreadId);
+    setTelegramThreadIdAudit(savedThreadAudit);
+    setTelegramThreadIdTickets(savedThreadTickets);
+    setTelegramThreadIdLogbugs(savedThreadLogbugs);
+    setTelegramLogEnabled(savedEnabled);
+    setTelegramLogMinSeverity(savedSeverity);
+  };
+
+  // Load Telegram settings on mount
+  useEffect(() => {
+    handleLoadTelegramSettings();
+  }, []);
+
+  // Send Telegram notification for new ticket
+  const sendTicketNotificationToTelegram = async (ticket: any) => {
+    const botToken = localStorage.getItem("zpos_telegram_bot_token");
+    const chatId = localStorage.getItem("zpos_telegram_chat_id");
+    const threadId = localStorage.getItem("zpos_telegram_thread_id_tickets");
+
+    if (!botToken || !chatId) {
+      console.warn("Telegram credentials not configured");
+      return;
+    }
+
+    try {
+      const createdAt = new Intl.DateTimeFormat("vi-VN", {
+        dateStyle: "short",
+        timeStyle: "medium",
+        timeZone: "Asia/Ho_Chi_Minh",
+      }).format(new Date(ticket.createdAt));
+
+      const priorityEmoji = (({
+        "Cao": "🔴",
+        "Trung bình": "🟡",
+        "Thấp": "🟢",
+      } as Record<string, string>)[ticket.priority]) || "⚪";
+
+      const categoryEmoji = (({
+        "Lỗi phần mềm": "🐞",
+        "Yêu cầu tính năng": "✨",
+        "Hỏi đáp/Tư vấn": "💬",
+        "Hóa đơn/Thanh toán": "💳",
+      } as Record<string, string>)[ticket.category]) || "📝";
+
+      const text = `${categoryEmoji} <b>Ticket Hỗ Trợ Mới</b>\n\n` +
+        `<b>ID:</b> <code>${ticket.id}</code>\n` +
+        `<b>Tenant:</b> ${ticket.tenantName} (@${ticket.tenantSlug})\n` +
+        `<b>Loại:</b> ${ticket.category}\n` +
+        `<b>Ưu tiên:</b> ${priorityEmoji} ${ticket.priority}\n` +
+        `<b>Người liên hệ:</b> ${ticket.contactPhone || "Không cung cấp"}\n` +
+        `<b>Thời gian:</b> ${createdAt}\n\n` +
+        `<b>Tiêu đề:</b>\n<code>${ticket.title}</code>\n\n` +
+        `<b>Nội dung:</b>\n${ticket.description.substring(0, 300)}${ticket.description.length > 300 ? "..." : ""}`;
+
+      const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text,
+          parse_mode: "HTML",
+          disable_web_page_preview: true,
+          message_thread_id: threadId ? Number(threadId) : undefined,
+        }),
+      });
+
+      const result = await response.json();
+      if (!result.ok) {
+        console.error("Failed to send Telegram notification:", result.description);
+      }
+    } catch (error) {
+      console.error("Error sending Telegram notification:", error);
+    }
+  };
+
+  // Check for new tickets and send Telegram notification
+  const notifyNewTickets = (newTickets: any[], oldTickets: any[]) => {
+    const newTicketIds = new Set(newTickets.map((t) => t.id));
+    const oldTicketIds = new Set(oldTickets.map((t) => t.id));
+
+    newTickets.forEach((ticket) => {
+      if (!oldTicketIds.has(ticket.id)) {
+        // New ticket found, send Telegram notification
+        sendTicketNotificationToTelegram(ticket);
+      }
     });
   };
 
@@ -3100,6 +3338,227 @@ export default function ConsoleDashboard() {
                           className="flex-1 bg-gradient-to-r from-teal-500 to-emerald-400 text-primary-foreground hover:from-teal-400 hover:to-emerald-300 font-bold text-xs"
                         >
                           Sao lưu Snapshot Ngay
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Telegram Logging Configuration */}
+                  <Card className="border-border bg-card/60 shadow-lg md:col-span-2">
+                    <CardHeader>
+                      <CardTitle className="text-foreground text-base flex items-center gap-2">
+                        <Mail className="h-5 w-5 text-primary" />
+                        Cấu Hình Telegram Logging (Telegram Bot Integration)
+                      </CardTitle>
+                      <CardDescription className="text-muted-foreground text-xs">
+                        Gửi nhật ký hệ thống, cảnh báo bảo mật và ticket hỗ trợ tới Telegram
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      {/* Info alert */}
+                      <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-200 text-xs space-y-1">
+                        <p className="font-bold">📱 Hướng dẫn thiết lập:</p>
+                        <ol className="list-decimal list-inside space-y-0.5 text-[11px]">
+                          <li>Chat với <strong>@BotFather</strong> trên Telegram</li>
+                          <li>Gửi lệnh <code className="bg-black/30 px-1 rounded">/newbot</code> để tạo bot mới</li>
+                          <li>Sao chép Bot Token vào ô bên dưới</li>
+                          <li>Thêm bot vào group hoặc chat riêng, lấy Chat ID từ <code className="bg-black/30 px-1 rounded">api.telegram.org/botTOKEN/getUpdates</code></li>
+                        </ol>
+                      </div>
+
+                      {/* Bot Token input */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-foreground">Telegram Bot Token</label>
+                        <Input
+                          type="password"
+                          placeholder="123456789:ABCDefGHijkLmnoPqrsTuvWxyz..."
+                          value={telegramBotToken}
+                          onChange={(e) => setTelegramBotToken(e.target.value)}
+                          className="bg-background border-border text-foreground"
+                        />
+                        <p className="text-[9px] text-muted-foreground">
+                          🔒 Giữ bí mật. Không chia sẻ token với bất kỳ ai.
+                        </p>
+                      </div>
+
+                      {/* Chat ID input */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-foreground">Telegram Chat ID</label>
+                        <Input
+                          placeholder="-100123456789 hoặc 123456789"
+                          value={telegramChatId}
+                          onChange={(e) => setTelegramChatId(e.target.value)}
+                          className="bg-background border-border text-foreground"
+                        />
+                        <p className="text-[9px] text-muted-foreground">
+                          ID của chat riêng, group, hoặc channel để nhận logs.
+                        </p>
+                      </div>
+
+                      {/* Message Thread ID (optional) */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-foreground">
+                          Message Thread ID (Tùy chọn - Dành cho Telegram Forum)
+                        </label>
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="ID của topic trong forum group (nếu có)"
+                            value={telegramMessageThreadId}
+                            onChange={(e) => setTelegramMessageThreadId(e.target.value)}
+                            className="bg-background border-border text-foreground flex-1"
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleTestTelegramConnection(telegramMessageThreadId, "chính")}
+                            disabled={isSavingTelegram || !telegramBotToken || !telegramChatId || !telegramMessageThreadId}
+                            className="border-border bg-background text-foreground hover:bg-secondary text-xs h-9 shrink-0 px-3 font-semibold"
+                          >
+                            🧪 Test
+                          </Button>
+                        </div>
+                        <p className="text-[9px] text-muted-foreground">
+                          Để trống nếu không dùng Telegram Forum.
+                        </p>
+                      </div>
+
+                      {/* Divider */}
+                      <Separator className="bg-border" />
+
+                      {/* Enable Telegram Logging toggle */}
+                      <div className="flex items-center justify-between p-3 rounded-xl bg-background border border-border">
+                        <div className="space-y-1">
+                          <p className="text-xs font-bold text-foreground">Kích hoạt Telegram Logging</p>
+                          <p className="text-[9px] text-muted-foreground leading-normal">
+                            Bật/Tắt gửi log tới Telegram
+                          </p>
+                        </div>
+                        <Switch
+                          checked={telegramLogEnabled}
+                          onCheckedChange={setTelegramLogEnabled}
+                          className="data-[state=checked]:bg-primary"
+                        />
+                      </div>
+
+                      {/* Min Severity Level */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-foreground">Mức độ Log tối thiểu (Min Severity)</label>
+                        <Select value={telegramLogMinSeverity} onValueChange={(val: any) => setTelegramLogMinSeverity(val)}>
+                          <SelectTrigger className="bg-background border-border text-foreground">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border-border text-foreground">
+                            <SelectItem value="info">INFO (Tất cả sự kiện)</SelectItem>
+                            <SelectItem value="warning">WARNING (Cảnh báo trở lên)</SelectItem>
+                            <SelectItem value="error">ERROR (Lỗi trở lên)</SelectItem>
+                            <SelectItem value="critical">CRITICAL (Chỉ sự cố nghiêm trọng)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-[9px] text-muted-foreground">
+                          Chọn loại log sẽ được gửi tới Telegram. Cảnh báo bảo mật luôn được gửi.
+                        </p>
+                      </div>
+
+                      {/* Divider */}
+                      <Separator className="bg-border" />
+
+                      {/* Multiple Thread IDs for different log types */}
+                      <div>
+                        <p className="text-xs font-bold text-foreground mb-3 flex items-center gap-2">
+                          🎯 Thread ID cho các loại Log (Dành cho Telegram Forum)
+                        </p>
+                        <div className="space-y-3">
+                          {/* Audit Thread ID */}
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-foreground">Thread ID - Audit & Bảo mật</label>
+                            <div className="flex gap-2">
+                              <Input
+                                placeholder="ID của topic Audit (để trống = dùng thread chính)"
+                                value={telegramThreadIdAudit}
+                                onChange={(e) => setTelegramThreadIdAudit(e.target.value)}
+                                className="bg-background border-border text-foreground flex-1"
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleTestTelegramConnection(telegramThreadIdAudit, "Audit & Bảo mật")}
+                                disabled={isSavingTelegram || !telegramBotToken || !telegramChatId || !telegramThreadIdAudit}
+                                className="border-border bg-background text-foreground hover:bg-secondary text-xs h-9 shrink-0 px-3 font-semibold"
+                              >
+                                🧪 Test
+                              </Button>
+                            </div>
+                            <p className="text-[9px] text-muted-foreground">Logs về hành động người dùng, đăng nhập, lỗi bảo mật</p>
+                          </div>
+
+                          {/* Tickets Thread ID */}
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-foreground">Thread ID - Tickets Hỗ Trợ</label>
+                            <div className="flex gap-2">
+                              <Input
+                                placeholder="ID của topic Tickets (để trống = dùng thread chính)"
+                                value={telegramThreadIdTickets}
+                                onChange={(e) => setTelegramThreadIdTickets(e.target.value)}
+                                className="bg-background border-border text-foreground flex-1"
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleTestTelegramConnection(telegramThreadIdTickets, "Tickets Hỗ Trợ")}
+                                disabled={isSavingTelegram || !telegramBotToken || !telegramChatId || !telegramThreadIdTickets}
+                                className="border-border bg-background text-foreground hover:bg-secondary text-xs h-9 shrink-0 px-3 font-semibold"
+                              >
+                                🧪 Test
+                              </Button>
+                            </div>
+                            <p className="text-[9px] text-muted-foreground">Các ticket/yêu cầu hỗ trợ từ khách hàng</p>
+                          </div>
+
+                          {/* Logbugs Thread ID */}
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-foreground">Thread ID - Logbugs Báo Cáo Lỗi</label>
+                            <div className="flex gap-2">
+                              <Input
+                                placeholder="ID của topic Logbugs (để trống = dùng thread chính)"
+                                value={telegramThreadIdLogbugs}
+                                onChange={(e) => setTelegramThreadIdLogbugs(e.target.value)}
+                                className="bg-background border-border text-foreground flex-1"
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleTestTelegramConnection(telegramThreadIdLogbugs, "Logbugs Báo Cáo Lỗi")}
+                                disabled={isSavingTelegram || !telegramBotToken || !telegramChatId || !telegramThreadIdLogbugs}
+                                className="border-border bg-background text-foreground hover:bg-secondary text-xs h-9 shrink-0 px-3 font-semibold"
+                              >
+                                🧪 Test
+                              </Button>
+                            </div>
+                            <p className="text-[9px] text-muted-foreground">Lỗi ứng dụng báo cáo từ khách hàng</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-3 pt-2">
+                        <Button
+                          onClick={handleTestTelegramConnection}
+                          disabled={isSavingTelegram || !telegramBotToken || !telegramChatId}
+                          variant="outline"
+                          className="flex-1 border-border bg-background text-foreground hover:bg-secondary font-bold text-xs"
+                        >
+                          {isSavingTelegram ? "Đang kiểm tra..." : "🧪 Kiểm Tra Kết Nối"}
+                        </Button>
+                        <Button
+                          onClick={handleSaveTelegramSettings}
+                          disabled={isSavingTelegram}
+                          className="flex-1 bg-primary text-primary-foreground hover:bg-teal-400 font-bold text-xs"
+                        >
+                          {isSavingTelegram ? "Đang lưu..." : "💾 Lưu Cấu Hình"}
                         </Button>
                       </div>
                     </CardContent>

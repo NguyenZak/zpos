@@ -13,6 +13,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Sparkles,
+  Search,
 } from "lucide-react";
 import {
   Card,
@@ -94,6 +95,7 @@ export function EInvoiceManager() {
     ...DEFAULT_CONFIG,
   });
   const [savingConfig, setSavingConfig] = React.useState(false);
+  const [fetchingTaxInfo, setFetchingTaxInfo] = React.useState(false);
 
   React.useEffect(() => {
     load();
@@ -127,6 +129,51 @@ export function EInvoiceManager() {
       toast.error(`Lưu thất bại: ${e?.message}`);
     } finally {
       setSavingTax(false);
+    }
+  }
+
+  async function handleFetchTaxInfo(taxCode: string) {
+    if (!taxCode || taxCode.length < 10) return;
+
+    setFetchingTaxInfo(true);
+    try {
+      const res = await fetch(`https://api.vietqr.io/v2/business/${taxCode}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.code === "00" && json.data) {
+          const { name, address } = json.data;
+
+          let province = tax.province || "";
+          let district = tax.district || "";
+          let legal_address = address;
+
+          if (address) {
+            const parts = address.split(",").map((p: string) => p.trim());
+            if (parts.length >= 3) {
+              province = parts[parts.length - 1];
+              district = parts[parts.length - 2];
+            } else if (parts.length === 2) {
+              province = parts[parts.length - 1];
+            }
+          }
+
+          setTax((prev) => ({
+            ...prev,
+            company_name: name || prev.company_name,
+            legal_address: legal_address || prev.legal_address,
+            province,
+            district,
+          }));
+          toast.success("Đã tự động điền thông tin công ty");
+        } else if (json.code === "51") {
+          toast.error("Mã số thuế không tồn tại hoặc không đúng");
+        }
+      }
+    } catch (err) {
+      console.error("Lỗi khi tìm MST", err);
+      toast.error("Không thể kết nối đến máy chủ tra cứu");
+    } finally {
+      setFetchingTaxInfo(false);
     }
   }
 
@@ -212,15 +259,36 @@ export function EInvoiceManager() {
                     <Label htmlFor="tax-code" className="font-bold">
                       Mã số thuế <span className="text-red-500">*</span>
                     </Label>
-                    <Input
-                      id="tax-code"
-                      value={tax.tax_code}
-                      onChange={(e) =>
-                        setTax((t) => ({ ...t, tax_code: e.target.value }))
-                      }
-                      placeholder="0312345678"
-                      className="font-mono font-bold"
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="tax-code"
+                        value={tax.tax_code}
+                        onChange={(e) =>
+                          setTax((t) => ({ ...t, tax_code: e.target.value }))
+                        }
+                        onBlur={() => {
+                          if (tax.tax_code && tax.tax_code.length >= 10 && !tax.company_name) {
+                            handleFetchTaxInfo(tax.tax_code);
+                          }
+                        }}
+                        placeholder="0312345678"
+                        className="font-mono font-bold"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => handleFetchTaxInfo(tax.tax_code)}
+                        disabled={fetchingTaxInfo || !tax.tax_code}
+                        className="px-3"
+                        title="Tra cứu thông tin tự động"
+                      >
+                        {fetchingTaxInfo ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Search className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
