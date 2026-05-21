@@ -167,34 +167,6 @@ export function BarcodeScannerDialog({
     }
   };
 
-  const playErrorBeep = () => {
-    if (!soundEnabled) return;
-    try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.type = "sawtooth"; // Buzzing error sound
-      osc.frequency.setValueAtTime(160, ctx.currentTime);
-
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start();
-      osc.stop(ctx.currentTime + 0.35);
-
-      // Double vibration for error
-      if (typeof navigator !== "undefined" && navigator.vibrate) {
-        navigator.vibrate([100, 50, 100]);
-      }
-    } catch (e) {
-      console.warn("Audio Context failed to play error beep:", e);
-    }
-  };
-
   // ------------------------------------------
   // CAMERA SCANNING ENGINE
   // ------------------------------------------
@@ -351,10 +323,10 @@ export function BarcodeScannerDialog({
 
     (window as any).lastScannedCode = cleanedCode;
     (window as any).lastScannedTime = now;
+    playBeep();
 
     // 1. Raw scan mode (e.g. populating product code fields)
     if (onRawScan) {
-      playBeep();
       onRawScan(cleanedCode);
       toast.success(
         <div className="flex flex-col gap-1">
@@ -372,7 +344,6 @@ export function BarcodeScannerDialog({
       const matchedProduct = products.find((p) => p.barcode && p.barcode.toString().trim() === cleanedCode);
 
       if (matchedProduct) {
-        playBeep();
         onScanSuccess(matchedProduct);
         toast.success(
           <div className="flex flex-col gap-1">
@@ -383,7 +354,6 @@ export function BarcodeScannerDialog({
           { duration: 2500 },
         );
       } else {
-        playErrorBeep();
         toast.error(
           <div className="flex flex-col gap-1.5">
             <span className="font-bold text-red-600 text-xs dark:text-red-400">Mã vạch không khớp</span>
