@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { Layers, ShoppingCart } from "lucide-react";
 
@@ -22,6 +23,7 @@ export type PickedVariant = {
   barcode?: string | null;
   image?: string | null;
   price: number;
+  cost_price?: number;
   stock: number;
   attributes: Record<string, string>;
 };
@@ -31,6 +33,7 @@ interface VariantPickerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: (variant: PickedVariant, product: any) => void;
+  onConfirmAll?: (variants: PickedVariant[], product: any) => void;
   allowOutOfStock?: boolean;
 }
 
@@ -60,7 +63,7 @@ function formatVND(n: number) {
   return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n);
 }
 
-export function VariantPickerDialog({ product, open, onOpenChange, onConfirm, allowOutOfStock = false }: VariantPickerDialogProps) {
+export function VariantPickerDialog({ product, open, onOpenChange, onConfirm, onConfirmAll, allowOutOfStock = false }: VariantPickerDialogProps) {
   const rawVariants: any[] = useMemo(
     () => (product && Array.isArray(product.variants) ? product.variants : []),
     [product],
@@ -80,6 +83,7 @@ export function VariantPickerDialog({ product, open, onOpenChange, onConfirm, al
   const matchedVariant = fullySelected ? findVariant(rawVariants, selection) : undefined;
   const matchedStock = Number(matchedVariant?.stock ?? 0);
   const matchedPrice = Number(matchedVariant?.price ?? 0);
+  const matchedCostPrice = Number(matchedVariant?.cost_price ?? 0);
 
   // Determine which values are still selectable given the current selection
   const isValueAvailable = (attrName: string, value: string) => {
@@ -102,6 +106,7 @@ export function VariantPickerDialog({ product, open, onOpenChange, onConfirm, al
         barcode: matchedVariant.barcode || null,
         image: matchedVariant.image_url || null,
         price: matchedPrice,
+        cost_price: matchedCostPrice,
         stock: matchedStock,
         attributes: matchedVariant.attributes || {},
       },
@@ -110,24 +115,47 @@ export function VariantPickerDialog({ product, open, onOpenChange, onConfirm, al
     onOpenChange(false);
   };
 
+  const handleConfirmAll = () => {
+    if (!product || !onConfirmAll) return;
+    const variantsToReturn: PickedVariant[] = rawVariants
+      .filter(v => allowOutOfStock || Number(v.stock ?? 0) > 0)
+      .map(v => ({
+        id: v.id,
+        name: v.name || "",
+        sku: v.sku || null,
+        barcode: v.barcode || null,
+        image: v.image_url || null,
+        price: Number(v.price ?? 0),
+        cost_price: Number(v.cost_price ?? 0),
+        stock: Number(v.stock ?? 0),
+        attributes: v.attributes || {},
+      }));
+    if (variantsToReturn.length > 0) {
+      onConfirmAll(variantsToReturn, product);
+      onOpenChange(false);
+    } else {
+      toast.error("Không có phiên bản nào khả dụng");
+    }
+  };
+
   if (!product) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[480px] gap-0 p-0 sm:rounded-2xl">
-        <DialogHeader className="border-b px-6 py-5 text-left">
+      <DialogContent className="max-w-[420px] gap-0 p-0 sm:rounded-2xl overflow-hidden">
+        <DialogHeader className="border-b px-5 py-4 text-left bg-muted/20">
           <DialogTitle className="flex items-center gap-3 text-xl font-bold">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted/80 text-foreground">
               <Layers className="h-5 w-5" />
             </span>
             <span className="line-clamp-1">{product.name}</span>
           </DialogTitle>
-          <DialogDescription className="mt-2 text-sm text-muted-foreground">
-            Chọn biến thể để thêm vào giỏ ({rawVariants.length} phiên bản)
+          <DialogDescription className="mt-1.5 text-[13px] text-muted-foreground">
+            Chọn biến thể để thêm vào đơn ({rawVariants.length} phiên bản)
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 px-6 py-6">
+        <div className="space-y-5 px-5 py-5">
           {attributeNames.map((attrName) => {
             const values = attributeMap.get(attrName) || [];
             return (
@@ -143,7 +171,7 @@ export function VariantPickerDialog({ product, open, onOpenChange, onConfirm, al
                         type="button"
                         disabled={!isAvailable}
                         onClick={() => setSelection({ ...selection, [attrName]: val })}
-                        className={`rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all ${
+                        className={`rounded-xl border px-3 py-2 text-[13px] font-semibold transition-all ${
                           isSelected
                             ? "border-primary bg-primary text-primary-foreground shadow-sm ring-1 ring-primary/20"
                             : isAvailable
@@ -161,7 +189,7 @@ export function VariantPickerDialog({ product, open, onOpenChange, onConfirm, al
           })}
 
           {/* Summary */}
-          <div className="rounded-2xl border border-input p-4">
+          <div className="rounded-xl border border-input/60 bg-muted/10 p-3.5">
             {!fullySelected ? (
               <p className="text-sm text-muted-foreground">Chọn đủ thuộc tính để xem giá và tồn kho.</p>
             ) : matchedVariant ? (
@@ -203,24 +231,37 @@ export function VariantPickerDialog({ product, open, onOpenChange, onConfirm, al
           </div>
         </div>
 
-        <DialogFooter className="m-0 gap-3 border-t-0 bg-transparent px-6 pb-6 pt-2">
+        <DialogFooter className="m-0 flex flex-row items-center justify-between gap-2 border-t px-5 py-3.5 bg-muted/20">
           <Button
             type="button"
-            variant="outline"
-            className="h-11 rounded-xl px-6 text-sm font-semibold"
+            variant="ghost"
+            className="h-10 rounded-xl px-4 text-sm font-semibold text-muted-foreground hover:text-foreground"
             onClick={() => onOpenChange(false)}
           >
             Hủy
           </Button>
-          <Button
-            type="button"
-            className="h-11 gap-2 rounded-xl px-6 text-sm font-semibold"
-            disabled={!matchedVariant || (!allowOutOfStock && matchedStock <= 0)}
-            onClick={handleConfirm}
-          >
-            <ShoppingCart className="h-4 w-4" />
-            Thêm vào giỏ
-          </Button>
+          <div className="flex gap-2">
+            {onConfirmAll && rawVariants.length > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                className="h-10 rounded-xl px-4 text-sm font-semibold shadow-sm"
+                onClick={handleConfirmAll}
+              >
+                <Layers className="h-4 w-4 mr-2 text-muted-foreground" />
+                Chọn tất cả
+              </Button>
+            )}
+            <Button
+              type="button"
+              className="h-10 gap-2 rounded-xl px-5 text-sm font-semibold shadow-sm"
+              disabled={!matchedVariant || (!allowOutOfStock && matchedStock <= 0)}
+              onClick={handleConfirm}
+            >
+              <ShoppingCart className="h-4 w-4" />
+              Thêm vào
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

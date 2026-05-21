@@ -833,22 +833,10 @@ export default function POSPage() {
     const loadData = async () => {
       try {
         const productsData = await posService.getProducts();
-        if (productsData && productsData.length > 0) {
-          applyProducts(productsData);
-          // Warm the offline cache for next time the cashier loses Wi-Fi.
-          cacheProducts(productsData).catch(() => {});
-        } else {
-          // Empty server response → fall back to cached or mock
-          const cached = await getCachedProducts();
-          if (cached.length > 0) {
-            applyProducts(cached);
-          } else if (getTenantSlug() === "app") {
-            setProducts(MOCK_PRODUCTS);
-            setCategories(["Tất cả", ...Array.from(new Set(MOCK_PRODUCTS.map((p) => p.category)))]);
-          } else {
-            setProducts([]);
-          }
-        }
+        // Server returned data (even if empty, meaning all products deleted)
+        applyProducts(productsData);
+        // Overwrite offline cache with the truth
+        cacheProducts(productsData).catch(() => {});
       } catch (e) {
         console.warn("Server unreachable — falling back to offline product cache:", (e as any)?.message);
         const cached = await getCachedProducts();
@@ -1203,6 +1191,7 @@ export default function POSPage() {
       status: "completed",
       shift_id: isValidUUID(activeShift.id) ? activeShift.id : null,
       cash_register_id: isValidUUID(activeShift.cash_register_id) ? activeShift.cash_register_id : null,
+      staff_id: isValidUUID(activeShift.cashier_id) ? activeShift.cashier_id : null,
     };
 
     isProcessingRef.current = true;
@@ -1398,6 +1387,7 @@ export default function POSPage() {
           status: "pending",
           shift_id: activeShift.id,
           cash_register_id: activeShift.cash_register_id || null,
+          staff_id: activeShift.cashier_id || null,
         } as any,
         cart,
       );
@@ -2667,9 +2657,16 @@ export default function POSPage() {
                     </div>
 
                     {pointsToEarn > 0 && (
-                      <div className="bg-emerald-500/10 rounded-lg p-2.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 flex justify-between items-center">
-                        <span>Đơn này sẽ tích thêm:</span>
-                        <span className="text-sm font-black">+{pointsToEarn.toLocaleString("vi-VN")} điểm</span>
+                      <div className="bg-emerald-500/10 rounded-lg p-2.5 flex flex-col gap-1.5">
+                        <div className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 flex justify-between items-center">
+                          <span>Đơn này sẽ tích thêm:</span>
+                          <span className="text-sm font-black">+{pointsToEarn.toLocaleString("vi-VN")} điểm</span>
+                        </div>
+                        {pointsEarningBreakdown && (
+                          <div className="text-[9.5px] font-medium text-emerald-600/90 dark:text-emerald-500/90 leading-snug border-t border-emerald-500/20 pt-1.5">
+                            {pointsEarningBreakdown}
+                          </div>
+                        )}
                       </div>
                     )}
 

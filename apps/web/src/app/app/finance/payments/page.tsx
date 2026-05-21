@@ -261,13 +261,13 @@ export default function PaymentsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Thời gian</TableHead>
-                  <TableHead>Mã CK</TableHead>
+                  <TableHead>Mã GD / Tham chiếu</TableHead>
                   <TableHead className="text-right">Số tiền</TableHead>
                   <TableHead>Người chuyển</TableHead>
                   <TableHead>Nội dung</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead>Nguồn</TableHead>
-                  <TableHead>Đơn hàng</TableHead>
+                  <TableHead>Liên kết / Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -276,8 +276,15 @@ export default function PaymentsPage() {
                   return (
                     <TableRow key={t.id}>
                       <TableCell className="font-mono text-xs">{formatTime(t.received_at)}</TableCell>
-                      <TableCell className="font-mono text-xs font-bold text-violet-700 dark:text-violet-400">
-                        {t.reference_code || "—"}
+                      <TableCell className="font-mono text-xs">
+                        <div className="font-bold text-violet-700 dark:text-violet-400">
+                          {t.external_id || "—"}
+                        </div>
+                        {t.reference_code && (
+                          <div className="text-[10px] text-muted-foreground mt-0.5">
+                            Ref: {t.reference_code}
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell className="text-right font-bold">
                         {t.transfer_type === "out" ? "-" : "+"}
@@ -304,6 +311,40 @@ export default function PaymentsPage() {
                             <Link2 className="h-3 w-3" />
                             Xem đơn
                           </a>
+                        ) : t.status === "ignored" ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50"
+                            onClick={async () => {
+                              try {
+                                await vietQRService.updateTransactionStatus(t.id, "unmatched");
+                                toast.success("Đã hoàn tác trạng thái");
+                                load();
+                              } catch (e) {
+                                toast.error("Lỗi khi cập nhật trạng thái");
+                              }
+                            }}
+                          >
+                            Hoàn tác
+                          </Button>
+                        ) : ["unmatched", "failed", "duplicate"].includes(t.status) ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs text-muted-foreground hover:text-amber-600 hover:bg-amber-50"
+                            onClick={async () => {
+                              try {
+                                await vietQRService.updateTransactionStatus(t.id, "ignored");
+                                toast.success("Đã đánh dấu bỏ qua giao dịch này");
+                                load();
+                              } catch (e) {
+                                toast.error("Lỗi khi cập nhật trạng thái");
+                              }
+                            }}
+                          >
+                            Bỏ qua
+                          </Button>
                         ) : (
                           <span className="text-xs text-muted-foreground">—</span>
                         )}

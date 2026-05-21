@@ -17,7 +17,7 @@ interface CloseShiftDialogProps {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   shift: Shift;
-  onClosed?: () => void;
+  onClosed?: (printed?: boolean) => void;
 }
 
 export function CloseShiftDialog({ open, onOpenChange, shift, onClosed }: CloseShiftDialogProps) {
@@ -64,8 +64,11 @@ export function CloseShiftDialog({ open, onOpenChange, shift, onClosed }: CloseS
         return;
       }
       toast.success(`Đã đóng ca · ${difference === 0 ? "khớp tiền" : difference > 0 ? "dư " + fmtVND(difference) : "thiếu " + fmtVND(Math.abs(difference))}`);
+      
+      const wantsToPrint = window.confirm("Ca đã đóng thành công. Bạn có muốn in Phiếu Kết Toán Ca (Z-Report) không?");
+      
       onOpenChange(false);
-      onClosed?.();
+      onClosed?.(wantsToPrint);
     } finally {
       setSaving(false);
     }
@@ -126,7 +129,7 @@ export function CloseShiftDialog({ open, onOpenChange, shift, onClosed }: CloseS
           </div>
 
           <div className="space-y-1">
-            <Label>Ghi chú đóng ca</Label>
+            <Label>Ghi chú bàn giao (Hiển thị cho ca sau)</Label>
             <Textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}

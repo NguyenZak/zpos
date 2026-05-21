@@ -15,7 +15,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Calendar, Download, Filter, Loader2, MoreHorizontal, Receipt, Search, Trash2 } from "lucide-react";
+import { Calendar, Download, Edit2, Filter, Loader2, MoreHorizontal, Receipt, Search, Trash2, Printer } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -45,7 +45,63 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { exportToCSV } from "@/lib/export-utils";
 import { posService } from "@/services/pos.service";
 
+import { CategoryManagerDialog } from "../_components/category-manager-dialog";
 import { AddExpenseDialog } from "./_components/add-expense-dialog";
+import { EditExpenseDialog } from "./_components/edit-expense-dialog";
+
+function numberToVietnameseWords(n: number): string {
+  if (n === 0) return "Không đồng";
+  const units = ["", " nghìn", " triệu", " tỷ", " nghìn tỷ", " triệu tỷ"];
+  const digits = ["không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"];
+
+  let result = "";
+  let unitIndex = 0;
+  let remaining = n;
+  let isFirstGroup = true;
+
+  while (remaining > 0) {
+    const group = remaining % 1000;
+    remaining = Math.floor(remaining / 1000);
+
+    if (group > 0) {
+      const hundred = Math.floor(group / 100);
+      const ten = Math.floor((group % 100) / 10);
+      const unit = group % 10;
+      let res = "";
+
+      if (hundred > 0 || !isFirstGroup) {
+        res += digits[hundred] + " trăm ";
+      }
+      if (ten > 1) {
+        res += digits[ten] + " mươi ";
+        if (unit === 1) res += "mốt";
+        else if (unit === 4) res += "tư";
+        else if (unit === 5) res += "lăm";
+        else if (unit > 0) res += digits[unit];
+      } else if (ten === 1) {
+        res += "mười ";
+        if (unit === 5) res += "lăm";
+        else if (unit > 0) res += digits[unit];
+      } else if (ten === 0) {
+        if (unit > 0 && (hundred > 0 || !isFirstGroup)) {
+          res += "lẻ ";
+        }
+        if (unit > 0) {
+          res += digits[unit];
+        }
+      }
+      res = res.trim();
+      result = res + units[unitIndex] + (result ? " " + result : "");
+    }
+    unitIndex++;
+    isFirstGroup = false;
+  }
+  
+  result = result.replace(/^không trăm (lẻ )?/, '');
+  result = result.trim();
+  result = result.charAt(0).toUpperCase() + result.slice(1);
+  return result + " đồng";
+}
 
 export default function ExpensesPage() {
   const [data, setData] = useState<any[]>([]);
@@ -58,6 +114,8 @@ export default function ExpensesPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [editExpense, setEditExpense] = useState<any | null>(null);
+  const [printExpense, setPrintExpense] = useState<any | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -168,8 +226,11 @@ export default function ExpensesPage() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Hành động</DropdownMenuLabel>
-            <DropdownMenuItem className="gap-2">
-              <Download className="h-4 w-4" /> Tải chứng từ
+            <DropdownMenuItem className="gap-2 text-primary" onClick={() => setEditExpense(row.original)}>
+              <Edit2 className="h-4 w-4" /> Sửa chi phí
+            </DropdownMenuItem>
+            <DropdownMenuItem className="gap-2" onClick={() => handlePrintReceipt(row.original)}>
+              <Printer className="h-4 w-4" /> In phiếu chi
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="gap-2 text-destructive" onClick={() => setDeleteId(row.original.id)}>
@@ -223,6 +284,13 @@ export default function ExpensesPage() {
     toast.success("Đã xuất CSV chi phí");
   };
 
+  const handlePrintReceipt = (expense: any) => {
+    setPrintExpense(expense);
+    setTimeout(() => {
+      window.print();
+    }, 100);
+  };
+
   const handleDeleteExpense = async () => {
     if (!deleteId) return;
     setDeleting(true);
@@ -262,7 +330,10 @@ export default function ExpensesPage() {
           <h1 className="font-black text-3xl tracking-tight">Chi phí vận hành</h1>
           <p className="text-muted-foreground text-sm">Quản lý các khoản chi phí không bao gồm giá vốn hàng bán.</p>
         </div>
-        <AddExpenseDialog onShowSuccess={loadData} />
+        <div className="flex items-center gap-2">
+          <CategoryManagerDialog onCategoriesChange={loadData} />
+          <AddExpenseDialog onShowSuccess={loadData} />
+        </div>
       </div>
 
       <div className="flex items-center gap-2 py-2">
@@ -419,6 +490,142 @@ export default function ExpensesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <EditExpenseDialog
+        expense={editExpense}
+        open={!!editExpense}
+        onOpenChange={(val) => !val && setEditExpense(null)}
+        onSuccess={loadData}
+      />
+
+      {/* Hidden Print Container */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          @page {
+            size: A5; /* Allows user to choose portrait/landscape in print dialog and it will default to A5 */
+            margin: 10mm;
+          }
+        }
+      `}} />
+      <div 
+        className="hidden print:block absolute top-0 left-0 w-full bg-white" 
+        style={{ fontFamily: '"Times New Roman", Times, serif', color: 'black' }}
+      >
+        {printExpense && (
+          <div className="w-full">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h1 className="text-base font-bold uppercase tracking-tight">Hệ Thống ZPOS</h1>
+                <p className="text-xs">Địa chỉ: ..............................................................</p>
+                <p className="text-xs">Điện thoại: ...........................................................</p>
+              </div>
+              <div className="text-center">
+                <p className="font-bold text-sm">Mẫu số 02 - TT</p>
+                <p className="text-[10px] italic">
+                  (Ban hành theo Thông tư số 200/2014/TT-BTC <br/>
+                  Ngày 22/12/2014 của Bộ Tài chính)
+                </p>
+              </div>
+            </div>
+
+            <div className="text-center mb-6 relative">
+              <h2 className="text-2xl font-black uppercase tracking-widest mb-1">Phiếu Chi</h2>
+              <p className="italic text-xs">
+                Ngày {format(new Date(printExpense.expense_date), "dd")} tháng {format(new Date(printExpense.expense_date), "MM")} năm {format(new Date(printExpense.expense_date), "yyyy")}
+              </p>
+              
+              <div className="absolute top-0 right-0 text-right text-xs">
+                <p>Quyển số: ...................</p>
+                <p>Số: <span className="font-semibold">{printExpense.id.slice(0, 8).toUpperCase()}</span></p>
+                <p>Nợ: ...........................</p>
+                <p>Có: ...........................</p>
+              </div>
+            </div>
+
+            <div className="space-y-3 text-sm mb-6">
+              <div className="flex items-end">
+                <span className="whitespace-nowrap font-medium pr-2">Họ và tên người nhận tiền:</span>
+                <span className="flex-1 font-semibold border-b border-dotted border-gray-400 capitalize pb-0.5">
+                  ......................................................................................................
+                </span>
+              </div>
+              <div className="flex items-end">
+                <span className="whitespace-nowrap font-medium pr-2">Địa chỉ:</span>
+                <span className="flex-1 border-b border-dotted border-gray-400 pb-0.5">
+                  ......................................................................................................
+                </span>
+              </div>
+              <div className="flex items-end">
+                <span className="whitespace-nowrap font-medium pr-2">Lý do chi:</span>
+                <span className="flex-1 font-bold text-base border-b border-dotted border-gray-400 pb-0.5">
+                  {printExpense.title} {printExpense.category?.name ? `(${printExpense.category?.name})` : ""}
+                </span>
+              </div>
+              <div className="flex flex-wrap md:flex-nowrap items-end gap-y-2">
+                <span className="whitespace-nowrap font-medium pr-2">Số tiền:</span>
+                <span className="font-black text-lg mr-4 pb-0.5">{formatCurrency(printExpense.amount || 0)}</span>
+                <span className="italic pb-0.5 whitespace-nowrap">(Viết bằng chữ):</span>
+                <span className="flex-1 font-bold text-base ml-2 border-b border-dotted border-gray-400 pb-0.5 min-w-[200px]">
+                  {numberToVietnameseWords(printExpense.amount || 0)}
+                </span>
+              </div>
+              <div className="flex items-end">
+                <span className="whitespace-nowrap font-medium pr-2">Kèm theo:</span>
+                <span className="flex-1 border-b border-dotted border-gray-400 pb-0.5">
+                  ................................................................................... chứng từ gốc.
+                </span>
+              </div>
+            </div>
+
+            <div className="flex justify-end text-xs italic mb-2">
+              Ngày {format(new Date(), "dd")} tháng {format(new Date(), "MM")} năm {format(new Date(), "yyyy")}
+            </div>
+
+            <div className="grid grid-cols-5 gap-2 text-center text-sm mb-20">
+              <div>
+                <p className="font-bold">Giám đốc</p>
+                <p className="italic text-[10px]">(Ký, họ tên, đóng dấu)</p>
+              </div>
+              <div>
+                <p className="font-bold">Kế toán trưởng</p>
+                <p className="italic text-[10px]">(Ký, họ tên)</p>
+              </div>
+              <div>
+                <p className="font-bold">Thủ quỹ</p>
+                <p className="italic text-[10px]">(Ký, họ tên)</p>
+              </div>
+              <div>
+                <p className="font-bold text-xs">Người lập phiếu</p>
+                <p className="italic text-[10px]">(Ký, họ tên)</p>
+              </div>
+              <div>
+                <p className="font-bold">Người nhận tiền</p>
+                <p className="italic text-[10px]">(Ký, họ tên)</p>
+              </div>
+            </div>
+
+            <div className="pt-8 space-y-3 text-xs">
+              <div className="flex items-end">
+                <span className="whitespace-nowrap font-medium pr-2">Đã nhận đủ số tiền (viết bằng chữ):</span>
+                <span className="flex-1 border-b border-dotted border-gray-400 font-bold text-sm pb-0.5">
+                  {numberToVietnameseWords(printExpense.amount || 0)}
+                </span>
+              </div>
+              <div className="flex items-end">
+                <span className="whitespace-nowrap pr-2">+ Tỷ giá ngoại tệ (vàng bạc, đá quý):</span>
+                <span className="flex-1 border-b border-dotted border-gray-400 pb-0.5">
+                  ......................................................................................................
+                </span>
+              </div>
+              <div className="flex items-end">
+                <span className="whitespace-nowrap pr-2">+ Số tiền quy đổi:</span>
+                <span className="flex-1 border-b border-dotted border-gray-400 pb-0.5">
+                  ......................................................................................................
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -33,6 +33,7 @@ import {
   Trash2,
   XCircle,
 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { PrintInvoice } from "@/app/app/pos/_components/print-invoice";
@@ -67,6 +68,7 @@ import { posService } from "@/services/pos.service";
 import { MobileOrders } from "../_components/mobile/mobile-orders";
 import { EditOrderDialog } from "./_components/edit-order-dialog";
 import { OrderDetailDialog } from "./_components/order-detail-dialog";
+import { ReturnOrderDialog } from "./_components/return-order-dialog";
 
 export type Order = {
   id: string;
@@ -78,9 +80,14 @@ export type Order = {
   payment_status?: string;
   payment_amount_received?: number;
   debt_amount?: number;
+  customer_address?: string;
+  customer_phone?: string;
   created_at: string;
   branch_id?: string;
+  staff_id?: string | null;
+  staff_name?: string | null;
   order_items?: any[];
+  return_orders?: any[];
   invoice_status?: string | null;
 };
 
@@ -89,6 +96,7 @@ const formatCurrency = (amount: number) => {
 };
 
 export default function OrdersPage() {
+  const searchParams = useSearchParams();
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -119,6 +127,10 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [printOrder, setPrintOrder] = useState<any | null>(null);
+
+  // Return Order states
+  const [returnTarget, setReturnTarget] = useState<Order | null>(null);
+  const [returnOpen, setReturnOpen] = useState(false);
 
   // eInvoice state
   const [invoiceTarget, setInvoiceTarget] = useState<Order | null>(null);
@@ -237,6 +249,18 @@ export default function OrdersPage() {
       accessorKey: "customer_name",
       header: "Khách hàng",
       cell: ({ row }) => <span>{row.getValue("customer_name") || "Khách lẻ"}</span>,
+    },
+    {
+      accessorKey: "staff_name",
+      header: "Nhân viên bán",
+      cell: ({ row }) => {
+        const name = row.original.staff_name;
+        return name ? (
+          <span className="font-semibold">{name}</span>
+        ) : (
+          <span className="text-muted-foreground text-xs italic">Không xác định</span>
+        );
+      },
     },
     {
       id: "products",
@@ -361,7 +385,18 @@ export default function OrdersPage() {
           className = "bg-red-500 hover:bg-red-600 text-white";
         }
 
-        return <Badge className={className}>{label}</Badge>;
+        const hasReturns = row.original.return_orders && row.original.return_orders.length > 0;
+
+        return (
+          <div className="flex flex-col gap-1 items-start">
+            <Badge className={className}>{label}</Badge>
+            {hasReturns && (
+              <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-600 border-orange-200">
+                Có hoàn trả
+              </Badge>
+            )}
+          </div>
+        );
       },
     },
     {
@@ -431,6 +466,17 @@ export default function OrdersPage() {
                   onClick={() => openIssueInvoice(row.original)}
                 >
                   <FileText className="h-4 w-4" /> Xuất hoá đơn điện tử
+                </DropdownMenuItem>
+              )}
+              {row.original.status === "completed" && (
+                <DropdownMenuItem
+                  className="gap-2 text-orange-600 focus:bg-orange-50 focus:text-orange-600"
+                  onClick={() => {
+                    setReturnTarget(row.original);
+                    setReturnOpen(true);
+                  }}
+                >
+                  <RefreshCcw className="h-4 w-4" /> Trả hàng / Hoàn tiền
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
@@ -589,6 +635,7 @@ export default function OrdersPage() {
       "Mã đơn hàng": order.order_number,
       "Ngày tạo": format(new Date(order.created_at), "dd/MM/yyyy HH:mm", { locale: vi }),
       "Khách hàng": order.customer_name || "Khách lẻ",
+      "Nhân viên bán": order.staff_name || "",
       "Sản phẩm": (order.order_items ?? [])
         .map((item: any) => {
           const prodName = item.variant?.product?.name || "Sản phẩm";
@@ -661,6 +708,7 @@ export default function OrdersPage() {
       const mapped = orders.map((o: any) => ({
         id: o.id,
         order_number: o.order_number,
+        customer_id: o.customer_id,
         customer_name: o.customer?.name,
         customer_address: o.customer?.address || "",
         customer_phone: o.customer?.phone || "",
@@ -676,7 +724,10 @@ export default function OrdersPage() {
             : 0),
         created_at: o.created_at,
         branch_id: o.branch_id,
+        staff_id: o.staff_id || null,
+        staff_name: o.staff?.full_name || o.staff?.email || null,
         order_items: o.order_items || [],
+        return_orders: o.return_orders || [],
         // invoice_status from DB if present
         invoice_status: o.invoice_status || null,
       }));
@@ -702,19 +753,57 @@ export default function OrdersPage() {
     void loadOrders();
   }, [loadOrders]);
 
+  useEffect(() => {
+    const orderId = searchParams.get("order");
+    if (!orderId || data.length === 0) return;
+
+    const order = data.find((item) => item.id === orderId);
+    if (!order) return;
+
+    setSelectedOrder(order);
+    setDetailOpen(true);
+  }, [data, searchParams]);
+
   if (isMobile) {
     const mappedMobileOrders = data.map((o: any) => ({
       id: o.id,
       order_number: o.order_number,
-      customer: o.customer_name ? { name: o.customer_name } : null,
+      customer_id: (o as any).customer_id,
+      customer: o.customer_name
+        ? {
+            id: (o as any).customer_id,
+            name: o.customer_name,
+            phone: o.customer_phone,
+            address: o.customer_address,
+          }
+        : null,
+      customer_name: o.customer_name,
+      customer_phone: o.customer_phone,
+      customer_address: o.customer_address,
       total_amount: o.total_amount,
       status: o.status,
       payment_method: o.payment_method,
+      payment_status: o.payment_status,
+      payment_amount_received: o.payment_amount_received,
+      debt_amount: o.debt_amount,
       created_at: o.created_at,
+      branch_id: o.branch_id,
+      staff_id: o.staff_id,
+      staff_name: o.staff_name,
       items: o.order_items || [],
+      order_items: o.order_items || [],
+      return_orders: o.return_orders || [],
+      invoice_status: o.invoice_status || null,
     }));
 
-    return <MobileOrders orders={mappedMobileOrders} loading={loading} />;
+    return (
+      <MobileOrders
+        orders={mappedMobileOrders}
+        branches={branches}
+        loading={loading}
+        onRefresh={loadOrders}
+      />
+    );
   }
 
   return (
@@ -1127,6 +1216,21 @@ export default function OrdersPage() {
               ...prev,
               [invoiceTarget.id]: invoice.status,
             }));
+          }}
+        />
+      )}
+
+      {/* Return Order Dialog */}
+      {returnTarget && (
+        <ReturnOrderDialog
+          order={returnTarget}
+          open={returnOpen}
+          onOpenChange={(open) => {
+            setReturnOpen(open);
+            if (!open) setTimeout(() => setReturnTarget(null), 200);
+          }}
+          onSuccess={() => {
+            loadOrders();
           }}
         />
       )}

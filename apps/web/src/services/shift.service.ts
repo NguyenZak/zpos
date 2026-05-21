@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/client";
 import { permissionService } from "./permission.service";
+import { telegramService } from "./telegram.service";
 import { isValidUUID } from "./pos.service";
 
 // Sanitize id-like value to null nếu không phải UUID. Tránh các id local
@@ -540,6 +541,27 @@ export const shiftService = {
     writeLocal(ACTIVE_SHIFT_CACHE_KEY, cache);
   },
 
+  async getPreviousShiftNote(branchId: string, cashRegisterId?: string): Promise<string | null> {
+    const supabase = createClient();
+    const orgId = await permissionService.getActiveOrgId();
+    let q = supabase
+      .from("shifts")
+      .select("note")
+      .eq("organization_id", orgId)
+      .eq("branch_id", branchId)
+      .not("note", "is", null)
+      .neq("note", "")
+      .order("opened_at", { ascending: false })
+      .limit(1);
+    
+    if (cashRegisterId) {
+      q = q.eq("cash_register_id", cashRegisterId);
+    }
+    
+    const { data } = await q.maybeSingle();
+    return data?.note || null;
+  },
+
   async openShift(payload: OpenShiftPayload): Promise<{ ok: boolean; shift?: Shift; error?: string }> {
     const supabase = createClient();
     const orgId = await permissionService.getActiveOrgId();
@@ -692,6 +714,19 @@ export const shiftService = {
       });
       this.clearCachedActiveShift(orgId, userId);
       notifyShiftClosed(payload.shift_id);
+
+      if (shift) {
+        telegramService.notifyShiftClosed({
+          employeeName: (shift as any).cashier?.full_name || "Nhân viên",
+          opening: shift.opening_cash_amount || 0,
+          sales: shift.cash_sales_amount || 0,
+          refund: shift.refund_amount || 0,
+          expense: shift.expense_amount || 0,
+          actualCash: payload.counted_cash_amount,
+          difference: data?.difference || 0
+        }).catch(e => console.warn("Telegram notify failed:", e));
+      }
+
       return {
         ok: true,
         shift: shift || undefined,
@@ -736,6 +771,19 @@ export const shiftService = {
       });
       this.clearCachedActiveShift(orgId, userId);
       notifyShiftClosed(payload.shift_id);
+
+      if (list[idx]) {
+        telegramService.notifyShiftClosed({
+          employeeName: "Nhân viên (Local)",
+          opening: list[idx].opening_cash_amount || 0,
+          sales: list[idx].cash_sales_amount || 0,
+          refund: list[idx].refund_amount || 0,
+          expense: list[idx].expense_amount || 0,
+          actualCash: payload.counted_cash_amount,
+          difference: diff || 0
+        }).catch(e => console.warn("Telegram notify failed:", e));
+      }
+
       return { ok: true, shift: list[idx], expected, counted: payload.counted_cash_amount, difference: diff };
     }
   },
@@ -893,6 +941,7 @@ export const shiftService = {
         if (this.isTableMissing(error)) return this.appendLocalTransaction(orgId, row);
         throw error;
       }
+      await this.aggregateShift(payload.shift_id);
       return data;
     } catch {
       return this.appendLocalTransaction(orgId, row);

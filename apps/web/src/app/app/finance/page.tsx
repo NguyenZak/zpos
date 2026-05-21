@@ -40,6 +40,10 @@ import {
 import { posService } from '@/services/pos.service';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from "@/components/ui/progress";
+import Link from 'next/link';
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
 
 const cashflowData = [
   { name: 'T2', income: 4000, expense: 2400 },
@@ -67,22 +71,109 @@ const formatCurrency = (amount: number) => {
 };
 
 export default function FinanceOverviewPage() {
-  const [stats, setStats] = useState<any>(null);
+  const [rawData, setRawData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [timeRange, setTimeRange] = useState("30days");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const data = await posService.getFinanceOverview();
-        setStats(data);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
+    const today = new Date();
+    const d30 = new Date();
+    d30.setDate(today.getDate() - 30);
+    
+    setStartDate(d30.toISOString().split('T')[0]);
+    setEndDate(today.toISOString().split('T')[0]);
   }, []);
+
+  const loadInitialData = async () => {
+    try {
+      setLoading(true);
+      // Fetch all time data once
+      const data = await posService.getFinanceOverview();
+      if (data.raw) {
+        setRawData(data.raw);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Lỗi khi tải dữ liệu tài chính");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadInitialData();
+  }, []);
+
+  const stats = React.useMemo(() => {
+    if (!rawData) return null;
+    let startStr = startDate;
+    let endStr = endDate;
+
+    if (timeRange === "today") {
+      const today = new Date();
+      startStr = today.toISOString().split('T')[0];
+      endStr = today.toISOString().split('T')[0];
+    } else if (timeRange === "7days") {
+      const today = new Date();
+      const d7 = new Date();
+      d7.setDate(today.getDate() - 6);
+      startStr = d7.toISOString().split('T')[0];
+      endStr = today.toISOString().split('T')[0];
+    } else if (timeRange === "30days") {
+      const today = new Date();
+      const d30 = new Date();
+      d30.setDate(today.getDate() - 30);
+      startStr = d30.toISOString().split('T')[0];
+      endStr = today.toISOString().split('T')[0];
+    }
+    
+    if (timeRange === "custom" && (!startDate || !endDate)) return null;
+
+    const computed = posService.calculateFinanceStats(
+      rawData,
+      startStr ? new Date(startStr).toISOString() : undefined,
+      endStr ? new Date(new Date(endStr).setHours(23, 59, 59, 999)).toISOString() : undefined
+    );
+    return computed;
+  }, [rawData, timeRange, startDate, endDate]);
+
+  const handleExportPL = () => {
+    if (!stats) return;
+    try {
+      const headers = ["Chỉ tiêu", "Số tiền (VND)", "Tỷ trọng / Ghi chú"];
+      const rows = [
+        ["Doanh thu thuần", stats.totalRevenue, ""],
+        ["Giá vốn hàng bán (COGS)", stats.totalCOGS, `${stats.totalRevenue > 0 ? Math.round(stats.totalCOGS/stats.totalRevenue*100) : 0}%`],
+        ["Lợi nhuận gộp", stats.totalRevenue - stats.totalCOGS, ""],
+        ["Chi phí vận hành", stats.totalExpenses, ""],
+      ];
+      
+      if (stats.costStructure && stats.costStructure.length > 0) {
+        stats.costStructure.forEach((item: any) => {
+          if (item.name !== "Giá vốn hàng đã bán (COGS)") {
+            rows.push([`- ${item.name}`, item.amount, `${item.percentage}%`]);
+          }
+        });
+      }
+      
+      rows.push(["Lợi nhuận ròng", stats.netProfit, `${stats.totalRevenue > 0 ? Math.round(stats.netProfit/stats.totalRevenue*100) : 0}%`]);
+
+      const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(r => `"${r[0]}","${r[1]}","${r[2]}"`)].join("\n");
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `bao_cao_p_and_l_${timeRange}_${new Date().getTime()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Xuất báo cáo P&L thành công");
+    } catch (e) {
+      toast.error("Không thể xuất báo cáo");
+    }
+  };
 
   if (loading) {
     return (
@@ -102,12 +193,76 @@ export default function FinanceOverviewPage() {
             Dữ liệu tài chính tính đến hôm nay, {new Date().toLocaleDateString('vi-VN')}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Time range picker filter */}
+          <div className="flex flex-wrap items-center gap-2 bg-background p-1 rounded-xl border shadow-sm mr-1">
+            <div className="flex border rounded-lg overflow-hidden bg-muted/30">
+              <Button 
+                variant={timeRange === "today" ? "default" : "ghost"} 
+                size="sm" 
+                className="rounded-none h-8 text-[11px] font-bold px-3"
+                onClick={() => setTimeRange("today")}
+              >
+                Hôm nay
+              </Button>
+              <Button 
+                variant={timeRange === "7days" ? "default" : "ghost"} 
+                size="sm" 
+                className="rounded-none h-8 text-[11px] font-bold border-l px-3"
+                onClick={() => setTimeRange("7days")}
+              >
+                7 ngày
+              </Button>
+              <Button 
+                variant={timeRange === "30days" ? "default" : "ghost"} 
+                size="sm" 
+                className="rounded-none h-8 text-[11px] font-bold border-l px-3"
+                onClick={() => setTimeRange("30days")}
+              >
+                Tháng này
+              </Button>
+              <Button 
+                variant={timeRange === "custom" ? "default" : "ghost"} 
+                size="sm" 
+                className="rounded-none h-8 text-[11px] font-bold border-l px-3"
+                onClick={() => setTimeRange("custom")}
+              >
+                Tùy chọn
+              </Button>
+            </div>
+
+            {/* Custom Date Inputs */}
+            {timeRange === "custom" && (
+              <div className="flex items-center gap-1.5 pl-2 border-l animate-in slide-in-from-left-2 duration-200">
+                <div className="flex items-center gap-1">
+                  <span className="text-[9px] font-bold text-muted-foreground uppercase">Từ:</span>
+                  <Input 
+                    type="date" 
+                    value={startDate} 
+                    onChange={(e) => setStartDate(e.target.value)} 
+                    className="h-8 text-xs font-semibold px-2 py-1 w-[125px] border-muted bg-background focus:ring-primary focus:border-primary"
+                  />
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-[9px] font-bold text-muted-foreground uppercase">Đến:</span>
+                  <Input 
+                    type="date" 
+                    value={endDate} 
+                    onChange={(e) => setEndDate(e.target.value)} 
+                    className="h-8 text-xs font-semibold px-2 py-1 w-[125px] border-muted bg-background focus:ring-primary focus:border-primary"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <Button variant="outline" size="sm" className="gap-2 h-9 text-xs font-bold shadow-sm" onClick={handleExportPL}>
             <Download className="w-4 h-4" />
             Báo cáo P&L
           </Button>
-          <Button size="sm">Cấu hình định kỳ</Button>
+          <Link href="/app/finance/recurring">
+            <Button size="sm" className="h-9 text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm">Cấu hình định kỳ</Button>
+          </Link>
         </div>
       </div>
 
@@ -246,47 +401,29 @@ export default function FinanceOverviewPage() {
             <CardDescription>Các khoản chi lớn nhất tháng này</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">Giá vốn hàng đã bán (COGS)</span>
-                <span className="text-muted-foreground font-bold">60%</span>
+            {stats?.costStructure && stats.costStructure.length > 0 ? (
+              stats.costStructure.map((item: any, idx: number) => (
+                <div key={idx} className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">{item.name}</span>
+                    <span className="text-muted-foreground font-bold">{item.percentage}%</span>
+                  </div>
+                  <Progress value={item.percentage} className="h-2" indicatorClassName={item.color} />
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-muted-foreground text-sm py-8">
+                Chưa có dữ liệu chi phí trong 30 ngày qua
               </div>
-              <Progress value={60} className="h-2" indicatorClassName="bg-primary" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">Lương nhân viên</span>
-                <span className="text-muted-foreground font-bold">20%</span>
-              </div>
-              <Progress value={20} className="h-2" indicatorClassName="bg-amber-500" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">Mặt bằng & Điện nước</span>
-                <span className="text-muted-foreground font-bold">12%</span>
-              </div>
-              <Progress value={12} className="h-2" indicatorClassName="bg-blue-500" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">Marketing</span>
-                <span className="text-muted-foreground font-bold">5%</span>
-              </div>
-              <Progress value={5} className="h-2" indicatorClassName="bg-emerald-500" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">Khác</span>
-                <span className="text-muted-foreground font-bold">3%</span>
-              </div>
-              <Progress value={3} className="h-2" indicatorClassName="bg-slate-400" />
-            </div>
+            )}
 
             <div className="pt-4 border-t">
-              <Button variant="outline" className="w-full gap-2 text-primary font-bold border-primary/20 bg-primary/5">
-                <PieChart className="w-4 h-4" />
-                Chi tiết Báo cáo Lợi nhuận
-              </Button>
+              <Link href="/app/finance/profit-loss">
+                <Button variant="outline" className="w-full gap-2 text-primary font-bold border-primary/20 bg-primary/5">
+                  <PieChart className="w-4 h-4" />
+                  Chi tiết Báo cáo Lợi nhuận
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>

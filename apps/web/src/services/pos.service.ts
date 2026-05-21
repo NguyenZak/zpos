@@ -1,4 +1,5 @@
 import { loyaltyService } from "@/services/loyalty.service";
+import { telegramService } from "@/services/telegram.service";
 import { createClient } from "@/utils/supabase/client";
 
 const UNIVERSAL_TENANTS = new Set(["www", "app", "console", "cms"]);
@@ -179,6 +180,7 @@ export const posService = {
       .select(`
         *,
         category:categories(name),
+        supplier:suppliers(name),
         variants:product_variants(*)
       `)
       .eq("organization_id", orgId)
@@ -643,30 +645,153 @@ export const posService = {
     if (updateError) throw updateError;
   },
 
-  async sendTelegramNotification(message: string) {
-    if (typeof window === "undefined") return;
-    const enabled = localStorage.getItem("zpos_telegram_enabled") === "true";
-    const token = localStorage.getItem("zpos_telegram_token");
-    const chatId = localStorage.getItem("zpos_telegram_chat_id");
+  async getCommissionRules() {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+    const { data, error } = await supabase
+      .from("commission_rules")
+      .select("*")
+      .eq("organization_id", orgId)
+      .eq("is_active", true)
+      .order("min_revenue", { ascending: false });
+      
+    if (error) throw error;
+    return data || [];
+  },
 
-    if (!enabled || !token || !chatId) return;
+  async saveCommissionRules(rules: any[]) {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+    
+    // Clear old rules
+    await supabase
+      .from("commission_rules")
+      .delete()
+      .eq("organization_id", orgId);
+      
+    if (rules && rules.length > 0) {
+      const { error } = await supabase
+        .from("commission_rules")
+        .insert(rules.map(r => ({
+          name: r.name || 'Mức thưởng',
+          min_revenue: r.min_revenue,
+          commission_percentage: r.commission_percentage,
+          organization_id: orgId,
+          is_active: true
+        })));
+      if (error) throw error;
+    }
+  },
+
+  async getEmployeeRevenueForMonth(profileId: string, month: number, year: number) {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+
+    const startDate = new Date(year, month - 1, 1).toISOString();
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999).toISOString();
+
+    const { data, error } = await supabase
+      .from("orders")
+      .select("total_amount")
+      .eq("organization_id", orgId)
+      .eq("staff_id", profileId)
+      .in("status", ["completed", "delivered", "paid"])
+      .gte("created_at", startDate)
+      .lte("created_at", endDate);
+
+    if (error) {
+      console.error("Error fetching employee revenue:", error);
+      return 0;
+    }
+
+    return (data || []).reduce((sum, order) => sum + Number(order.total_amount || 0), 0);
+  },
+
+  async getEmployeeAdvancesForMonth(employeeId: string, month: number, year: number) {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+
+    const startDate = new Date(year, month - 1, 1).toISOString();
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999).toISOString();
+
+    const { data, error } = await supabase
+      .from("salary_advances")
+      .select("amount")
+      .eq("organization_id", orgId)
+      .eq("staff_id", employeeId)
+      .is("payroll_id", null) // only fetch un-deducted advances
+      .gte("advance_date", startDate)
+      .lte("advance_date", endDate);
+
+    if (error) {
+      console.warn("Could not fetch salary advances (table might not exist):", error.message);
+      return 0;
+    }
+
+    return (data || []).reduce((sum, adv) => sum + Number(adv.amount || 0), 0);
+  },
+
+  async createSalaryAdvance(data: any) {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+
+    const { data: advance, error } = await supabase
+      .from("salary_advances")
+      .insert([{
+        ...data,
+        organization_id: orgId
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Create cashflow transaction
+    await supabase.from("cashflow_transactions").insert([{
+      organization_id: orgId,
+      branch_id: data.branch_id || null,
+      type: "outflow",
+      category: "payroll",
+      amount: data.amount,
+      payment_method: data.payment_method || 'cash',
+      reference_type: "payroll", // Using payroll category for advances
+      note: `Tạm ứng lương: ${data.note || ''}`,
+      transaction_date: data.advance_date || new Date().toISOString()
+    }]);
 
     try {
-      const url = `https://api.telegram.org/bot${token}/sendMessage`;
-      await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: message,
-          parse_mode: "HTML",
-        }),
-      });
+      const { data: employeeData } = await supabase.from("employees").select("name").eq("id", data.staff_id).single();
+      const employeeName = employeeData?.name || "Nhân viên";
+      telegramService.notifySalaryAdvance(data, employeeName);
     } catch (e) {
-      console.warn("Failed to send Telegram notification:", e);
+      console.warn("Failed to notify salary advance", e);
     }
+
+    return advance;
+  },
+
+  async getEmployeeShiftCountForMonth(profileId: string, month: number, year: number) {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+
+    const startDate = new Date(year, month - 1, 1).toISOString();
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999).toISOString();
+
+    const { count, error } = await supabase
+      .from("shifts")
+      .select("*", { count: 'exact', head: true })
+      .eq("organization_id", orgId)
+      .eq("cashier_id", profileId)
+      .neq("status", "cancelled")
+      .gte("opened_at", startDate)
+      .lte("opened_at", endDate);
+
+    if (error) {
+      console.error("Error fetching shift count:", error);
+      return 0;
+    }
+
+    return count || 0;
   },
 
   async createOrder(orderData: any, items: any[]) {
@@ -1041,7 +1166,7 @@ export const posService = {
     //    - Otherwise fall back to the parent products.stock column for non-variant products.
     // The low-stock Telegram notification uses the post-deduction value of the affected row.
     const notifyStock =
-      typeof localStorage !== "undefined" && localStorage.getItem("zpos_telegram_notify_stock") === "true";
+      typeof localStorage !== "undefined" && localStorage.getItem("zpos_telegram_notify_stock") !== "false";
 
     for (const item of items) {
       const variantId = item.variant_id && isValidUUID(item.variant_id) ? item.variant_id : null;
@@ -1064,8 +1189,7 @@ export const posService = {
 
             if (notifyStock && newStock <= 5) {
               const parentName = (variantData as any).products?.name || "Sản phẩm";
-              const warningMsg = `⚠️ <b>CẢNH BÁO TỒN KHO THẤP</b>\n\nBiến thể <b>${parentName} – ${variantData.name}</b> chỉ còn <b>${newStock}</b> sản phẩm trong kho (mức tối thiểu: 5). Vui lòng nhập thêm hàng!`;
-              posService.sendTelegramNotification(warningMsg);
+              telegramService.notifyLowStock(`${parentName} – ${variantData.name}`, newStock);
             }
           }
         } else if (productId) {
@@ -1086,8 +1210,7 @@ export const posService = {
               .eq("organization_id", orgId);
 
             if (notifyStock && newStock <= 5) {
-              const warningMsg = `⚠️ <b>CẢNH BÁO TỒN KHO THẤP</b>\n\nSản phẩm <b>${productData.name}</b> chỉ còn <b>${newStock}</b> sản phẩm trong kho (mức tối thiểu: 5). Vui lòng nhập thêm hàng!`;
-              posService.sendTelegramNotification(warningMsg);
+              telegramService.notifyLowStock(productData.name, newStock);
             }
           }
         }
@@ -1097,38 +1220,33 @@ export const posService = {
     }
 
     // Telegram Notification: New Order Completed Check
-    const notifyOrder = localStorage.getItem("zpos_telegram_notify_order") === "true";
-    if (notifyOrder) {
+    let staffName: string | null = null;
+    if (order?.staff_id && isValidUUID(order.staff_id)) {
       try {
-        const orderNum = order.order_number || `DH-${order.id.slice(0, 8)}`;
-        const totalFormatted = new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
-          order.total_amount,
-        );
-        const paymentMethod =
-          order.payment_method === "cash"
-            ? "💵 Tiền mặt"
-            : order.payment_method === "qr" || order.payment_method === "bank"
-              ? "💳 Chuyển khoản (VietQR)"
-              : "💰 Khác";
-
-        let itemsList = "";
-        items.forEach((item, index) => {
-          itemsList += `${index + 1}. <b>${item.name}</b> x${item.quantity} - ${new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(item.price * item.quantity)}\n`;
-        });
-
-        const telegramMsg =
-          `🎉 <b>ĐƠN HÀNG MỚI ĐÃ HOÀN TẤT!</b>\n\n` +
-          `🔹 Mã đơn: <b>#${orderNum}</b>\n` +
-          `🔹 Thanh toán: <b>${paymentMethod}</b>\n` +
-          `🔹 Tổng tiền: <b>${totalFormatted}</b>\n\n` +
-          `📋 <b>Chi tiết sản phẩm:</b>\n${itemsList}\n` +
-          `⚡️ <i>Cảm ơn quý khách đã mua sắm tại ZPOS!</i>`;
-
-        posService.sendTelegramNotification(telegramMsg);
-      } catch (telErr) {
-        console.warn("Failed to compose and send order Telegram message:", telErr);
+        const { data: staffProfile } = await supabase
+          .from("profiles")
+          .select("full_name, email")
+          .eq("id", order.staff_id)
+          .single();
+        staffName = staffProfile?.full_name || staffProfile?.email || null;
+      } catch (e) {
+        console.warn("Could not fetch staff profile for Telegram notification:", e);
       }
     }
+    let customerName: string | null = null;
+    if (order?.customer_id && isValidUUID(order.customer_id)) {
+      try {
+        const { data: customerRow } = await supabase
+          .from("customers")
+          .select("name")
+          .eq("id", order.customer_id)
+          .single();
+        customerName = customerRow?.name || null;
+      } catch (e) {
+        console.warn("Could not fetch customer name for Telegram notification:", e);
+      }
+    }
+    await telegramService.notifyNewOrder(order, items, staffName, customerName);
 
     return order;
   },
@@ -1143,11 +1261,17 @@ export const posService = {
       .select(`
         *,
         customer:customers(name, address, phone),
+        staff:profiles!staff_id(id, full_name, email),
         order_items(
+          id,
           quantity,
           unit_price,
           total_price,
           variant_id
+        ),
+        return_orders(
+          id,
+          total_refund_amount
         )
       `)
       .eq("organization_id", orgId)
@@ -1162,13 +1286,13 @@ export const posService = {
       .select("id, name, description, variants:product_variants(id, name)")
       .eq("organization_id", orgId);
 
-    const variantMap = new Map<string, { productName: string; variantName: string | null }>();
+    const variantMap = new Map<string, { productId: string; productName: string; variantName: string | null }>();
 
     products?.forEach((p: any) => {
-      variantMap.set(p.id, { productName: p.name, variantName: null });
+      variantMap.set(p.id, { productId: p.id, productName: p.name, variantName: null });
 
       p.variants?.forEach((v: any) => {
-        variantMap.set(v.id, { productName: p.name, variantName: v.name });
+        variantMap.set(v.id, { productId: p.id, productName: p.name, variantName: v.name });
       });
     });
 
@@ -1178,9 +1302,11 @@ export const posService = {
         const mapped = variantMap.get(item.variant_id);
         return {
           ...item,
+          product_id: mapped?.productId,
           product_name: mapped?.productName || "Sản phẩm",
           variant_name: mapped?.variantName || null,
           variant: {
+            product_id: mapped?.productId,
             name: mapped?.variantName || null,
             product: {
               name: mapped?.productName || "Sản phẩm",
@@ -1332,6 +1458,9 @@ export const posService = {
         console.warn(`cancelOrder: failed to restore stock for variant ${variantId}:`, e);
       }
     }
+    
+    // Telegram Notification
+    telegramService.notifyCancelledOrder(id, 'HỦY');
   },
 
   async deleteOrder(id: string) {
@@ -1347,6 +1476,92 @@ export const posService = {
     const { error: orderError } = await supabase.from("orders").delete().eq("id", id).eq("organization_id", orgId);
 
     if (orderError) throw orderError;
+    
+    // Telegram Notification
+    telegramService.notifyCancelledOrder(id, 'XÓA');
+  },
+
+  async processReturnOrder(data: {
+    order_id: string;
+    customer_id?: string;
+    total_refund_amount: number;
+    refund_method: string;
+    reason: string;
+    items: {
+      order_item_id: string;
+      product_id: string;
+      variant_id?: string;
+      quantity: number;
+      refund_price: number;
+      is_restocked: boolean;
+    }[];
+  }) {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+    
+    // Generate return_code (e.g., RT-12345)
+    const returnCode = `RT-${Date.now().toString().slice(-6)}`;
+    
+    // Insert into return_orders
+    const { data: returnOrder, error: returnErr } = await supabase
+      .from("return_orders")
+      .insert({
+        organization_id: orgId,
+        order_id: data.order_id,
+        customer_id: data.customer_id || null,
+        return_code: returnCode,
+        total_refund_amount: data.total_refund_amount,
+        refund_method: data.refund_method,
+        reason: data.reason,
+        status: "completed"
+      })
+      .select()
+      .single();
+      
+    if (returnErr) throw returnErr;
+    
+    // Insert into return_order_items
+    const returnItemsData = data.items.map(it => ({
+      return_order_id: returnOrder.id,
+      order_item_id: it.order_item_id,
+      product_id: it.product_id,
+      variant_id: it.variant_id || null,
+      quantity: it.quantity,
+      refund_price: it.refund_price,
+      is_restocked: it.is_restocked
+    }));
+    
+    const { error: itemsErr } = await supabase
+      .from("return_order_items")
+      .insert(returnItemsData);
+      
+    if (itemsErr) throw itemsErr;
+    
+    // Add shift transaction for refund
+    if (data.total_refund_amount > 0) {
+      try {
+        const { shiftService } = await import('./shift.service');
+        const activeShift = await shiftService.getActiveShift();
+        if (activeShift?.id) {
+          await shiftService.addTransaction({
+            shift_id: activeShift.id,
+            type: "refund",
+            amount: data.total_refund_amount,
+            payment_method: data.refund_method as any,
+            note: `Hoàn tiền cho đơn trả hàng ${returnCode}`,
+            reference_type: "order",
+            reference_id: data.order_id,
+          });
+        }
+      } catch (e) {
+        console.error("Failed to add shift transaction for refund", e);
+      }
+    }
+    
+    // Telegram Notification
+    telegramService.notifyReturnOrder(returnOrder);
+    
+    return returnOrder;
   },
 
   async getOrderDetails(id: string) {
@@ -1379,13 +1594,13 @@ export const posService = {
       .select("id, name, description, variants:product_variants(id, name)")
       .eq("organization_id", orgId);
 
-    const variantMap = new Map<string, { productName: string; variantName: string | null }>();
+    const variantMap = new Map<string, { productId: string; productName: string; variantName: string | null }>();
 
     products?.forEach((p: any) => {
-      variantMap.set(p.id, { productName: p.name, variantName: null });
+      variantMap.set(p.id, { productId: p.id, productName: p.name, variantName: null });
 
       p.variants?.forEach((v: any) => {
-        variantMap.set(v.id, { productName: p.name, variantName: v.name });
+        variantMap.set(v.id, { productId: p.id, productName: p.name, variantName: v.name });
       });
     });
 
@@ -1393,6 +1608,7 @@ export const posService = {
       const mapped = variantMap.get(item.variant_id);
       return {
         ...item,
+        product_id: mapped?.productId,
         product_name: mapped?.productName || "Sản phẩm",
         variant_name: mapped?.variantName || null,
       };
@@ -1848,6 +2064,20 @@ export const posService = {
     if (updatePOError) {
       console.error("receiveStock: error updating PO status:", JSON.stringify(updatePOError, null, 2));
       throw updatePOError;
+    }
+
+    if (fullyReceived) {
+      // Get PO details to send notification
+      const { data: poDetail } = await supabase
+        .from("purchase_orders")
+        .select("*, supplier:suppliers(*)")
+        .eq("id", purchaseOrderId)
+        .eq("organization_id", orgId)
+        .single();
+      
+      if (poDetail) {
+        await telegramService.notifyPOCompleted(poDetail);
+      }
     }
   },
 
@@ -2514,6 +2744,54 @@ export const posService = {
     return data || [];
   },
 
+  async createExpenseCategory(category: { name: string; description?: string }) {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+
+    const { data, error } = await supabase
+      .from("expense_categories")
+      .insert([
+        {
+          ...category,
+          organization_id: orgId,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async updateExpenseCategory(id: string, category: { name: string; description?: string }) {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+
+    const { data, error } = await supabase
+      .from("expense_categories")
+      .update(category)
+      .eq("id", id)
+      .eq("organization_id", orgId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async deleteExpenseCategory(id: string) {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+
+    const { error } = await supabase
+      .from("expense_categories")
+      .delete()
+      .eq("id", id)
+      .eq("organization_id", orgId);
+
+    if (error) throw error;
+  },
+
   async getExpenses(filters?: { categoryId?: string; search?: string }) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
@@ -2578,6 +2856,62 @@ export const posService = {
       ]);
     }
 
+    telegramService.notifyNewExpense(data);
+
+    return data;
+  },
+
+  async updateExpense(id: string, expense: any) {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+
+    const { data, error } = await supabase
+      .from("expenses")
+      .update(expense)
+      .eq("id", id)
+      .eq("organization_id", orgId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    if (data.status === "paid") {
+      const { data: existingCashflow } = await supabase
+        .from("cashflow_transactions")
+        .select("id")
+        .eq("reference_type", "expense")
+        .eq("reference_id", id)
+        .eq("organization_id", orgId)
+        .maybeSingle();
+
+      const cashflowData = {
+        amount: data.amount,
+        transaction_date: data.expense_date
+          ? new Date(data.expense_date).toISOString()
+          : new Date().toISOString(),
+        note: data.title,
+      };
+
+      if (existingCashflow) {
+        await supabase
+          .from("cashflow_transactions")
+          .update(cashflowData)
+          .eq("id", existingCashflow.id);
+      } else {
+        await supabase.from("cashflow_transactions").insert([
+          {
+            organization_id: orgId,
+            branch_id: data.branch_id,
+            type: "outflow",
+            category: "expense",
+            reference_type: "expense",
+            reference_id: data.id,
+            ...cashflowData,
+          },
+        ]);
+      }
+    }
+
     return data;
   },
 
@@ -2599,7 +2933,7 @@ export const posService = {
     if (error) throw error;
   },
 
-  async getFinanceOverview() {
+  async getFinanceOverview(startDate?: string, endDate?: string) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
 
@@ -2623,12 +2957,23 @@ export const posService = {
 
     const { data: expenses, error: expensesError } = await supabase
       .from("expenses")
-      .select("amount, created_at, expense_date")
+      .select("amount, created_at, expense_date, category:expense_categories(name)")
       .eq("organization_id", orgId)
       .eq("status", "paid");
     if (expensesError) throw expensesError;
 
-    // Total (all-time) figures shown in the big numbers.
+    const raw = { orders: orders || [], debtPayments: debtPayments || [], soldItems: soldItems || [], expenses: expenses || [] };
+    const computed = this.calculateFinanceStats(raw, startDate, endDate);
+    return { ...computed, raw };
+  },
+
+  calculateFinanceStats(
+    raw: { orders: any[]; debtPayments: any[]; soldItems: any[]; expenses: any[] },
+    startDate?: string,
+    endDate?: string
+  ) {
+    const { orders, debtPayments, soldItems, expenses } = raw;
+
     const orderAmt = (o: any) => {
       const method = String(o.payment_method || "").toLowerCase();
       const status = String(o.payment_status || "").toLowerCase();
@@ -2638,19 +2983,15 @@ export const posService = {
       return received > 0 ? received : Number(o.total_amount || 0);
     };
     const debtPaymentAmt = (p: any) => Number(p.amount || 0);
-    const totalRevenue =
-      (orders?.reduce((s, o: any) => s + orderAmt(o), 0) || 0) +
-      (debtPayments?.reduce((s, p: any) => s + debtPaymentAmt(p), 0) || 0);
-    const totalCOGS = calculateSoldItemsCOGS(soldItems);
-    const totalExpenses = expenses?.reduce((s, e: any) => s + Number(e.amount || 0), 0) || 0;
-    const netProfit = totalRevenue - totalCOGS - totalExpenses;
 
-    // Period-over-period: last 30 days vs the 30 days before that.
-    const now = new Date();
-    const d30 = new Date();
-    d30.setDate(now.getDate() - 30);
-    const d60 = new Date();
-    d60.setDate(now.getDate() - 60);
+    const curEnd = endDate ? new Date(endDate) : new Date();
+    const curStart = startDate ? new Date(startDate) : new Date(curEnd.getTime() - 30 * 24 * 60 * 60 * 1000);
+    
+    const rangeMs = curEnd.getTime() - curStart.getTime() || (30 * 24 * 60 * 60 * 1000);
+    const prevEnd = curStart;
+    const prevStart = new Date(curStart.getTime() - rangeMs);
+
+    const isFiltered = !!(startDate || endDate);
 
     const sumWindow = (
       rows: any[] | null,
@@ -2665,7 +3006,7 @@ export const posService = {
         const raw = getDate(r);
         if (!raw) continue;
         const d = new Date(raw);
-        if (d >= from && d < to) s += Number(getAmount(r) || 0);
+        if (d >= from && d <= to) s += Number(getAmount(r) || 0);
       }
       return s;
     };
@@ -2678,17 +3019,18 @@ export const posService = {
     const expenseAmt = (e: any) => e.amount;
     const expenseDate = (e: any) => e.expense_date || e.created_at;
 
-    const revCur =
-      sumWindow(orders, orderDate, orderAmt, d30, now) +
-      sumWindow(debtPayments, debtPaymentDate, debtPaymentAmt, d30, now);
-    const revPrev =
-      sumWindow(orders, orderDate, orderAmt, d60, d30) +
-      sumWindow(debtPayments, debtPaymentDate, debtPaymentAmt, d60, d30);
-    const cogsCur = sumWindow(soldItems, soldItemDate, soldItemAmt, d30, now);
-    const cogsPrev = sumWindow(soldItems, soldItemDate, soldItemAmt, d60, d30);
-    const expCur = sumWindow(expenses, expenseDate, expenseAmt, d30, now);
-    const expPrev = sumWindow(expenses, expenseDate, expenseAmt, d60, d30);
+    const revCur = sumWindow(orders, orderDate, orderAmt, curStart, curEnd) + sumWindow(debtPayments, debtPaymentDate, debtPaymentAmt, curStart, curEnd);
+    const revPrev = sumWindow(orders, orderDate, orderAmt, prevStart, prevEnd) + sumWindow(debtPayments, debtPaymentDate, debtPaymentAmt, prevStart, prevEnd);
+    const cogsCur = sumWindow(soldItems, soldItemDate, soldItemAmt, curStart, curEnd);
+    const cogsPrev = sumWindow(soldItems, soldItemDate, soldItemAmt, prevStart, prevEnd);
+    const expCur = sumWindow(expenses, expenseDate, expenseAmt, curStart, curEnd);
+    const expPrev = sumWindow(expenses, expenseDate, expenseAmt, prevStart, prevEnd);
 
+    // If filtered, totals are just the current period. If not, they are all-time.
+    const totalRevenue = isFiltered ? revCur : (orders?.reduce((s, o: any) => s + orderAmt(o), 0) || 0) + (debtPayments?.reduce((s, p: any) => s + debtPaymentAmt(p), 0) || 0);
+    const totalCOGS = isFiltered ? cogsCur : calculateSoldItemsCOGS(soldItems);
+    const totalExpenses = isFiltered ? expCur : expenses?.reduce((s, e: any) => s + Number(e.amount || 0), 0) || 0;
+    const netProfit = totalRevenue - totalCOGS - totalExpenses;
     const profitCur = revCur - cogsCur - expCur;
     const profitPrev = revPrev - cogsPrev - expPrev;
 
@@ -2698,11 +3040,64 @@ export const posService = {
       return `${change >= 0 ? "+" : ""}${change.toFixed(1)}%`;
     };
 
+    // Calculate Cost Structure for the current period (d30 to now)
+    const categoryTotals: Record<string, number> = {};
+    if (expenses) {
+      for (const e of expenses) {
+        const raw = expenseDate(e);
+        if (!raw) continue;
+        const d = new Date(raw);
+        if (d >= curStart && d <= curEnd) {
+          // category is an object like { name: '...' } or an array if 1-to-many. It's usually a single object.
+          let catName = "Khác";
+          if (e.category) {
+            catName = Array.isArray(e.category) ? e.category[0]?.name : e.category.name;
+            if (!catName) catName = "Khác";
+          }
+          categoryTotals[catName] = (categoryTotals[catName] || 0) + Number(e.amount || 0);
+        }
+      }
+    }
+
+    const totalCostCur = cogsCur + expCur;
+    let costStructure: Array<{ name: string; amount: number; percentage: number; color: string }> = [];
+
+    if (totalCostCur > 0) {
+      const colors = ["bg-primary", "bg-amber-500", "bg-blue-500", "bg-emerald-500", "bg-purple-500", "bg-pink-500"];
+      let colorIndex = 1; // start from 1 since 0 is for COGS
+
+      if (cogsCur > 0) {
+        costStructure.push({
+          name: "Giá vốn hàng đã bán (COGS)",
+          amount: cogsCur,
+          percentage: Math.round((cogsCur / totalCostCur) * 100),
+          color: colors[0],
+        });
+      }
+
+      // Sort categories by amount descending
+      const sortedCategories = Object.entries(categoryTotals)
+        .sort((a, b) => b[1] - a[1]);
+
+      for (const [name, amount] of sortedCategories) {
+        if (amount > 0) {
+          costStructure.push({
+            name,
+            amount,
+            percentage: Math.round((amount / totalCostCur) * 100),
+            color: colors[colorIndex % colors.length],
+          });
+          colorIndex++;
+        }
+      }
+    }
+
     return {
       totalRevenue,
       totalCOGS,
       totalExpenses,
       netProfit,
+      costStructure,
       // Real period-over-period deltas
       revenueChange: pct(revCur, revPrev),
       expenseChange: pct(expCur, expPrev),
@@ -2806,15 +3201,94 @@ export const posService = {
     if (error) throw error;
   },
 
-  async getPayroll() {
+  async processDueRecurringExpenses() {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
 
-    const { data, error } = await supabase
+    const today = new Date();
+    // Start of today string in YYYY-MM-DD
+    const todayStr = today.toISOString().split("T")[0];
+
+    const { data: recurring, error } = await supabase
+      .from("recurring_expenses")
+      .select("*")
+      .eq("organization_id", orgId)
+      .eq("status", "active")
+      .lte("next_due_date", todayStr);
+
+    if (error) throw error;
+    if (!recurring || recurring.length === 0) return 0;
+
+    let processedCount = 0;
+
+    for (const item of recurring) {
+      if (!item.auto_create) continue;
+
+      const expenseData = {
+        title: `${item.title} (Kỳ ${item.next_due_date})`,
+        amount: item.amount,
+        category_id: item.category_id,
+        expense_date: item.next_due_date,
+        branch_id: item.branch_id,
+        status: "paid",
+        payment_method: "cash",
+      };
+
+      try {
+        await this.createExpense(expenseData);
+
+        const nextDate = new Date(item.next_due_date);
+        switch (item.frequency) {
+          case "daily":
+            nextDate.setDate(nextDate.getDate() + 1);
+            break;
+          case "weekly":
+            nextDate.setDate(nextDate.getDate() + 7);
+            break;
+          case "monthly":
+            nextDate.setMonth(nextDate.getMonth() + 1);
+            break;
+          case "quarterly":
+            nextDate.setMonth(nextDate.getMonth() + 3);
+            break;
+          case "yearly":
+            nextDate.setFullYear(nextDate.getFullYear() + 1);
+            break;
+        }
+
+        await supabase
+          .from("recurring_expenses")
+          .update({
+            next_due_date: nextDate.toISOString().split("T")[0],
+            last_processed_date: new Date().toISOString(),
+          })
+          .eq("id", item.id);
+
+        processedCount++;
+      } catch (err) {
+        console.error(`Error processing recurring expense ${item.id}:`, err);
+      }
+    }
+
+    return processedCount;
+  },
+
+  async getPayroll(month?: number, year?: number) {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+
+    let query = supabase
       .from("payroll")
       .select("*, employee:employees(*)")
-      .eq("organization_id", orgId)
-      .order("created_at", { ascending: false });
+      .eq("organization_id", orgId);
+      
+    if (month && year) {
+      const startDate = new Date(year, month - 1, 1).toISOString();
+      const endDate = new Date(year, month, 0, 23, 59, 59, 999).toISOString();
+      query = query.gte("created_at", startDate).lte("created_at", endDate);
+    }
+
+    const { data, error } = await query.order("created_at", { ascending: false });
 
     if (error) throw error;
     return data || [];
@@ -2904,6 +3378,82 @@ export const posService = {
       ]);
     }
     return data;
+  },
+
+  async updatePayroll(id: string, payrollData: any) {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+
+    const { data, error } = await supabase
+      .from("payroll")
+      .update(payrollData)
+      .eq("id", id)
+      .eq("organization_id", orgId)
+      .select("*, employee:employees(*)")
+      .single();
+
+    if (error) throw error;
+
+    if (payrollData.payment_status === "paid") {
+      const { data: existingCashflow } = await supabase
+        .from("cashflow_transactions")
+        .select("id")
+        .eq("reference_type", "payroll")
+        .eq("reference_id", id)
+        .eq("organization_id", orgId)
+        .maybeSingle();
+
+      const cashflowData = {
+        amount: data.final_salary,
+        transaction_date: payrollData.payment_date
+          ? new Date(payrollData.payment_date).toISOString()
+          : new Date().toISOString(),
+        note: `Trả lương cho nhân viên ${data.employee?.name || ""}`,
+      };
+
+      if (existingCashflow) {
+        await supabase
+          .from("cashflow_transactions")
+          .update(cashflowData)
+          .eq("id", existingCashflow.id);
+      } else {
+        await supabase.from("cashflow_transactions").insert([
+          {
+            organization_id: orgId,
+            branch_id: data.branch_id || null,
+            type: "outflow",
+            category: "salary",
+            reference_type: "payroll",
+            reference_id: data.id,
+            ...cashflowData,
+          },
+        ]);
+      }
+    }
+
+    return data;
+  },
+
+  async deletePayroll(id: string) {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+
+    const { error: cashflowError } = await supabase
+      .from("cashflow_transactions")
+      .delete()
+      .eq("reference_type", "payroll")
+      .eq("reference_id", id)
+      .eq("organization_id", orgId);
+
+    if (cashflowError) throw cashflowError;
+
+    const { error } = await supabase
+      .from("payroll")
+      .delete()
+      .eq("id", id)
+      .eq("organization_id", orgId);
+
+    if (error) throw error;
   },
 
   async getBranches() {

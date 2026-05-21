@@ -55,11 +55,13 @@ export function CreatePurchaseDialog({ onShowSuccess }: { onShowSuccess?: () => 
     const product = products.find(p => p.id === productId);
     if (!product) return;
     
+    const qty = product.stock || 1;
+    const cost = product.cost_price ?? (product.price * 0.7);
     setItems([...items, {
       id: product.id,
       name: product.name,
-      quantity: 1,
-      cost: product.price * 0.7 // Default cost estimation
+      quantity: qty,
+      cost: cost
     }]);
   };
 

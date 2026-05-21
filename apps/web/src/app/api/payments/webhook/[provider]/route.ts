@@ -36,8 +36,8 @@ function normalizeSepay(body: any): Normalized {
     description: body.content || body.description || null,
     reference_code: body.code || body.referenceCode || null,
     transfer_type: body.transferType === "out" ? "out" : "in",
-    counterparty_name: body.counterAccountName || null,
-    counterparty_account: body.counterAccountNumber || null,
+    counterparty_name: body.counterAccountName || body.counter_account_name || null,
+    counterparty_account: body.counterAccountNumber || body.counter_account_number || null,
   };
 }
 
@@ -53,8 +53,8 @@ function normalizeCasso(item: any): Normalized {
     description: item.description || null,
     reference_code: extractReference(item.description),
     transfer_type: amt < 0 ? "out" : "in",
-    counterparty_name: item.corresponsive_name || null,
-    counterparty_account: item.corresponsive_account || null,
+    counterparty_name: item.corresponsive_name || item.corresponsiveName || null,
+    counterparty_account: item.corresponsive_account || item.corresponsiveAccount || null,
   };
 }
 

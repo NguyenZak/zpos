@@ -37,7 +37,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { exportToCSV } from "@/lib/export-utils";
 import { posService } from "@/services/pos.service";
-
+import { CategoryManagerDialog } from "../_components/category-manager-dialog";
 import { AddRecurringExpenseDialog } from "./_components/add-recurring-dialog";
 
 export default function RecurringExpensesPage() {
@@ -46,7 +46,7 @@ export default function RecurringExpensesPage() {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
-  const [processing, setProcessing] = useState<"pause" | "activate" | "delete" | null>(null);
+  const [processing, setProcessing] = useState<"pause" | "activate" | "delete" | "process" | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -215,6 +215,23 @@ export default function RecurringExpensesPage() {
     toast.success("Đã xuất CSV chi phí định kỳ");
   };
 
+  const handleProcessDue = async () => {
+    setProcessing("process");
+    try {
+      const processed = await posService.processDueRecurringExpenses();
+      if (processed > 0) {
+        toast.success(`Đã tự động tạo ${processed} khoản chi đến hạn`);
+        await loadData();
+      } else {
+        toast.info("Không có khoản chi nào cần tạo tại thời điểm này");
+      }
+    } catch (_error) {
+      toast.error("Lỗi khi thực thi chi phí định kỳ");
+    } finally {
+      setProcessing(null);
+    }
+  };
+
   const handleBulkStatus = async (nextStatus: "active" | "paused") => {
     if (selectedRecurring.length === 0) return;
     setProcessing(nextStatus === "active" ? "activate" : "pause");
@@ -274,7 +291,19 @@ export default function RecurringExpensesPage() {
           <h1 className="font-black text-3xl text-amber-600 tracking-tight">Chi phí định kỳ</h1>
           <p className="text-muted-foreground text-sm">Tự động hóa việc ghi nhận các khoản chi cố định hàng tháng.</p>
         </div>
-        <AddRecurringExpenseDialog onShowSuccess={loadData} />
+        <div className="flex items-center gap-2">
+          <CategoryManagerDialog onCategoriesChange={loadData} />
+          <Button 
+            variant="outline" 
+            className="gap-2 border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+            onClick={handleProcessDue}
+            disabled={processing === "process"}
+          >
+            {processing === "process" ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
+            Thực thi chi phí đến hạn
+          </Button>
+          <AddRecurringExpenseDialog onShowSuccess={loadData} />
+        </div>
       </div>
 
       {selectedCount > 0 && (

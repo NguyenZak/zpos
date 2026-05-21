@@ -634,7 +634,7 @@ export const loyaltyService = {
       const pointsFromSpend = Math.floor(amountSpent / Number(spendRule.spend_amount)) * spendRule.points_awarded;
       if (pointsFromSpend > 0) {
         earned += pointsFromSpend;
-        explanation += `+${pointsFromSpend} điểm (Chi tiêu ${spendRule.spend_amount.toLocaleString()}đ nhận ${spendRule.points_awarded}đ) `;
+        explanation += `+${pointsFromSpend} điểm (Chi tiêu ${spendRule.spend_amount.toLocaleString()}đ nhận ${spendRule.points_awarded} điểm) `;
       }
     }
 
@@ -851,8 +851,8 @@ export const loyaltyService = {
       is_enabled: true, // Enable by default locally for immediate wow factor!
       point_name: "Điểm ZPoint",
       expiration_months: 12,
-      birthday_bonus_points: 50,
-      first_purchase_bonus_points: 20,
+      birthday_bonus_points: 0,
+      first_purchase_bonus_points: 0,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };

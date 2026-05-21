@@ -20,12 +20,13 @@ interface BarcodeTypeSelectorProps {
   value?: string;
   onChange: (value: string) => void;
   disabled?: boolean;
+  labelClassName?: string;
 }
 
-export function BarcodeTypeSelector({ value = "CODE128", onChange, disabled }: BarcodeTypeSelectorProps) {
+export function BarcodeTypeSelector({ value = "CODE128", onChange, disabled, labelClassName }: BarcodeTypeSelectorProps) {
   return (
     <div className="grid gap-2">
-      <Label>Loại mã vạch</Label>
+      <Label className={labelClassName}>Loại mã vạch</Label>
       <Select value={value} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger>
           <SelectValue placeholder="Chọn loại mã vạch" />

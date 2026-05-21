@@ -108,23 +108,64 @@ export default function NewPurchasePage() {
   const addItem = (product: any, variant?: PickedVariant) => {
     const variantId = variant?.id || null;
     const itemKey = variantId || product.id;
-    const existing = items.find(i => i.item_key === itemKey);
     
-    if (existing) {
-      updateItem(itemKey, 'quantity', existing.quantity + 1);
-    } else {
-      const unitCost = variant ? variant.price * 0.7 : product.price * 0.7; // Suggest 70% of retail price as cost
-      setItems([...items, {
-        item_key: itemKey,
-        product_id: product.id,
-        variant_id: variantId,
-        name: variant ? `${product.name} - ${variant.name}` : product.name,
-        sku: variant?.sku || product.sku || product.barcode,
-        quantity: 1,
-        unit_cost: unitCost,
-        total_amount: unitCost
-      }]);
-    }
+    setItems(prev => {
+      const existing = prev.find(i => i.item_key === itemKey);
+      if (existing) {
+        return prev.map(item => {
+          if (item.item_key === itemKey) {
+            const updated = { ...item, quantity: item.quantity + 1 };
+            updated.total_amount = updated.unit_cost * updated.quantity;
+            return updated;
+          }
+          return item;
+        });
+      } else {
+        const unitCost = variant ? (variant.cost_price ?? variant.price * 0.7) : (product.cost_price ?? product.price * 0.7);
+        const qty = variant ? (variant.stock || 1) : (product.stock || 1);
+        return [...prev, {
+          item_key: itemKey,
+          product_id: product.id,
+          variant_id: variantId,
+          name: variant ? `${product.name} - ${variant.name}` : product.name,
+          sku: variant?.sku || product.sku || product.barcode,
+          quantity: qty,
+          unit_cost: unitCost,
+          total_amount: unitCost * qty
+        }];
+      }
+    });
+  };
+
+  const addAllItems = (variants: PickedVariant[], product: any) => {
+    setItems(prev => {
+      let newItems = [...prev];
+      variants.forEach(variant => {
+        const itemKey = variant.id;
+        const existingIndex = newItems.findIndex(i => i.item_key === itemKey);
+        
+        if (existingIndex >= 0) {
+          const item = newItems[existingIndex];
+          const updated = { ...item, quantity: item.quantity + 1 };
+          updated.total_amount = updated.unit_cost * updated.quantity;
+          newItems[existingIndex] = updated;
+        } else {
+          const unitCost = variant.cost_price ?? variant.price * 0.7;
+          const qty = variant.stock || 1;
+          newItems.push({
+            item_key: itemKey,
+            product_id: product.id,
+            variant_id: variant.id,
+            name: `${product.name} - ${variant.name}`,
+            sku: variant.sku || product.sku || product.barcode,
+            quantity: qty,
+            unit_cost: unitCost,
+            total_amount: unitCost * qty
+          });
+        }
+      });
+      return newItems;
+    });
   };
 
   const updateItem = (itemKey: string, field: string, value: any) => {
@@ -450,6 +491,7 @@ export default function NewPurchasePage() {
         open={isVariantPickerOpen} 
         onOpenChange={setIsVariantPickerOpen} 
         onConfirm={(variant) => addItem(selectedProduct, variant)}
+        onConfirmAll={(variants) => addAllItems(variants, selectedProduct)}
         allowOutOfStock={true}
       />
     </div>

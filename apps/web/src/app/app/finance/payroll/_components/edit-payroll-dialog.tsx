@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Loader2, UserCheck, DollarSign } from "lucide-react";
+import { Edit, Loader2, UserCheck, DollarSign } from "lucide-react";
 import { 
   Dialog, 
   DialogContent, 
@@ -24,7 +24,7 @@ import {
 import { toast } from "sonner";
 import { posService } from "@/services/pos.service";
 
-export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void }) {
+export function EditPayrollDialog({ payroll, onShowSuccess }: { payroll: any; onShowSuccess?: () => void }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState<any[]>([]);
@@ -54,15 +54,28 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
       try {
         const data = await posService.getEmployees();
         setEmployees(data || []);
-        if (data && data.length > 0) {
-          setFormData(prev => ({ ...prev, staff_id: data[0].id }));
-        }
       } catch (error) {
         console.error(error);
       }
     };
-    if (open) loadEmployees();
-  }, [open]);
+    if (open) {
+      loadEmployees();
+      if (payroll) {
+        setFormData({
+          staff_id: payroll.staff_id || "",
+          base_salary: payroll.base_salary?.toString() || "0",
+          bonus: payroll.bonus?.toString() || "0",
+          allowance: payroll.allowance?.toString() || "0",
+          deduction: payroll.deduction?.toString() || "0",
+          payment_status: payroll.payment_status || "pending",
+          payment_date: payroll.payment_date 
+            ? new Date(payroll.payment_date).toISOString().split('T')[0] 
+            : new Date().toISOString().split('T')[0],
+          note: payroll.note || ""
+        });
+      }
+    }
+  }, [open, payroll]);
 
   useEffect(() => {
     const calculateBonus = async () => {
@@ -155,7 +168,7 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
     const finalSalary = base + bonus + allowance - deduction;
 
     try {
-      await posService.createPayroll({
+      await posService.updatePayroll(payroll.id, {
         staff_id: formData.staff_id,
         base_salary: base,
         bonus,
@@ -167,22 +180,12 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
         note: formData.note
       });
       
-      toast.success("Đã lập bảng lương thành công!");
+      toast.success("Đã cập nhật bảng lương thành công!");
       setOpen(false);
-      setFormData({
-        staff_id: employees[0]?.id || "",
-        base_salary: "",
-        bonus: "0",
-        allowance: "0",
-        deduction: "0",
-        payment_status: "pending",
-        payment_date: new Date().toISOString().split('T')[0],
-        note: ""
-      });
       if (onShowSuccess) onShowSuccess();
     } catch (error: any) {
       console.error(error);
-      toast.error(`Lỗi: ${error.message || "Không thể lưu bảng lương"}`);
+      toast.error(`Lỗi: ${error.message || "Không thể cập nhật bảng lương"}`);
     } finally {
       setLoading(false);
     }
@@ -191,21 +194,27 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-2 bg-emerald-600 hover:bg-emerald-700">
-          <Plus className="h-4 w-4" />
-          Tính lương nhân viên
-        </Button>
+        <div 
+          className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 gap-2 font-medium"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen(true);
+          }}
+        >
+          <Edit className="w-4 h-4" /> Sửa phiếu lương
+        </div>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[550px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold flex items-center gap-2">
               <UserCheck className="w-5 h-5 text-emerald-600" />
-              Tính lương & Thưởng
+              Sửa bảng lương & Thưởng
             </DialogTitle>
             <DialogDescription>
-              Tạo phiếu chi lương cho nhân viên thuộc hệ thống cửa hàng.
+              Cập nhật thông tin phiếu lương cho nhân viên.
             </DialogDescription>
+
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
@@ -400,7 +409,7 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
             </Button>
             <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Xác nhận lương
+              Lưu thay đổi
             </Button>
           </DialogFooter>
         </form>

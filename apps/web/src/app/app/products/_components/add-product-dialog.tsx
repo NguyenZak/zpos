@@ -23,12 +23,14 @@ import { convertToWebP } from "@/lib/image-utils";
 import { posService } from "@/services/pos.service";
 
 import { ProductBarcodeField } from "./product-barcode-field";
+import { BarcodeTypeSelector } from "./barcode-type-selector";
 import { type AttributeDef, VariantBuilder, type VariantRow } from "./variant-builder";
 
 export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
+  const [suppliers, setSuppliers] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -37,6 +39,7 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
     price: "",
     stock: "",
     category_id: "",
+    supplier_id: "",
     image: "",
     barcode_type: "CODE128",
   });
@@ -58,6 +61,7 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
   React.useEffect(() => {
     if (open) {
       posService.getCategoryList().then(setCategories).catch(console.error);
+      posService.getSuppliers().then(setSuppliers).catch(console.error);
       if (!formData.sku) {
         generateSKU();
       }
@@ -260,6 +264,7 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
         sku: hasVariants ? null : formData.sku,
         barcode: hasVariants ? null : formData.barcode,
         category_id: formData.category_id || null,
+        supplier_id: formData.supplier_id || null,
         price: basePrice,
         stock: baseStock,
         image: finalImageUrl || null,
@@ -277,6 +282,7 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
         price: "",
         stock: "",
         category_id: "",
+        supplier_id: "",
         image: "",
       });
       setHasVariants(false);
@@ -503,6 +509,27 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
                           </Select>
                         )}
                       </div>
+                      <div className="grid gap-3">
+                        <Label htmlFor="supplier" className="text-sm font-semibold text-foreground">
+                          Nhà cung cấp
+                        </Label>
+                        <Select
+                          value={formData.supplier_id}
+                          onValueChange={(val) => setFormData({ ...formData, supplier_id: val })}
+                        >
+                          <SelectTrigger id="supplier" className="h-10 w-full rounded-xl">
+                            <SelectValue placeholder="Chọn nhà cung cấp (Tuỳ chọn)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none" className="text-muted-foreground italic">Không có / Bỏ qua</SelectItem>
+                            {suppliers.map((sup) => (
+                              <SelectItem key={sup.id} value={sup.id}>
+                                {sup.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </div>
 
@@ -514,7 +541,7 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
                         <p className="text-sm text-muted-foreground">Thiết lập giá bán và số lượng tồn kho ban đầu</p>
                       </div>
 
-                      <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="grid gap-4 sm:grid-cols-3 items-start">
                         <div className="grid gap-3">
                           <Label htmlFor="sku" className="text-sm font-semibold text-foreground">
                             Mã SKU
@@ -531,20 +558,26 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
                               type="button"
                               variant="outline"
                               size="sm"
-                              className="h-10 rounded-xl px-3"
+                              className="h-10 rounded-xl px-3 shrink-0"
                               onClick={generateSKU}
                             >
                               Tự tạo
                             </Button>
                           </div>
                         </div>
-                        <div className="pt-2">
+                        <div className="grid gap-3">
+                          <BarcodeTypeSelector
+                            value={formData.barcode_type}
+                            onChange={(val) => setFormData({ ...formData, barcode_type: val })}
+                            labelClassName="text-sm font-semibold text-foreground"
+                          />
+                        </div>
+                        <div className="grid gap-3">
                           <ProductBarcodeField
                             value={formData.barcode}
                             onChange={(val) => setFormData({ ...formData, barcode: val })}
                             onValidationChange={setBarcodeValid}
                             barcodeType={formData.barcode_type}
-                            onBarcodeTypeChange={(val) => setFormData({ ...formData, barcode_type: val })}
                           />
                         </div>
                       </div>

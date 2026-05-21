@@ -1,5 +1,22 @@
 [
   {
+    "id": "log-1779395288391-abynaygru",
+    "tenant_id": null,
+    "user_id": "7e8c93e3-678b-4524-a617-4f3889616a8c",
+    "user_email": "nguyenvanzak@gmail.com",
+    "action": "login_success",
+    "module": "auth",
+    "severity": "info",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Server Process",
+    "metadata": {
+      "mode": "live"
+    },
+    "is_alert": false,
+    "alert_reason": null,
+    "created_at": "2026-05-21T20:28:08.391Z"
+  },
+  {
     "id": "log-1779305370524-6oplt00xb",
     "tenant_id": null,
     "user_id": "04512e3f-e46f-4342-9712-bcdd16c4948d",

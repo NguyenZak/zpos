@@ -225,6 +225,10 @@ export function OrderDetailDialog({ order, open, onOpenChange, onPrint }: OrderD
               <span className="text-muted-foreground">Tên khách hàng:</span>
               <span className="font-bold">{order.customer_name || "Khách lẻ"}</span>
             </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Nhân viên bán hàng:</span>
+              <span className="font-bold">{order.staff_name || "Không xác định"}</span>
+            </div>
           </div>
         </div>
 
@@ -459,6 +463,12 @@ export function OrderDetailDialog({ order, open, onOpenChange, onPrint }: OrderD
             <span>Thuế (VAT):</span>
             <span>{formatCurrency(0)}</span>
           </div>
+          {order.return_orders && order.return_orders.length > 0 && (
+            <div className="flex justify-between text-orange-600 font-semibold">
+              <span>Đã hoàn tiền ({order.return_orders.length} lần):</span>
+              <span>-{formatCurrency(order.return_orders.reduce((acc: number, curr: any) => acc + (Number(curr.total_refund_amount) || 0), 0))}</span>
+            </div>
+          )}
           <div className="flex justify-between font-black text-lg border-t pt-3.5 text-foreground">
             <span>TỔNG THANH TOÁN:</span>
             <span className="text-primary font-black text-xl">{formatCurrency(order.total_amount)}</span>

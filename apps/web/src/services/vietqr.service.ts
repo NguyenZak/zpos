@@ -335,6 +335,18 @@ export const vietQRService = {
     return (data || []) as PaymentTransaction[];
   },
 
+  async updateTransactionStatus(id: string, status: PaymentTransaction["status"]): Promise<void> {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+    const { error } = await supabase
+      .from("payment_transactions")
+      .update({ status })
+      .eq("id", id)
+      .eq("tenant_id", orgId);
+      
+    if (error) throw error;
+  },
+
   /**
    * Build the public webhook URL the user pastes into Sepay/Casso dashboard.
    * The bank account id is passed in the URL so the webhook handler knows

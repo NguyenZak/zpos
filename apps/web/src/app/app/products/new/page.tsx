@@ -17,6 +17,7 @@ import { convertToWebP } from "@/lib/image-utils";
 import { posService } from "@/services/pos.service";
 
 import { ProductBarcodeField } from "../_components/product-barcode-field";
+import { BarcodeTypeSelector } from "../_components/barcode-type-selector";
 import { type AttributeDef, VariantBuilder, type VariantRow } from "../_components/variant-builder";
 
 export default function NewProductPage() {
@@ -24,6 +25,7 @@ export default function NewProductPage() {
 
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
+  const [suppliers, setSuppliers] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -33,6 +35,7 @@ export default function NewProductPage() {
     cost_price: "",
     stock: "",
     category_id: "",
+    supplier_id: "",
     image: "",
     barcode_type: "CODE128",
   });
@@ -52,6 +55,7 @@ export default function NewProductPage() {
 
   useEffect(() => {
     posService.getCategoryList().then(setCategories).catch(console.error);
+    posService.getSuppliers().then(setSuppliers).catch(console.error);
   }, []);
 
   const generateSKU = async () => {
@@ -239,6 +243,7 @@ export default function NewProductPage() {
         sku: hasVariants ? null : formData.sku,
         barcode: hasVariants ? null : formData.barcode,
         category_id: formData.category_id || null,
+        supplier_id: formData.supplier_id || null,
         price: basePrice,
         cost_price: baseCostPrice,
         stock: baseStock,
@@ -453,8 +458,27 @@ export default function NewProductPage() {
                   </Select>
                 )}
               </div>
-              {/* Một slot trống để giữ grid cân, có thể là field "Đơn vị" sau này */}
-              <div className="hidden sm:block" />
+              <div className="grid gap-1.5">
+                <Label htmlFor="supplier" className="text-xs font-semibold">
+                  Nhà cung cấp
+                </Label>
+                <Select
+                  value={formData.supplier_id}
+                  onValueChange={(val) => setFormData({ ...formData, supplier_id: val })}
+                >
+                  <SelectTrigger className="h-10 w-full rounded-xl">
+                    <SelectValue placeholder="Chọn nhà cung cấp (Tuỳ chọn)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none" className="text-muted-foreground italic">Không có / Bỏ qua</SelectItem>
+                    {suppliers.map((sup) => (
+                      <SelectItem key={sup.id} value={sup.id}>
+                        {sup.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </section>
 
@@ -485,7 +509,7 @@ export default function NewProductPage() {
             <div className="p-5">
               {!hasVariants ? (
                 <>
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="grid gap-4 sm:grid-cols-3 items-start">
                   <div className="grid gap-1.5">
                     <Label htmlFor="sku" className="text-xs font-semibold">
                       Mã SKU
@@ -502,20 +526,28 @@ export default function NewProductPage() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="h-10 rounded-xl px-3"
+                        className="h-10 rounded-xl px-3 shrink-0"
                         onClick={generateSKU}
                       >
                         Tự tạo
                       </Button>
                     </div>
                   </div>
-                  <div className="xl:col-span-2">
+                  
+                  <div className="grid gap-1.5">
+                    <BarcodeTypeSelector
+                      value={formData.barcode_type}
+                      onChange={(val) => setFormData({ ...formData, barcode_type: val })}
+                      labelClassName="text-xs font-semibold"
+                    />
+                  </div>
+
+                  <div className="grid gap-1.5">
                     <ProductBarcodeField
                       value={formData.barcode}
                       onChange={(val) => setFormData({ ...formData, barcode: val })}
                       onValidationChange={setBarcodeValid}
                       barcodeType={formData.barcode_type}
-                      onBarcodeTypeChange={(val) => setFormData({ ...formData, barcode_type: val })}
                     />
                   </div>
                 </div>

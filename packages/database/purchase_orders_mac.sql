@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS purchase_orders (
   id uuid primary key default uuid_generate_v4(),
   organization_id uuid references organizations(id) on delete cascade not null,
   branch_id uuid references branches(id) not null,
-  supplier_id uuid references suppliers(id),
+  supplier_id uuid references suppliers(id) ON DELETE SET NULL,
   staff_id uuid references profiles(id),
   code text not null,
   status text default 'draft' check (status in ('draft', 'ordered', 'receiving', 'completed', 'cancelled')),
@@ -29,7 +29,7 @@ BEGIN
     END;
 END $$;
 
-ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS supplier_id uuid references suppliers(id);
+ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS supplier_id uuid references suppliers(id) ON DELETE SET NULL;
 ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS subtotal decimal(12,2) not null default 0;
 ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS discount_amount decimal(12,2) not null default 0;
 ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS shipping_fee decimal(12,2) not null default 0;
@@ -133,26 +133,20 @@ BEGIN
     FOR item IN SELECT * FROM purchase_order_items WHERE purchase_order_id = NEW.id
     LOOP
       IF item.variant_id IS NOT NULL THEN
-        -- Bước A & B: Lấy tổng tồn kho hiện tại và giá vốn hiện tại từ product_variants
-        SELECT COALESCE(stock, 0), COALESCE(cost_price, 0)
-        INTO current_global_qty, current_cost_price
-        FROM product_variants
-        WHERE id = item.variant_id;
+        -- Cập nhật giá vốn mới nhất (Latest Cost Price)
+        new_cost_price := item.unit_cost;
 
-        -- Bước C: Áp dụng công thức Moving Average Cost (MAC)
-        IF (current_global_qty + item.quantity) > 0 THEN
-          new_cost_price := ((current_global_qty * current_cost_price) + (item.quantity * item.unit_cost)) / (current_global_qty + item.quantity);
-        ELSE
-          new_cost_price := item.unit_cost; -- fallback nếu tồn kho bị âm hoặc bằng 0
-        END IF;
-
-        -- Bước D: Cập nhật lại giá vốn MAC mới vào product_variants
         UPDATE product_variants
         SET cost_price = new_cost_price
         WHERE id = item.variant_id;
         
-        -- Lưu ý: Việc cộng tồn kho (stock) đã được thực hiện ở API receiveStock 
-        -- thông qua việc update trực tiếp product_variants.stock
+      ELSE
+        -- Dành cho sản phẩm không có biến thể
+        new_cost_price := item.unit_cost;
+
+        UPDATE products
+        SET cost_price = new_cost_price
+        WHERE id = item.product_id;
       END IF;
       
     END LOOP;

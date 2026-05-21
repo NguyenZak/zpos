@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { posService } from '@/services/pos.service';
-
+import { telegramService } from '@/services/telegram.service';
 export function TelegramScheduler() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -10,20 +10,28 @@ export function TelegramScheduler() {
     const checkReports = async () => {
       // Check if Telegram is enabled first
       const enabled = localStorage.getItem('zpos_telegram_enabled') === 'true';
+      const reportsEnabled = localStorage.getItem('zpos_telegram_notify_reports') !== 'false';
+      const staleProductsEnabled = localStorage.getItem('zpos_telegram_notify_stale_products') !== 'false';
       if (!enabled) return;
       
       try {
         const orders = await posService.getOrders();
-        if (!orders || orders.length === 0) return;
         
-        // 1. Run Daily report check
-        await checkAndSendDailyReport(orders);
-        
-        // 2. Run Weekly report check
-        await checkAndSendWeeklyReport(orders);
-        
-        // 3. Run Monthly report check
-        await checkAndSendMonthlyReport(orders);
+        if (reportsEnabled && orders && orders.length > 0) {
+          // 1. Run Daily report check
+          await checkAndSendDailyReport(orders);
+          
+          // 2. Run Weekly report check
+          await checkAndSendWeeklyReport(orders);
+          
+          // 3. Run Monthly report check
+          await checkAndSendMonthlyReport(orders);
+        }
+
+        if (staleProductsEnabled) {
+          const products = await posService.getProducts();
+          await checkAndSendStaleProducts(products || [], orders || []);
+        }
       } catch (e) {
         console.warn("[TelegramScheduler] Failed checking scheduled reports:", e);
       }
@@ -132,7 +140,7 @@ export function TelegramScheduler() {
         `🏆 <b>Top sản phẩm bán chạy:</b>\n${productListStr}\n` +
         `⚡️ <i>Hệ thống ZPOS tự động gửi báo cáo cuối ngày.</i>`;
 
-      await posService.sendTelegramNotification(message);
+      await telegramService.sendMessage(message, "reports");
     };
 
     const checkAndSendWeeklyReport = async (orders: any[]) => {
@@ -214,7 +222,7 @@ export function TelegramScheduler() {
         `🏆 <b>Top 5 sản phẩm bán chạy nhất tuần:</b>\n${productListStr}\n` +
         `⚡️ <i>Hệ thống ZPOS tự động gửi báo cáo tuần vào tối Chủ Nhật.</i>`;
 
-      await posService.sendTelegramNotification(message);
+      await telegramService.sendMessage(message, "reports");
     };
 
     const checkAndSendMonthlyReport = async (orders: any[]) => {
@@ -315,7 +323,78 @@ export function TelegramScheduler() {
         `🏆 <b>Top 5 sản phẩm bán chạy nhất tháng:</b>\n${productListStr}\n` +
         `⚡️ <i>Hệ thống ZPOS tự động gửi báo cáo tháng vào tối ngày cuối tháng.</i>`;
 
-      await posService.sendTelegramNotification(message);
+      await telegramService.sendMessage(message, "reports");
+    };
+
+    const checkAndSendStaleProducts = async (products: any[], orders: any[]) => {
+      const days = Math.max(1, parseInt(localStorage.getItem('zpos_telegram_stale_product_days') || '7', 10));
+      const todayStr = formatDateString(new Date());
+      const alreadySentToday = localStorage.getItem(`zpos_tel_stale_products_${days}_${todayStr}`) === 'true';
+      if (alreadySentToday) return;
+
+      const now = Date.now();
+      const thresholdMs = days * 24 * 60 * 60 * 1000;
+      const lastSoldByKey = new Map<string, Date>();
+
+      orders.forEach((order: any) => {
+        const orderDate = new Date(order.created_at);
+        if (Number.isNaN(orderDate.getTime())) return;
+
+        (order.order_items || []).forEach((item: any) => {
+          const keys = [item.variant_id, item.product_id].filter(Boolean);
+          keys.forEach((key) => {
+            const current = lastSoldByKey.get(key);
+            if (!current || orderDate > current) {
+              lastSoldByKey.set(key, orderDate);
+            }
+          });
+        });
+      });
+
+      const staleItems: Array<{ name: string; stock: number; daysWithoutSale: number; lastSoldLabel: string }> = [];
+
+      products.forEach((product: any) => {
+        const variants = Array.isArray(product.variants) ? product.variants : [];
+        const productLastSold = lastSoldByKey.get(product.id);
+
+        if (variants.length > 0) {
+          variants.forEach((variant: any) => {
+            const stock = Number(variant.stock || 0);
+            if (stock <= 0) return;
+
+            const lastSold = lastSoldByKey.get(variant.id) || productLastSold;
+            const daysWithoutSale = lastSold ? Math.floor((now - lastSold.getTime()) / (24 * 60 * 60 * 1000)) : days;
+            if (lastSold && now - lastSold.getTime() < thresholdMs) return;
+
+            staleItems.push({
+              name: `${product.name} - ${variant.name}`,
+              stock,
+              daysWithoutSale,
+              lastSoldLabel: lastSold ? `lần bán cuối ${lastSold.toLocaleDateString('vi-VN')}` : 'chưa từng bán',
+            });
+          });
+          return;
+        }
+
+        const stock = Number(product.stock || 0);
+        if (stock <= 0) return;
+
+        const daysWithoutSale = productLastSold ? Math.floor((now - productLastSold.getTime()) / (24 * 60 * 60 * 1000)) : days;
+        if (productLastSold && now - productLastSold.getTime() < thresholdMs) return;
+
+        staleItems.push({
+          name: product.name,
+          stock,
+          daysWithoutSale,
+          lastSoldLabel: productLastSold ? `lần bán cuối ${productLastSold.toLocaleDateString('vi-VN')}` : 'chưa từng bán',
+        });
+      });
+
+      staleItems.sort((a, b) => b.daysWithoutSale - a.daysWithoutSale || b.stock - a.stock);
+      await telegramService.notifyStaleProducts(staleItems, days);
+      if (staleItems.length > 0) {
+        localStorage.setItem(`zpos_tel_stale_products_${days}_${todayStr}`, 'true');
+      }
     };
 
     // Run initially

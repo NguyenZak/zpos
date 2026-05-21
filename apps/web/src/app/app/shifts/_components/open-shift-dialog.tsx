@@ -60,6 +60,7 @@ export function OpenShiftDialog({
   const [saving, setSaving] = useState(false);
   const [loadingBranches, setLoadingBranches] = useState(false);
   const [loadingRegisters, setLoadingRegisters] = useState(false);
+  const [previousNote, setPreviousNote] = useState<string | null>(null);
 
   const selectedBranch = useMemo(() => branches.find((branch) => branch.id === branchId), [branches, branchId]);
   const selectedRegister = useMemo(
@@ -124,6 +125,16 @@ export function OpenShiftDialog({
     };
   }, [branchId]);
 
+  useEffect(() => {
+    if (!open || !branchId) {
+      setPreviousNote(null);
+      return;
+    }
+    shiftService.getPreviousShiftNote(branchId, registerId || undefined)
+      .then(setPreviousNote)
+      .catch(() => setPreviousNote(null));
+  }, [open, branchId, registerId]);
+
   const submit = async () => {
     if (!branchId) {
       toast.error("Vui lòng chọn chi nhánh");
@@ -154,24 +165,30 @@ export function OpenShiftDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="z-[120] overflow-hidden p-0 sm:max-w-2xl">
-        <DialogHeader className="border-b bg-muted/40 px-5 py-4 sm:px-6">
+      <DialogContent className="z-[120] flex max-h-[92dvh] flex-col overflow-hidden p-0 sm:max-w-2xl">
+        <DialogHeader className="shrink-0 border-b bg-muted/40 px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex items-start gap-3 pr-8">
-            <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
+            <div className="hidden size-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm sm:flex">
               <Wallet className="size-5" />
             </div>
             <div className="min-w-0">
-              <DialogTitle className="font-semibold text-xl leading-7">Mở ca làm việc</DialogTitle>
-              <DialogDescription className="mt-1 text-sm leading-5">
-                Chọn điểm bán, nhập tiền mặt trong két và bắt đầu phiên bán hàng.
+              <DialogTitle className="font-semibold text-base leading-6 sm:text-xl sm:leading-7">Mở ca làm việc</DialogTitle>
+              <DialogDescription className="mt-1 text-xs leading-5 sm:text-sm">
+                Chọn điểm bán, nhập tiền mặt và bắt đầu phiên bán.
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="grid gap-5 px-5 py-5 sm:grid-cols-[1fr_240px] sm:px-6">
+        <div className="grid flex-1 gap-4 overflow-y-auto px-4 py-4 sm:grid-cols-[1fr_240px] sm:gap-5 sm:px-6 sm:py-5">
           <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
+            {previousNote && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-amber-900 sm:hidden">
+                <p className="mb-1 font-semibold text-[11px] uppercase tracking-wider">Ghi chú bàn giao từ ca trước:</p>
+                <p className="text-sm italic">{previousNote}</p>
+              </div>
+            )}
+            <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 font-semibold text-sm">
                   <Building2 className="size-4 text-muted-foreground" />
@@ -252,20 +269,20 @@ export function OpenShiftDialog({
                   value={formatCurrencyInput(openingCash)}
                   onChange={(e) => setOpeningCash(parseCurrencyInput(e.target.value))}
                   placeholder="0"
-                  className="h-14 rounded-2xl bg-background pr-12 pl-4 font-semibold text-2xl tabular-nums"
+                  className="h-12 rounded-2xl bg-background pr-12 pl-4 font-semibold text-xl tabular-nums sm:h-14 sm:text-2xl"
                 />
                 <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 font-medium text-muted-foreground text-sm">
                   đ
                 </span>
               </div>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div className="grid grid-cols-4 gap-2">
                 {QUICK_AMOUNTS.map((amount) => (
                   <Button
                     key={amount}
                     type="button"
                     variant={openingCash === amount ? "default" : "outline"}
                     size="sm"
-                    className="h-9 rounded-xl"
+                    className="h-10 rounded-xl px-1.5 text-xs sm:h-9 sm:text-sm"
                     onClick={() => setOpeningCash(amount)}
                   >
                     {amount === 0 ? "0 đ" : fmtVND(amount)}
@@ -279,19 +296,26 @@ export function OpenShiftDialog({
               <Textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                rows={3}
-                className="min-h-24 resize-none rounded-2xl bg-background p-3"
+                rows={2}
+                className="min-h-20 resize-none rounded-2xl bg-background p-3 sm:min-h-24"
                 placeholder="Ví dụ: ca sáng, két 1..."
               />
             </div>
           </div>
 
-          <div className="rounded-3xl bg-muted/60 p-4">
-            <div className="flex items-center gap-2 font-semibold text-sm">
-              <CheckCircle2 className="size-4 text-emerald-600" />
-              Tóm tắt ca
-            </div>
-            <dl className="mt-4 space-y-3 text-sm">
+          <div className="hidden rounded-3xl bg-muted/60 p-4 space-y-4 sm:block">
+            {previousNote && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-amber-900">
+                <p className="font-semibold text-xs uppercase tracking-wider mb-1">Ghi chú bàn giao từ ca trước:</p>
+                <p className="text-sm italic">{previousNote}</p>
+              </div>
+            )}
+            <div>
+              <div className="flex items-center gap-2 font-semibold text-sm">
+                <CheckCircle2 className="size-4 text-emerald-600" />
+                Tóm tắt ca
+              </div>
+              <dl className="mt-4 space-y-3 text-sm">
               <div>
                 <dt className="text-muted-foreground">Chi nhánh</dt>
                 <dd className="mt-1 font-medium">{selectedBranch?.name || "Chưa chọn"}</dd>
@@ -305,19 +329,24 @@ export function OpenShiftDialog({
                 <dd className="mt-1 font-semibold text-2xl tabular-nums">{fmtVND(openingCash)}</dd>
               </div>
             </dl>
+            </div>
           </div>
         </div>
 
-        <DialogFooter className="m-0 rounded-none px-5 py-4 sm:px-6">
+        <DialogFooter className="m-0 shrink-0 flex-col-reverse gap-2 rounded-none border-t px-4 py-3 sm:flex-row sm:px-6 sm:py-4">
           <Button
             variant="outline"
-            className="h-10 rounded-xl px-4"
+            className="h-11 w-full rounded-xl px-4 sm:h-10 sm:w-auto"
             onClick={() => onOpenChange(false)}
             disabled={saving}
           >
             Huỷ
           </Button>
-          <Button className="h-10 rounded-xl px-5" onClick={submit} disabled={saving || loadingBranches || !branchId}>
+          <Button
+            className="h-11 w-full rounded-xl px-5 sm:h-10 sm:w-auto"
+            onClick={submit}
+            disabled={saving || loadingBranches || !branchId}
+          >
             {saving ? "Đang mở..." : "Mở ca"}
           </Button>
         </DialogFooter>

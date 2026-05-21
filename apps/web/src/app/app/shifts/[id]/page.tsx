@@ -19,6 +19,7 @@ import { ShiftSummaryCard } from "../_components/shift-summary-card";
 import { ShiftOrdersTable } from "../_components/shift-orders-table";
 import { ShiftTransactionsTable } from "../_components/shift-transactions-table";
 import { CloseShiftDialog } from "../_components/close-shift-dialog";
+import { ShiftZReport } from "../_components/shift-z-report";
 import { fmtVND } from "../_components/format";
 
 export default function ShiftDetailPage() {
@@ -128,6 +129,8 @@ export default function ShiftDetailPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <ShiftZReport shift={shift} transactions={txs} />
+      
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between print:hidden">
         <div className="flex items-start gap-3">
           <Button variant="ghost" size="icon" asChild>
@@ -189,7 +192,14 @@ export default function ShiftDetailPage() {
         open={closeOpen}
         onOpenChange={setCloseOpen}
         shift={shift}
-        onClosed={() => router.replace("/pos")}
+        onClosed={async (wantsToPrint) => {
+          if (wantsToPrint) {
+            await load();
+            setTimeout(() => window.print(), 500);
+          } else {
+            router.replace("/pos");
+          }
+        }}
       />
 
       <Dialog open={!!cashFlowOpen} onOpenChange={(v) => !v && setCashFlowOpen(null)}>
