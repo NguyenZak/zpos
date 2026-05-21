@@ -71,6 +71,18 @@ export function BarcodeScannerDialog({
     return getPreferredBackCamera(devices);
   };
 
+  const listVideoInputDevices = async (): Promise<CameraDevice[]> => {
+    if (!navigator.mediaDevices?.enumerateDevices) return [];
+
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    return devices
+      .filter((device) => device.kind === "videoinput")
+      .map((device) => ({
+        id: device.deviceId,
+        label: device.label,
+      }));
+  };
+
   const getScannerCameraTarget = (cameraSelection = CAMERA_BACK_VALUE): string | MediaTrackConstraints => {
     if (cameraSelection === CAMERA_BACK_VALUE) return { facingMode: "environment" };
     if (cameraSelection === CAMERA_FRONT_VALUE) return { facingMode: "user" };
@@ -194,23 +206,20 @@ export function BarcodeScannerDialog({
   };
 
   const requestCameraPermissions = async () => {
+    setHasCameraPermission(null);
+
     try {
-      const devices = await Html5Qrcode.getCameras();
-      setHasCameraPermission(true);
+      const devices = await listVideoInputDevices();
       setCameras(devices);
 
-      if (devices.length > 0) {
-        const backCam = getPreferredBackCamera(devices);
-        const preferredCamera = backCam?.id ?? CAMERA_BACK_VALUE;
-        setSelectedCameraId(preferredCamera);
-        void startScanner(preferredCamera, devices);
-      } else {
-        toast.error("Không tìm thấy camera trên thiết bị");
-      }
+      const backCam = getPreferredBackCamera(devices);
+      const preferredCamera = backCam?.id ?? CAMERA_BACK_VALUE;
+      setSelectedCameraId(preferredCamera);
+      void startScanner(preferredCamera, devices);
     } catch (err) {
-      console.error("Camera access error:", err);
-      setHasCameraPermission(false);
-      toast.error("Vui lòng cấp quyền truy cập camera để quét mã vạch.");
+      console.warn("Could not enumerate cameras before starting barcode scanner:", err);
+      setSelectedCameraId(CAMERA_BACK_VALUE);
+      void startScanner(CAMERA_BACK_VALUE, []);
     }
   };
 
@@ -257,6 +266,8 @@ export function BarcodeScannerDialog({
       );
 
       const hasVideoFrame = await prepareScannerVideoElement();
+      setHasCameraPermission(true);
+
       if (!hasVideoFrame && cameraSelection === CAMERA_BACK_VALUE) {
         const fallbackCamera = getFallbackCamera(fallbackDevices);
         if (fallbackCamera?.id) {
@@ -271,8 +282,9 @@ export function BarcodeScannerDialog({
         setSelectedCameraId(activeDeviceId);
       }
 
-      // Camera labels can be empty before permission on iOS/Android. Refresh after the stream starts.
-      Html5Qrcode.getCameras()
+      // Camera labels can be empty before permission on iOS/Android. Refresh labels after the scanner stream starts,
+      // without opening and stopping a second camera stream.
+      listVideoInputDevices()
         .then((updatedDevices) => {
           if (updatedDevices.length > 0) setCameras(updatedDevices);
         })
@@ -288,6 +300,7 @@ export function BarcodeScannerDialog({
           return;
         }
       }
+      setHasCameraPermission(false);
       toast.error("Không thể mở camera quét mã vạch. Vui lòng thử đổi camera hoặc kiểm tra quyền truy cập.");
     }
   };
