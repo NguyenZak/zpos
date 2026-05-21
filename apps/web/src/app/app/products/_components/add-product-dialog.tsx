@@ -1,23 +1,25 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, Loader2, Package, Image as ImageIcon, Sparkles, Barcode } from "lucide-react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
-} from "@/components/ui/dialog";
+
+import { Image as ImageIcon, Loader2, Package, Plus, Sparkles } from "lucide-react";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
-import { posService } from "@/services/pos.service";
 import { convertToWebP } from "@/lib/image-utils";
+import { posService } from "@/services/pos.service";
 
 import { ProductBarcodeField } from "./product-barcode-field";
 
@@ -25,7 +27,7 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
-  
+
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
@@ -34,9 +36,9 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
     stock: "",
     category_id: "",
     image: "",
-    barcode_type: "CODE128"
+    barcode_type: "CODE128",
   });
-  
+
   const [barcodeValid, setBarcodeValid] = useState(true);
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -53,11 +55,11 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
     try {
       const products = await posService.getProducts();
       const nextNumber = products.length + 1;
-      const sku = `SP${nextNumber.toString().padStart(4, '0')}`;
-      setFormData(prev => ({ ...prev, sku }));
+      const sku = `SP${nextNumber.toString().padStart(4, "0")}`;
+      setFormData((prev) => ({ ...prev, sku }));
     } catch (error) {
       const random = Math.floor(1000 + Math.random() * 9000);
-      setFormData(prev => ({ ...prev, sku: `SP${random}` }));
+      setFormData((prev) => ({ ...prev, sku: `SP${random}` }));
     }
   };
 
@@ -66,11 +68,14 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const input = e.target;
+    const file = input.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
+    const isImageFile = file.type.startsWith("image/") || /\.(heic|heif|jpe?g|png|webp)$/i.test(file.name);
+    if (!isImageFile) {
       toast.error("Vui lòng chọn tệp tin hình ảnh hợp lệ!");
+      input.value = "";
       return;
     }
 
@@ -78,15 +83,21 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
     const toastId = toast.loading("Đang tối ưu hóa ảnh và tải lên...");
 
     try {
-      // Compress to lightweight WebP client-side
-      const webpFile = await convertToWebP(file, 0.8);
-      
+      let uploadFile = file;
+
+      try {
+        uploadFile = await convertToWebP(file, 0.8);
+      } catch (conversionError) {
+        console.warn("Không thể chuyển ảnh sang WebP, tải ảnh gốc lên thay thế", conversionError);
+        toast.loading("Không nén được ảnh trên thiết bị này, đang tải ảnh gốc lên...", { id: toastId });
+      }
+
       const uploadForm = new FormData();
-      uploadForm.append("file", webpFile);
+      uploadForm.append("file", uploadFile);
 
       const res = await fetch("/api/upload", {
         method: "POST",
-        body: uploadForm
+        body: uploadForm,
       });
 
       const json = await res.json();
@@ -94,13 +105,14 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
         throw new Error(json.error || "Không thể tải ảnh lên");
       }
 
-      setFormData(prev => ({ ...prev, image: json.url }));
+      setFormData((prev) => ({ ...prev, image: json.url }));
       toast.success("Đã tải ảnh sản phẩm thành công!", { id: toastId });
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Tải ảnh thất bại", { id: toastId });
     } finally {
       setUploadingImage(false);
+      input.value = "";
     }
   };
 
@@ -121,7 +133,7 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
         throw new Error(json.error || "Không tìm thấy ảnh phù hợp");
       }
 
-      setFormData(prev => ({ ...prev, image: json.url }));
+      setFormData((prev) => ({ ...prev, image: json.url }));
       toast.success("AI đã tìm và tự động đồng bộ ảnh thành công!", { id: toastId });
     } catch (err: any) {
       console.error(err);
@@ -133,11 +145,15 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (uploadingImage) {
+      toast.info("Ảnh đang được tải lên, vui lòng đợi hoàn tất rồi lưu sản phẩm.");
+      return;
+    }
     setLoading(true);
-    
+
     try {
       let finalImageUrl = formData.image;
-      
+
       // Auto fallback to AI search if no image is uploaded
       if (!finalImageUrl && formData.name.trim()) {
         try {
@@ -167,14 +183,23 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
         barcode: formData.barcode,
         category_id: formData.category_id || null,
         price: parseFloat(formData.price),
-        stock: parseInt(formData.stock),
+        stock: parseInt(formData.stock, 10),
         image: finalImageUrl || null,
-        barcode_type: formData.barcode_type
+        barcode_type: formData.barcode_type,
       });
-      
+
       toast.success("Đã thêm sản phẩm thành công!");
       setOpen(false);
-      setFormData({ name: "", sku: "", barcode: "", barcode_type: "CODE128", price: "", stock: "", category_id: "", image: "" });
+      setFormData({
+        name: "",
+        sku: "",
+        barcode: "",
+        barcode_type: "CODE128",
+        price: "",
+        stock: "",
+        category_id: "",
+        image: "",
+      });
       if (onShowSuccess) onShowSuccess();
     } catch (error: any) {
       console.error("createProduct error:", error);
@@ -197,40 +222,44 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-2">
+        <Button size="sm" className="gap-2 max-sm:h-9 max-sm:flex-1 max-sm:rounded-xl">
           <Plus className="h-4 w-4" />
           Thêm sản phẩm
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold flex items-center gap-2">
-              <Package className="w-5 h-5" />
-              Thêm sản phẩm mới
+      <DialogContent className="bottom-0 left-0 top-auto max-h-[92dvh] w-full max-w-none translate-x-0 translate-y-0 overflow-hidden rounded-b-none rounded-t-3xl p-0 sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-w-[540px] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl">
+        <form onSubmit={handleSubmit} className="flex max-h-[92dvh] flex-col">
+          <DialogHeader className="border-b bg-background/95 px-5 pb-4 pt-5 text-left backdrop-blur sm:px-6">
+            <DialogTitle className="flex items-center gap-2 pr-8 text-lg font-semibold sm:text-xl">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <Package className="h-4 w-4" />
+              </span>
+              <span>Thêm sản phẩm mới</span>
             </DialogTitle>
-            <DialogDescription>
-              Nhập thông tin chi tiết cho sản phẩm mới của bạn.
+            <DialogDescription className="max-w-[34rem] text-xs leading-relaxed sm:text-sm">
+              Nhập thông tin bán hàng, tồn kho và mã vạch cho sản phẩm.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4 sm:px-6">
             {/* Product Image Uploader Box */}
-            <div className="flex gap-4 items-center p-3 rounded-xl border bg-muted/10 relative">
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleImageUpload} 
-                className="hidden" 
-                accept="image/*" 
+            <div className="relative flex flex-col gap-3 rounded-2xl border bg-muted/20 p-3 sm:flex-row sm:items-center">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImageUpload}
+                className="hidden"
+                accept="image/*,.heic,.heif"
+                capture="environment"
               />
-              <div 
+              <button
+                type="button"
                 onClick={handleImageChange}
-                className="w-20 h-20 rounded-lg bg-muted flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/20 hover:bg-muted/85 cursor-pointer overflow-hidden transition-all flex-shrink-0 relative group"
+                className="group relative flex h-24 w-full cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-muted-foreground/20 bg-background p-0 transition-all hover:bg-muted/70 sm:h-20 sm:w-20 sm:shrink-0"
               >
                 {formData.image ? (
                   <>
                     <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
                       <span className="text-[10px] font-bold text-white uppercase">Đổi ảnh</span>
                     </div>
                   </>
@@ -246,70 +275,77 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
                     )}
                   </>
                 )}
-              </div>
-              <div className="flex-1 space-y-1">
-                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Hình ảnh sản phẩm</span>
-                <p className="text-[10px] text-muted-foreground leading-normal italic">
-                  Tải ảnh thực tế (webp nén) hoặc để trống để AI tự động tìm hình ảnh trên Internet khi lưu.
+              </button>
+              <div className="min-w-0 flex-1 space-y-2">
+                <span className="block text-xs font-bold uppercase text-muted-foreground">Hình ảnh sản phẩm</span>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  Tải ảnh thực tế hoặc để trống để AI tự tìm ảnh khi lưu.
                 </p>
-                <div className="flex gap-2 mt-1.5">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm" 
-                    className="h-7 text-xs" 
+                <div className="grid grid-cols-2 gap-2 sm:flex">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 rounded-xl text-xs"
                     onClick={handleImageChange}
                     disabled={uploadingImage}
                   >
                     Tải ảnh lên
                   </Button>
-                  <Button 
-                    type="button" 
-                    variant="secondary" 
-                    size="sm" 
-                    className="h-7 text-xs gap-1 text-violet-500 font-bold border-violet-500/20 bg-violet-500/10 hover:bg-violet-500/20" 
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="h-8 gap-1 rounded-xl border-violet-500/20 bg-violet-500/10 text-xs font-bold text-violet-500 hover:bg-violet-500/20"
                     onClick={handleAiFindImage}
                     disabled={aiFindingImage || !formData.name.trim()}
                   >
-                    {aiFindingImage ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : (
-                      <Sparkles className="w-3 h-3" />
-                    )}
+                    {aiFindingImage ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                     AI Tự Tìm Ảnh
                   </Button>
                 </div>
               </div>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="name">Tên sản phẩm</Label>
-              <Input 
-                id="name" 
-                placeholder="Ví dụ: iPhone 15 Pro Max" 
+            <div className="grid gap-2 rounded-2xl border bg-background p-3 sm:border-0 sm:bg-transparent sm:p-0">
+              <Label htmlFor="name" className="text-xs font-bold uppercase text-muted-foreground">
+                Tên sản phẩm
+              </Label>
+              <Input
+                id="name"
+                placeholder="Ví dụ: iPhone 15 Pro Max"
+                className="h-10 rounded-xl"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="sku">Mã SKU</Label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-2 rounded-2xl border bg-background p-3 sm:border-0 sm:bg-transparent sm:p-0">
+                <Label htmlFor="sku" className="text-xs font-bold uppercase text-muted-foreground">
+                  Mã SKU
+                </Label>
                 <div className="flex gap-2">
-                  <Input 
-                    id="sku" 
-                    placeholder="Mã SP (Ví dụ: SP0001)" 
-                    className="uppercase flex-1"
+                  <Input
+                    id="sku"
+                    placeholder="Mã SP (Ví dụ: SP0001)"
+                    className="h-10 flex-1 rounded-xl uppercase"
                     value={formData.sku}
                     onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                   />
-                  <Button type="button" variant="outline" size="sm" onClick={generateSKU}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-10 rounded-xl px-3"
+                    onClick={generateSKU}
+                  >
                     Tự tạo
                   </Button>
                 </div>
               </div>
-              <div className="grid gap-2 mt-[-1rem]">
-                <ProductBarcodeField 
+              <div className="rounded-2xl border bg-background p-3 sm:border-0 sm:bg-transparent sm:p-0">
+                <ProductBarcodeField
                   value={formData.barcode}
                   onChange={(val) => setFormData({ ...formData, barcode: val })}
                   onValidationChange={setBarcodeValid}
@@ -318,39 +354,49 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="category">Danh mục</Label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-2 rounded-2xl border bg-background p-3 sm:border-0 sm:bg-transparent sm:p-0">
+                <Label htmlFor="category" className="text-xs font-bold uppercase text-muted-foreground">
+                  Danh mục
+                </Label>
                 <Select onValueChange={(val) => setFormData({ ...formData, category_id: val })}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-10 rounded-xl">
                     <SelectValue placeholder="Chọn danh mục" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map(cat => (
-                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="price">Giá bán (₫)</Label>
-                <Input 
-                  id="price" 
-                  type="text" 
-                  placeholder="25,000,000" 
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-2 rounded-2xl border bg-background p-3 sm:border-0 sm:bg-transparent sm:p-0">
+                <Label htmlFor="price" className="text-xs font-bold uppercase text-muted-foreground">
+                  Giá bán (₫)
+                </Label>
+                <Input
+                  id="price"
+                  type="text"
+                  placeholder="25,000,000"
+                  className="h-10 rounded-xl"
                   value={formatCurrencyValue(formData.price)}
                   onChange={(e) => setFormData({ ...formData, price: parseCurrencyValue(e.target.value) })}
                   required
                 />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="stock">Tồn kho ban đầu</Label>
-                <Input 
-                  id="stock" 
-                  type="number" 
-                  placeholder="10" 
+              <div className="grid gap-2 rounded-2xl border bg-background p-3 sm:border-0 sm:bg-transparent sm:p-0">
+                <Label htmlFor="stock" className="text-xs font-bold uppercase text-muted-foreground">
+                  Tồn kho ban đầu
+                </Label>
+                <Input
+                  id="stock"
+                  type="number"
+                  placeholder="10"
+                  className="h-10 rounded-xl"
                   value={formData.stock}
                   onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
                   required
@@ -358,13 +404,24 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
               </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" size="sm" onClick={() => setOpen(false)}>
+          <DialogFooter className="mt-0 rounded-none bg-background/95 px-5 py-4 backdrop-blur sm:px-6">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-10 rounded-xl sm:h-8 sm:rounded-lg"
+              onClick={() => setOpen(false)}
+            >
               Hủy
             </Button>
-            <Button type="submit" size="sm" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Lưu sản phẩm
+            <Button
+              type="submit"
+              size="sm"
+              className="h-10 rounded-xl sm:h-8 sm:rounded-lg"
+              disabled={loading || uploadingImage}
+            >
+              {(loading || uploadingImage) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {uploadingImage ? "Đang tải ảnh..." : "Lưu sản phẩm"}
             </Button>
           </DialogFooter>
         </form>

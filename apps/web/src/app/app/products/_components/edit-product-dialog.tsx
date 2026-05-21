@@ -72,11 +72,14 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess }: Ed
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const input = e.target;
+    const file = input.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
+    const isImageFile = file.type.startsWith("image/") || /\.(heic|heif|jpe?g|png|webp)$/i.test(file.name);
+    if (!isImageFile) {
       toast.error("Vui lòng chọn tệp tin hình ảnh hợp lệ!");
+      input.value = "";
       return;
     }
 
@@ -84,11 +87,17 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess }: Ed
     const toastId = toast.loading("Đang tối ưu hóa ảnh và tải lên...");
 
     try {
-      // Compress to WebP client-side
-      const webpFile = await convertToWebP(file, 0.8);
+      let uploadFile = file;
+
+      try {
+        uploadFile = await convertToWebP(file, 0.8);
+      } catch (conversionError) {
+        console.warn("Không thể chuyển ảnh sang WebP, tải ảnh gốc lên thay thế", conversionError);
+        toast.loading("Không nén được ảnh trên thiết bị này, đang tải ảnh gốc lên...", { id: toastId });
+      }
 
       const uploadForm = new FormData();
-      uploadForm.append("file", webpFile);
+      uploadForm.append("file", uploadFile);
 
       const res = await fetch("/api/upload", {
         method: "POST",
@@ -107,6 +116,7 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess }: Ed
       toast.error(err.message || "Tải ảnh thất bại", { id: toastId });
     } finally {
       setUploadingImage(false);
+      input.value = "";
     }
   };
 
@@ -139,6 +149,10 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess }: Ed
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (uploadingImage) {
+      toast.info("Ảnh đang được tải lên, vui lòng đợi hoàn tất rồi lưu sản phẩm.");
+      return;
+    }
     setLoading(true);
     try {
       let finalImageUrl = formData.image;
@@ -201,7 +215,14 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess }: Ed
           <div className="grid gap-4 py-4">
             {/* Product Image Uploader Box */}
             <div className="relative flex items-center gap-4 rounded-xl border bg-muted/10 p-3">
-              <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImageUpload}
+                className="hidden"
+                accept="image/*,.heic,.heif"
+                capture="environment"
+              />
               <button
                 type="button"
                 onClick={handleImageChange}
@@ -336,9 +357,9 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess }: Ed
             <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
               Hủy
             </Button>
-            <Button type="submit" size="sm" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Lưu thay đổi
+            <Button type="submit" size="sm" disabled={loading || uploadingImage}>
+              {(loading || uploadingImage) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {uploadingImage ? "Đang tải ảnh..." : "Lưu thay đổi"}
             </Button>
           </DialogFooter>
         </form>
