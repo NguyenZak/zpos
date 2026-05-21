@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Barcode, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
-import { BarcodeCameraSheet } from "./barcode-camera-sheet";
-import { GenerateBarcodeButton } from "./generate-barcode-button";
-import { posService } from "@/services/pos.service";
-import { permissionService } from "@/services/permission.service";
-import { BarcodeTypeSelector } from "./barcode-type-selector";
+import { useEffect, useState } from "react";
+
+import { AlertCircle, Barcode, CheckCircle2, Loader2 } from "lucide-react";
+
 import { RequirePermission } from "@/components/auth/require-permission";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { permissionService } from "@/services/permission.service";
+import { posService } from "@/services/pos.service";
+
+import { BarcodeCameraSheet } from "./barcode-camera-sheet";
+import { BarcodeTypeSelector } from "./barcode-type-selector";
+import { GenerateBarcodeButton } from "./generate-barcode-button";
 
 interface ProductBarcodeFieldProps {
   value: string;
@@ -22,16 +25,16 @@ interface ProductBarcodeFieldProps {
   onBarcodeTypeChange?: (val: string) => void;
 }
 
-export function ProductBarcodeField({ 
-  value, 
-  onChange, 
-  label = "Mã Barcode", 
+export function ProductBarcodeField({
+  value,
+  onChange,
+  label = "Mã Barcode",
   placeholder = "Nhập hoặc quét mã vạch...",
   originalBarcode,
   onValidationChange,
   disabled = false,
   barcodeType = "CODE128",
-  onBarcodeTypeChange
+  onBarcodeTypeChange,
 }: ProductBarcodeFieldProps) {
   const [scannerOpen, setScannerOpen] = useState(false);
   const [validating, setValidating] = useState(false);
@@ -67,7 +70,7 @@ export function ProductBarcodeField({
           setSuccess(true);
           onValidationChange?.(true);
         }
-      } catch (err: any) {
+      } catch (_err: any) {
         setError("Lỗi kiểm tra mã vạch");
         onValidationChange?.(false);
       } finally {
@@ -82,61 +85,49 @@ export function ProductBarcodeField({
   return (
     <div className="grid gap-4">
       {onBarcodeTypeChange && (
-        <BarcodeTypeSelector 
-          value={barcodeType} 
-          onChange={onBarcodeTypeChange} 
-          disabled={disabled} 
-        />
+        <BarcodeTypeSelector value={barcodeType} onChange={onBarcodeTypeChange} disabled={disabled} />
       )}
       <div className="grid gap-2">
         <Label>{label}</Label>
-        <div className="flex gap-2 relative">
-        <div className="relative flex-1">
-          <Input 
-            placeholder={placeholder}
-            className={`uppercase pr-8 ${error ? 'border-destructive focus-visible:ring-destructive' : ''} ${success ? 'border-green-500 focus-visible:ring-green-500' : ''}`}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            disabled={disabled}
-          />
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
-            {validating && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
-            {!validating && error && <AlertCircle className="w-4 h-4 text-destructive" />}
-            {!validating && success && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+        <div className="relative flex gap-2">
+          <div className="relative flex-1">
+            <Input
+              placeholder={placeholder}
+              className={`pr-8 uppercase ${error ? "border-destructive focus-visible:ring-destructive" : ""} ${success ? "border-green-500 focus-visible:ring-green-500" : ""}`}
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              disabled={disabled}
+            />
+            <div className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center">
+              {validating && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+              {!validating && error && <AlertCircle className="h-4 w-4 text-destructive" />}
+              {!validating && success && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+            </div>
           </div>
+          {!disabled && (
+            <>
+              <RequirePermission requiredPermission="products.barcode.scan">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 shrink-0 border-purple-500/10 bg-purple-500/5 text-purple-500 hover:bg-purple-500/15"
+                  onClick={() => setScannerOpen(true)}
+                  title="Quét mã vạch bằng camera"
+                >
+                  <Barcode className="h-4 w-4" />
+                </Button>
+              </RequirePermission>
+              <RequirePermission requiredPermission="products.barcode.generate">
+                <GenerateBarcodeButton onGenerate={onChange} barcodeType={barcodeType} />
+              </RequirePermission>
+            </>
+          )}
         </div>
-        {!disabled && (
-          <>
-            <RequirePermission requiredPermission="products.barcode.scan">
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="icon" 
-                className="h-9 w-9 text-purple-500 bg-purple-500/5 border-purple-500/10 hover:bg-purple-500/15 shrink-0"
-                onClick={() => setScannerOpen(true)}
-                title="Quét mã vạch bằng camera"
-              >
-                <Barcode className="w-4 h-4" />
-              </Button>
-            </RequirePermission>
-            <RequirePermission requiredPermission="products.barcode.generate">
-              <GenerateBarcodeButton onGenerate={onChange} />
-            </RequirePermission>
-          </>
-        )}
-      </div>
-      {error && (
-        <span className="text-xs font-medium text-destructive">{error}</span>
-      )}
-      {!error && success && value && (
-        <span className="text-xs font-medium text-green-500">Mã vạch hợp lệ</span>
-      )}
-      
-      <BarcodeCameraSheet 
-        open={scannerOpen}
-        onOpenChange={setScannerOpen}
-        onScan={onChange}
-      />
+        {error && <span className="font-medium text-destructive text-xs">{error}</span>}
+        {!error && success && value && <span className="font-medium text-green-500 text-xs">Mã vạch hợp lệ</span>}
+
+        <BarcodeCameraSheet open={scannerOpen} onOpenChange={setScannerOpen} onScan={onChange} />
       </div>
     </div>
   );
