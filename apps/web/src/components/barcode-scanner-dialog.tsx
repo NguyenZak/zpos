@@ -60,6 +60,7 @@ export function BarcodeScannerDialog({
   const [manualBarcode, setManualBarcode] = useState("");
 
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
   const regionId = "barcode-scanner-video-region";
 
   const backCameraLabelTerms = [
@@ -139,10 +140,51 @@ export function BarcodeScannerDialog({
   // ------------------------------------------
   // SOUND EFFECTS GENERATOR (Web Audio API - 100% Offline)
   // ------------------------------------------
-  const playBeep = () => {
+  const getAudioContext = () => {
+    if (typeof window === "undefined") return null;
+    if (audioContextRef.current && audioContextRef.current.state !== "closed") return audioContextRef.current;
+
+    const AudioContextConstructor = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextConstructor) return null;
+
+    audioContextRef.current = new AudioContextConstructor();
+    return audioContextRef.current;
+  };
+
+  const unlockAudioFeedback = async (force = false) => {
+    if (!force && !soundEnabled) return;
+
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
+
+      // iOS/Safari needs an audio node started from a user gesture before later scanner callbacks can make sound.
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.01);
+    } catch (error) {
+      console.warn("Failed to unlock barcode scanner audio:", error);
+    }
+  };
+
+  const playBeep = async () => {
     if (!soundEnabled) return;
     try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const ctx = getAudioContext();
+      if (!ctx) return;
+
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
+
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
@@ -323,7 +365,7 @@ export function BarcodeScannerDialog({
 
     (window as any).lastScannedCode = cleanedCode;
     (window as any).lastScannedTime = now;
-    playBeep();
+    void playBeep();
 
     // 1. Raw scan mode (e.g. populating product code fields)
     if (onRawScan) {
@@ -376,7 +418,10 @@ export function BarcodeScannerDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-md border border-white/10 bg-zinc-950 p-6 text-white backdrop-blur-2xl">
+      <DialogContent
+        className="max-w-md border border-white/10 bg-zinc-950 p-6 text-white backdrop-blur-2xl"
+        onPointerDownCapture={() => void unlockAudioFeedback()}
+      >
         <DialogHeader className="flex flex-row items-center justify-between border-white/5 border-b pb-2">
           <DialogTitle className="flex items-center gap-2 font-semibold text-lg text-zinc-100 tracking-wide">
             <BarcodeIcon className="h-5 w-5 animate-pulse text-purple-400" />
@@ -401,6 +446,9 @@ export function BarcodeScannerDialog({
                 size="sm"
                 className="h-8 gap-1.5 text-zinc-300 hover:bg-white/5"
                 onClick={() => setSoundEnabled(!soundEnabled)}
+                onPointerDown={() => {
+                  if (!soundEnabled) void unlockAudioFeedback(true);
+                }}
               >
                 {soundEnabled ? (
                   <>
