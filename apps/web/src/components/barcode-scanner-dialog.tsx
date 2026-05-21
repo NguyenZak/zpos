@@ -71,23 +71,10 @@ export function BarcodeScannerDialog({
     return getPreferredBackCamera(devices);
   };
 
-  const createScannerVideoConstraints = (cameraSelection = CAMERA_BACK_VALUE): MediaTrackConstraints => {
-    let cameraConstraint: MediaTrackConstraints;
-
-    if (cameraSelection === CAMERA_BACK_VALUE) {
-      cameraConstraint = { facingMode: { ideal: "environment" } };
-    } else if (cameraSelection === CAMERA_FRONT_VALUE) {
-      cameraConstraint = { facingMode: { ideal: "user" } };
-    } else {
-      cameraConstraint = { deviceId: { exact: cameraSelection } };
-    }
-
-    return {
-      ...cameraConstraint,
-      // Request high resolution so barcode lines do not blur into each other.
-      width: { min: 640, ideal: 1280, max: 1920 },
-      height: { min: 480, ideal: 720, max: 1080 },
-    };
+  const getScannerCameraTarget = (cameraSelection = CAMERA_BACK_VALUE): string | MediaTrackConstraints => {
+    if (cameraSelection === CAMERA_BACK_VALUE) return { facingMode: "environment" };
+    if (cameraSelection === CAMERA_FRONT_VALUE) return { facingMode: "user" };
+    return cameraSelection;
   };
 
   // ------------------------------------------
@@ -189,11 +176,9 @@ export function BarcodeScannerDialog({
       setCameras(devices);
 
       if (devices.length > 0) {
-        // Prefer back camera ("environment") for mobile scanning by default
-        const backCam = getPreferredBackCamera(devices);
-        const preferredCamera = backCam?.id ?? CAMERA_BACK_VALUE;
-        setSelectedCameraId(preferredCamera);
-        void startScanner(preferredCamera, devices);
+        // Prefer facingMode for the first open. Device labels/order are unreliable on mobile.
+        setSelectedCameraId(CAMERA_BACK_VALUE);
+        void startScanner(CAMERA_BACK_VALUE, devices);
       } else {
         toast.error("Không tìm thấy camera trên thiết bị");
       }
@@ -227,16 +212,10 @@ export function BarcodeScannerDialog({
       scannerRef.current = html5QrCode;
       setIsScanning(true);
 
-      const videoConstraints = createScannerVideoConstraints(cameraSelection);
-
       await html5QrCode.start(
-        cameraSelection === CAMERA_BACK_VALUE
-          ? { facingMode: "environment" }
-          : cameraSelection === CAMERA_FRONT_VALUE
-            ? { facingMode: "user" }
-            : { deviceId: { exact: cameraSelection } },
+        getScannerCameraTarget(cameraSelection),
         {
-          fps: 24, // Higher frame rate for fluid scanning and fast frame capture
+          fps: 10,
           qrbox: (width, height) => {
             // Wider scan window to capture complete long 1D barcodes
             const boxWidth = Math.min(width * 0.9, 380);
@@ -244,7 +223,6 @@ export function BarcodeScannerDialog({
             return { width: boxWidth, height: boxHeight };
           },
           aspectRatio: 1.777778, // 16:9 widescreen
-          videoConstraints,
         },
         (decodedText) => {
           handleBarcodeScanned(decodedText);
@@ -253,6 +231,20 @@ export function BarcodeScannerDialog({
           // Failure callback is ignored as it triggers constantly during camera frames
         },
       );
+
+      const videoElement = document.querySelector<HTMLVideoElement>(`#${regionId} video`);
+      if (videoElement) {
+        videoElement.setAttribute("playsinline", "true");
+        videoElement.setAttribute("webkit-playsinline", "true");
+        videoElement.muted = true;
+        videoElement.autoplay = true;
+        videoElement.style.width = "100%";
+        videoElement.style.height = "100%";
+        videoElement.style.objectFit = "cover";
+        void videoElement.play().catch((error) => {
+          console.warn("Barcode scanner video play() was blocked:", error);
+        });
+      }
 
       const activeDeviceId = html5QrCode.getRunningTrackSettings().deviceId;
       if (activeDeviceId && cameraSelection !== CAMERA_BACK_VALUE && cameraSelection !== CAMERA_FRONT_VALUE) {
