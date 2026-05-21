@@ -1145,6 +1145,19 @@ export const posService = {
     const tenantSlug = getTenantSlug();
     const orgId = await getActiveOrganizationId();
 
+    if (customerData.phone) {
+      const { data: existingPhone } = await supabase
+        .from('customers')
+        .select('id, name')
+        .eq('organization_id', orgId)
+        .eq('phone', customerData.phone)
+        .limit(1);
+        
+      if (Array.isArray(existingPhone) && existingPhone.length > 0) {
+        throw new Error(`Số điện thoại đã được sử dụng cho khách hàng "${existingPhone[0].name}". Vui lòng sử dụng số điện thoại khác.`);
+      }
+    }
+
     const newId = customerData.id || crypto.randomUUID();
     const finalData = {
       id: newId,
@@ -1212,6 +1225,20 @@ export const posService = {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
     const tenantSlug = getTenantSlug();
+
+    if (customerData.phone) {
+      const { data: existingPhone } = await supabase
+        .from('customers')
+        .select('id, name')
+        .eq('organization_id', orgId)
+        .eq('phone', customerData.phone)
+        .neq('id', id)
+        .limit(1);
+        
+      if (Array.isArray(existingPhone) && existingPhone.length > 0) {
+        throw new Error(`Số điện thoại đã được sử dụng cho khách hàng "${existingPhone[0].name}". Vui lòng sử dụng số điện thoại khác.`);
+      }
+    }
 
     // If address is provided, add tenantSlug prefix if not already present
     let address = customerData.address;

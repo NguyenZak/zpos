@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { AlertCircle, Barcode, CheckCircle2, Loader2 } from "lucide-react";
+import { AlertCircle, ScanBarcode, CheckCircle2, Loader2 } from "lucide-react";
 
 import { RequirePermission } from "@/components/auth/require-permission";
 import { Button } from "@/components/ui/button";
@@ -115,7 +115,7 @@ export function ProductBarcodeField({
                   onClick={() => setScannerOpen(true)}
                   title="Quét mã vạch bằng camera"
                 >
-                  <Barcode className="h-4 w-4" />
+                  <ScanBarcode className="h-4 w-4" />
                 </Button>
               </RequirePermission>
               <RequirePermission requiredPermission="products.barcode.generate">

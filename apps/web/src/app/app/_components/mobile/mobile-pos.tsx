@@ -8,7 +8,7 @@ import {
   Trash2, 
   Plus, 
   Minus,
-  Barcode,
+  ScanBarcode,
   History,
   X,
   SearchIcon,
@@ -297,7 +297,7 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
               className="h-10 w-10 rounded-xl text-primary bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border-purple-500/20"
               onClick={() => setScannerOpen(true)}
             >
-              <Barcode className="w-4.5 h-4.5 text-purple-500" />
+              <ScanBarcode className="w-4.5 h-4.5 text-purple-500" />
             </Button>
           </div>
         </div>

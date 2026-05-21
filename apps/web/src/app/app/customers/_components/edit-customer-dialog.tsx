@@ -76,7 +76,7 @@ export function EditCustomerDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] w-[95vw] sm:w-full rounded-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold flex items-center gap-2">
@@ -100,7 +100,7 @@ export function EditCustomerDialog({
                 required
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="edit-phone">Số điện thoại</Label>
                 <Input
@@ -137,7 +137,7 @@ export function EditCustomerDialog({
               />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2 pt-2 sm:pt-0">
             <Button
               type="button"
               variant="outline"

@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { 
   Plus, 
-  Barcode, 
+  ScanBarcode, 
   ArrowDownToLine, 
   Tag, 
   UserPlus, 
@@ -98,7 +98,7 @@ export function MobileQuickActions() {
     {
       label: "Quét mã vạch",
       desc: "Camera quét",
-      icon: Barcode,
+      icon: ScanBarcode,
       color: "bg-sky-500/10 text-sky-600 dark:text-sky-400 dark:bg-sky-500/20",
       action: handleBarcodeScan
     },
@@ -175,7 +175,7 @@ export function MobileQuickActions() {
                     className="h-11 bg-muted/40 border-none pr-10" 
                     autoFocus
                   />
-                  <Barcode className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <ScanBarcode className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 </div>
               </div>
               <div className="space-y-1.5">

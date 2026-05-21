@@ -8,7 +8,7 @@ import {
   Trash2,
   Plus,
   Minus,
-  Barcode,
+  ScanBarcode,
   Keyboard,
   Receipt,
   RotateCcw,
@@ -146,20 +146,20 @@ export default function POSPage() {
   const [showIdleScreen, setShowIdleScreen] = useState(false);
   const [idleMessage, setIdleMessage] = useState('Chúc quý khách một ngày tốt lành!');
   const [currentTimeStr, setCurrentTimeStr] = useState('');
-  
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
+
     // Load config
     const isEnabled = localStorage.getItem('zpos_pos_idle_screen') !== 'false'; // default true
     if (!isEnabled) return;
-    
+
     const timeoutMins = parseInt(localStorage.getItem('zpos_pos_idle_timeout') || '5');
     const timeoutMs = timeoutMins * 60 * 1000;
-    
+
     const msg = localStorage.getItem('zpos_welcome_message') || 'Chúc một ngày kinh doanh thuận lợi, bùng nổ doanh thu.';
     setIdleMessage(msg);
-    
+
     let timer: NodeJS.Timeout;
     const resetTimer = () => {
       if (showIdleScreen) setShowIdleScreen(false);
@@ -169,21 +169,21 @@ export default function POSPage() {
         setShowIdleScreen(true);
       }, timeoutMs);
     };
-    
+
     // Timer interval to update time clock
     const clockInterval = setInterval(() => {
       if (showIdleScreen) {
         setCurrentTimeStr(new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }));
       }
     }, 10000);
-    
+
     window.addEventListener('mousemove', resetTimer);
     window.addEventListener('keydown', resetTimer);
     window.addEventListener('touchstart', resetTimer);
     window.addEventListener('click', resetTimer);
-    
+
     resetTimer(); // init
-    
+
     return () => {
       clearTimeout(timer);
       clearInterval(clockInterval);
@@ -416,7 +416,7 @@ export default function POSPage() {
         setEnableBarPrint(localStorage.getItem('zpos_invoice_enable_bar') !== 'false');
         setEnableFinalPrint(localStorage.getItem('zpos_invoice_enable_final') !== 'false');
       };
-      
+
       handleStorageUpdate();
       window.addEventListener('zpos_settings_updated', handleStorageUpdate);
       return () => window.removeEventListener('zpos_settings_updated', handleStorageUpdate);
@@ -436,7 +436,7 @@ export default function POSPage() {
     });
 
     const enabledOptionsCount = [enableProvisionalPrint, enableKitchenPrint, enableBarPrint, enableFinalPrint].filter(Boolean).length;
-    
+
     if (enabledOptionsCount === 1) {
       // Bypass dialog if only 1 option is enabled
       const type: PrintType = enableProvisionalPrint ? 'temp_bill' : enableKitchenPrint ? 'kitchen_ticket' : enableBarPrint ? 'bar_ticket' : 'final_receipt';
@@ -1010,7 +1010,7 @@ export default function POSPage() {
 
   const handleCheckout = async () => {
     if (isProcessingRef.current) return;
-    
+
     const stockProblem = getCartStockProblem();
     if (stockProblem) {
       toast.error("Không đủ tồn kho", {
@@ -1548,7 +1548,7 @@ export default function POSPage() {
     return (
       <>
         {showIdleScreen && (
-          <div 
+          <div
             className="fixed inset-0 z-[99999] bg-slate-950/95 flex flex-col items-center justify-center cursor-pointer animate-in fade-in duration-1000"
             onClick={() => setShowIdleScreen(false)}
           >
@@ -1578,7 +1578,7 @@ export default function POSPage() {
   return (
     <>
       {showIdleScreen && (
-        <div 
+        <div
           className="fixed inset-0 z-[99999] bg-slate-950/95 flex flex-col items-center justify-center cursor-pointer animate-in fade-in duration-1000"
           onClick={() => setShowIdleScreen(false)}
         >
@@ -1629,8 +1629,8 @@ export default function POSPage() {
                 className="gap-2 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 text-purple-400 border-purple-500/20 hover:border-purple-500/40 hover:from-purple-500/20 hover:to-indigo-500/20"
                 onClick={() => setScannerOpen(true)}
               >
-                <Barcode className="w-4 h-4 text-purple-500" />
-                Quét Camera
+                <ScanBarcode className="w-4 h-4 text-purple-500" />
+                Quét Barcode
               </Button>
             </div>
           </div>
@@ -1705,8 +1705,8 @@ export default function POSPage() {
                     aria-disabled={isOutOfStock}
                     title={isOutOfStock ? "Sản phẩm đã hết hàng" : undefined}
                     className={`group gap-0 overflow-hidden rounded-xl border border-border/70 bg-card py-0 shadow-sm transition-all duration-200 ${isOutOfStock
-                        ? "cursor-not-allowed opacity-45 grayscale"
-                        : "cursor-pointer hover:border-primary/50 hover:shadow-md"
+                      ? "cursor-not-allowed opacity-45 grayscale"
+                      : "cursor-pointer hover:border-primary/50 hover:shadow-md"
                       }`}
                     onClick={() => addToCart(product)}
                   >
@@ -1729,10 +1729,10 @@ export default function POSPage() {
                             {product.category}
                           </span>
                           <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold shadow-sm backdrop-blur ${(product.stock ?? 0) <= 0
-                              ? 'bg-red-500 text-white'
-                              : (product.stock ?? 0) <= 5
-                                ? 'bg-amber-500 text-white'
-                                : 'bg-zinc-950/85 text-white'
+                            ? 'bg-red-500 text-white'
+                            : (product.stock ?? 0) <= 5
+                              ? 'bg-amber-500 text-white'
+                              : 'bg-zinc-950/85 text-white'
                             }`}>
                             {product.stock ?? 0}
                           </span>
@@ -1834,12 +1834,12 @@ export default function POSPage() {
                 </div>
               </div>
               {selectedCustomer ? (
-                <div 
+                <div
                   className="p-1 hover:bg-destructive/10 rounded-full transition-colors cursor-pointer flex-shrink-0"
-                  onClick={(e) => { 
+                  onClick={(e) => {
                     e.preventDefault();
-                    e.stopPropagation(); 
-                    setSelectedCustomer(null); 
+                    e.stopPropagation();
+                    setSelectedCustomer(null);
                   }}
                   onPointerDown={(e) => e.stopPropagation()}
                 >
@@ -2301,12 +2301,12 @@ export default function POSPage() {
                         </div>
                       </div>
                       {selectedCustomer ? (
-                        <div 
+                        <div
                           className="p-1 hover:bg-destructive/10 rounded-full transition-colors cursor-pointer flex-shrink-0 ml-2"
-                          onClick={(e) => { 
+                          onClick={(e) => {
                             e.preventDefault();
-                            e.stopPropagation(); 
-                            setSelectedCustomer(null); 
+                            e.stopPropagation();
+                            setSelectedCustomer(null);
                           }}
                           onPointerDown={(e) => e.stopPropagation()}
                         >
@@ -2325,8 +2325,8 @@ export default function POSPage() {
                       <button
                         onClick={() => setPaymentMethod('cash')}
                         className={`flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border-2 transition-all duration-300 ${paymentMethod === 'cash'
-                            ? 'bg-primary/10 dark:bg-primary/20 border-primary text-primary font-bold scale-[1.02] shadow-sm'
-                            : 'bg-muted/40 text-muted-foreground border-transparent hover:border-border hover:bg-muted/60'
+                          ? 'bg-primary/10 dark:bg-primary/20 border-primary text-primary font-bold scale-[1.02] shadow-sm'
+                          : 'bg-muted/40 text-muted-foreground border-transparent hover:border-border hover:bg-muted/60'
                           }`}
                       >
                         <Banknote className={`w-7 h-7 transition-transform ${paymentMethod === 'cash' ? 'scale-110' : ''}`} />
@@ -2335,8 +2335,8 @@ export default function POSPage() {
                       <button
                         onClick={() => setPaymentMethod('transfer')}
                         className={`flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border-2 transition-all duration-300 ${paymentMethod === 'transfer'
-                            ? 'bg-primary/10 dark:bg-primary/20 border-primary text-primary font-bold scale-[1.02] shadow-sm'
-                            : 'bg-muted/40 text-muted-foreground border-transparent hover:border-border hover:bg-muted/60'
+                          ? 'bg-primary/10 dark:bg-primary/20 border-primary text-primary font-bold scale-[1.02] shadow-sm'
+                          : 'bg-muted/40 text-muted-foreground border-transparent hover:border-border hover:bg-muted/60'
                           }`}
                       >
                         <QrCode className={`w-7 h-7 transition-transform ${paymentMethod === 'transfer' ? 'scale-110' : ''}`} />
@@ -2345,8 +2345,8 @@ export default function POSPage() {
                       <button
                         onClick={() => setPaymentMethod('card')}
                         className={`flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border-2 transition-all duration-300 ${paymentMethod === 'card'
-                            ? 'bg-primary/10 dark:bg-primary/20 border-primary text-primary font-bold scale-[1.02] shadow-sm'
-                            : 'bg-muted/40 text-muted-foreground border-transparent hover:border-border hover:bg-muted/60'
+                          ? 'bg-primary/10 dark:bg-primary/20 border-primary text-primary font-bold scale-[1.02] shadow-sm'
+                          : 'bg-muted/40 text-muted-foreground border-transparent hover:border-border hover:bg-muted/60'
                           }`}
                       >
                         <CreditCard className={`w-7 h-7 transition-transform ${paymentMethod === 'card' ? 'scale-110' : ''}`} />
@@ -2355,8 +2355,8 @@ export default function POSPage() {
                       <button
                         onClick={() => setPaymentMethod('debt')}
                         className={`flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border-2 transition-all duration-300 ${paymentMethod === 'debt'
-                            ? 'bg-amber-500/10 dark:bg-amber-500/20 border-amber-500 text-amber-700 dark:text-amber-400 font-bold scale-[1.02] shadow-sm'
-                            : 'bg-muted/40 text-muted-foreground border-transparent hover:border-border hover:bg-muted/60'
+                          ? 'bg-amber-500/10 dark:bg-amber-500/20 border-amber-500 text-amber-700 dark:text-amber-400 font-bold scale-[1.02] shadow-sm'
+                          : 'bg-muted/40 text-muted-foreground border-transparent hover:border-border hover:bg-muted/60'
                           }`}
                       >
                         <CoinsIcon className={`w-7 h-7 transition-transform ${paymentMethod === 'debt' ? 'scale-110' : ''}`} />
@@ -2544,8 +2544,8 @@ export default function POSPage() {
 
                         {/* Tiền thừa */}
                         <div className={`p-5 rounded-lg border-2 transition-all text-center space-y-1.5 shadow-md ${receivedAmount >= finalTotal
-                            ? 'bg-emerald-500/10 dark:bg-emerald-500/20 border-emerald-500/50 text-emerald-700 dark:text-emerald-400 animate-pulse'
-                            : 'bg-destructive/10 dark:bg-destructive/20 border-destructive/50 text-destructive'
+                          ? 'bg-emerald-500/10 dark:bg-emerald-500/20 border-emerald-500/50 text-emerald-700 dark:text-emerald-400 animate-pulse'
+                          : 'bg-destructive/10 dark:bg-destructive/20 border-destructive/50 text-destructive'
                           }`}>
                           <span className="text-[10px] font-black tracking-wider uppercase opacity-85">
                             {receivedAmount >= finalTotal ? 'Tiền thừa trả khách' : 'Còn thiếu'}
@@ -2859,7 +2859,7 @@ export default function POSPage() {
       )}
 
       {['provisional', 'temp_bill', 'kitchen_ticket', 'bar_ticket', 'final_receipt'].includes(printType) && provisionalOrder && (
-        <PrintInvoice 
+        <PrintInvoice
           isProvisional={printType === 'provisional' || printType === 'temp_bill'}
           printType={printType as any}
           order={{
@@ -2874,7 +2874,7 @@ export default function POSPage() {
             total_amount: provisionalOrder.total,
             payment_method: provisionalOrder.paymentMethod,
             customer: provisionalOrder.customer ? { name: provisionalOrder.customer.name, phone: provisionalOrder.customer.phone } : undefined
-          }} 
+          }}
         />
       )}
 

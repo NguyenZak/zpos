@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import { vietQRService } from "@/services/vietqr.service";
 
 interface PrintInvoiceProps {
   order: {
@@ -42,6 +43,7 @@ export function PrintInvoice({ order, isProvisional, printType = 'payment' }: Pr
   const [memoTemplate, setMemoTemplate] = useState('ZPOS_');
 
   useEffect(() => {
+    let cancelled = false;
     if (typeof window !== 'undefined') {
       // Basic settings
       setPaperSize(localStorage.getItem('zpos_printer_paper') || 'K80 (80mm)');
@@ -81,10 +83,30 @@ export function PrintInvoice({ order, isProvisional, printType = 'payment' }: Pr
       setShowCashierName(getSetting('show_cashier', true, true));
 
       // Bank Info
-      setBankId(localStorage.getItem('zpos_qr_bank_id') || '');
-      setAccountNo(localStorage.getItem('zpos_qr_account_no') || '');
-      setMemoTemplate(localStorage.getItem('zpos_qr_memo_template') || 'ZPOS_');
+      (async () => {
+        try {
+          const bank = await vietQRService.getDefaultBankAccount();
+          if (cancelled) return;
+          if (bank) {
+            setBankId(bank.bank_id);
+            setAccountNo(bank.account_no);
+            setMemoTemplate((bank.memo_prefix || 'ZPOS') + ' ');
+            return;
+          }
+        } catch (e) {
+          console.warn('Could not load default bank account:', e);
+        }
+        
+        if (!cancelled) {
+          setBankId(localStorage.getItem('zpos_qr_bank_id') || '');
+          setAccountNo(localStorage.getItem('zpos_qr_account_no') || '');
+          setMemoTemplate(localStorage.getItem('zpos_qr_memo_template') || 'ZPOS_');
+        }
+      })();
     }
+    return () => {
+      cancelled = true;
+    };
   }, [isProvisional, printType, order]);
 
   const formatCurrency = (amount: number) => {

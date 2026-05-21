@@ -36,6 +36,7 @@ import { cn } from "@/lib/utils";
 import { posService } from "@/services/pos.service";
 import { debtService } from "@/services/debt.service";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { vietQRService } from "@/services/vietqr.service";
 
 interface MobileCheckoutSheetProps {
   open: boolean;
@@ -82,20 +83,44 @@ export function MobileCheckoutSheet({
     if (open) {
       setReceivedAmount(total);
       
-      // Load bank settings from system configuration
-      if (typeof window !== "undefined") {
-        const savedBankId = localStorage.getItem("zpos_qr_bank_id") || "vcb";
-        const savedAccountNo = localStorage.getItem("zpos_qr_account_no") || "0071001234567";
-        const savedAccountName = localStorage.getItem("zpos_qr_account_name") || "ZPOS RETAIL";
-        const savedMemoTemplate = localStorage.getItem("zpos_qr_memo_template") || "ZPOS_";
-        
-        setQrSettings({
-          bankId: savedBankId,
-          accountNo: savedAccountNo,
-          accountName: savedAccountName,
-          memoTemplate: savedMemoTemplate
-        });
-      }
+      let cancelled = false;
+      (async () => {
+        try {
+          const bank = await vietQRService.getDefaultBankAccount();
+          if (cancelled) return;
+          if (bank) {
+            setQrSettings({
+              bankId: bank.bank_id,
+              accountNo: bank.account_no,
+              accountName: bank.account_name,
+              memoTemplate: (bank.memo_prefix || "ZPOS") + " "
+            });
+            return;
+          }
+        } catch (e) {
+          console.warn('Could not load default bank account:', e);
+        }
+
+        // Load bank settings from system configuration
+        if (typeof window !== "undefined") {
+          const savedBankId = localStorage.getItem("zpos_qr_bank_id") || "vcb";
+          const savedAccountNo = localStorage.getItem("zpos_qr_account_no") || "0071001234567";
+          const savedAccountName = localStorage.getItem("zpos_qr_account_name") || "ZPOS RETAIL";
+          const savedMemoTemplate = localStorage.getItem("zpos_qr_memo_template") || "ZPOS_";
+          
+          if (!cancelled) {
+            setQrSettings({
+              bankId: savedBankId,
+              accountNo: savedAccountNo,
+              accountName: savedAccountName,
+              memoTemplate: savedMemoTemplate
+            });
+          }
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
     }
   }, [open, total]);
 

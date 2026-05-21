@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { type CameraDevice, Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
 import {
   AlertCircle,
-  Barcode as BarcodeIcon,
+  ScanBarcode as BarcodeIcon,
   Camera,
   RefreshCw,
   Search,
@@ -58,6 +58,7 @@ export function BarcodeScannerDialog({
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [manualBarcode, setManualBarcode] = useState("");
+  const [scanMode, setScanMode] = useState<"camera" | "usb">("usb");
 
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -215,7 +216,11 @@ export function BarcodeScannerDialog({
   // biome-ignore lint/correctness/useExhaustiveDependencies: scanner lifecycle is intentionally keyed only by dialog visibility.
   useEffect(() => {
     if (open) {
-      void requestCameraPermissions();
+      if (scanMode === "camera") {
+        void requestCameraPermissions();
+      } else {
+        void stopScanner();
+      }
     } else {
       // If it was closed externally without handleOpenChange
       void stopScanner();
@@ -229,7 +234,7 @@ export function BarcodeScannerDialog({
         });
       }
     };
-  }, [open]);
+  }, [open, scanMode]);
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen && scannerRef.current && scannerRef.current.isScanning) {
@@ -419,159 +424,200 @@ export function BarcodeScannerDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="max-w-md border border-white/10 bg-zinc-950 p-6 text-white backdrop-blur-2xl"
+        showCloseButton={false}
+        className="w-[95vw] max-w-md sm:max-w-md md:max-w-lg overflow-hidden border border-white/10 bg-zinc-950 p-5 sm:p-6 text-white backdrop-blur-2xl"
         onPointerDownCapture={() => void unlockAudioFeedback()}
       >
-        <DialogHeader className="flex flex-row items-center justify-between border-white/5 border-b pb-2">
+        <DialogHeader className="flex flex-row items-center justify-between border-white/5 border-b pb-3">
           <DialogTitle className="flex items-center gap-2 font-semibold text-lg text-zinc-100 tracking-wide">
             <BarcodeIcon className="h-5 w-5 animate-pulse text-purple-400" />
-            <span>Quét Mã Vạch Sản Phẩm</span>
+            <span>Quét Mã Vạch</span>
           </DialogTitle>
           <button
             type="button"
             onClick={() => handleOpenChange(false)}
-            className="rounded-full p-1 text-zinc-400 transition-all hover:bg-white/10 hover:text-white"
+            className="rounded-full p-1.5 text-zinc-400 transition-all hover:bg-white/10 hover:text-white"
           >
             <X className="h-4 w-4" />
           </button>
         </DialogHeader>
 
-        <div className="my-4 flex flex-col gap-4">
-          {/* Audio toggle & Camera Selector toolbar */}
-          <div className="flex items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-8 gap-1.5 text-zinc-300 hover:bg-white/5"
-                onClick={() => setSoundEnabled(!soundEnabled)}
-                onPointerDown={() => {
-                  if (!soundEnabled) void unlockAudioFeedback(true);
-                }}
-              >
-                {soundEnabled ? (
-                  <>
-                    <Volume2 className="h-4 w-4 text-emerald-400" />
-                    <span>Âm thanh: Bật</span>
-                  </>
-                ) : (
-                  <>
-                    <VolumeX className="h-4 w-4 text-zinc-500" />
-                    <span>Âm thanh: Tắt</span>
-                  </>
-                )}
-              </Button>
-            </div>
-
-            {(cameras.length > 0 || selectedCameraId) && (
-              <div className="flex items-center gap-1.5">
-                <Camera className="h-3.5 w-3.5 text-purple-400" />
-                <select
-                  value={selectedCameraId}
-                  onChange={(e) => handleCameraChange(e.target.value)}
-                  className="rounded-md border border-white/10 bg-zinc-900 px-2 py-1 text-xs text-zinc-200 outline-none focus:border-purple-500"
-                >
-                  <option value={CAMERA_BACK_VALUE}>Camera sau</option>
-                  <option value={CAMERA_FRONT_VALUE}>Camera trước</option>
-                  {cameras.map((cam) => (
-                    <option key={cam.id} value={cam.id}>
-                      {cam.label || `Camera ${cameras.indexOf(cam) + 1}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
-
-          {/* Camera Scan Region Viewport */}
-          <div className="relative aspect-[1.777778] overflow-hidden rounded-xl border border-white/5 bg-zinc-900 shadow-2xl">
-            <div id={regionId} className="h-full w-full object-cover [&>video]:object-cover" />
-
-            {/* Dark glass overlay viewport helper */}
-            {isScanning && (
-              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                {/* Visual Scanner Target Box */}
-                <div className="relative h-[45%] w-[80%] rounded-lg border-2 border-purple-500/40 border-dashed bg-purple-500/[0.02]">
-                  {/* Glowing Laser Scanline */}
-                  <div className="absolute right-0 left-0 h-0.5 animate-scanner-laser bg-gradient-to-r from-transparent via-purple-400 to-transparent shadow-[0_0_10px_#c084fc]" />
-
-                  {/* Corner brackets */}
-                  <div className="absolute -top-1 -left-1 h-3 w-3 border-purple-400 border-t-2 border-l-2" />
-                  <div className="absolute -top-1 -right-1 h-3 w-3 border-purple-400 border-t-2 border-r-2" />
-                  <div className="absolute -bottom-1 -left-1 h-3 w-3 border-purple-400 border-b-2 border-l-2" />
-                  <div className="absolute -right-1 -bottom-1 h-3 w-3 border-purple-400 border-r-2 border-b-2" />
-                </div>
-
-                <span className="mt-3 animate-pulse font-medium text-[10px] text-purple-400/80 uppercase tracking-wider">
-                  Đặt mã vạch vào giữa khung hình để quét
-                </span>
-              </div>
-            )}
-
-            {/* Error/Unavailable message */}
-            {hasCameraPermission === false && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950/90 p-6 text-center text-zinc-400">
-                <AlertCircle className="mb-2 h-10 w-10 animate-bounce text-red-500" />
-                <span className="mb-1 font-semibold text-sm text-white">Không thể khởi động Camera</span>
-                <span className="max-w-[280px] text-xs">
-                  Hãy kiểm tra quyền cấp phép camera trên trình duyệt hoặc đổi thiết bị quét.
-                </span>
-                <Button
-                  size="sm"
-                  className="mt-3 bg-purple-600 font-medium text-white hover:bg-purple-700"
-                  onClick={() => void requestCameraPermissions()}
-                >
-                  Cấp Quyền Lại
-                </Button>
-              </div>
-            )}
-
-            {hasCameraPermission === null && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950 text-zinc-400">
-                <RefreshCw className="mb-2 h-8 w-8 animate-spin text-purple-500" />
-                <span className="text-xs">Đang kiểm tra kết nối camera...</span>
-              </div>
-            )}
-          </div>
-
-          {/* Manual Input Fallback */}
-          <form onSubmit={handleManualSubmit} className="mt-2 flex flex-col gap-2">
-            <label
-              htmlFor="manual-barcode"
-              className="flex items-center gap-1 font-semibold text-[11px] text-zinc-400 uppercase tracking-wider"
+        <div className="my-2 mb-6">
+          <div className="flex bg-zinc-900/80 backdrop-blur-sm rounded-full p-1 border border-white/10 shadow-inner relative">
+            <button
+              onClick={() => setScanMode('usb')}
+              className={`flex-1 py-2 text-xs font-bold rounded-full transition-all duration-300 z-10 flex justify-center items-center gap-2 ${
+                scanMode === 'usb' ? 'bg-zinc-700/80 text-white shadow-md ring-1 ring-white/20' : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+              }`}
             >
-              <Search className="h-3 w-3" />
-              Nhập mã vạch thủ công
-            </label>
-            <div className="flex gap-2">
-              <Input
-                id="manual-barcode"
-                type="text"
-                placeholder="Nhập mã vạch (ví dụ: 123456789)"
-                value={manualBarcode}
-                onChange={(e) => setManualBarcode(e.target.value)}
-                className="h-9 flex-1 border-white/10 bg-zinc-900 text-sm text-white placeholder-zinc-500 focus-visible:ring-1 focus-visible:ring-purple-500"
-              />
-              <Button
-                type="submit"
-                className="h-9 shrink-0 bg-purple-600 px-4 font-semibold text-white text-xs hover:bg-purple-700"
-              >
-                Nhập
-              </Button>
-            </div>
-          </form>
-
-          {/* Connected hardware scanner tip */}
-          <div className="flex items-start gap-2.5 rounded-lg border border-white/5 bg-white/[0.01] p-3 text-[11px] text-zinc-400 leading-relaxed">
-            <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-            <p>
-              <b>Mẹo:</b> Hệ thống POS đã tích hợp sẵn tính năng tự động nhận diện từ súng quét mã vạch USB/Bluetooth.
-              Bạn chỉ cần cắm máy quét và bóp cò ở bất cứ đâu trên màn hình, sản phẩm sẽ tự thêm vào giỏ hàng ngay lập
-              tức!
-            </p>
+              <BarcodeIcon className="w-3.5 h-3.5" />
+              Súng quét USB
+            </button>
+            <button
+              onClick={() => setScanMode('camera')}
+              className={`flex-1 py-2 text-xs font-bold rounded-full transition-all duration-300 z-10 flex justify-center items-center gap-2 ${
+                scanMode === 'camera' ? 'bg-zinc-700/80 text-white shadow-md ring-1 ring-white/20' : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+              }`}
+            >
+              <Camera className="w-3.5 h-3.5" />
+              Camera thiết bị
+            </button>
           </div>
         </div>
+
+        {scanMode === 'camera' ? (
+          <div className="my-2 flex flex-col gap-4">
+            {/* Audio toggle & Camera Selector toolbar */}
+            <div className="flex items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 gap-1.5 text-zinc-300 hover:bg-white/5"
+                  onClick={() => setSoundEnabled(!soundEnabled)}
+                  onPointerDown={() => {
+                    if (!soundEnabled) void unlockAudioFeedback(true);
+                  }}
+                >
+                  {soundEnabled ? (
+                    <>
+                      <Volume2 className="h-4 w-4 text-emerald-400" />
+                      <span>Âm thanh: Bật</span>
+                    </>
+                  ) : (
+                    <>
+                      <VolumeX className="h-4 w-4 text-zinc-500" />
+                      <span>Âm thanh: Tắt</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {(cameras.length > 0 || selectedCameraId) && (
+                <div className="flex items-center gap-1.5">
+                  <Camera className="h-3.5 w-3.5 text-purple-400" />
+                  <select
+                    value={selectedCameraId}
+                    onChange={(e) => handleCameraChange(e.target.value)}
+                    className="rounded-md border border-white/10 bg-zinc-900 px-2 py-1 text-xs text-zinc-200 outline-none focus:border-purple-500"
+                  >
+                    <option value={CAMERA_BACK_VALUE}>Camera sau</option>
+                    <option value={CAMERA_FRONT_VALUE}>Camera trước</option>
+                    {cameras.map((cam) => (
+                      <option key={cam.id} value={cam.id}>
+                        {cam.label || `Camera ${cameras.indexOf(cam) + 1}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {/* Camera Scan Region Viewport */}
+            <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] overflow-hidden rounded-xl border border-white/5 bg-zinc-900 shadow-xl isolate">
+              <div 
+                id={regionId} 
+                className="absolute inset-0 w-full h-full [&>video]:object-cover [&_video]:!w-full [&_video]:!h-full [&_div]:!w-full [&_div]:!max-w-full" 
+              />
+
+              {/* Dark glass overlay viewport helper */}
+              {isScanning && (
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                  {/* Visual Scanner Target Box */}
+                  <div className="relative h-[45%] w-[80%] rounded-lg border-2 border-purple-500/40 border-dashed bg-purple-500/[0.02]">
+                    {/* Glowing Laser Scanline */}
+                    <div className="absolute right-0 left-0 h-0.5 animate-scanner-laser bg-gradient-to-r from-transparent via-purple-400 to-transparent shadow-[0_0_10px_#c084fc]" />
+
+                    {/* Corner brackets */}
+                    <div className="absolute -top-1 -left-1 h-3 w-3 border-purple-400 border-t-2 border-l-2" />
+                    <div className="absolute -top-1 -right-1 h-3 w-3 border-purple-400 border-t-2 border-r-2" />
+                    <div className="absolute -bottom-1 -left-1 h-3 w-3 border-purple-400 border-b-2 border-l-2" />
+                    <div className="absolute -right-1 -bottom-1 h-3 w-3 border-purple-400 border-r-2 border-b-2" />
+                  </div>
+
+                  <span className="mt-3 animate-pulse font-medium text-[10px] text-purple-400/80 uppercase tracking-wider">
+                    Đặt mã vạch vào giữa khung hình để quét
+                  </span>
+                </div>
+              )}
+
+              {/* Error/Unavailable message */}
+              {hasCameraPermission === false && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950/90 p-6 text-center text-zinc-400">
+                  <AlertCircle className="mb-2 h-10 w-10 animate-bounce text-red-500" />
+                  <span className="mb-1 font-semibold text-sm text-white">Không thể khởi động Camera</span>
+                  <span className="max-w-[280px] text-xs">
+                    Hãy kiểm tra quyền cấp phép camera trên trình duyệt hoặc đổi thiết bị quét.
+                  </span>
+                  <Button
+                    size="sm"
+                    className="mt-3 bg-purple-600 font-medium text-white hover:bg-purple-700"
+                    onClick={() => void requestCameraPermissions()}
+                  >
+                    Cấp Quyền Lại
+                  </Button>
+                </div>
+              )}
+
+              {hasCameraPermission === null && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950 text-zinc-400">
+                  <RefreshCw className="mb-2 h-8 w-8 animate-spin text-purple-500" />
+                  <span className="text-xs">Đang kiểm tra kết nối camera...</span>
+                </div>
+              )}
+            </div>
+
+            {/* Manual Input Fallback */}
+            <form onSubmit={handleManualSubmit} className="mt-1 flex flex-col gap-2">
+              <label
+                htmlFor="manual-barcode"
+                className="flex items-center gap-1 font-semibold text-[11px] text-zinc-400 uppercase tracking-wider"
+              >
+                <Search className="h-3 w-3" />
+                Nhập mã vạch thủ công
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  id="manual-barcode"
+                  type="text"
+                  placeholder="Nhập mã vạch (ví dụ: 123456789)"
+                  value={manualBarcode}
+                  onChange={(e) => setManualBarcode(e.target.value)}
+                  className="h-9 flex-1 border-white/10 bg-zinc-900 text-sm text-white placeholder-zinc-500 focus-visible:ring-1 focus-visible:ring-purple-500"
+                />
+                <Button
+                  type="submit"
+                  className="h-9 shrink-0 bg-purple-600 px-4 font-semibold text-white text-xs hover:bg-purple-700"
+                >
+                  Nhập
+                </Button>
+              </div>
+            </form>
+          </div>
+        ) : (
+          <div className="my-4 flex flex-col items-center justify-center py-6 gap-4 text-center">
+            <div className="bg-purple-500/10 p-5 rounded-full mb-2">
+              <BarcodeIcon className="w-16 h-16 text-purple-400" />
+            </div>
+            <h3 className="font-semibold text-zinc-100 text-lg">Sử dụng súng quét mã vạch</h3>
+            <p className="text-sm text-zinc-400 max-w-[280px]">
+              Đảm bảo súng quét của bạn đã kết nối qua USB/Bluetooth. Trỏ súng quét vào mã vạch và bấm cò.
+            </p>
+            
+            <form onSubmit={handleManualSubmit} className="mt-4 w-full px-4">
+              <Input
+                id="usb-barcode"
+                type="text"
+                placeholder="Đang chờ tín hiệu quét..."
+                value={manualBarcode}
+                onChange={(e) => setManualBarcode(e.target.value)}
+                className="h-12 w-full text-center text-lg font-bold border-white/20 bg-zinc-900 text-white placeholder-zinc-500 focus-visible:ring-2 focus-visible:ring-purple-500 shadow-inner"
+                autoFocus
+              />
+            </form>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
