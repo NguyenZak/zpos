@@ -29,6 +29,9 @@ interface BarcodeScannerDialogProps {
   onRawScan?: (code: string) => void;
 }
 
+const CAMERA_BACK_VALUE = "__zpos_camera_back";
+const CAMERA_FRONT_VALUE = "__zpos_camera_front";
+
 export function BarcodeScannerDialog({
   open,
   onOpenChange,
@@ -65,13 +68,19 @@ export function BarcodeScannerDialog({
   };
 
   const getFallbackCamera = (devices: CameraDevice[]) => {
-    return getPreferredBackCamera(devices) ?? devices.at(-1);
+    return getPreferredBackCamera(devices);
   };
 
-  const createScannerVideoConstraints = (cameraId?: string): MediaTrackConstraints => {
-    const cameraConstraint: MediaTrackConstraints = cameraId
-      ? { deviceId: { exact: cameraId } }
-      : { facingMode: { exact: "environment" } };
+  const createScannerVideoConstraints = (cameraSelection = CAMERA_BACK_VALUE): MediaTrackConstraints => {
+    let cameraConstraint: MediaTrackConstraints;
+
+    if (cameraSelection === CAMERA_BACK_VALUE) {
+      cameraConstraint = { facingMode: { ideal: "environment" } };
+    } else if (cameraSelection === CAMERA_FRONT_VALUE) {
+      cameraConstraint = { facingMode: { ideal: "user" } };
+    } else {
+      cameraConstraint = { deviceId: { exact: cameraSelection } };
+    }
 
     return {
       ...cameraConstraint,
@@ -182,8 +191,9 @@ export function BarcodeScannerDialog({
       if (devices.length > 0) {
         // Prefer back camera ("environment") for mobile scanning by default
         const backCam = getPreferredBackCamera(devices);
-        setSelectedCameraId(backCam?.id ?? "");
-        void startScanner(backCam?.id, devices);
+        const preferredCamera = backCam?.id ?? CAMERA_BACK_VALUE;
+        setSelectedCameraId(preferredCamera);
+        void startScanner(preferredCamera, devices);
       } else {
         toast.error("Không tìm thấy camera trên thiết bị");
       }
@@ -194,7 +204,7 @@ export function BarcodeScannerDialog({
     }
   };
 
-  const startScanner = async (cameraId?: string, fallbackDevices: CameraDevice[] = cameras) => {
+  const startScanner = async (cameraSelection = CAMERA_BACK_VALUE, fallbackDevices: CameraDevice[] = cameras) => {
     // Stop any running scanner first
     await stopScanner();
 
@@ -217,10 +227,14 @@ export function BarcodeScannerDialog({
       scannerRef.current = html5QrCode;
       setIsScanning(true);
 
-      const videoConstraints = createScannerVideoConstraints(cameraId);
+      const videoConstraints = createScannerVideoConstraints(cameraSelection);
 
       await html5QrCode.start(
-        cameraId ? { deviceId: { exact: cameraId } } : { facingMode: { exact: "environment" } },
+        cameraSelection === CAMERA_BACK_VALUE
+          ? { facingMode: "environment" }
+          : cameraSelection === CAMERA_FRONT_VALUE
+            ? { facingMode: "user" }
+            : { deviceId: { exact: cameraSelection } },
         {
           fps: 24, // Higher frame rate for fluid scanning and fast frame capture
           qrbox: (width, height) => {
@@ -241,7 +255,7 @@ export function BarcodeScannerDialog({
       );
 
       const activeDeviceId = html5QrCode.getRunningTrackSettings().deviceId;
-      if (activeDeviceId) {
+      if (activeDeviceId && cameraSelection !== CAMERA_BACK_VALUE && cameraSelection !== CAMERA_FRONT_VALUE) {
         setSelectedCameraId(activeDeviceId);
       }
 
@@ -254,7 +268,7 @@ export function BarcodeScannerDialog({
     } catch (err) {
       console.error("Failed to start barcode scanner:", err);
       setIsScanning(false);
-      if (!cameraId) {
+      if (cameraSelection === CAMERA_BACK_VALUE) {
         const fallbackCamera = getFallbackCamera(fallbackDevices);
         if (fallbackCamera?.id) {
           setSelectedCameraId(fallbackCamera.id);
@@ -278,10 +292,10 @@ export function BarcodeScannerDialog({
     setIsScanning(false);
   };
 
-  const handleCameraChange = (newCameraId: string) => {
-    setSelectedCameraId(newCameraId);
+  const handleCameraChange = (newCameraSelection: string) => {
+    setSelectedCameraId(newCameraSelection);
     if (open) {
-      void startScanner(newCameraId);
+      void startScanner(newCameraSelection);
     }
   };
 
@@ -398,7 +412,7 @@ export function BarcodeScannerDialog({
               </Button>
             </div>
 
-            {cameras.length > 1 && (
+            {(cameras.length > 0 || selectedCameraId) && (
               <div className="flex items-center gap-1.5">
                 <Camera className="h-3.5 w-3.5 text-purple-400" />
                 <select
@@ -406,6 +420,8 @@ export function BarcodeScannerDialog({
                   onChange={(e) => handleCameraChange(e.target.value)}
                   className="rounded-md border border-white/10 bg-zinc-900 px-2 py-1 text-xs text-zinc-200 outline-none focus:border-purple-500"
                 >
+                  <option value={CAMERA_BACK_VALUE}>Camera sau</option>
+                  <option value={CAMERA_FRONT_VALUE}>Camera trước</option>
                   {cameras.map((cam) => (
                     <option key={cam.id} value={cam.id}>
                       {cam.label || `Camera ${cameras.indexOf(cam) + 1}`}
