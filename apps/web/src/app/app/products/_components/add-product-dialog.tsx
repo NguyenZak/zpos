@@ -249,7 +249,6 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
                 onChange={handleImageUpload}
                 className="hidden"
                 accept="image/*,.heic,.heif"
-                capture="environment"
               />
               <button
                 type="button"

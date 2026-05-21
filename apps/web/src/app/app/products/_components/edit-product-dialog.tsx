@@ -221,7 +221,6 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess }: Ed
                 onChange={handleImageUpload}
                 className="hidden"
                 accept="image/*,.heic,.heif"
-                capture="environment"
               />
               <button
                 type="button"
