@@ -77,6 +77,30 @@ export function BarcodeScannerDialog({
     return cameraSelection;
   };
 
+  const prepareScannerVideoElement = async () => {
+    const videoElement = document.querySelector<HTMLVideoElement>(`#${regionId} video`);
+    if (!videoElement) return false;
+
+    videoElement.setAttribute("playsinline", "true");
+    videoElement.setAttribute("webkit-playsinline", "true");
+    videoElement.muted = true;
+    videoElement.autoplay = true;
+    videoElement.style.width = "100%";
+    videoElement.style.height = "100%";
+    videoElement.style.objectFit = "cover";
+
+    try {
+      await videoElement.play();
+    } catch (error) {
+      console.warn("Barcode scanner video play() was blocked:", error);
+    }
+
+    if (videoElement.videoWidth > 0 && videoElement.videoHeight > 0) return true;
+
+    await new Promise((resolve) => window.setTimeout(resolve, 600));
+    return videoElement.videoWidth > 0 && videoElement.videoHeight > 0;
+  };
+
   // ------------------------------------------
   // SOUND EFFECTS GENERATOR (Web Audio API - 100% Offline)
   // ------------------------------------------
@@ -176,9 +200,10 @@ export function BarcodeScannerDialog({
       setCameras(devices);
 
       if (devices.length > 0) {
-        // Prefer facingMode for the first open. Device labels/order are unreliable on mobile.
-        setSelectedCameraId(CAMERA_BACK_VALUE);
-        void startScanner(CAMERA_BACK_VALUE, devices);
+        const backCam = getPreferredBackCamera(devices);
+        const preferredCamera = backCam?.id ?? CAMERA_BACK_VALUE;
+        setSelectedCameraId(preferredCamera);
+        void startScanner(preferredCamera, devices);
       } else {
         toast.error("Không tìm thấy camera trên thiết bị");
       }
@@ -222,7 +247,6 @@ export function BarcodeScannerDialog({
             const boxHeight = Math.min(height * 0.5, 180);
             return { width: boxWidth, height: boxHeight };
           },
-          aspectRatio: 1.777778, // 16:9 widescreen
         },
         (decodedText) => {
           handleBarcodeScanned(decodedText);
@@ -232,18 +256,14 @@ export function BarcodeScannerDialog({
         },
       );
 
-      const videoElement = document.querySelector<HTMLVideoElement>(`#${regionId} video`);
-      if (videoElement) {
-        videoElement.setAttribute("playsinline", "true");
-        videoElement.setAttribute("webkit-playsinline", "true");
-        videoElement.muted = true;
-        videoElement.autoplay = true;
-        videoElement.style.width = "100%";
-        videoElement.style.height = "100%";
-        videoElement.style.objectFit = "cover";
-        void videoElement.play().catch((error) => {
-          console.warn("Barcode scanner video play() was blocked:", error);
-        });
+      const hasVideoFrame = await prepareScannerVideoElement();
+      if (!hasVideoFrame && cameraSelection === CAMERA_BACK_VALUE) {
+        const fallbackCamera = getFallbackCamera(fallbackDevices);
+        if (fallbackCamera?.id) {
+          setSelectedCameraId(fallbackCamera.id);
+          await startScanner(fallbackCamera.id, fallbackDevices);
+          return;
+        }
       }
 
       const activeDeviceId = html5QrCode.getRunningTrackSettings().deviceId;
