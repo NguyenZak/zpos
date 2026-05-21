@@ -45,6 +45,7 @@ interface MobileCheckoutSheetProps {
   selectedCustomer: any | null;
   customers: any[];
   onSelectCustomer: (customer: any | null) => void;
+  onRemoveItem: (id: number) => void;
   onCheckoutSuccess: () => void;
   orderId: string | number;
 }
@@ -57,6 +58,7 @@ export function MobileCheckoutSheet({
   selectedCustomer,
   customers,
   onSelectCustomer,
+  onRemoveItem,
   onCheckoutSuccess,
   orderId
 }: MobileCheckoutSheetProps) {
@@ -137,6 +139,11 @@ export function MobileCheckoutSheet({
   };
 
   const handleCheckoutSubmit = async () => {
+    if (cart.length === 0) {
+      toast.error("Chưa có sản phẩm để thanh toán");
+      return;
+    }
+
     const isDebt = paymentMethod === "debt";
     if (isDebt && !selectedCustomer?.id) {
       setCustomerSearchOpen(true);
@@ -238,6 +245,53 @@ export function MobileCheckoutSheet({
           </DrawerHeader>
 
           <div className="px-6 py-4 overflow-y-auto space-y-5 max-h-[60vh] scrollbar-none">
+            {/* SELECTED ITEMS */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
+                  Sản phẩm thanh toán
+                </span>
+                <span className="font-mono text-[10px] font-black text-foreground">
+                  {cart.reduce((sum, item) => sum + item.quantity, 0)} món
+                </span>
+              </div>
+
+              {cart.length > 0 ? (
+                <div className="space-y-2">
+                  {cart.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center gap-3 rounded-xl border bg-card p-3 shadow-xs"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-black text-foreground">{item.name}</p>
+                        <p className="mt-0.5 font-mono text-[10px] font-semibold text-muted-foreground">
+                          {formatCurrency(item.price)} x {item.quantity}
+                        </p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="font-mono text-xs font-black text-foreground">
+                          {formatCurrency(item.price * item.quantity)}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        aria-label={`Bỏ chọn ${item.name}`}
+                        onClick={() => onRemoveItem(item.id)}
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive transition-all active:scale-95"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed bg-muted/20 p-4 text-center">
+                  <p className="text-xs font-bold text-muted-foreground">Chưa có sản phẩm thanh toán</p>
+                </div>
+              )}
+            </div>
+
             {/* PAYMENT METHOD CHIPS */}
             <div className="space-y-2">
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Phương thức thanh toán</span>
@@ -454,7 +508,7 @@ export function MobileCheckoutSheet({
           <DrawerFooter className="px-6 gap-2 border-t pt-3">
             <Button 
               onClick={handleCheckoutSubmit}
-              disabled={isProcessing || (paymentMethod === "cash" && receivedAmount < total)}
+              disabled={cart.length === 0 || isProcessing || (paymentMethod === "cash" && receivedAmount < total)}
               className="h-12 text-sm font-bold w-full rounded-xl bg-primary text-primary-foreground shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all"
             >
               {isProcessing ? (

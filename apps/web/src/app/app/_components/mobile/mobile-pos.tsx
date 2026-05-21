@@ -563,6 +563,7 @@ export function MobilePOS({ products, customers, loading = false }: MobilePOSPro
         selectedCustomer={selectedCustomer} 
         customers={customers}
         onSelectCustomer={setSelectedCustomer}
+        onRemoveItem={removeFromCart}
         onCheckoutSuccess={handleCheckoutSuccess} 
         orderId={orderId} 
       />
