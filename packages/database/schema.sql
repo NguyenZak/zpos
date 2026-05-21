@@ -86,6 +86,7 @@ create table product_variants (
   barcode_type text,
   price decimal(12,2) default 0,
   cost_price decimal(12,2) default 0,
+  image_url text,
   attributes jsonb default '{}'::jsonb,
   created_at timestamp with time zone default now()
 );

@@ -25,7 +25,7 @@ interface BarcodeScannerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   products?: any[];
-  onScanSuccess?: (product: any) => void;
+  onScanSuccess?: (product: any, variant?: any) => void;
   onRawScan?: (code: string) => void;
 }
 
@@ -388,14 +388,35 @@ export function BarcodeScannerDialog({
 
     // 2. POS product matching mode
     if (products && onScanSuccess) {
-      const matchedProduct = products.find((p) => p.barcode && p.barcode.toString().trim() === cleanedCode);
+      // First try a direct product-level barcode match.
+      let matchedProduct = products.find((p) => p.barcode && p.barcode.toString().trim() === cleanedCode);
+      let matchedVariant: any | undefined;
+
+      // Then look for a variant-level barcode if no direct match. This lets the
+      // scanner add a specific SKU (e.g. "Áo phông – Đỏ / M") straight into the
+      // cart without going through the variant picker.
+      if (!matchedProduct) {
+        for (const p of products) {
+          const variants: any[] = Array.isArray(p.variants) ? p.variants : [];
+          const v = variants.find((vv) => vv.barcode && vv.barcode.toString().trim() === cleanedCode);
+          if (v) {
+            matchedProduct = p;
+            matchedVariant = v;
+            break;
+          }
+        }
+      }
 
       if (matchedProduct) {
-        onScanSuccess(matchedProduct);
+        onScanSuccess(matchedProduct, matchedVariant);
+        const subline = matchedVariant?.name ? ` – ${matchedVariant.name}` : "";
         toast.success(
           <div className="flex flex-col gap-1">
             <span className="font-bold text-green-600 text-xs dark:text-green-400">Đã quét thành công</span>
-            <span className="font-semibold text-sm">{matchedProduct.name}</span>
+            <span className="font-semibold text-sm">
+              {matchedProduct.name}
+              {subline}
+            </span>
             <span className="text-[10px] text-muted-foreground">Mã vạch: {cleanedCode}</span>
           </div>,
           { duration: 2500 },
@@ -445,18 +466,22 @@ export function BarcodeScannerDialog({
         <div className="my-2 mb-6">
           <div className="flex bg-zinc-900/80 backdrop-blur-sm rounded-full p-1 border border-white/10 shadow-inner relative">
             <button
-              onClick={() => setScanMode('usb')}
+              onClick={() => setScanMode("usb")}
               className={`flex-1 py-2 text-xs font-bold rounded-full transition-all duration-300 z-10 flex justify-center items-center gap-2 ${
-                scanMode === 'usb' ? 'bg-zinc-700/80 text-white shadow-md ring-1 ring-white/20' : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+                scanMode === "usb"
+                  ? "bg-zinc-700/80 text-white shadow-md ring-1 ring-white/20"
+                  : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
               }`}
             >
               <BarcodeIcon className="w-3.5 h-3.5" />
               Súng quét USB
             </button>
             <button
-              onClick={() => setScanMode('camera')}
+              onClick={() => setScanMode("camera")}
               className={`flex-1 py-2 text-xs font-bold rounded-full transition-all duration-300 z-10 flex justify-center items-center gap-2 ${
-                scanMode === 'camera' ? 'bg-zinc-700/80 text-white shadow-md ring-1 ring-white/20' : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+                scanMode === "camera"
+                  ? "bg-zinc-700/80 text-white shadow-md ring-1 ring-white/20"
+                  : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
               }`}
             >
               <Camera className="w-3.5 h-3.5" />
@@ -465,7 +490,7 @@ export function BarcodeScannerDialog({
           </div>
         </div>
 
-        {scanMode === 'camera' ? (
+        {scanMode === "camera" ? (
           <div className="my-2 flex flex-col gap-4">
             {/* Audio toggle & Camera Selector toolbar */}
             <div className="flex items-center justify-between gap-3 text-xs">
@@ -516,9 +541,9 @@ export function BarcodeScannerDialog({
 
             {/* Camera Scan Region Viewport */}
             <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] overflow-hidden rounded-xl border border-white/5 bg-zinc-900 shadow-xl isolate">
-              <div 
-                id={regionId} 
-                className="absolute inset-0 w-full h-full [&>video]:object-cover [&_video]:!w-full [&_video]:!h-full [&_div]:!w-full [&_div]:!max-w-full" 
+              <div
+                id={regionId}
+                className="absolute inset-0 w-full h-full [&>video]:object-cover [&_video]:!w-full [&_video]:!h-full [&_div]:!w-full [&_div]:!max-w-full"
               />
 
               {/* Dark glass overlay viewport helper */}
@@ -604,7 +629,7 @@ export function BarcodeScannerDialog({
             <p className="text-sm text-zinc-400 max-w-[280px]">
               Đảm bảo súng quét của bạn đã kết nối qua USB/Bluetooth. Trỏ súng quét vào mã vạch và bấm cò.
             </p>
-            
+
             <form onSubmit={handleManualSubmit} className="mt-4 w-full px-4">
               <Input
                 id="usb-barcode"

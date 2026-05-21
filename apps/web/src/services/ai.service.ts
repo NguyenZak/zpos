@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/client";
-import { getActiveOrganizationId } from "./pos.service";
+import { calculateSoldItemsCOGS, fetchSoldItemsForCOGS, getActiveOrganizationId } from "./pos.service";
 
 export const aiService = {
   // 1. Revenue Summary
@@ -27,17 +27,15 @@ export const aiService = {
     const orgId = await getActiveOrganizationId();
     // Revenue
     const { data: orders } = await supabase.from('orders')
-      .select('total_amount')
+      .select('id, total_amount')
       .eq('organization_id', orgId)
       .neq('status', 'cancelled');
     const revenue = orders?.reduce((sum, o) => sum + Number(o.total_amount), 0) || 0;
 
-    // COGS
-    const { data: purchases } = await supabase.from('purchase_orders')
-      .select('total_amount')
-      .eq('organization_id', orgId)
-      .neq('status', 'cancelled');
-    const cogs = purchases?.reduce((sum, p) => sum + Number(p.total_amount), 0) || 0;
+    // COGS: only sold items count toward cost of goods sold.
+    const orderIds = (orders || []).map((o: any) => o.id).filter(Boolean);
+    const soldItems = await fetchSoldItemsForCOGS(supabase, orderIds);
+    const cogs = calculateSoldItemsCOGS(soldItems);
 
     // Expenses
     const { data: expenses } = await supabase.from('expenses')

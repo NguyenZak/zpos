@@ -50,10 +50,15 @@ import { Badge } from "@/components/ui/badge";
 import { posService } from '@/services/pos.service';
 import { toast } from 'sonner';
 import { MobileInventory } from '../_components/mobile/mobile-inventory';
+import { AdjustStockDialog } from './_components/adjust-stock-dialog';
+import { StockHistoryDialog } from './_components/stock-history-dialog';
+import { createClient } from "@/utils/supabase/client";
 
 
 export type InventoryItem = {
   id: string;
+  product_id?: string;
+  is_variant?: boolean;
   name: string;
   sku: string;
   category: string;
@@ -76,25 +81,55 @@ export default function InventoryPage() {
   }, []);
 
   const [data, setData] = useState<InventoryItem[]>([]);
+  const [adjustItem, setAdjustItem] = useState<InventoryItem | null>(null);
+  const [adjustMode, setAdjustMode] = useState<"ADJUST" | "LOSS">("ADJUST");
+  const [isAdjustOpen, setIsAdjustOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [globalFilter, setGlobalFilter] = useState("");
 
   const loadInventory = async () => {
     setLoading(true);
     try {
       const products = await posService.getProducts();
-      setData(products.map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        sku: p.sku || 'N/A',
-        category: p.category?.name || 'Chưa phân loại',
-        stock: p.stock || 0,
-        min_stock: p.min_stock || 5,
-        price: p.price || 0,
-        image: p.image || ''
-      })));
+      let inventoryList: InventoryItem[] = [];
+      
+      products.forEach((p: any) => {
+        if (p.has_variants && p.variants && p.variants.length > 0) {
+          p.variants.forEach((v: any) => {
+            inventoryList.push({
+              id: v.id,
+              product_id: p.id,
+              is_variant: true,
+              name: `${p.name} - ${v.name}`,
+              sku: v.sku || p.sku || 'N/A',
+              category: p.category?.name || 'Chưa phân loại',
+              stock: v.stock || 0,
+              min_stock: p.min_stock || 5, // fallback to product min_stock
+              price: v.price || p.price || 0,
+              image: v.image_url || p.image || ''
+            });
+          });
+        } else {
+          inventoryList.push({
+            id: p.id,
+            product_id: p.id,
+            is_variant: false,
+            name: p.name,
+            sku: p.sku || 'N/A',
+            category: p.category?.name || 'Chưa phân loại',
+            stock: p.stock || 0,
+            min_stock: p.min_stock || 5,
+            price: p.price || 0,
+            image: p.image || ''
+          });
+        }
+      });
+      
+      setData(inventoryList);
     } catch (error) {
       console.error("Lỗi tải kho:", error);
     } finally {
@@ -187,14 +222,25 @@ export default function InventoryPage() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Điều chỉnh kho</DropdownMenuLabel>
-                <DropdownMenuItem className="gap-2">
+                <DropdownMenuItem className="gap-2" onClick={() => {
+                  setAdjustMode("ADJUST");
+                  setAdjustItem(row.original);
+                  setIsAdjustOpen(true);
+                }}>
                   <RefreshCcw className="w-4 h-4" /> Cập nhật số dư
                 </DropdownMenuItem>
-                <DropdownMenuItem className="gap-2">
+                <DropdownMenuItem className="gap-2" onClick={() => {
+                  setAdjustItem(row.original);
+                  setIsHistoryOpen(true);
+                }}>
                   <History className="w-4 h-4" /> Xem thẻ kho
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Báo mất / hỏng</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  setAdjustMode("LOSS");
+                  setAdjustItem(row.original);
+                  setIsAdjustOpen(true);
+                }}>Báo mất / hỏng</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -212,9 +258,11 @@ export default function InventoryPage() {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    onGlobalFilterChange: setGlobalFilter,
     state: {
       sorting,
       columnFilters,
+      globalFilter,
     },
   });
 
@@ -235,7 +283,14 @@ export default function InventoryPage() {
         products={mappedMobileProducts}
         loading={loading}
         onUpdateStock={async (productId, newStock) => {
-          await posService.updateProduct(productId.toString(), { stock: newStock });
+          const target = data.find(i => i.id === productId.toString());
+          if (!target) return;
+          const supabase = createClient();
+          if (target.is_variant) {
+            await supabase.from("product_variants").update({ stock: newStock }).eq("id", target.id);
+          } else {
+            await supabase.from("products").update({ stock: newStock }).eq("id", target.id);
+          }
           loadInventory();
         }}
       />
@@ -255,7 +310,7 @@ export default function InventoryPage() {
             <RefreshCcw className="mr-2 h-4 w-4" />
             Làm mới
           </Button>
-          <Button size="sm">
+          <Button size="sm" onClick={() => toast.info("Tính năng Kiểm kho định kỳ đang được phát triển.")}>
             <Boxes className="mr-2 h-4 w-4" />
             Kiểm kho định kỳ
           </Button>
@@ -297,14 +352,12 @@ export default function InventoryPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
             placeholder="Tìm theo tên sản phẩm, mã SKU..."
-            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-              table.getColumn("name")?.setFilterValue(event.target.value)
-            }
+            value={globalFilter ?? ""}
+            onChange={(event) => setGlobalFilter(event.target.value)}
             className="pl-10 h-9"
           />
         </div>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={() => toast.info("Tính năng Lọc chi tiết đang được phát triển.")}>
           <Filter className="mr-2 h-4 w-4" />
           Bộ lọc
         </Button>
@@ -353,6 +406,19 @@ export default function InventoryPage() {
           </TableBody>
         </Table>
       </div>
+      
+      <AdjustStockDialog 
+        open={isAdjustOpen} 
+        onOpenChange={setIsAdjustOpen} 
+        item={adjustItem} 
+        mode={adjustMode}
+        onSuccess={loadInventory} 
+      />
+      <StockHistoryDialog 
+        open={isHistoryOpen} 
+        onOpenChange={setIsHistoryOpen} 
+        item={adjustItem} 
+      />
     </div>
   );
 }

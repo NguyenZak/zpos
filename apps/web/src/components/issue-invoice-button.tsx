@@ -19,8 +19,11 @@ import { toast } from "sonner";
 import {
   einvoiceService,
   type Invoice,
-  type InvoiceLineItem,
+  type InvoiceItem,
 } from "@/services/einvoice.service";
+
+// Backward compat alias
+type InvoiceLineItem = InvoiceItem;
 
 interface Props {
   orderId?: string;
@@ -81,7 +84,7 @@ export function IssueInvoiceButton({
           email: form.email,
           phone: form.phone,
         },
-        items,
+        items: items as any,
         vatRate: form.vatRate,
         notes: form.notes,
       });
@@ -266,7 +269,7 @@ export function IssueInvoiceButton({
                 </p>
                 {items.slice(0, 5).map((it, i) => (
                   <div key={i} className="flex justify-between">
-                    <span className="truncate flex-1">{it.name}</span>
+                    <span className="truncate flex-1">{(it as any).product_name || (it as any).name}</span>
                     <span className="font-mono ml-2">
                       {it.quantity} × {new Intl.NumberFormat("vi-VN").format(it.unit_price)}
                     </span>

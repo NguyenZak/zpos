@@ -248,7 +248,7 @@ export default function FinanceOverviewPage() {
           <CardContent className="space-y-6">
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">Nhập hàng (COGS)</span>
+                <span className="font-medium">Giá vốn hàng đã bán (COGS)</span>
                 <span className="text-muted-foreground font-bold">60%</span>
               </div>
               <Progress value={60} className="h-2" indicatorClassName="bg-primary" />

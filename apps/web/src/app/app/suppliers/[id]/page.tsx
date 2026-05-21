@@ -72,8 +72,6 @@ export default function SupplierDetailPage() {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
 
-  const totalDebt = purchases.reduce((acc, p) => acc + (p.total_amount - (p.paid_amount || 0)), 0);
-
   if (loading) return (
     <div className="flex flex-col items-center justify-center h-[400px] gap-4">
       <Loader2 className="w-10 h-10 animate-spin text-primary" />
@@ -150,7 +148,7 @@ export default function SupplierDetailPage() {
                 <div className="p-2 bg-muted rounded-lg"><CreditCard className="w-4 h-4 text-primary" /></div>
                 <div className="flex flex-col">
                   <span className="text-[10px] text-muted-foreground uppercase font-bold">Công nợ hiện tại</span>
-                  <span className="text-lg font-black text-destructive">{formatCurrency(totalDebt)}</span>
+                  <span className="text-lg font-black text-destructive">{formatCurrency(supplier.total_debt || 0)}</span>
                 </div>
               </div>
             </CardContent>
@@ -189,7 +187,7 @@ export default function SupplierDetailPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-bold text-destructive">
-                          {formatCurrency(item.total_amount - (item.paid_amount || 0))}
+                          {formatCurrency(item.debt_amount || (item.total_amount - (item.paid_amount || 0)))}
                         </TableCell>
                       </TableRow>
                     )) : (

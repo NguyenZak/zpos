@@ -46,7 +46,7 @@ interface MobileCheckoutSheetProps {
   selectedCustomer: any | null;
   customers: any[];
   onSelectCustomer: (customer: any | null) => void;
-  onRemoveItem: (id: number) => void;
+  onRemoveItem: (cartKey: string) => void;
   onCheckoutSuccess: () => void;
   orderId: string | number;
 }
@@ -285,7 +285,7 @@ export function MobileCheckoutSheet({
                 <div className="space-y-2">
                   {cart.map((item) => (
                     <div
-                      key={item.id}
+                      key={item.cartKey || item.id}
                       className="flex items-center gap-3 rounded-xl border bg-card p-3 shadow-xs"
                     >
                       <div className="min-w-0 flex-1">
@@ -302,7 +302,7 @@ export function MobileCheckoutSheet({
                       <button
                         type="button"
                         aria-label={`Bỏ chọn ${item.name}`}
-                        onClick={() => onRemoveItem(item.id)}
+                        onClick={() => onRemoveItem(item.cartKey || item.id)}
                         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive transition-all active:scale-95"
                       >
                         <X className="h-4 w-4" />
@@ -627,7 +627,7 @@ export function MobileCheckoutSheet({
               </div>
               <div className="space-y-1">
                 {cart.map((item) => (
-                  <div key={item.id} className="flex justify-between">
+                  <div key={item.cartKey || item.id} className="flex justify-between">
                     <span className="truncate w-[180px]">{item.name} x{item.quantity}</span>
                     <span>{formatCurrency(item.price * item.quantity)}</span>
                   </div>

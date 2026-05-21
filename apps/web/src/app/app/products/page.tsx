@@ -9,19 +9,22 @@ import {
   getFilteredRowModel,
   ColumnDef
 } from "@tanstack/react-table";
-import { 
-  Search, 
-  Filter, 
-  MoreHorizontal, 
-  Trash2, 
-  FileDown, 
+import {
+  Search,
+  Filter,
+  MoreHorizontal,
+  Trash2,
+  FileDown,
   FileUp,
-  Package, 
+  Package,
   Loader2,
   AlertTriangle,
   ArrowUpDown,
-  Pencil
+  Pencil,
+  Plus,
+  Copy
 } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +45,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -55,19 +64,42 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { exportToCSV } from "@/lib/export-utils";
+import { Checkbox } from "@/components/ui/checkbox";
 
-import { AddProductDialog } from "./_components/add-product-dialog";
 import { EditProductDialog } from "./_components/edit-product-dialog";
 import { BarcodePrintDialog } from "./_components/barcode-print-dialog";
 import { posService } from "@/services/pos.service";
 import { RequirePermission } from "@/components/auth/require-permission";
+
+const HighlightText = ({ text, highlight }: { text: string | undefined | null, highlight: string }) => {
+  if (!text) return null;
+  if (!highlight || !highlight.trim()) return <>{text}</>;
+  
+  const parts = text.toString().split(new RegExp(`(${highlight})`, 'gi'));
+  return (
+    <>
+      {parts.map((part, index) => 
+        part.toLowerCase() === highlight.toLowerCase() ? (
+          <mark key={index} className="bg-yellow-200 text-yellow-900 rounded-sm px-0.5 font-bold">
+            {part}
+          </mark>
+        ) : (
+          part
+        )
+      )}
+    </>
+  );
+};
 
 export default function ProductsPage() {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [globalFilter, setGlobalFilter] = useState("");
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
+  const [copyingProduct, setCopyingProduct] = useState<any | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [rowSelection, setRowSelection] = useState({});
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   // Filters State
   const [showFilters, setShowFilters] = useState(false);
@@ -106,6 +138,27 @@ export default function ProductsPage() {
   // Real-time filtered data matching active criteria
   const filteredData = React.useMemo(() => {
     return data.filter(item => {
+      // 0. Search Filter
+      if (globalFilter) {
+        const search = globalFilter.toLowerCase();
+        const matchName = item.name?.toLowerCase().includes(search);
+        const matchSku = item.sku?.toLowerCase().includes(search);
+        const matchBarcode = item.barcode?.toLowerCase().includes(search);
+        
+        let matchVariant = false;
+        if (item.variants && Array.isArray(item.variants)) {
+          matchVariant = item.variants.some((v: any) => 
+            (v.name && v.name.toLowerCase().includes(search)) ||
+            (v.sku && v.sku.toLowerCase().includes(search)) ||
+            (v.barcode && v.barcode.toLowerCase().includes(search))
+          );
+        }
+
+        if (!matchName && !matchSku && !matchBarcode && !matchVariant) {
+          return false;
+        }
+      }
+
       // 1. Category Filter
       if (selectedCategory !== "all") {
         if (item.category?.name !== selectedCategory) return false;
@@ -134,15 +187,39 @@ export default function ProductsPage() {
 
       return true;
     });
-  }, [data, selectedCategory, selectedStockStatus, selectedPriceRange]);
+  }, [data, selectedCategory, selectedStockStatus, selectedPriceRange, globalFilter]);
 
   const handleDelete = async (id: string) => {
     try {
       await posService.deleteProduct(id);
       toast.success("Đã xóa sản phẩm");
       loadProducts();
+      setRowSelection({});
     } catch (error) {
       toast.error("Lỗi khi xóa sản phẩm");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const selectedIds = Object.keys(rowSelection).map((index) => {
+      // rowSelection keys are the row indices in the filtered/sorted data
+      // actually, by default they are row indices or row IDs if getRowId is provided.
+      // let's fetch the actual row id from the table rows based on the index.
+      return table.getRowModel().rowsById[index]?.original.id;
+    }).filter(Boolean);
+
+    if (selectedIds.length === 0) return;
+
+    setIsBulkDeleting(true);
+    try {
+      await Promise.all(selectedIds.map(id => posService.deleteProduct(id)));
+      toast.success(`Đã xóa ${selectedIds.length} sản phẩm thành công`);
+      loadProducts();
+      setRowSelection({});
+    } catch (error) {
+      toast.error("Lỗi khi xóa một số sản phẩm");
+    } finally {
+      setIsBulkDeleting(false);
     }
   };
 
@@ -280,6 +357,30 @@ export default function ProductsPage() {
 
   const columns: ColumnDef<any>[] = [
     {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Chọn tất cả"
+          className="translate-y-[2px]"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Chọn hàng này"
+          className="translate-y-[2px]"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
       accessorKey: "name",
       header: ({ column }) => {
         return (
@@ -293,21 +394,89 @@ export default function ProductsPage() {
           </Button>
         )
       },
-      cell: ({ row }) => (
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-md bg-muted overflow-hidden flex-shrink-0 border">
-            {row.original.image ? (
-              <img src={row.original.image} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <Package className="w-full h-full p-2 text-muted-foreground/30" />
-            )}
+      cell: ({ row }) => {
+        const variantCount = Array.isArray(row.original.variants) ? row.original.variants.length : 0;
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-md bg-muted overflow-hidden flex-shrink-0 border">
+              {row.original.image ? (
+                <img src={row.original.image} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <Package className="w-full h-full p-2 text-muted-foreground/30" />
+              )}
+            </div>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1.5">
+                <span className="font-medium text-sm">
+                  <HighlightText text={row.original.name} highlight={globalFilter} />
+                </span>
+                {variantCount > 0 && (
+                  <Badge
+                    variant="outline"
+                    className="h-4 border-primary/30 bg-primary/10 px-1.5 text-[9px] font-bold text-primary"
+                  >
+                    {variantCount} biến thể
+                  </Badge>
+                )}
+              </div>
+              {variantCount > 0 ? (
+                (() => {
+                  const hasVariantMatch = globalFilter && row.original.variants.some((v: any) => 
+                    (v.name && v.name.toLowerCase().includes(globalFilter.toLowerCase())) ||
+                    (v.sku && v.sku.toLowerCase().includes(globalFilter.toLowerCase())) ||
+                    (v.barcode && v.barcode.toLowerCase().includes(globalFilter.toLowerCase()))
+                  );
+                  return (
+                    <Accordion type="single" collapsible className="w-full mt-1" defaultValue={hasVariantMatch ? "skus" : undefined}>
+                      <AccordionItem value="skus" className="border-none">
+                        <AccordionTrigger className="py-0.5 hover:no-underline text-[10px] text-muted-foreground uppercase font-semibold h-auto">
+                          <div className="flex items-center gap-2">
+                            <span>Chi tiết mã {variantCount} biến thể</span>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pb-0 pt-1.5">
+                          <div className="flex flex-col gap-1.5 border-t border-border/50 pt-2">
+                        {row.original.variants.map((v: any) => (
+                          <div key={v.id} className="flex justify-between items-center text-[10px] bg-muted/40 px-2 py-1.5 rounded-md">
+                            <span className="truncate max-w-[100px] text-foreground font-medium" title={v.name}>
+                              <HighlightText text={v.name} highlight={globalFilter} />
+                            </span>
+                            <div className="flex items-center gap-2 text-right">
+                              {v.sku ? (
+                                <span className="font-mono text-muted-foreground text-[9px] bg-background px-1 rounded border">
+                                  SKU: <HighlightText text={v.sku} highlight={globalFilter} />
+                                </span>
+                              ) : null}
+                              {v.barcode ? (
+                                <span className="font-mono text-muted-foreground text-[9px] bg-background px-1 rounded border">
+                                  BARCODE: <HighlightText text={v.barcode} highlight={globalFilter} />
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+                  );
+                })()
+              ) : (
+                <div className="flex items-center gap-2 text-[10px] text-muted-foreground uppercase font-semibold mt-1">
+                  {row.original.sku && (
+                    <span>SKU: <HighlightText text={row.original.sku} highlight={globalFilter} /></span>
+                  )}
+                  {row.original.sku && row.original.barcode && <span>•</span>}
+                  {row.original.barcode && (
+                    <span>Mã vạch: <HighlightText text={row.original.barcode} highlight={globalFilter} /></span>
+                  )}
+                  {!row.original.sku && !row.original.barcode && <span>N/A</span>}
+                </div>
+              )}
+            </div>
           </div>
-          <div className="flex flex-col">
-            <span className="font-medium text-sm">{row.original.name}</span>
-            <span className="text-[10px] text-muted-foreground uppercase font-semibold">SKU: {row.original.barcode || 'N/A'}</span>
-          </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       accessorKey: "category",
@@ -322,21 +491,63 @@ export default function ProductsPage() {
       accessorKey: "price",
       header: "Giá bán",
       cell: ({ row }) => {
+        const variants = Array.isArray(row.original.variants) ? row.original.variants : [];
+        const formatter = new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" });
+        if (variants.length > 0) {
+          const prices = variants.map((v: any) => parseFloat(v.price) || 0).filter((p: number) => p > 0);
+          if (prices.length > 0) {
+            const min = Math.min(...prices);
+            const max = Math.max(...prices);
+            return (
+              <div className="font-bold text-sm text-primary">
+                {min === max ? formatter.format(min) : `${formatter.format(min)} – ${formatter.format(max)}`}
+              </div>
+            );
+          }
+        }
         const amount = parseFloat(row.getValue("price"));
-        const formatted = new Intl.NumberFormat("vi-VN", {
-          style: "currency",
-          currency: "VND",
-        }).format(amount);
-        return <div className="font-bold text-sm text-primary">{formatted}</div>;
+        return <div className="font-bold text-sm text-primary">{formatter.format(amount)}</div>;
       },
     },
     {
       accessorKey: "stock",
       header: "Tồn kho",
       cell: ({ row }) => {
-        const stock = parseInt(row.getValue("stock"));
+        const variants = Array.isArray(row.original.variants) ? row.original.variants : [];
+        const stock =
+          variants.length > 0
+            ? variants.reduce((sum: number, v: any) => sum + (parseInt(v.stock, 10) || 0), 0)
+            : parseInt(row.getValue("stock"));
+            
+        if (variants.length > 0) {
+          return (
+            <Accordion type="single" collapsible className="w-full min-w-[160px] max-w-[200px]">
+              <AccordionItem value="stock" className="border-none">
+                <AccordionTrigger className="py-1 hover:no-underline [&[data-state=open]>div>span:last-child]:text-primary/70">
+                  <div className="flex items-center gap-2 text-left w-full">
+                    <span className={`font-bold text-sm ${stock <= 5 ? 'text-red-500' : 'text-primary'}`}>
+                      {stock} <span className="text-[10px] font-medium text-muted-foreground ml-1">(Tổng)</span>
+                    </span>
+                    {stock <= 5 && <AlertTriangle className="w-3.5 h-3.5 text-red-500" />}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-1 pt-0">
+                  <div className="flex flex-col gap-1.5 border-t border-border/50 pt-2">
+                    {variants.map((v: any) => (
+                      <div key={v.id} className="flex justify-between items-center text-[11px] leading-none gap-2 group">
+                        <span className="text-muted-foreground truncate max-w-[120px] group-hover:text-foreground transition-colors" title={v.name}>{v.name}</span>
+                        <span className={`font-bold ${parseInt(v.stock, 10) <= 5 ? 'text-red-500' : 'text-emerald-600'}`}>{v.stock || 0}</span>
+                      </div>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          );
+        }
+
         return (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-[160px] py-2">
             <span className={`font-bold text-sm ${stock <= 5 ? 'text-red-500' : ''}`}>
               {stock}
             </span>
@@ -357,6 +568,15 @@ export default function ProductsPage() {
           >
             <Pencil className="w-4 h-4" />
           </Button>
+          <Button 
+            variant="ghost" 
+            size="icon-sm" 
+            onClick={() => setCopyingProduct(row.original)}
+            className="hover:bg-muted text-muted-foreground"
+            title="Sao chép sản phẩm"
+          >
+            <Copy className="w-4 h-4" />
+          </Button>
           <RequirePermission requiredPermission="products.barcode.print">
             <BarcodePrintDialog 
               productName={row.original.name}
@@ -364,6 +584,7 @@ export default function ProductsPage() {
               barcode={row.original.barcode}
               barcodeType={row.original.barcode_type}
               price={row.original.price}
+              variants={row.original.variants}
             />
           </RequirePermission>
           <AlertDialog>
@@ -399,10 +620,13 @@ export default function ProductsPage() {
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     state: {
-      globalFilter,
+      rowSelection,
     },
-    onGlobalFilterChange: setGlobalFilter,
+    onRowSelectionChange: setRowSelection,
+    enableRowSelection: true,
   });
+
+  const selectedCount = Object.keys(rowSelection).length;
 
   return (
     <div className="flex flex-col gap-4">
@@ -449,7 +673,38 @@ export default function ProductsPage() {
             <FileDown className="mr-2 h-4 w-4 text-blue-600" />
             Xuất CSV
           </Button>
-          <AddProductDialog onShowSuccess={loadProducts} />
+
+          {selectedCount > 0 && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm" className="gap-2 max-sm:h-9 max-sm:flex-1 max-sm:rounded-xl">
+                  {isBulkDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  Xóa {selectedCount} sản phẩm
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Xác nhận xóa {selectedCount} sản phẩm?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Bạn sắp xóa {selectedCount} sản phẩm đã chọn. Hành động này không thể hoàn tác.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Hủy</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive hover:bg-destructive/90">
+                    Xác nhận xóa
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+
+          <Button asChild size="sm" className="gap-2 max-sm:h-9 max-sm:flex-1 max-sm:rounded-xl">
+            <Link href="/app/products/new">
+              <Plus className="h-4 w-4" />
+              Thêm sản phẩm
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -624,6 +879,21 @@ export default function ProductsPage() {
             setEditingProduct(null);
             loadProducts();
           }} 
+        />
+      )}
+
+      {copyingProduct && (
+        <EditProductDialog 
+          product={copyingProduct} 
+          open={!!copyingProduct} 
+          onOpenChange={(open) => {
+            if (!open) setCopyingProduct(null);
+          }} 
+          onSuccess={() => {
+            setCopyingProduct(null);
+            loadProducts();
+          }} 
+          mode="copy"
         />
       )}
     </div>

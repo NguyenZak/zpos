@@ -41,8 +41,9 @@ import {
   einvoiceService,
   type TaxSettings,
   type EInvoiceConfig,
-  type EInvoiceProvider,
 } from "@/services/einvoice.service";
+
+type EInvoiceProvider = EInvoiceConfig["provider"];
 
 const PROVIDER_OPTIONS: { value: EInvoiceProvider; label: string; hint: string }[] = [
   { value: "vnpt", label: "VNPT eInvoice", hint: "einvoice.vnpt.vn — cần username/password" },

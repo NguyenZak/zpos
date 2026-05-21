@@ -112,7 +112,7 @@ export default function ProfitLossPage() {
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger>
-                        <TooltipContent>Tổng giá trị tiền hàng nhập kho (tính theo giá nhập)</TooltipContent>
+                        <TooltipContent>Tổng giá vốn của các sản phẩm đã bán</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </div>

@@ -12,9 +12,23 @@ import {
   FileText,
   Boxes,
   History,
-  AlertCircle
+  AlertCircle,
+  Edit,
+  CreditCard,
+  CheckCircle2,
+  Trash
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   Card, 
   CardContent, 
@@ -45,6 +59,14 @@ import {
   DialogDescription
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 
 export default function PurchaseDetailPage() {
   const { id } = useParams();
@@ -52,8 +74,14 @@ export default function PurchaseDetailPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [receivingOpen, setReceivingOpen] = useState(false);
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "transfer" | "card" | "other">("cash");
+  const [paymentNote, setPaymentNote] = useState("");
   const [receivingItems, setReceivingItems] = useState<any[]>([]);
   const [processing, setProcessing] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const loadDetail = async () => {
     setLoading(true);
@@ -98,18 +126,20 @@ export default function PurchaseDetailPage() {
       setReceivingOpen(false);
       loadDetail();
     } catch (error) {
-      toast.error("Lỗi khi thực hiện nhập kho");
+      console.error("Receive stock error:", error);
+      toast.error(`Lỗi khi thực hiện nhập kho: ${(error as any)?.message || "Không xác định"}`);
     } finally {
       setProcessing(false);
     }
   };
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
+    const s = status?.toLowerCase() || '';
+    switch (s) {
       case 'draft': return <Badge variant="outline" className="bg-slate-100 text-slate-700">Nháp</Badge>;
       case 'ordered': return <Badge variant="outline" className="bg-blue-100 text-blue-700">Đã đặt hàng</Badge>;
       case 'receiving': return <Badge variant="outline" className="bg-amber-100 text-amber-700">Đang nhập kho</Badge>;
-      case 'received': return <Badge variant="outline" className="bg-green-100 text-green-700">Đã nhập kho</Badge>;
+      case 'completed': return <Badge variant="outline" className="bg-green-100 text-green-700">Hoàn tất</Badge>;
       case 'cancelled': return <Badge variant="outline" className="bg-red-100 text-red-700">Đã hủy</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;
     }
@@ -117,6 +147,45 @@ export default function PurchaseDetailPage() {
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+  };
+
+  const handlePayment = async () => {
+    if (!paymentAmount || paymentAmount <= 0) {
+      toast.warning("Vui lòng nhập số tiền hợp lệ");
+      return;
+    }
+    setProcessing(true);
+    try {
+      await posService.recordSupplierPayment(
+        data.supplier_id,
+        paymentAmount,
+        paymentMethod,
+        [{ purchase_order_id: id as string, amount: paymentAmount }],
+        { notes: paymentNote }
+      );
+      toast.success("Ghi nhận thanh toán thành công");
+      setPaymentOpen(false);
+      loadDetail();
+    } catch (error) {
+      console.error("Payment error:", error);
+      toast.error(`Lỗi khi ghi nhận thanh toán: ${(error as any)?.message || "Không xác định"}`);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await posService.deletePurchaseOrder(id as string);
+      toast.success("Đã xoá đơn nhập hàng");
+      router.push('/app/purchases');
+    } catch (error: any) {
+      console.error("Lỗi xoá đơn:", error);
+      toast.error(`Không thể xoá đơn: ${error.message || "Lỗi không xác định"}`);
+      setDeleting(false);
+      setDeleteOpen(false);
+    }
   };
 
   if (loading) return (
@@ -130,7 +199,7 @@ export default function PurchaseDetailPage() {
     <div className="flex flex-col items-center justify-center h-[400px] gap-4">
       <AlertCircle className="w-12 h-12 text-destructive opacity-50" />
       <p className="text-muted-foreground">Không tìm thấy dữ liệu đơn hàng.</p>
-      <Button asChild><Link href="/purchases">Quay lại danh sách</Link></Button>
+      <Button asChild><Link href="/app/purchases">Quay lại danh sách</Link></Button>
     </div>
   );
 
@@ -139,7 +208,7 @@ export default function PurchaseDetailPage() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/purchases">
+            <Link href="/app/purchases">
               <ArrowLeft className="w-5 h-5" />
             </Link>
           </Button>
@@ -157,11 +226,29 @@ export default function PurchaseDetailPage() {
           <Button variant="outline" size="sm">
             <Printer className="mr-2 h-4 w-4" /> In phiếu
           </Button>
-          {data.status !== 'received' && data.status !== 'cancelled' && (
-            <Button size="sm" onClick={() => setReceivingOpen(true)}>
-              <Boxes className="mr-2 h-4 w-4" /> Nhập kho
+          {data.status !== 'completed' && data.status !== 'cancelled' && (
+            <>
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/app/purchases/${id}/edit`}>
+                  <Edit className="mr-2 h-4 w-4" /> Sửa đơn
+                </Link>
+              </Button>
+              <Button size="sm" onClick={() => setReceivingOpen(true)}>
+                <Boxes className="mr-2 h-4 w-4" /> Nhập kho
+              </Button>
+            </>
+          )}
+          {data.payment_status !== 'paid' && data.debt_amount > 0 && (
+            <Button size="sm" variant="default" className="bg-green-600 hover:bg-green-700" onClick={() => {
+              setPaymentAmount(data.debt_amount);
+              setPaymentOpen(true);
+            }}>
+              <CreditCard className="mr-2 h-4 w-4" /> Thanh toán
             </Button>
           )}
+          <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive hover:text-destructive-foreground border-destructive/20" onClick={() => setDeleteOpen(true)}>
+            <Trash className="mr-2 h-4 w-4" /> Xóa
+          </Button>
         </div>
       </div>
 
@@ -254,8 +341,23 @@ export default function PurchaseDetailPage() {
           </Card>
 
           <Card className="border-none shadow-sm bg-primary/5">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-black">Thông tin thanh toán</CardTitle>
+              {data.payment_status === 'paid' && (
+                <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200">
+                  <CheckCircle2 className="w-3 h-3 mr-1" /> Đã trả đủ
+                </Badge>
+              )}
+              {data.payment_status === 'partial' && (
+                <Badge variant="outline" className="bg-yellow-100 text-yellow-700 border-yellow-200">
+                  Thanh toán 1 phần
+                </Badge>
+              )}
+              {data.payment_status === 'unpaid' && (
+                <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200">
+                  Chưa thanh toán
+                </Badge>
+              )}
             </CardHeader>
             <CardContent className="grid gap-3">
               <div className="flex justify-between text-sm">
@@ -282,7 +384,7 @@ export default function PurchaseDetailPage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Còn nợ</span>
-                  <span className="text-destructive font-black">{formatCurrency(data.remaining_amount || (data.total_amount - (data.paid_amount || 0)))}</span>
+                  <span className="text-destructive font-black">{formatCurrency(data.debt_amount || (data.total_amount - (data.paid_amount || 0)))}</span>
                 </div>
               </div>
             </CardContent>
@@ -351,6 +453,93 @@ export default function PurchaseDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Payment Dialog */}
+      <Dialog open={paymentOpen} onOpenChange={setPaymentOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Thanh toán cho Nhà cung cấp</DialogTitle>
+            <DialogDescription>
+              Ghi nhận số tiền đã trả cho đơn nhập này.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Số tiền thanh toán</Label>
+              <Input 
+                type="number"
+                value={paymentAmount}
+                onChange={(e) => setPaymentAmount(parseFloat(e.target.value) || 0)}
+                max={data?.debt_amount}
+                className="text-lg font-bold"
+              />
+              <p className="text-xs text-muted-foreground">
+                Còn nợ: {formatCurrency(data?.debt_amount || 0)}
+              </p>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Phương thức</Label>
+              <Select value={paymentMethod} onValueChange={(val: any) => setPaymentMethod(val)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn phương thức" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">Tiền mặt</SelectItem>
+                  <SelectItem value="transfer">Chuyển khoản</SelectItem>
+                  <SelectItem value="card">Quẹt thẻ</SelectItem>
+                  <SelectItem value="other">Khác</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Ghi chú (Tùy chọn)</Label>
+              <Input 
+                placeholder="Ví dụ: Chuyển khoản Vietcombank..."
+                value={paymentNote}
+                onChange={(e) => setPaymentNote(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPaymentOpen(false)}>Hủy</Button>
+            <Button onClick={handlePayment} disabled={processing || paymentAmount <= 0}>
+              {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Xác nhận trả {formatCurrency(paymentAmount)}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Dialog */}
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xóa đơn nhập hàng?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa đơn nhập hàng <strong>{data?.code}</strong> không? 
+              Hành động này không thể hoàn tác và sẽ xóa toàn bộ chi tiết của đơn này.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Hủy bỏ</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash className="w-4 h-4 mr-2" />}
+              Xóa đơn
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

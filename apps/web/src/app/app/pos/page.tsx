@@ -1,97 +1,101 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
+
 import {
-  Search,
-  ShoppingCart,
-  User,
-  Trash2,
-  Plus,
-  Minus,
-  ScanBarcode,
-  Keyboard,
-  Receipt,
-  RotateCcw,
-  Tag,
-  CreditCard,
-  Banknote,
-  QrCode,
-  CheckCircle2,
-  Printer,
-  History,
-  X,
-  SearchIcon,
-  UserPlus,
-  Copy,
-  Check,
-  Sparkles,
-  Coins,
   ArrowRight,
-  Pencil,
-  RefreshCw,
-  Loader2,
-  Wallet,
+  Banknote,
+  Check,
+  CheckCircle2,
   Clock,
-  Monitor
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+  Coins,
+  Coins as CoinsIcon,
+  Copy,
+  CreditCard,
+  FileText,
+  History,
+  Keyboard,
+  Loader2,
+  Minus,
+  Monitor,
+  Pencil,
+  Plus,
+  Printer,
+  QrCode,
+  Receipt,
+  RefreshCw,
+  RotateCcw,
+  ScanBarcode,
+  Search,
+  SearchIcon,
+  ShoppingCart,
+  Sparkles,
+  Tag,
+  Trash2,
+  User,
+  UserPlus,
+  Wallet,
+  WifiOff,
+  X,
+} from "lucide-react";
+import { toast } from "sonner";
+
+import { BarcodeScannerDialog } from "@/components/barcode-scanner-dialog";
+import { OfflineStatus } from "@/components/offline-status";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-  DialogDescription
-} from '@/components/ui/dialog';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { toast } from 'sonner';
-import { posService, getTenantSlug, isValidUUID } from '@/services/pos.service';
-import {
-  vietQRService,
-  buildVietQRImageUrl,
-  generateReferenceCode,
-  type BankAccount,
-} from '@/services/vietqr.service';
-import { einvoiceService } from '@/services/einvoice.service';
-import { zaloService } from '@/services/zalo.service';
-import { FileText, WifiOff } from 'lucide-react';
-import { cacheProducts, getCachedProducts, cacheCustomers, getCachedCustomers } from '@/lib/offline/offline-db';
-import { debtService, type CreditAccount } from '@/services/debt.service';
-import { Coins as CoinsIcon } from 'lucide-react';
-import { queueOfflineOrder, flushOfflineQueue } from '@/lib/offline/sync';
-import { useOnlineStatus } from '@/hooks/use-online-status';
-import { OfflineStatus } from '@/components/offline-status';
-import { MobilePOS } from '../_components/mobile/mobile-pos';
-import { PrintInvoice } from './_components/print-invoice';
-import { PrintDialog } from './_components/print-dialog';
-import { PrintType, printService } from '@/services/print.service';
-import { BarcodeScannerDialog } from '@/components/barcode-scanner-dialog';
-import { loyaltyService } from '@/services/loyalty.service';
-import { shiftService, type Shift } from '@/services/shift.service';
-import { OpenShiftDialog } from '../shifts/_components/open-shift-dialog';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useOnlineStatus } from "@/hooks/use-online-status";
+import { cacheCustomers, cacheProducts, getCachedCustomers, getCachedProducts } from "@/lib/offline/offline-db";
+import { flushOfflineQueue, queueOfflineOrder } from "@/lib/offline/sync";
+import { type CreditAccount, debtService } from "@/services/debt.service";
+import { einvoiceService } from "@/services/einvoice.service";
+import { loyaltyService } from "@/services/loyalty.service";
+import { getTenantSlug, isValidUUID, posService } from "@/services/pos.service";
+import { type PrintType, printService } from "@/services/print.service";
+import { type Shift, shiftService } from "@/services/shift.service";
+import { type BankAccount, buildVietQRImageUrl, generateReferenceCode, vietQRService } from "@/services/vietqr.service";
+import { zaloService } from "@/services/zalo.service";
+
+import { MobilePOS } from "../_components/mobile/mobile-pos";
+import { OpenShiftDialog } from "../shifts/_components/open-shift-dialog";
+import { PrintDialog } from "./_components/print-dialog";
+import { PrintInvoice } from "./_components/print-invoice";
+import { type PickedVariant, VariantPickerDialog } from "./_components/variant-picker-dialog";
 
 // Fire-and-forget Zalo ZNS send. Always swallows errors so checkout never blocks.
-async function fireZalo(event: 'order_paid' | 'invoice_issued', opts: {
-  phone?: string;
-  orderId?: string;
-  invoiceId?: string;
-  customerId?: string;
-  data?: Record<string, any>;
-}) {
+async function fireZalo(
+  event: "order_paid" | "invoice_issued",
+  opts: {
+    phone?: string;
+    orderId?: string;
+    invoiceId?: string;
+    customerId?: string;
+    data?: Record<string, any>;
+  },
+) {
   if (!opts.phone) return;
   try {
     await zaloService.sendZNS({
       phone: opts.phone,
       templateEvent: event,
-      templateData: opts.data || {},
+      templateData: opts.data ?? {},
       orderId: opts.orderId,
       invoiceId: opts.invoiceId,
       customerId: opts.customerId,
@@ -99,28 +103,74 @@ async function fireZalo(event: 'order_paid' | 'invoice_issued', opts: {
   } catch (e: any) {
     // 412 not_configured / 404 template_not_found → skip silently.
     if (!/zalo_not_configured|template_not_found/.test(String(e?.message))) {
-      console.warn('Zalo ZNS send failed:', e?.message);
+      console.warn("Zalo ZNS send failed:", e?.message);
     }
   }
 }
 
-
 // --- MOCK DATA --- (Fallback)
 const MOCK_PRODUCTS = [
-  { id: 1, name: 'Apple iPhone 15 Pro', price: 25000000, category: 'Điện thoại', stock: 10, image: 'https://images.unsplash.com/photo-1696446701796-da61225697cc?q=80&w=300&auto=format&fit=crop', barcode: '123456789' },
-  { id: 2, name: 'Samsung Galaxy S24 Ultra', price: 30000000, category: 'Điện thoại', stock: 5, image: 'https://images.unsplash.com/photo-1707230181313-2d937072719d?q=80&w=300&auto=format&fit=crop', barcode: '987654321' },
-  { id: 3, name: 'MacBook Air M3', price: 28000000, category: 'Máy tính', stock: 8, image: 'https://images.unsplash.com/photo-1611186871348-b1ec696e523b?q=80&w=300&auto=format&fit=crop', barcode: '111222333' },
-  { id: 4, name: 'Sony WH-1000XM5', price: 8500000, category: 'Phụ kiện', stock: 15, image: 'https://images.unsplash.com/photo-1644794106607-ca927d3c9071?q=80&w=300&auto=format&fit=crop', barcode: '444555666' },
-  { id: 5, name: 'Logitech MX Master 3S', price: 2500000, category: 'Phụ kiện', stock: 20, image: 'https://images.unsplash.com/photo-1636114673156-052a83459fc1?q=80&w=300&auto=format&fit=crop', barcode: '777888999' },
-  { id: 6, name: 'Apple Watch Ultra 2', price: 19000000, category: 'Đồng hồ', stock: 12, image: 'https://images.unsplash.com/photo-1695663363303-398328108502?q=80&w=300&auto=format&fit=crop', barcode: '000111222' },
+  {
+    id: 1,
+    name: "Apple iPhone 15 Pro",
+    price: 25000000,
+    category: "Điện thoại",
+    stock: 10,
+    image: "https://images.unsplash.com/photo-1696446701796-da61225697cc?q=80&w=300&auto=format&fit=crop",
+    barcode: "123456789",
+  },
+  {
+    id: 2,
+    name: "Samsung Galaxy S24 Ultra",
+    price: 30000000,
+    category: "Điện thoại",
+    stock: 5,
+    image: "https://images.unsplash.com/photo-1707230181313-2d937072719d?q=80&w=300&auto=format&fit=crop",
+    barcode: "987654321",
+  },
+  {
+    id: 3,
+    name: "MacBook Air M3",
+    price: 28000000,
+    category: "Máy tính",
+    stock: 8,
+    image: "https://images.unsplash.com/photo-1611186871348-b1ec696e523b?q=80&w=300&auto=format&fit=crop",
+    barcode: "111222333",
+  },
+  {
+    id: 4,
+    name: "Sony WH-1000XM5",
+    price: 8500000,
+    category: "Phụ kiện",
+    stock: 15,
+    image: "https://images.unsplash.com/photo-1644794106607-ca927d3c9071?q=80&w=300&auto=format&fit=crop",
+    barcode: "444555666",
+  },
+  {
+    id: 5,
+    name: "Logitech MX Master 3S",
+    price: 2500000,
+    category: "Phụ kiện",
+    stock: 20,
+    image: "https://images.unsplash.com/photo-1636114673156-052a83459fc1?q=80&w=300&auto=format&fit=crop",
+    barcode: "777888999",
+  },
+  {
+    id: 6,
+    name: "Apple Watch Ultra 2",
+    price: 19000000,
+    category: "Đồng hồ",
+    stock: 12,
+    image: "https://images.unsplash.com/photo-1695663363303-398328108502?q=80&w=300&auto=format&fit=crop",
+    barcode: "000111222",
+  },
 ];
 
 const MOCK_CUSTOMERS = [
-  { id: '1', name: 'Nguyễn Văn A', phone: '0901234567', email: 'vana@gmail.com', points: 1250 },
-  { id: '2', name: 'Trần Thị B', phone: '0912345678', email: 'thib@gmail.com', points: 800 },
-  { id: '3', name: 'Lê Văn C', phone: '0923456789', email: 'vanc@gmail.com', points: 2100 },
+  { id: "1", name: "Nguyễn Văn A", phone: "0901234567", email: "vana@gmail.com", points: 1250 },
+  { id: "2", name: "Trần Thị B", phone: "0912345678", email: "thib@gmail.com", points: 800 },
+  { id: "3", name: "Lê Văn C", phone: "0923456789", email: "vanc@gmail.com", points: 2100 },
 ];
-
 
 export default function POSPage() {
   const [isMobile, setIsMobile] = useState(false);
@@ -131,7 +181,7 @@ export default function POSPage() {
   // this runs even if the pill isn't visible (e.g. legacy layouts).
   useEffect(() => {
     if (!isOnline) return;
-    flushOfflineQueue().catch(() => { });
+    flushOfflineQueue().catch(() => {});
   }, [isOnline]);
 
   useEffect(() => {
@@ -144,20 +194,21 @@ export default function POSPage() {
 
   // Idle Screen Logic
   const [showIdleScreen, setShowIdleScreen] = useState(false);
-  const [idleMessage, setIdleMessage] = useState('Chúc quý khách một ngày tốt lành!');
-  const [currentTimeStr, setCurrentTimeStr] = useState('');
+  const [idleMessage, setIdleMessage] = useState("Chúc quý khách một ngày tốt lành!");
+  const [currentTimeStr, setCurrentTimeStr] = useState("");
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     // Load config
-    const isEnabled = localStorage.getItem('zpos_pos_idle_screen') !== 'false'; // default true
+    const isEnabled = localStorage.getItem("zpos_pos_idle_screen") !== "false"; // default true
     if (!isEnabled) return;
 
-    const timeoutMins = parseInt(localStorage.getItem('zpos_pos_idle_timeout') || '5');
+    const timeoutMins = parseInt(localStorage.getItem("zpos_pos_idle_timeout") || "5");
     const timeoutMs = timeoutMins * 60 * 1000;
 
-    const msg = localStorage.getItem('zpos_welcome_message') || 'Chúc một ngày kinh doanh thuận lợi, bùng nổ doanh thu.';
+    const msg =
+      localStorage.getItem("zpos_welcome_message") || "Chúc một ngày kinh doanh thuận lợi, bùng nổ doanh thu.";
     setIdleMessage(msg);
 
     let timer: NodeJS.Timeout;
@@ -165,7 +216,7 @@ export default function POSPage() {
       if (showIdleScreen) setShowIdleScreen(false);
       clearTimeout(timer);
       timer = setTimeout(() => {
-        setCurrentTimeStr(new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }));
+        setCurrentTimeStr(new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }));
         setShowIdleScreen(true);
       }, timeoutMs);
     };
@@ -173,29 +224,29 @@ export default function POSPage() {
     // Timer interval to update time clock
     const clockInterval = setInterval(() => {
       if (showIdleScreen) {
-        setCurrentTimeStr(new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }));
+        setCurrentTimeStr(new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }));
       }
     }, 10000);
 
-    window.addEventListener('mousemove', resetTimer);
-    window.addEventListener('keydown', resetTimer);
-    window.addEventListener('touchstart', resetTimer);
-    window.addEventListener('click', resetTimer);
+    window.addEventListener("mousemove", resetTimer);
+    window.addEventListener("keydown", resetTimer);
+    window.addEventListener("touchstart", resetTimer);
+    window.addEventListener("click", resetTimer);
 
     resetTimer(); // init
 
     return () => {
       clearTimeout(timer);
       clearInterval(clockInterval);
-      window.removeEventListener('mousemove', resetTimer);
-      window.removeEventListener('keydown', resetTimer);
-      window.removeEventListener('touchstart', resetTimer);
-      window.removeEventListener('click', resetTimer);
+      window.removeEventListener("mousemove", resetTimer);
+      window.removeEventListener("keydown", resetTimer);
+      window.removeEventListener("touchstart", resetTimer);
+      window.removeEventListener("click", resetTimer);
     };
   }, [showIdleScreen]);
 
   const [products, setProducts] = useState<any[]>([]);
-  const [categories, setCategories] = useState<string[]>(['Tất cả']);
+  const [categories, setCategories] = useState<string[]>(["Tất cả"]);
   const [loading, setLoading] = useState(true);
 
   // Tabs State
@@ -205,7 +256,7 @@ export default function POSPage() {
     selectedCustomer: any | null;
     orderId: string | number;
     title: string;
-    discountType?: 'percentage' | 'fixed';
+    discountType?: "percentage" | "fixed";
     discountValue?: number;
   }
 
@@ -214,25 +265,31 @@ export default function POSPage() {
   };
 
   const [tabs, setTabs] = useState<OrderTab[]>([
-    { id: '1', cart: [], selectedCustomer: null, orderId: generateOrderId(), title: 'Đơn 1', discountType: 'fixed', discountValue: 0 }
+    {
+      id: "1",
+      cart: [],
+      selectedCustomer: null,
+      orderId: generateOrderId(),
+      title: "Đơn 1",
+      discountType: "fixed",
+      discountValue: 0,
+    },
   ]);
-  const [activeTabId, setActiveTabId] = useState<string>('1');
+  const [activeTabId, setActiveTabId] = useState<string>("1");
 
-  const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0];
+  const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0];
   const cart = activeTab.cart;
   const selectedCustomer = activeTab.selectedCustomer;
   const orderId = activeTab.orderId;
 
-  const discountType = activeTab.discountType || 'fixed';
+  const discountType = activeTab.discountType || "fixed";
   const discountValue = activeTab.discountValue || 0;
 
   // ----------------------------------------------------------
   // Pricing calculations (placed early so hooks + handlers can use them)
   // ----------------------------------------------------------
-  const subtotal = cart.reduce((acc: number, item: any) => acc + (item.price * item.quantity), 0);
-  const discount = discountType === 'percentage'
-    ? Math.round((subtotal * discountValue) / 100)
-    : discountValue;
+  const subtotal = cart.reduce((acc: number, item: any) => acc + item.price * item.quantity, 0);
+  const discount = discountType === "percentage" ? Math.round((subtotal * discountValue) / 100) : discountValue;
   const tax = 0;
   const total = Math.max(0, subtotal - discount + tax);
 
@@ -243,7 +300,7 @@ export default function POSPage() {
   const [customerLoyaltyBalance, setCustomerLoyaltyBalance] = useState<any>(null);
   const [pointsRedeemed, setPointsRedeemed] = useState<number>(0);
   const [pointsToEarn, setPointsToEarn] = useState<number>(0);
-  const [pointsEarningBreakdown, setPointsEarningBreakdown] = useState<string>('');
+  const [pointsEarningBreakdown, setPointsEarningBreakdown] = useState<string>("");
 
   // ----------------------------------------------------------
   // Loyalty derived calculations (depend on total, so placed after it)
@@ -252,7 +309,9 @@ export default function POSPage() {
   // But POS redemption rules come from loyaltyService.getRules() loaded inside calculateRedeemablePoints.
   // We use simple local config for the UI layer – the service handles the heavy lifting.
   // Default rule values (overridden when a real program is loaded with rules attached):
-  const redemptionRule = (loyaltyProgram?.rules as any[])?.find((r: any) => r.rule_type === 'redemption_discount' && r.is_active);
+  const redemptionRule = (loyaltyProgram?.rules as any[])?.find(
+    (r: any) => r.rule_type === "redemption_discount" && r.is_active,
+  );
   // Points to VND ratio: discount_amount / points_required  (e.g. 10000 / 100 = 100 VND per point)
   const pointsToCashRatio = redemptionRule
     ? (Number(redemptionRule.discount_amount) || 10000) / (Number(redemptionRule.points_required) || 100)
@@ -271,70 +330,83 @@ export default function POSPage() {
   const maxPointsRedeemable = Math.min(customerAvailablePoints, maxPointsAllowedByCap);
   const finalTotal = Math.max(0, total - pointsDiscount);
 
-  const setDiscountType = (type: 'percentage' | 'fixed') => {
-    setTabs(prev => prev.map(tab => {
-      if (tab.id === activeTabId) {
-        return { ...tab, discountType: type };
-      }
-      return tab;
-    }));
+  const setDiscountType = (type: "percentage" | "fixed") => {
+    setTabs((prev) =>
+      prev.map((tab) => {
+        if (tab.id === activeTabId) {
+          return { ...tab, discountType: type };
+        }
+        return tab;
+      }),
+    );
   };
 
   const setDiscountValue = (val: number) => {
-    setTabs(prev => prev.map(tab => {
-      if (tab.id === activeTabId) {
-        return { ...tab, discountValue: val };
-      }
-      return tab;
-    }));
+    setTabs((prev) =>
+      prev.map((tab) => {
+        if (tab.id === activeTabId) {
+          return { ...tab, discountValue: val };
+        }
+        return tab;
+      }),
+    );
   };
 
   const setCart = (newCart: any[] | ((prev: any[]) => any[])) => {
-    setTabs(prev => prev.map(tab => {
-      if (tab.id === activeTabId) {
-        return { ...tab, cart: typeof newCart === 'function' ? newCart(tab.cart) : newCart };
-      }
-      return tab;
-    }));
+    setTabs((prev) =>
+      prev.map((tab) => {
+        if (tab.id === activeTabId) {
+          return { ...tab, cart: typeof newCart === "function" ? newCart(tab.cart) : newCart };
+        }
+        return tab;
+      }),
+    );
   };
 
   const setSelectedCustomer = (customer: any | null) => {
-    setTabs(prev => prev.map(tab => {
-      if (tab.id === activeTabId) {
-        return { ...tab, selectedCustomer: customer };
-      }
-      return tab;
-    }));
+    setTabs((prev) =>
+      prev.map((tab) => {
+        if (tab.id === activeTabId) {
+          return { ...tab, selectedCustomer: customer };
+        }
+        return tab;
+      }),
+    );
   };
 
   const setOrderId = (id: string | number | ((prev: string | number) => string | number)) => {
-    setTabs(prev => prev.map(tab => {
-      if (tab.id === activeTabId) {
-        return { ...tab, orderId: typeof id === 'function' ? id(tab.orderId) : id };
-      }
-      return tab;
-    }));
+    setTabs((prev) =>
+      prev.map((tab) => {
+        if (tab.id === activeTabId) {
+          return { ...tab, orderId: typeof id === "function" ? id(tab.orderId) : id };
+        }
+        return tab;
+      }),
+    );
   };
 
   const addNewTab = () => {
     const newId = Date.now().toString();
     const newTitle = `Đơn ${tabs.length + 1}`;
-    setTabs(prev => [...prev, {
-      id: newId,
-      cart: [],
-      selectedCustomer: null,
-      orderId: generateOrderId(),
-      title: newTitle,
-      discountType: 'fixed',
-      discountValue: 0
-    }]);
+    setTabs((prev) => [
+      ...prev,
+      {
+        id: newId,
+        cart: [],
+        selectedCustomer: null,
+        orderId: generateOrderId(),
+        title: newTitle,
+        discountType: "fixed",
+        discountValue: 0,
+      },
+    ]);
     setActiveTabId(newId);
   };
 
   const removeTab = (id: string) => {
     if (tabs.length === 1) return;
-    setTabs(prev => {
-      const newTabs = prev.filter(t => t.id !== id);
+    setTabs((prev) => {
+      const newTabs = prev.filter((t) => t.id !== id);
       if (activeTabId === id) {
         setActiveTabId(newTabs[newTabs.length - 1].id);
       }
@@ -346,17 +418,17 @@ export default function POSPage() {
 
   // Load draft tabs from localStorage on client-side mount
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedTabs = localStorage.getItem('zpos_draft_tabs');
-      const savedActiveTabId = localStorage.getItem('zpos_active_tab_id');
+    if (typeof window !== "undefined") {
+      const savedTabs = localStorage.getItem("zpos_draft_tabs");
+      const savedActiveTabId = localStorage.getItem("zpos_active_tab_id");
       if (savedTabs) {
         try {
           const parsed = JSON.parse(savedTabs);
           if (Array.isArray(parsed) && parsed.length > 0) {
             // Force regenerate orderId for restored tabs to prevent old duplicate IDs from persisting
-            const sanitizedTabs = parsed.map(tab => ({
+            const sanitizedTabs = parsed.map((tab) => ({
               ...tab,
-              orderId: generateOrderId()
+              orderId: generateOrderId(),
             }));
             setTabs(sanitizedTabs);
           }
@@ -373,35 +445,36 @@ export default function POSPage() {
 
   // Save tabs to localStorage whenever they change
   useEffect(() => {
-    if (typeof window !== 'undefined' && isMounted) {
-      localStorage.setItem('zpos_draft_tabs', JSON.stringify(tabs));
+    if (typeof window !== "undefined" && isMounted) {
+      localStorage.setItem("zpos_draft_tabs", JSON.stringify(tabs));
     }
   }, [tabs, isMounted]);
 
   // Save activeTabId to localStorage whenever it changes
   useEffect(() => {
-    if (typeof window !== 'undefined' && isMounted) {
-      localStorage.setItem('zpos_active_tab_id', activeTabId);
+    if (typeof window !== "undefined" && isMounted) {
+      localStorage.setItem("zpos_active_tab_id", activeTabId);
     }
   }, [activeTabId, isMounted]);
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
-  const [tempPrice, setTempPrice] = useState<string>('');
+  const [tempPrice, setTempPrice] = useState<string>("");
   const [editingQtyId, setEditingQtyId] = useState<number | null>(null);
-  const [tempQty, setTempQty] = useState<string>('');
-  const [activeCategory, setActiveCategory] = useState('Tất cả');
+  const [tempQty, setTempQty] = useState<string>("");
+  const [activeCategory, setActiveCategory] = useState("Tất cả");
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const isProcessingRef = useRef(false);
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'transfer' | 'debt'>('cash');
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "transfer" | "debt">("cash");
   const [creditAccount, setCreditAccount] = useState<CreditAccount | null>(null);
   const [debtDueDays, setDebtDueDays] = useState<number>(30);
   const [successOpen, setSuccessOpen] = useState(false);
   const [lastOrder, setLastOrder] = useState<any>(null);
-  const [printType, setPrintType] = useState<'payment' | 'provisional' | PrintType>('payment');
+  const [printType, setPrintType] = useState<"payment" | "provisional" | PrintType>("payment");
   const [provisionalOrder, setProvisionalOrder] = useState<any>(null);
+  const [pickerProduct, setPickerProduct] = useState<any | null>(null);
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const [enableProvisionalPrint, setEnableProvisionalPrint] = useState(true);
   const [enableKitchenPrint, setEnableKitchenPrint] = useState(true);
@@ -409,17 +482,17 @@ export default function POSPage() {
   const [enableFinalPrint, setEnableFinalPrint] = useState(true);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const handleStorageUpdate = () => {
-        setEnableProvisionalPrint(localStorage.getItem('zpos_invoice_enable_provisional') !== 'false');
-        setEnableKitchenPrint(localStorage.getItem('zpos_invoice_enable_kitchen') !== 'false');
-        setEnableBarPrint(localStorage.getItem('zpos_invoice_enable_bar') !== 'false');
-        setEnableFinalPrint(localStorage.getItem('zpos_invoice_enable_final') !== 'false');
+        setEnableProvisionalPrint(localStorage.getItem("zpos_invoice_enable_provisional") !== "false");
+        setEnableKitchenPrint(localStorage.getItem("zpos_invoice_enable_kitchen") !== "false");
+        setEnableBarPrint(localStorage.getItem("zpos_invoice_enable_bar") !== "false");
+        setEnableFinalPrint(localStorage.getItem("zpos_invoice_enable_final") !== "false");
       };
 
       handleStorageUpdate();
-      window.addEventListener('zpos_settings_updated', handleStorageUpdate);
-      return () => window.removeEventListener('zpos_settings_updated', handleStorageUpdate);
+      window.addEventListener("zpos_settings_updated", handleStorageUpdate);
+      return () => window.removeEventListener("zpos_settings_updated", handleStorageUpdate);
     }
   }, []);
 
@@ -430,46 +503,58 @@ export default function POSPage() {
       total: finalTotal,
       subtotal: subtotal,
       discount: discount + pointsDiscount,
-      paymentMethod: 'Chưa thanh toán',
+      paymentMethod: "Chưa thanh toán",
       cart: [...cart],
-      customer: selectedCustomer
+      customer: selectedCustomer,
     });
 
-    const enabledOptionsCount = [enableProvisionalPrint, enableKitchenPrint, enableBarPrint, enableFinalPrint].filter(Boolean).length;
+    const enabledOptionsCount = [enableProvisionalPrint, enableKitchenPrint, enableBarPrint, enableFinalPrint].filter(
+      Boolean,
+    ).length;
 
     if (enabledOptionsCount === 1) {
       // Bypass dialog if only 1 option is enabled
-      const type: PrintType = enableProvisionalPrint ? 'temp_bill' : enableKitchenPrint ? 'kitchen_ticket' : enableBarPrint ? 'bar_ticket' : 'final_receipt';
+      const type: PrintType = enableProvisionalPrint
+        ? "temp_bill"
+        : enableKitchenPrint
+          ? "kitchen_ticket"
+          : enableBarPrint
+            ? "bar_ticket"
+            : "final_receipt";
       setPrintType(type);
       setTimeout(() => window.print(), 100);
 
-      const orderIdStr = orderId.toString().startsWith('ORD-') ? orderId.toString() : `ORD-${orderId}`;
-      printService.logPrint({
-        orderId: orderIdStr,
-        type: type,
-      }).catch(console.warn);
+      const orderIdStr = orderId.toString().startsWith("ORD-") ? orderId.toString() : `ORD-${orderId}`;
+      printService
+        .logPrint({
+          orderId: orderIdStr,
+          type: type,
+        })
+        .catch(console.warn);
     } else {
       setPrintDialogOpen(true);
     }
   };
 
   const getPrintButtonText = () => {
-    const enabledOptionsCount = [enableProvisionalPrint, enableKitchenPrint, enableBarPrint, enableFinalPrint].filter(Boolean).length;
+    const enabledOptionsCount = [enableProvisionalPrint, enableKitchenPrint, enableBarPrint, enableFinalPrint].filter(
+      Boolean,
+    ).length;
     if (enabledOptionsCount === 1) {
-      if (enableProvisionalPrint) return 'Tạm tính';
-      if (enableKitchenPrint) return 'In bếp';
-      if (enableBarPrint) return 'In bar';
-      if (enableFinalPrint) return 'In cuối';
+      if (enableProvisionalPrint) return "Tạm tính";
+      if (enableKitchenPrint) return "In bếp";
+      if (enableBarPrint) return "In bar";
+      if (enableFinalPrint) return "In cuối";
     }
-    return 'In ấn';
+    return "In ấn";
   };
 
   // Load VietQR Settings dynamically from localStorage (or defaults)
   const [qrSettings, setQrSettings] = useState({
-    bankId: 'vcb',
-    accountNo: '0071001234567',
-    accountName: 'ZPOS RETAIL',
-    memoTemplate: 'ZPOS_'
+    bankId: "vcb",
+    accountNo: "0071001234567",
+    accountName: "ZPOS RETAIL",
+    memoTemplate: "ZPOS_",
   });
 
   const [receivedAmount, setReceivedAmount] = useState<number>(0);
@@ -487,7 +572,9 @@ export default function POSPage() {
   // Use a ref to track the active shift ID for the close-event handler
   // so the useEffect doesn't depend on activeShift (which would loop).
   const activeShiftIdRef = useRef<string | null>(null);
-  useEffect(() => { activeShiftIdRef.current = activeShift?.id ?? null; }, [activeShift?.id]);
+  useEffect(() => {
+    activeShiftIdRef.current = activeShift?.id ?? null;
+  }, [activeShift?.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -555,14 +642,16 @@ export default function POSPage() {
         /* ignore */
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [selectedCustomer?.id, checkoutOpen]);
 
   // VietQR Pro: server-backed bank account + pending payment reference + realtime listener
   const [defaultBank, setDefaultBank] = useState<BankAccount | null>(null);
-  const [paymentReference, setPaymentReference] = useState<string>('');
+  const [paymentReference, setPaymentReference] = useState<string>("");
   const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
-  const [transferStatus, setTransferStatus] = useState<'idle' | 'waiting' | 'received'>('idle');
+  const [transferStatus, setTransferStatus] = useState<"idle" | "waiting" | "received">("idle");
   const transferUnsubRef = useRef<null | (() => void)>(null);
 
   // Load server-side default bank account when checkout opens.
@@ -580,19 +669,19 @@ export default function POSPage() {
             bankId: bank.bank_id,
             accountNo: bank.account_no,
             accountName: bank.account_name,
-            memoTemplate: (bank.memo_prefix || 'ZPOS') + ' '
+            memoTemplate: (bank.memo_prefix || "ZPOS") + " ",
           });
           return;
         }
       } catch (e) {
-        console.warn('Could not load default bank account:', e);
+        console.warn("Could not load default bank account:", e);
       }
       // Legacy fallback
-      if (typeof window !== 'undefined') {
-        const savedBankId = localStorage.getItem('zpos_qr_bank_id') || 'vcb';
-        const savedAccountNo = localStorage.getItem('zpos_qr_account_no') || '0071001234567';
-        const savedAccountName = localStorage.getItem('zpos_qr_account_name') || 'ZPOS RETAIL';
-        const savedMemoTemplate = localStorage.getItem('zpos_qr_memo_template') || 'ZPOS_';
+      if (typeof window !== "undefined") {
+        const savedBankId = localStorage.getItem("zpos_qr_bank_id") || "vcb";
+        const savedAccountNo = localStorage.getItem("zpos_qr_account_no") || "0071001234567";
+        const savedAccountName = localStorage.getItem("zpos_qr_account_name") || "ZPOS RETAIL";
+        const savedMemoTemplate = localStorage.getItem("zpos_qr_memo_template") || "ZPOS_";
         if (!cancelled) {
           setDefaultBank(null);
           setQrSettings({
@@ -611,18 +700,18 @@ export default function POSPage() {
 
   // Reset transfer flow whenever the dialog closes or method changes
   useEffect(() => {
-    if (!checkoutOpen || paymentMethod !== 'transfer') {
+    if (!checkoutOpen || paymentMethod !== "transfer") {
       if (transferUnsubRef.current) {
         transferUnsubRef.current();
         transferUnsubRef.current = null;
       }
-      setTransferStatus('idle');
+      setTransferStatus("idle");
       setPendingOrderId(null);
-      setPaymentReference('');
+      setPaymentReference("");
       return;
     }
     // Generate a fresh reference on each entry into transfer mode
-    const prefix = defaultBank?.memo_prefix || 'ZPOS';
+    const prefix = defaultBank?.memo_prefix || "ZPOS";
     setPaymentReference(generateReferenceCode(prefix));
   }, [checkoutOpen, paymentMethod, defaultBank?.memo_prefix]);
 
@@ -638,18 +727,17 @@ export default function POSPage() {
     if (!selectedCustomer?.id) {
       setCustomerLoyaltyBalance(null);
       setPointsToEarn(0);
-      setPointsEarningBreakdown('');
+      setPointsEarningBreakdown("");
       setPointsRedeemed(0);
       return;
     }
 
     // Load customer balance
-    loyaltyService.getCustomerBalance(selectedCustomer.id)
-      .then(setCustomerLoyaltyBalance)
-      .catch(console.error);
+    loyaltyService.getCustomerBalance(selectedCustomer.id).then(setCustomerLoyaltyBalance).catch(console.error);
 
     // Calculate points to earn for this order
-    loyaltyService.calculateEarnedPoints(selectedCustomer.id, total, cart)
+    loyaltyService
+      .calculateEarnedPoints(selectedCustomer.id, total, cart)
       .then(({ points, breakDown }) => {
         setPointsToEarn(points);
         setPointsEarningBreakdown(breakDown);
@@ -658,7 +746,7 @@ export default function POSPage() {
   }, [selectedCustomer?.id, total, cart, checkoutOpen]);
 
   const handleCopy = (text: string, field: string) => {
-    if (typeof navigator !== 'undefined') {
+    if (typeof navigator !== "undefined") {
       navigator.clipboard.writeText(text);
       setCopiedField(field);
       toast.success(`Đã sao chép ${field}!`);
@@ -669,27 +757,27 @@ export default function POSPage() {
   // Customer State
   const [customerSearchOpen, setCustomerSearchOpen] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
-  const [customerQuery, setCustomerQuery] = useState('');
+  const [customerQuery, setCustomerQuery] = useState("");
 
   // Add Customer States
   const [isAddingCustomer, setIsAddingCustomer] = useState(false);
-  const [newCustomerName, setNewCustomerName] = useState('');
-  const [newCustomerPhone, setNewCustomerPhone] = useState('');
-  const [newCustomerEmail, setNewCustomerEmail] = useState('');
-  const [newCustomerAddress, setNewCustomerAddress] = useState('');
+  const [newCustomerName, setNewCustomerName] = useState("");
+  const [newCustomerPhone, setNewCustomerPhone] = useState("");
+  const [newCustomerEmail, setNewCustomerEmail] = useState("");
+  const [newCustomerAddress, setNewCustomerAddress] = useState("");
   const [isSavingCustomer, setIsSavingCustomer] = useState(false);
 
   const handleStartAddCustomer = () => {
     const query = customerQuery.trim();
     if (/^\d+$/.test(query) && query.length >= 9 && query.length <= 11) {
       setNewCustomerPhone(query);
-      setNewCustomerName('');
+      setNewCustomerName("");
     } else {
       setNewCustomerName(query);
-      setNewCustomerPhone('');
+      setNewCustomerPhone("");
     }
-    setNewCustomerEmail('');
-    setNewCustomerAddress('');
+    setNewCustomerEmail("");
+    setNewCustomerAddress("");
     setIsAddingCustomer(true);
   };
 
@@ -706,15 +794,15 @@ export default function POSPage() {
         name: newCustomerName.trim(),
         phone: newCustomerPhone.trim() || null,
         email: newCustomerEmail.trim() || null,
-        address: newCustomerAddress.trim() || null
+        address: newCustomerAddress.trim() || null,
       });
 
-      setCustomers(prev => [newCustomer, ...prev]);
+      setCustomers((prev) => [newCustomer, ...prev]);
       setSelectedCustomer(newCustomer);
 
       setCustomerSearchOpen(false);
       setIsAddingCustomer(false);
-      setCustomerQuery('');
+      setCustomerQuery("");
       toast.success("Thêm khách hàng mới thành công!");
     } catch (err) {
       console.error("Failed to save customer:", err);
@@ -725,7 +813,7 @@ export default function POSPage() {
   };
 
   // Barcode State
-  const barcodeRef = useRef<string>('');
+  const barcodeRef = useRef<string>("");
   const lastKeyTimeRef = useRef<number>(0);
 
   // Fetch Products & derive categories from them.
@@ -735,11 +823,11 @@ export default function POSPage() {
     const applyProducts = (rows: any[]) => {
       const mapped = rows.map((p: any) => ({
         ...p,
-        category: p.category?.name || p.category || 'Chưa phân loại',
+        category: p.category?.name || p.category || "Chưa phân loại",
       }));
       setProducts(mapped);
       const uniqueCats = Array.from(new Set(mapped.map((p: any) => p.category))) as string[];
-      setCategories(['Tất cả', ...uniqueCats.sort()]);
+      setCategories(["Tất cả", ...uniqueCats.sort()]);
     };
 
     const loadData = async () => {
@@ -748,28 +836,28 @@ export default function POSPage() {
         if (productsData && productsData.length > 0) {
           applyProducts(productsData);
           // Warm the offline cache for next time the cashier loses Wi-Fi.
-          cacheProducts(productsData).catch(() => { });
+          cacheProducts(productsData).catch(() => {});
         } else {
           // Empty server response → fall back to cached or mock
           const cached = await getCachedProducts();
           if (cached.length > 0) {
             applyProducts(cached);
-          } else if (getTenantSlug() === 'app') {
+          } else if (getTenantSlug() === "app") {
             setProducts(MOCK_PRODUCTS);
-            setCategories(['Tất cả', ...Array.from(new Set(MOCK_PRODUCTS.map(p => p.category)))]);
+            setCategories(["Tất cả", ...Array.from(new Set(MOCK_PRODUCTS.map((p) => p.category)))]);
           } else {
             setProducts([]);
           }
         }
       } catch (e) {
-        console.warn('Server unreachable — falling back to offline product cache:', (e as any)?.message);
+        console.warn("Server unreachable — falling back to offline product cache:", (e as any)?.message);
         const cached = await getCachedProducts();
         if (cached.length > 0) {
           applyProducts(cached);
-          toast.info('Đang dùng dữ liệu offline. Một số sản phẩm có thể cũ.');
-        } else if (getTenantSlug() === 'app') {
+          toast.info("Đang dùng dữ liệu offline. Một số sản phẩm có thể cũ.");
+        } else if (getTenantSlug() === "app") {
           setProducts(MOCK_PRODUCTS);
-          setCategories(['Tất cả', ...Array.from(new Set(MOCK_PRODUCTS.map(p => p.category)))]);
+          setCategories(["Tất cả", ...Array.from(new Set(MOCK_PRODUCTS.map((p) => p.category)))]);
         } else {
           setProducts([]);
         }
@@ -789,19 +877,19 @@ export default function POSPage() {
         // Cache the *full* customer list — we re-pull it whenever the query
         // is empty (the "browse all" case).
         if (!customerQuery.trim() && Array.isArray(data) && data.length > 0) {
-          cacheCustomers(data).catch(() => { });
+          cacheCustomers(data).catch(() => {});
         }
       } catch (e) {
-        console.warn('Customer search failed, using offline cache:', (e as any)?.message);
+        console.warn("Customer search failed, using offline cache:", (e as any)?.message);
         const cached = await getCachedCustomers();
         const q = customerQuery.trim().toLowerCase();
         const filtered = q
           ? cached.filter(
-            (c: any) =>
-              (c.name || '').toLowerCase().includes(q) ||
-              (c.phone || '').includes(q) ||
-              (c.email || '').toLowerCase().includes(q),
-          )
+              (c: any) =>
+                (c.name || "").toLowerCase().includes(q) ||
+                (c.phone || "").includes(q) ||
+                (c.email || "").toLowerCase().includes(q),
+            )
           : cached;
         setCustomers(filtered.slice(0, 50));
       }
@@ -824,128 +912,182 @@ export default function POSPage() {
           // Debounce and search
           clearTimeout((window as any).barcodeTimeout);
           (window as any).barcodeTimeout = setTimeout(() => {
-            const product = products.find(p => p.barcode === barcodeRef.current);
+            const product = products.find((p) => p.barcode === barcodeRef.current);
             if (product) {
               addToCart(product);
               toast.success(`Đã quét: ${product.name}`);
             }
-            barcodeRef.current = '';
+            barcodeRef.current = "";
           }, 100);
         }
         return;
-      } else if (diff > 100) {
-        barcodeRef.current = ''; // Reset if slow
+      }
+      if (diff > 100) {
+        barcodeRef.current = ""; // Reset if slow
       }
 
-      if (e.key === 'F1') {
+      if (e.key === "F1") {
         e.preventDefault();
-        document.getElementById('product-search')?.focus();
+        document.getElementById("product-search")?.focus();
       }
-      if (e.key === 'F10' && cart.length > 0) {
+      if (e.key === "F10" && cart.length > 0) {
         e.preventDefault();
         setCheckoutOpen(true);
       }
-      if (e.key === 'F2') {
+      if (e.key === "F2") {
         e.preventDefault();
         setCustomerSearchOpen(true);
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [cart, products]);
 
+  // Tổng tồn kho của 1 SP: nếu có variants → cộng dồn từ variant.stock; else dùng product.stock.
+  const totalStockOf = (product: any) => {
+    const variants = Array.isArray(product?.variants) ? product.variants : [];
+    if (variants.length > 0) {
+      return variants.reduce((sum: number, v: any) => sum + Number(v.stock ?? 0), 0);
+    }
+    return Number(product?.stock ?? 0);
+  };
+
+  // Entry point: nếu SP có biến thể → mở picker, ngược lại add ngay.
   const addToCart = (product: any) => {
-    const stock = Number(product.stock ?? 0);
-    const existing = cart.find(item => item.id === product.id);
+    const variants = Array.isArray(product?.variants) ? product.variants : [];
+    if (variants.length > 0) {
+      if (totalStockOf(product) <= 0) {
+        toast.error("Sản phẩm đã hết hàng", { description: product.name });
+        return;
+      }
+      setPickerProduct(product);
+      return;
+    }
+    addItemToCart(product);
+  };
+
+  // Add thực sự. Khi `variant` được cung cấp, cart item đại diện cho 1 SKU cụ thể
+  // và được group riêng với các biến thể khác (qua `cartKey`). Giữ `id = product.id`
+  // để các logic stock-deduct phía pos.service hoạt động.
+  const addItemToCart = (product: any, variant?: PickedVariant) => {
+    const stock = variant ? variant.stock : Number(product.stock ?? 0);
+    const price = variant ? variant.price : Number(product.price ?? 0);
+    const displayName = variant ? `${product.name} – ${variant.name}` : product.name;
+    const cartKey = variant ? variant.id : product.id;
+    const existing = cart.find((item) => (item.cartKey || item.id) === cartKey);
     const currentQuantity = existing?.quantity || 0;
 
     if (stock <= 0) {
-      toast.error("Sản phẩm đã hết hàng", {
-        description: product.name,
-      });
+      toast.error("Sản phẩm đã hết hàng", { description: displayName });
       return;
     }
-
     if (currentQuantity >= stock) {
-      toast.error("Không đủ tồn kho", {
-        description: `${product.name} chỉ còn ${stock} sản phẩm`,
-      });
+      toast.error("Không đủ tồn kho", { description: `${displayName} chỉ còn ${stock} sản phẩm` });
       return;
     }
 
     if (existing) {
-      setCart(cart.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
+      setCart(
+        cart.map((item) => ((item.cartKey || item.id) === cartKey ? { ...item, quantity: item.quantity + 1 } : item)),
+      );
     } else {
-      setCart([...cart, { ...product, quantity: 1, originalPrice: product.price }]);
+      setCart([
+        ...cart,
+        {
+          ...product,
+          cartKey,
+          quantity: 1,
+          name: displayName,
+          price,
+          stock,
+          originalPrice: price,
+          image: variant?.image || product.image,
+          variant_id: variant?.id,
+          variant_name: variant?.name,
+          variant_attributes: variant?.attributes,
+          variant_sku: variant?.sku,
+          variant_barcode: variant?.barcode,
+        },
+      ]);
     }
   };
 
-  const removeFromCart = (id: number) => {
-    setCart(cart.filter(item => item.id !== id));
+  const handleVariantConfirm = (variant: PickedVariant, product: any) => {
+    addItemToCart(product, variant);
   };
 
-  const updateQuantity = (id: number, delta: number) => {
-    setCart(cart.map(item => {
-      if (item.id === id) {
-        const product = products.find(p => p.id === id);
-        const stock = Number(product?.stock ?? item.stock ?? 0);
+  // Scanner callback: nếu trúng barcode 1 biến thể → add thẳng; ngược lại đi qua addToCart (có thể mở picker).
+  const handleScanSuccess = (product: any, rawVariant?: any) => {
+    if (rawVariant) {
+      addItemToCart(product, {
+        id: rawVariant.id,
+        name: rawVariant.name || Object.values(rawVariant.attributes || {}).join(" / "),
+        sku: rawVariant.sku || null,
+        barcode: rawVariant.barcode || null,
+        image: rawVariant.image_url || null,
+        price: Number(rawVariant.price ?? 0),
+        stock: Number(rawVariant.stock ?? 0),
+        attributes: rawVariant.attributes || {},
+      });
+      return;
+    }
+    addToCart(product);
+  };
+
+  const removeFromCart = (cartKey: string) => {
+    setCart(cart.filter((item) => (item.cartKey || item.id) !== cartKey));
+  };
+
+  const updateQuantity = (cartKey: string, delta: number) => {
+    setCart(
+      cart.map((item) => {
+        if ((item.cartKey || item.id) !== cartKey) return item;
+        const stock = Number(item.stock ?? 0);
         const newQty = Math.max(1, item.quantity + delta);
         if (delta > 0 && newQty > stock) {
-          toast.error("Không đủ tồn kho", {
-            description: `${item.name} chỉ còn ${stock} sản phẩm`,
-          });
+          toast.error("Không đủ tồn kho", { description: `${item.name} chỉ còn ${stock} sản phẩm` });
           return item;
         }
         return { ...item, quantity: newQty };
-      }
-      return item;
-    }));
+      }),
+    );
   };
 
-  const setQuantity = (id: number, newQty: number) => {
-    setCart(cart.map(item => {
-      if (item.id === id) {
-        const product = products.find(p => p.id === id);
-        const stock = Number(product?.stock ?? item.stock ?? 0);
+  const setQuantity = (cartKey: string, newQty: number) => {
+    setCart(
+      cart.map((item) => {
+        if ((item.cartKey || item.id) !== cartKey) return item;
+        const stock = Number(item.stock ?? 0);
         const safe = Math.max(1, Math.floor(newQty) || 1);
         if (safe > stock) {
-          toast.error("Không đủ tồn kho", {
-            description: `${item.name} chỉ còn ${stock} sản phẩm`,
-          });
+          toast.error("Không đủ tồn kho", { description: `${item.name} chỉ còn ${stock} sản phẩm` });
           return { ...item, quantity: stock > 0 ? stock : 1 };
         }
         return { ...item, quantity: safe };
-      }
-      return item;
-    }));
+      }),
+    );
   };
 
-  const updatePrice = (id: number, newPrice: number) => {
-    setCart(cart.map(item => {
-      if (item.id === id) {
-        return { ...item, price: newPrice };
-      }
-      return item;
-    }));
+  const updatePrice = (cartKey: string, newPrice: number) => {
+    setCart(cart.map((item) => ((item.cartKey || item.id) === cartKey ? { ...item, price: newPrice } : item)));
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN').format(amount) + " Đ";
+    return new Intl.NumberFormat("vi-VN").format(amount) + " Đ";
   };
 
   const formatCompactPrice = (amount: number) => {
     if (amount >= 1000 && amount % 1000 === 0) {
-      return `${new Intl.NumberFormat('vi-VN').format(amount / 1000)}k`;
+      return `${new Intl.NumberFormat("vi-VN").format(amount / 1000)}k`;
     }
-    return formatCurrency(amount).replace(/\s?Đ$/, 'đ');
+    return formatCurrency(amount).replace(/\s?Đ$/, "đ");
   };
-
-
 
   const getCartStockProblem = () => {
     for (const item of cart) {
-      const product = products.find(p => p.id === item.id);
-      const stock = Number(product?.stock ?? item.stock ?? 0);
+      // Cart item carries the variant-specific stock snapshot; trust it rather
+      // than looking up product.stock which is a parent-level aggregate.
+      const stock = Number(item.stock ?? 0);
       if (stock <= 0) {
         return `${item.name} đã hết hàng, không thể bán tiếp.`;
       }
@@ -965,29 +1107,29 @@ export default function POSPage() {
   // Reset the POS state + close dialogs after a successful checkout.
   const finishCheckoutSuccess = (snapshot: any) => {
     setLastOrder(snapshot);
-    setPrintType('payment');
-    setProducts(prevProducts =>
-      prevProducts.map(p => {
-        const cartItem = cart.find(c => c.id === p.id);
+    setPrintType("payment");
+    setProducts((prevProducts) =>
+      prevProducts.map((p) => {
+        const cartItem = cart.find((c) => c.id === p.id);
         if (cartItem) {
           return { ...p, stock: Math.max(0, (p.stock || 0) - cartItem.quantity) };
         }
         return p;
-      })
+      }),
     );
 
     // Auto-issue eInvoice is handled by the dedicated useEffect on `successOpen`
     // → see handleIssueInvoice + the effect a bit further down.
 
     // Fire Zalo ZNS for order_paid (best-effort, doesn't block UI)
-    fireZalo('order_paid', {
+    fireZalo("order_paid", {
       phone: snapshot?.customer?.phone,
       orderId: snapshot?.dbOrderId,
       customerId: snapshot?.customer?.id,
       data: {
-        customer_name: snapshot?.customer?.name || 'Quý khách',
+        customer_name: snapshot?.customer?.name || "Quý khách",
         order_no: snapshot?.orderId,
-        total: new Intl.NumberFormat('vi-VN').format(snapshot?.total || 0),
+        total: new Intl.NumberFormat("vi-VN").format(snapshot?.total || 0),
         payment_method: snapshot?.paymentMethod,
       },
     });
@@ -997,12 +1139,12 @@ export default function POSPage() {
     setReceivedAmount(0);
     setOrderId(`ORD-${Date.now().toString().slice(-6)}`);
     setDiscountValue(0);
-    setDiscountType('fixed');
+    setDiscountType("fixed");
     if (transferUnsubRef.current) {
       transferUnsubRef.current();
       transferUnsubRef.current = null;
     }
-    setTransferStatus('idle');
+    setTransferStatus("idle");
     setPendingOrderId(null);
     setCheckoutOpen(false);
     setSuccessOpen(true);
@@ -1022,24 +1164,24 @@ export default function POSPage() {
 
     // For transfer mode: 2-stage flow (start → confirm).
     // If we're not yet waiting, start the pending order and listen for webhook.
-    if (paymentMethod === 'transfer' && transferStatus === 'idle') {
+    if (paymentMethod === "transfer" && transferStatus === "idle") {
       return handleStartTransfer();
     }
     // If we're already waiting, the primary CTA acts as "manual confirm".
-    if (paymentMethod === 'transfer' && transferStatus === 'waiting' && pendingOrderId) {
+    if (paymentMethod === "transfer" && transferStatus === "waiting" && pendingOrderId) {
       return handleManualConfirmTransfer();
     }
 
     // Debt mode requires a customer (the ledger is keyed by customer_id).
-    const isDebt = paymentMethod === 'debt';
+    const isDebt = paymentMethod === "debt";
     if (isDebt && !selectedCustomer?.id) {
       setCustomerSearchOpen(true);
-      toast.error('Chọn khách hàng để ghi nợ đơn này');
+      toast.error("Chọn khách hàng để ghi nợ đơn này");
       return;
     }
 
     if (!activeShift) {
-      toast.error('Bạn chưa mở ca làm việc — vui lòng mở ca trước khi bán hàng.');
+      toast.error("Bạn chưa mở ca làm việc — vui lòng mở ca trước khi bán hàng.");
       setOpenShiftDialog(true);
       return;
     }
@@ -1048,17 +1190,17 @@ export default function POSPage() {
     // Hoisted out of `try` so the catch block can reach it when queueing
     // a fallback offline order after a network error.
     const orderData: any = {
-      organization_id: '00000000-0000-0000-0000-000000000000',
-      branch_id: '00000000-0000-0000-0000-000000000000',
+      organization_id: "00000000-0000-0000-0000-000000000000",
+      branch_id: "00000000-0000-0000-0000-000000000000",
       customer_id: selectedCustomer?.id || null,
-      order_number: orderId.toString().startsWith('ORD-') ? orderId.toString() : `ORD-${orderId}`,
+      order_number: orderId.toString().startsWith("ORD-") ? orderId.toString() : `ORD-${orderId}`,
       total_amount: finalTotal,
       discount_amount: discount + pointsDiscount,
       payment_method: paymentMethod,
-      payment_status: isDebt ? 'debt' : 'paid',
+      payment_status: isDebt ? "debt" : "paid",
       payment_confirmed_at: isDebt ? null : new Date().toISOString(),
       payment_amount_received: isDebt ? 0 : finalTotal,
-      status: 'completed',
+      status: "completed",
       shift_id: isValidUUID(activeShift.id) ? activeShift.id : null,
       cash_register_id: isValidUUID(activeShift.cash_register_id) ? activeShift.cash_register_id : null,
     };
@@ -1068,7 +1210,7 @@ export default function POSPage() {
     try {
       // Offline mode: queue the order to IndexedDB and continue as if it succeeded.
       // The cashier has already taken cash — we MUST not block them on the network.
-      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      if (typeof navigator !== "undefined" && navigator.onLine === false) {
         await queueOfflineOrder({ orderData, items: cart });
         finishCheckoutSuccess({
           cart: [...cart],
@@ -1091,10 +1233,10 @@ export default function POSPage() {
         // If an order was already created as a pending transfer and the user switched to Cash/Card/Debt
         createdOrder = await posService.updateOrder(pendingOrderId, {
           payment_method: paymentMethod,
-          payment_status: isDebt ? 'debt' : 'paid',
+          payment_status: isDebt ? "debt" : "paid",
           payment_confirmed_at: isDebt ? null : new Date().toISOString(),
           payment_amount_received: isDebt ? 0 : finalTotal,
-          status: 'completed'
+          status: "completed",
         });
       } else {
         createdOrder = await posService.createOrder(orderData, cart);
@@ -1108,18 +1250,18 @@ export default function POSPage() {
         try {
           const debtRes = await debtService.chargeOrderAsDebt(createdOrder.id, debtDueDays);
           if (!debtRes.ok) {
-            console.error('chargeOrderAsDebt failed:', debtRes.error);
-            toast.warning('Đơn đã tạo nhưng chưa ghi nợ', {
-              description: debtRes.error || 'Vui lòng kiểm tra lại trong mục Công nợ',
+            console.error("chargeOrderAsDebt failed:", debtRes.error);
+            toast.warning("Đơn đã tạo nhưng chưa ghi nợ", {
+              description: debtRes.error || "Vui lòng kiểm tra lại trong mục Công nợ",
               duration: 8000,
             });
           } else if (debtRes.over_limit) {
-            toast.warning('Khách hàng đã vượt hạn mức công nợ');
+            toast.warning("Khách hàng đã vượt hạn mức công nợ");
           }
         } catch (debtErr: any) {
-          console.error('chargeOrderAsDebt threw:', debtErr);
-          toast.warning('Đơn đã tạo nhưng chưa ghi nợ', {
-            description: debtErr?.message || 'Lỗi không xác định',
+          console.error("chargeOrderAsDebt threw:", debtErr);
+          toast.warning("Đơn đã tạo nhưng chưa ghi nợ", {
+            description: debtErr?.message || "Lỗi không xác định",
             duration: 8000,
           });
         }
@@ -1128,34 +1270,30 @@ export default function POSPage() {
       // Apply loyalty redemption (deduct points) and earning (award points) – best-effort
       if (selectedCustomer?.id && createdOrder?.id) {
         if (pointsRedeemed > 0 && pointsDiscount > 0) {
-          loyaltyService.applyRedemption(
-            selectedCustomer.id,
-            createdOrder.id,
-            pointsRedeemed,
-            pointsDiscount
-          ).catch(console.warn);
+          loyaltyService
+            .applyRedemption(selectedCustomer.id, createdOrder.id, pointsRedeemed, pointsDiscount)
+            .catch(console.warn);
         }
         if (pointsToEarn > 0) {
-          loyaltyService.applyEarning(
-            selectedCustomer.id,
-            createdOrder.id,
-            pointsToEarn,
-            finalTotal
-          ).catch(console.warn);
+          loyaltyService
+            .applyEarning(selectedCustomer.id, createdOrder.id, pointsToEarn, finalTotal)
+            .catch(console.warn);
         }
       }
 
       // Log shift transaction (best-effort — never block checkout)
       if (activeShift && createdOrder?.id) {
-        shiftService.addTransaction({
-          shift_id: activeShift.id,
-          type: 'sale',
-          amount: finalTotal,
-          payment_method: (paymentMethod === 'transfer' ? 'bank_transfer' : paymentMethod) as any,
-          reference_type: 'order',
-          reference_id: createdOrder.id,
-          note: `Bán hàng #${orderData.order_number}`,
-        }).catch(console.warn);
+        shiftService
+          .addTransaction({
+            shift_id: activeShift.id,
+            type: "sale",
+            amount: finalTotal,
+            payment_method: (paymentMethod === "transfer" ? "bank_transfer" : paymentMethod) as any,
+            reference_type: "order",
+            reference_id: createdOrder.id,
+            note: `Bán hàng #${orderData.order_number}`,
+          })
+          .catch(console.warn);
       }
 
       finishCheckoutSuccess({
@@ -1167,7 +1305,7 @@ export default function POSPage() {
         dbOrderId: createdOrder?.id,
         paymentMethod,
         customer: selectedCustomer,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       });
       toast.success(isDebt ? "Đã ghi nợ đơn hàng!" : "Thanh toán thành công!");
     } catch (e: any) {
@@ -1182,18 +1320,14 @@ export default function POSPage() {
         name: e?.name,
         raw: e,
       };
-      console.error('Checkout failed:', errInfo);
+      console.error("Checkout failed:", errInfo);
 
       // Show the real Supabase error in the toast so the cashier knows what happened.
       const userMsg =
-        e?.message ||
-        e?.details ||
-        e?.hint ||
-        (typeof e === 'string' ? e : '') ||
-        'Lỗi không xác định khi lưu đơn';
+        e?.message || e?.details || e?.hint || (typeof e === "string" ? e : "") || "Lỗi không xác định khi lưu đơn";
 
-      const msg = String(e?.message || '').toLowerCase();
-      const isNetwork = msg.includes('network') || msg.includes('fetch') || msg.includes('timeout');
+      const msg = String(e?.message || "").toLowerCase();
+      const isNetwork = msg.includes("network") || msg.includes("fetch") || msg.includes("timeout");
       if (isNetwork) {
         try {
           await queueOfflineOrder({ orderData, items: cart });
@@ -1211,11 +1345,11 @@ export default function POSPage() {
           toast.success("Mất mạng — đơn đã xếp hàng đợi & sẽ tự sync");
           return;
         } catch (qe: any) {
-          console.error('Queue fallback failed:', { message: qe?.message, raw: qe });
+          console.error("Queue fallback failed:", { message: qe?.message, raw: qe });
         }
       }
       setCheckoutOpen(false);
-      toast.error('Không thể lưu đơn hàng', {
+      toast.error("Không thể lưu đơn hàng", {
         description: userMsg,
         duration: 8000,
       });
@@ -1240,12 +1374,10 @@ export default function POSPage() {
     isProcessingRef.current = true;
     setIsProcessing(true);
     try {
-      const orderNumber = orderId.toString().startsWith('ORD-')
-        ? orderId.toString()
-        : `ORD-${orderId}`;
+      const orderNumber = orderId.toString().startsWith("ORD-") ? orderId.toString() : `ORD-${orderId}`;
 
       if (!activeShift) {
-        toast.error('Bạn chưa mở ca làm việc — vui lòng mở ca trước khi bán hàng.');
+        toast.error("Bạn chưa mở ca làm việc — vui lòng mở ca trước khi bán hàng.");
         setOpenShiftDialog(true);
         setIsProcessing(false);
         return;
@@ -1253,17 +1385,17 @@ export default function POSPage() {
 
       const order = await posService.createOrder(
         {
-          organization_id: '00000000-0000-0000-0000-000000000000',
-          branch_id: '00000000-0000-0000-0000-000000000000',
+          organization_id: "00000000-0000-0000-0000-000000000000",
+          branch_id: "00000000-0000-0000-0000-000000000000",
           customer_id: selectedCustomer?.id || null,
           order_number: orderNumber,
           total_amount: total,
           discount_amount: discount,
-          payment_method: 'transfer',
-          payment_status: 'pending',
+          payment_method: "transfer",
+          payment_status: "pending",
           payment_reference: paymentReference,
           bank_account_id: defaultBank?.id || null,
-          status: 'pending',
+          status: "pending",
           shift_id: activeShift.id,
           cash_register_id: activeShift.cash_register_id || null,
         } as any,
@@ -1276,7 +1408,7 @@ export default function POSPage() {
       }
 
       setPendingOrderId(order.id);
-      setTransferStatus('waiting');
+      setTransferStatus("waiting");
 
       // Make sure the reference is persisted even if createOrder dropped the field
       try {
@@ -1298,7 +1430,9 @@ export default function POSPage() {
         // Apply loyalty points on transfer confirmation (best-effort)
         if (selectedCustomer?.id && order?.id) {
           if (pointsRedeemed > 0 && pointsDiscount > 0) {
-            loyaltyService.applyRedemption(selectedCustomer.id, order.id, pointsRedeemed, pointsDiscount).catch(console.warn);
+            loyaltyService
+              .applyRedemption(selectedCustomer.id, order.id, pointsRedeemed, pointsDiscount)
+              .catch(console.warn);
           }
           if (pointsToEarn > 0) {
             loyaltyService.applyEarning(selectedCustomer.id, order.id, pointsToEarn, finalTotal).catch(console.warn);
@@ -1307,15 +1441,17 @@ export default function POSPage() {
 
         // Log shift transaction (best-effort)
         if (activeShift) {
-          shiftService.addTransaction({
-            shift_id: activeShift.id,
-            type: 'sale',
-            amount: finalTotal,
-            payment_method: 'bank_transfer' as any,
-            reference_type: 'order',
-            reference_id: order.id,
-            note: `Bán hàng CK #${orderNumber}`,
-          }).catch(console.warn);
+          shiftService
+            .addTransaction({
+              shift_id: activeShift.id,
+              type: "sale",
+              amount: finalTotal,
+              payment_method: "bank_transfer" as any,
+              reference_type: "order",
+              reference_id: order.id,
+              note: `Bán hàng CK #${orderNumber}`,
+            })
+            .catch(console.warn);
         }
 
         finishCheckoutSuccess({
@@ -1325,7 +1461,7 @@ export default function POSPage() {
           total: finalTotal,
           orderId: orderNumber,
           dbOrderId: order.id,
-          paymentMethod: 'transfer',
+          paymentMethod: "transfer",
           customer: selectedCustomer,
           createdAt: new Date().toISOString(),
           paymentReference,
@@ -1354,24 +1490,30 @@ export default function POSPage() {
       // Apply loyalty points on manual transfer confirmation (best-effort)
       if (selectedCustomer?.id && pendingOrderId) {
         if (pointsRedeemed > 0 && pointsDiscount > 0) {
-          loyaltyService.applyRedemption(selectedCustomer.id, pendingOrderId, pointsRedeemed, pointsDiscount).catch(console.warn);
+          loyaltyService
+            .applyRedemption(selectedCustomer.id, pendingOrderId, pointsRedeemed, pointsDiscount)
+            .catch(console.warn);
         }
         if (pointsToEarn > 0) {
-          loyaltyService.applyEarning(selectedCustomer.id, pendingOrderId, pointsToEarn, finalTotal).catch(console.warn);
+          loyaltyService
+            .applyEarning(selectedCustomer.id, pendingOrderId, pointsToEarn, finalTotal)
+            .catch(console.warn);
         }
       }
 
       // Log shift transaction (best-effort)
       if (activeShift) {
-        shiftService.addTransaction({
-          shift_id: activeShift.id,
-          type: 'sale',
-          amount: finalTotal,
-          payment_method: 'bank_transfer' as any,
-          reference_type: 'order',
-          reference_id: pendingOrderId,
-          note: `Bán hàng CK (xác nhận thủ công) #${orderId}`,
-        }).catch(console.warn);
+        shiftService
+          .addTransaction({
+            shift_id: activeShift.id,
+            type: "sale",
+            amount: finalTotal,
+            payment_method: "bank_transfer" as any,
+            reference_type: "order",
+            reference_id: pendingOrderId,
+            note: `Bán hàng CK (xác nhận thủ công) #${orderId}`,
+          })
+          .catch(console.warn);
       }
 
       finishCheckoutSuccess({
@@ -1379,9 +1521,9 @@ export default function POSPage() {
         subtotal,
         discount,
         total: finalTotal,
-        orderId: orderId.toString().startsWith('ORD-') ? orderId.toString() : `ORD-${orderId}`,
+        orderId: orderId.toString().startsWith("ORD-") ? orderId.toString() : `ORD-${orderId}`,
         dbOrderId: pendingOrderId,
-        paymentMethod: 'transfer',
+        paymentMethod: "transfer",
         customer: selectedCustomer,
         createdAt: new Date().toISOString(),
         paymentReference,
@@ -1412,7 +1554,7 @@ export default function POSPage() {
       const res = await einvoiceService.issueInvoice({
         orderId: snap.dbOrderId,
         buyer: {
-          name: snap.customer?.name || 'Khách lẻ',
+          name: snap.customer?.name || "Khách lẻ",
           tax_code: snap.customer?.tax_code,
           phone: snap.customer?.phone,
           email: snap.customer?.email,
@@ -1421,30 +1563,28 @@ export default function POSPage() {
         items,
       });
       if (!res.ok) {
-        toast.error(res.error || 'Phát hành hoá đơn thất bại');
+        toast.error(res.error || "Phát hành hoá đơn thất bại");
         return;
       }
       setIssuedInvoice(res.invoice);
-      toast.success(
-        `Đã phát hành HĐ ${res.invoice?.invoice_series || ''}-${res.invoice?.invoice_no || ''}`,
-      );
+      toast.success(`Đã phát hành HĐ ${res.invoice?.invoice_series || ""}-${res.invoice?.invoice_no || ""}`);
 
       // Fire Zalo ZNS for invoice_issued — sends lookup code so customer can verify on Tổng cục Thuế
-      fireZalo('invoice_issued', {
+      fireZalo("invoice_issued", {
         phone: snap?.customer?.phone,
         orderId: snap?.dbOrderId,
         invoiceId: res.invoice?.id,
         customerId: snap?.customer?.id,
         data: {
-          customer_name: snap?.customer?.name || 'Quý khách',
-          invoice_no: `${res.invoice?.invoice_series || ''}/${res.invoice?.invoice_no || ''}`,
-          lookup_code: res.invoice?.provider_lookup_code || '',
-          total: new Intl.NumberFormat('vi-VN').format(res.invoice?.total_amount || 0),
-          pdf_url: res.invoice?.provider_pdf_url || '',
+          customer_name: snap?.customer?.name || "Quý khách",
+          invoice_no: `${res.invoice?.invoice_series || ""}/${res.invoice?.invoice_no || ""}`,
+          lookup_code: res.invoice?.provider_lookup_code || "",
+          total: new Intl.NumberFormat("vi-VN").format(res.invoice?.total_amount || 0),
+          pdf_url: res.invoice?.provider_pdf_url || "",
         },
       });
     } catch (e: any) {
-      toast.error(`Lỗi: ${e?.message || 'Không rõ'}`);
+      toast.error(`Lỗi: ${e?.message || "Không rõ"}`);
     } finally {
       setInvoiceIssuing(false);
     }
@@ -1464,17 +1604,17 @@ export default function POSPage() {
           handleIssueInvoice(lastOrder);
         }
       } catch (e) {
-        console.warn('auto-issue check failed:', e);
+        console.warn("auto-issue check failed:", e);
       }
       // Fire-and-forget Zalo ZNS — server will skip if not configured.
-      fireZalo('order_paid', {
+      fireZalo("order_paid", {
         phone: lastOrder?.customer?.phone,
         orderId: lastOrder?.dbOrderId,
         customerId: lastOrder?.customer?.id,
         data: {
-          order_number: lastOrder?.orderId || '',
-          total: new Intl.NumberFormat('vi-VN').format(Number(lastOrder?.total || 0)),
-          customer_name: lastOrder?.customer?.name || 'Quý khách',
+          order_number: lastOrder?.orderId || "",
+          total: new Intl.NumberFormat("vi-VN").format(Number(lastOrder?.total || 0)),
+          customer_name: lastOrder?.customer?.name || "Quý khách",
         },
       });
     })();
@@ -1498,14 +1638,14 @@ export default function POSPage() {
       transferUnsubRef.current();
       transferUnsubRef.current = null;
     }
-    setTransferStatus('idle');
+    setTransferStatus("idle");
     setPendingOrderId(null);
     toast.info("Đã huỷ chờ thanh toán. Đơn hàng vẫn ở trạng thái 'Chờ thanh toán'.");
   };
 
-  const filteredProducts = products.filter(p => {
+  const filteredProducts = products.filter((p) => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.barcode?.includes(searchQuery);
-    const matchesCategory = activeCategory === 'Tất cả' || p.category === activeCategory;
+    const matchesCategory = activeCategory === "Tất cả" || p.category === activeCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -1522,7 +1662,8 @@ export default function POSPage() {
             <div className="grid gap-2">
               <h1 className="text-2xl font-semibold tracking-tight">Cần mở ca làm việc</h1>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Bạn phải mở ca trước khi truy cập màn hình bán hàng. Đăng xuất hoặc tắt tab không đóng ca, chỉ thao tác đóng ca mới kết thúc phiên bán hàng.
+                Bạn phải mở ca trước khi truy cập màn hình bán hàng. Đăng xuất hoặc tắt tab không đóng ca, chỉ thao tác
+                đóng ca mới kết thúc phiên bán hàng.
               </p>
             </div>
             <Button className="w-full gap-2" onClick={() => setOpenShiftDialog(true)}>
@@ -1552,25 +1693,19 @@ export default function POSPage() {
             className="fixed inset-0 z-[99999] bg-slate-950/95 flex flex-col items-center justify-center cursor-pointer animate-in fade-in duration-1000"
             onClick={() => setShowIdleScreen(false)}
           >
-            <div className="absolute top-12 text-slate-400 font-mono tracking-widest text-sm uppercase">ZPOS System Standby</div>
+            <div className="absolute top-12 text-slate-400 font-mono tracking-widest text-sm uppercase">
+              ZPOS System Standby
+            </div>
             <Clock className="w-16 h-16 text-primary mb-6 animate-pulse" />
-            <h1 className="text-6xl font-black text-white mb-4 tracking-tight drop-shadow-lg">
-              {currentTimeStr}
-            </h1>
-            <p className="text-xl text-slate-300 font-medium text-center max-w-2xl px-6">
-              {idleMessage}
-            </p>
+            <h1 className="text-6xl font-black text-white mb-4 tracking-tight drop-shadow-lg">{currentTimeStr}</h1>
+            <p className="text-xl text-slate-300 font-medium text-center max-w-2xl px-6">{idleMessage}</p>
             <div className="absolute bottom-12 text-slate-500 text-sm flex items-center gap-2">
               <Monitor className="w-4 h-4" />
               <span>Chạm vào màn hình để sử dụng máy</span>
             </div>
           </div>
         )}
-        <MobilePOS
-          products={products}
-          customers={customers}
-          loading={loading}
-        />
+        <MobilePOS products={products} customers={customers} loading={loading} />
       </>
     );
   }
@@ -1582,7 +1717,9 @@ export default function POSPage() {
           className="fixed inset-0 z-[99999] bg-slate-950/95 flex flex-col items-center justify-center cursor-pointer animate-in fade-in duration-1000"
           onClick={() => setShowIdleScreen(false)}
         >
-          <div className="absolute top-12 text-slate-400 font-mono tracking-widest text-sm uppercase">ZPOS System Standby</div>
+          <div className="absolute top-12 text-slate-400 font-mono tracking-widest text-sm uppercase">
+            ZPOS System Standby
+          </div>
           <Clock className="w-16 h-16 text-primary mb-6 animate-pulse" />
           <h1 className="text-8xl md:text-[10rem] font-black text-white mb-6 tracking-tight drop-shadow-2xl">
             {currentTimeStr}
@@ -1598,7 +1735,6 @@ export default function POSPage() {
       )}
 
       <div className="flex h-[calc(100vh-80px)] gap-4 overflow-hidden print:hidden">
-
         {/* Left Column: Product Selection */}
         <div className="flex-1 flex flex-col gap-4 overflow-hidden">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -1611,11 +1747,19 @@ export default function POSPage() {
                 onSyncComplete={(res) => {
                   if (res.ok > 0) {
                     // Force-refresh products to reflect just-synced stock deltas
-                    posService.getProducts?.().then((rows) => {
-                      if (Array.isArray(rows) && rows.length) {
-                        setProducts(rows.map((p: any) => ({ ...p, category: p.category?.name || p.category || 'Chưa phân loại' })));
-                      }
-                    }).catch(() => { });
+                    posService
+                      .getProducts?.()
+                      .then((rows) => {
+                        if (Array.isArray(rows) && rows.length) {
+                          setProducts(
+                            rows.map((p: any) => ({
+                              ...p,
+                              category: p.category?.name || p.category || "Chưa phân loại",
+                            })),
+                          );
+                        }
+                      })
+                      .catch(() => {});
                   }
                 }}
               />
@@ -1646,13 +1790,19 @@ export default function POSPage() {
           )}
 
           {/* Shift status banner */}
-          {shiftChecked && (
-            activeShift ? (
+          {shiftChecked &&
+            (activeShift ? (
               <div className="flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-xs">
                 <span className="text-emerald-700 dark:text-emerald-400">
-                  <b>Ca đang mở</b> · #{activeShift.id.slice(0, 8)} · Tiền đầu ca {new Intl.NumberFormat('vi-VN').format(Number(activeShift.opening_cash_amount || 0))} ₫
+                  <b>Ca đang mở</b> · #{activeShift.id.slice(0, 8)} · Tiền đầu ca{" "}
+                  {new Intl.NumberFormat("vi-VN").format(Number(activeShift.opening_cash_amount || 0))} ₫
                 </span>
-                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => window.location.assign(`/shifts/${activeShift.id}`)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => window.location.assign(`/shifts/${activeShift.id}`)}
+                >
                   Xem chi tiết
                 </Button>
               </div>
@@ -1661,11 +1811,11 @@ export default function POSPage() {
                 <span className="text-amber-700 dark:text-amber-400">
                   <b>Chưa mở ca</b> — vui lòng mở ca trước khi bán hàng.
                 </span>
-                <Button size="sm" className="h-7 text-xs" onClick={() => setOpenShiftDialog(true)}>Mở ca</Button>
+                <Button size="sm" className="h-7 text-xs" onClick={() => setOpenShiftDialog(true)}>
+                  Mở ca
+                </Button>
               </div>
-            )
-          )}
-
+            ))}
 
           {/* Search & Tool Bar */}
           <div className="relative">
@@ -1682,7 +1832,7 @@ export default function POSPage() {
           {/* Categories Tabs */}
           <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
             <TabsList className="bg-transparent h-auto p-0 flex flex-wrap gap-2 justify-start overflow-visible">
-              {categories.map(cat => (
+              {categories.map((cat) => (
                 <TabsTrigger
                   key={cat}
                   value={cat}
@@ -1697,17 +1847,20 @@ export default function POSPage() {
           {/* Product Grid */}
           <ScrollArea className="flex-1">
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pb-4 pr-4">
-              {filteredProducts.map(product => {
-                const isOutOfStock = Number(product.stock ?? 0) <= 0;
+              {filteredProducts.map((product) => {
+                const totalStock = totalStockOf(product);
+                const isOutOfStock = totalStock <= 0;
+                const variantCount = Array.isArray(product.variants) ? product.variants.length : 0;
                 return (
                   <Card
                     key={product.id}
                     aria-disabled={isOutOfStock}
                     title={isOutOfStock ? "Sản phẩm đã hết hàng" : undefined}
-                    className={`group gap-0 overflow-hidden rounded-xl border border-border/70 bg-card py-0 shadow-sm transition-all duration-200 ${isOutOfStock
-                      ? "cursor-not-allowed opacity-45 grayscale"
-                      : "cursor-pointer hover:border-primary/50 hover:shadow-md"
-                      }`}
+                    className={`group gap-0 overflow-hidden rounded-xl border border-border/70 bg-card py-0 shadow-sm transition-all duration-200 ${
+                      isOutOfStock
+                        ? "cursor-not-allowed opacity-45 grayscale"
+                        : "cursor-pointer hover:border-primary/50 hover:shadow-md"
+                    }`}
                     onClick={() => addToCart(product)}
                   >
                     <div className="relative aspect-square overflow-hidden bg-zinc-100 dark:bg-zinc-900">
@@ -1723,18 +1876,26 @@ export default function POSPage() {
                           </span>
                         </div>
                       )}
+                      {variantCount > 0 && (
+                        <span className="absolute left-2 top-2 z-10 rounded-full bg-primary/90 px-2 py-0.5 text-[9px] font-bold uppercase text-primary-foreground shadow-sm backdrop-blur">
+                          {variantCount} phiên bản
+                        </span>
+                      )}
                       <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-2 pt-10">
                         <div className="flex items-end justify-between gap-2">
                           <span className="min-w-0 truncate rounded-full bg-white/90 px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide text-zinc-700 shadow-sm backdrop-blur dark:bg-zinc-950/80 dark:text-zinc-200">
                             {product.category}
                           </span>
-                          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold shadow-sm backdrop-blur ${(product.stock ?? 0) <= 0
-                            ? 'bg-red-500 text-white'
-                            : (product.stock ?? 0) <= 5
-                              ? 'bg-amber-500 text-white'
-                              : 'bg-zinc-950/85 text-white'
-                            }`}>
-                            {product.stock ?? 0}
+                          <span
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold shadow-sm backdrop-blur ${
+                              totalStock <= 0
+                                ? "bg-red-500 text-white"
+                                : totalStock <= 5
+                                  ? "bg-amber-500 text-white"
+                                  : "bg-zinc-950/85 text-white"
+                            }`}
+                          >
+                            {totalStock}
                           </span>
                         </div>
                       </div>
@@ -1749,7 +1910,7 @@ export default function POSPage() {
                             {formatCompactPrice(product.price)}
                           </p>
                         </div>
-                        {cart.some(item => item.id === product.id) && (
+                        {cart.some((item) => item.id === product.id) && (
                           <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
                             ✓
                           </span>
@@ -1757,7 +1918,7 @@ export default function POSPage() {
                       </div>
                     </CardContent>
                   </Card>
-                )
+                );
               })}
             </div>
           </ScrollArea>
@@ -1772,12 +1933,15 @@ export default function POSPage() {
                 <div
                   key={tab.id}
                   onClick={() => setActiveTabId(tab.id)}
-                  className={`flex items-center shrink-0 gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold cursor-pointer whitespace-nowrap transition-colors ${activeTabId === tab.id ? 'bg-background shadow-sm border text-foreground' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
+                  className={`flex items-center shrink-0 gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold cursor-pointer whitespace-nowrap transition-colors ${activeTabId === tab.id ? "bg-background shadow-sm border text-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"}`}
                 >
                   {tab.title}
                   {tabs.length > 1 && (
                     <button
-                      onClick={(e) => { e.stopPropagation(); removeTab(tab.id); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeTab(tab.id);
+                      }}
                       className="w-4 h-4 rounded-full flex items-center justify-center hover:bg-muted-foreground/20 text-muted-foreground hover:text-destructive transition-colors"
                     >
                       <X className="w-3 h-3" />
@@ -1806,11 +1970,16 @@ export default function POSPage() {
               <div>
                 <h2 className="font-bold text-lg leading-none">Đơn hàng</h2>
                 <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mt-1">
-                  Mã số: {orderId ? (orderId.toString().startsWith('ORD-') ? orderId : '#' + orderId) : '....'}
+                  Mã số: {orderId ? (orderId.toString().startsWith("ORD-") ? orderId : "#" + orderId) : "...."}
                 </p>
               </div>
             </div>
-            <Button variant="ghost" size="icon-sm" className="rounded-full hover:bg-destructive/10 hover:text-destructive" onClick={() => setCart([])}>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="rounded-full hover:bg-destructive/10 hover:text-destructive"
+              onClick={() => setCart([])}
+            >
               <RotateCcw className="w-4 h-4" />
             </Button>
           </div>
@@ -1828,9 +1997,7 @@ export default function POSPage() {
                   <p className="text-muted-foreground font-semibold text-sm group-hover:text-foreground truncate">
                     {selectedCustomer ? selectedCustomer.name : "Chọn khách hàng (F2)"}
                   </p>
-                  {selectedCustomer && (
-                    <p className="text-[10px] text-muted-foreground">{selectedCustomer.phone}</p>
-                  )}
+                  {selectedCustomer && <p className="text-[10px] text-muted-foreground">{selectedCustomer.phone}</p>}
                 </div>
               </div>
               {selectedCustomer ? (
@@ -1865,27 +2032,38 @@ export default function POSPage() {
                   </div>
                 </div>
               ) : (
-                cart.map(item => (
-                  <div key={item.id} className="flex gap-4 group/item animate-in fade-in slide-in-from-right-4 duration-300">
+                cart.map((item) => (
+                  <div
+                    key={item.cartKey || item.id}
+                    className="flex gap-4 group/item animate-in fade-in slide-in-from-right-4 duration-300"
+                  >
                     <div className="w-14 h-14 rounded-lg overflow-hidden bg-muted flex-shrink-0 border">
                       <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col justify-between">
                       <div className="flex justify-between items-start">
                         <div className="min-w-0 flex-1">
-                          <p className="font-semibold text-sm truncate pr-2" title={item.name}>{item.name}</p>
+                          <p className="font-semibold text-sm truncate pr-2" title={item.name}>
+                            {item.name}
+                          </p>
                           {item.originalPrice && item.price !== item.originalPrice && (
                             <div className="flex items-center gap-1.5 mt-0.5 animate-in fade-in slide-in-from-left-1 duration-200">
                               <span className="text-[10px] text-muted-foreground line-through">
                                 {formatCurrency(item.originalPrice)}
                               </span>
-                              <Badge variant="secondary" className="text-[8px] px-1 py-0 h-4 bg-amber-500/10 text-amber-600 dark:text-amber-400 border-none font-bold uppercase tracking-wider">
+                              <Badge
+                                variant="secondary"
+                                className="text-[8px] px-1 py-0 h-4 bg-amber-500/10 text-amber-600 dark:text-amber-400 border-none font-bold uppercase tracking-wider"
+                              >
                                 Giá tùy chỉnh
                               </Badge>
                             </div>
                           )}
                         </div>
-                        <button onClick={() => removeFromCart(item.id)} className="text-muted-foreground hover:text-destructive opacity-0 group-hover/item:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => removeFromCart(item.cartKey || item.id)}
+                          className="text-muted-foreground hover:text-destructive opacity-0 group-hover/item:opacity-100 transition-opacity"
+                        >
                           <X className="w-4 h-4" />
                         </button>
                       </div>
@@ -1893,11 +2071,11 @@ export default function POSPage() {
                         <div className="flex items-center bg-muted rounded-full p-0.5">
                           <button
                             className="w-6 h-6 flex items-center justify-center hover:bg-card rounded-full transition-colors"
-                            onClick={() => updateQuantity(item.id, -1)}
+                            onClick={() => updateQuantity(item.cartKey || item.id, -1)}
                           >
                             <Minus className="w-3 h-3" />
                           </button>
-                          {editingQtyId === item.id ? (
+                          {editingQtyId === (item.cartKey || item.id) ? (
                             <input
                               type="number"
                               min={1}
@@ -1906,18 +2084,18 @@ export default function POSPage() {
                               onBlur={() => {
                                 const val = Number(tempQty);
                                 if (!isNaN(val) && val >= 1) {
-                                  setQuantity(item.id, val);
+                                  setQuantity(item.cartKey || item.id, val);
                                 }
                                 setEditingQtyId(null);
                               }}
                               onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
+                                if (e.key === "Enter") {
                                   const val = Number(tempQty);
                                   if (!isNaN(val) && val >= 1) {
-                                    setQuantity(item.id, val);
+                                    setQuantity(item.cartKey || item.id, val);
                                   }
                                   setEditingQtyId(null);
-                                } else if (e.key === 'Escape') {
+                                } else if (e.key === "Escape") {
                                   setEditingQtyId(null);
                                 }
                               }}
@@ -1929,7 +2107,7 @@ export default function POSPage() {
                             <span
                               className="text-xs font-bold w-7 text-center cursor-pointer hover:text-primary transition-colors select-none"
                               onClick={() => {
-                                setEditingQtyId(item.id);
+                                setEditingQtyId(item.cartKey || item.id);
                                 setTempQty(item.quantity.toString());
                               }}
                               title="Click để nhập số lượng"
@@ -1939,14 +2117,14 @@ export default function POSPage() {
                           )}
                           <button
                             className="w-6 h-6 flex items-center justify-center hover:bg-card rounded-full transition-colors"
-                            onClick={() => updateQuantity(item.id, 1)}
+                            onClick={() => updateQuantity(item.cartKey || item.id, 1)}
                           >
                             <Plus className="w-3 h-3" />
                           </button>
                         </div>
 
                         {/* Click-to-edit Unit Price */}
-                        {editingItemId === item.id ? (
+                        {editingItemId === (item.cartKey || item.id) ? (
                           <div className="flex items-center gap-1 bg-muted/60 px-2 py-0.5 rounded-lg border border-primary/20 animate-in zoom-in-95 duration-150">
                             <input
                               type="number"
@@ -1955,18 +2133,18 @@ export default function POSPage() {
                               onBlur={() => {
                                 const val = Number(tempPrice);
                                 if (!isNaN(val) && val >= 0) {
-                                  updatePrice(item.id, val);
+                                  updatePrice(item.cartKey || item.id, val);
                                 }
                                 setEditingItemId(null);
                               }}
                               onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
+                                if (e.key === "Enter") {
                                   const val = Number(tempPrice);
                                   if (!isNaN(val) && val >= 0) {
-                                    updatePrice(item.id, val);
+                                    updatePrice(item.cartKey || item.id, val);
                                   }
                                   setEditingItemId(null);
-                                } else if (e.key === 'Escape') {
+                                } else if (e.key === "Escape") {
                                   setEditingItemId(null);
                                 }
                               }}
@@ -1980,7 +2158,7 @@ export default function POSPage() {
                           <div
                             className="flex items-center gap-1 cursor-pointer hover:bg-muted/70 px-2 py-1 rounded-lg transition-all group/price active:scale-95"
                             onClick={() => {
-                              setEditingItemId(item.id);
+                              setEditingItemId(item.cartKey || item.id);
                               setTempPrice(item.price.toString());
                             }}
                             title="Click để sửa giá sản phẩm"
@@ -2015,7 +2193,7 @@ export default function POSPage() {
                     </span>
                     <span className="text-sm font-bold">
                       {discountValue > 0 ? `-${formatCurrency(discount)}` : "-0 Đ"}
-                      {discountValue > 0 && discountType === 'percentage' && ` (${discountValue}%)`}
+                      {discountValue > 0 && discountType === "percentage" && ` (${discountValue}%)`}
                     </span>
                   </div>
                 </PopoverTrigger>
@@ -2036,29 +2214,33 @@ export default function POSPage() {
                         value={discountType}
                         onValueChange={(val) => {
                           if (val) {
-                            setDiscountType(val as 'percentage' | 'fixed');
+                            setDiscountType(val as "percentage" | "fixed");
                             setDiscountValue(0);
                           }
                         }}
                         className="w-full flex"
                       >
-                        <ToggleGroupItem value="fixed" className="flex-1 text-xs">Số tiền (Đ)</ToggleGroupItem>
-                        <ToggleGroupItem value="percentage" className="flex-1 text-xs">Phần trăm (%)</ToggleGroupItem>
+                        <ToggleGroupItem value="fixed" className="flex-1 text-xs">
+                          Số tiền (Đ)
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="percentage" className="flex-1 text-xs">
+                          Phần trăm (%)
+                        </ToggleGroupItem>
                       </ToggleGroup>
                     </div>
                     <div className="space-y-1">
                       <Label className="text-[10px] font-bold uppercase text-muted-foreground">
-                        {discountType === 'percentage' ? 'Mức giảm (%)' : 'Số tiền giảm (Đ)'}
+                        {discountType === "percentage" ? "Mức giảm (%)" : "Số tiền giảm (Đ)"}
                       </Label>
                       <div className="relative">
                         <Input
                           type="number"
                           min="0"
-                          max={discountType === 'percentage' ? "100" : undefined}
+                          max={discountType === "percentage" ? "100" : undefined}
                           value={discountValue || ""}
                           onChange={(e) => {
                             let val = Math.max(0, Number(e.target.value));
-                            if (discountType === 'percentage') {
+                            if (discountType === "percentage") {
                               val = Math.min(100, val);
                             }
                             setDiscountValue(val);
@@ -2067,11 +2249,11 @@ export default function POSPage() {
                           className="h-9 pr-10 font-bold text-foreground text-sm"
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">
-                          {discountType === 'percentage' ? '%' : 'Đ'}
+                          {discountType === "percentage" ? "%" : "Đ"}
                         </span>
                       </div>
                     </div>
-                    {discountValue > 0 && discountType === 'percentage' && (
+                    {discountValue > 0 && discountType === "percentage" && (
                       <div className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 p-2 rounded-lg text-center animate-in fade-in zoom-in-95 duration-200 dark:text-emerald-400">
                         Tổng giảm giá: -{formatCurrency(discount)}
                       </div>
@@ -2081,12 +2263,14 @@ export default function POSPage() {
               </Popover>
               <Separator className="bg-primary-foreground/15 my-2" />
               <div className="flex justify-between items-baseline pt-1">
-                <span className="font-extrabold text-sm uppercase tracking-wider text-primary-foreground/90">Tổng cộng</span>
+                <span className="font-extrabold text-sm uppercase tracking-wider text-primary-foreground/90">
+                  Tổng cộng
+                </span>
                 <span className="text-3xl font-black tracking-tight">{formatCurrency(total)}</span>
               </div>
             </div>
 
-            {(enableProvisionalPrint || enableKitchenPrint || enableBarPrint || enableFinalPrint) ? (
+            {enableProvisionalPrint || enableKitchenPrint || enableBarPrint || enableFinalPrint ? (
               <div className="flex gap-2 w-full">
                 <Button
                   className="w-1/3 h-14 bg-background hover:bg-background/90 text-primary text-sm font-bold rounded-xl shadow-sm transition-all active:scale-[0.98]"
@@ -2117,12 +2301,15 @@ export default function POSPage() {
         </div>
 
         {/* Customer Search Dialog */}
-        <Dialog open={customerSearchOpen} onOpenChange={(open) => {
-          setCustomerSearchOpen(open);
-          if (!open) {
-            setIsAddingCustomer(false);
-          }
-        }}>
+        <Dialog
+          open={customerSearchOpen}
+          onOpenChange={(open) => {
+            setCustomerSearchOpen(open);
+            if (!open) {
+              setIsAddingCustomer(false);
+            }
+          }}
+        >
           <DialogContent className="max-w-md p-6">
             {isAddingCustomer ? (
               <form onSubmit={handleSaveCustomer} className="space-y-5">
@@ -2131,14 +2318,17 @@ export default function POSPage() {
                     <UserPlus className="w-5 h-5 text-primary" />
                     Thêm khách hàng mới
                   </DialogTitle>
-                  <DialogDescription>
-                    Điền các thông tin cơ bản của khách hàng để lưu vào hệ thống.
-                  </DialogDescription>
+                  <DialogDescription>Điền các thông tin cơ bản của khách hàng để lưu vào hệ thống.</DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-4 py-2">
                   <div className="space-y-1.5">
-                    <Label htmlFor="customer-name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tên khách hàng *</Label>
+                    <Label
+                      htmlFor="customer-name"
+                      className="text-xs font-bold uppercase tracking-wider text-muted-foreground"
+                    >
+                      Tên khách hàng *
+                    </Label>
                     <Input
                       id="customer-name"
                       placeholder="Nguyễn Văn A..."
@@ -2151,7 +2341,12 @@ export default function POSPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="customer-phone" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Số điện thoại</Label>
+                    <Label
+                      htmlFor="customer-phone"
+                      className="text-xs font-bold uppercase tracking-wider text-muted-foreground"
+                    >
+                      Số điện thoại
+                    </Label>
                     <Input
                       id="customer-phone"
                       placeholder="0987654321..."
@@ -2163,7 +2358,12 @@ export default function POSPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="customer-email" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Email</Label>
+                    <Label
+                      htmlFor="customer-email"
+                      className="text-xs font-bold uppercase tracking-wider text-muted-foreground"
+                    >
+                      Email
+                    </Label>
                     <Input
                       id="customer-email"
                       placeholder="khachhang@gmail.com..."
@@ -2175,7 +2375,12 @@ export default function POSPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="customer-address" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Địa chỉ</Label>
+                    <Label
+                      htmlFor="customer-address"
+                      className="text-xs font-bold uppercase tracking-wider text-muted-foreground"
+                    >
+                      Địa chỉ
+                    </Label>
                     <Input
                       id="customer-address"
                       placeholder="123 Đường ABC, Quận 1..."
@@ -2195,11 +2400,7 @@ export default function POSPage() {
                   >
                     Quay lại
                   </Button>
-                  <Button
-                    type="submit"
-                    disabled={isSavingCustomer}
-                    className="flex-1 sm:flex-initial gap-2"
-                  >
+                  <Button type="submit" disabled={isSavingCustomer} className="flex-1 sm:flex-initial gap-2">
                     {isSavingCustomer ? "Đang lưu..." : "Lưu khách hàng"}
                   </Button>
                 </DialogFooter>
@@ -2232,17 +2433,22 @@ export default function POSPage() {
                   <ScrollArea className="h-[300px]">
                     <div className="space-y-1 pr-4">
                       {filteredCustomers.length > 0 ? (
-                        filteredCustomers.map(c => (
+                        filteredCustomers.map((c) => (
                           <button
                             key={c.id}
                             className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors text-left"
-                            onClick={() => { setSelectedCustomer(c); setCustomerSearchOpen(false); }}
+                            onClick={() => {
+                              setSelectedCustomer(c);
+                              setCustomerSearchOpen(false);
+                            }}
                           >
                             <div>
                               <p className="font-semibold text-sm">{c.name}</p>
                               <p className="text-xs text-muted-foreground">{c.phone}</p>
                             </div>
-                            <Badge variant="secondary" className="font-bold">{c.points} điểm</Badge>
+                            <Badge variant="secondary" className="font-bold">
+                              {c.points} điểm
+                            </Badge>
                           </button>
                         ))
                       ) : (
@@ -2284,7 +2490,7 @@ export default function POSPage() {
                         Thanh toán đơn hàng
                       </h2>
                       <p className="text-muted-foreground text-xs font-semibold uppercase mt-1">
-                        Hóa đơn: {orderId ? (orderId.toString().startsWith('ORD-') ? orderId : '#' + orderId) : '....'}
+                        Hóa đơn: {orderId ? (orderId.toString().startsWith("ORD-") ? orderId : "#" + orderId) : "...."}
                       </p>
                     </div>
                     <Button
@@ -2320,50 +2526,64 @@ export default function POSPage() {
 
                   {/* Method selector */}
                   <div className="space-y-2">
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Phương thức thanh toán</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                      Phương thức thanh toán
+                    </span>
                     <div className="grid grid-cols-4 gap-2">
                       <button
-                        onClick={() => setPaymentMethod('cash')}
-                        className={`flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border-2 transition-all duration-300 ${paymentMethod === 'cash'
-                          ? 'bg-primary/10 dark:bg-primary/20 border-primary text-primary font-bold scale-[1.02] shadow-sm'
-                          : 'bg-muted/40 text-muted-foreground border-transparent hover:border-border hover:bg-muted/60'
-                          }`}
+                        onClick={() => setPaymentMethod("cash")}
+                        className={`flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border-2 transition-all duration-300 ${
+                          paymentMethod === "cash"
+                            ? "bg-primary/10 dark:bg-primary/20 border-primary text-primary font-bold scale-[1.02] shadow-sm"
+                            : "bg-muted/40 text-muted-foreground border-transparent hover:border-border hover:bg-muted/60"
+                        }`}
                       >
-                        <Banknote className={`w-7 h-7 transition-transform ${paymentMethod === 'cash' ? 'scale-110' : ''}`} />
+                        <Banknote
+                          className={`w-7 h-7 transition-transform ${paymentMethod === "cash" ? "scale-110" : ""}`}
+                        />
                         <span className="text-xs">Tiền mặt</span>
                       </button>
                       <button
-                        onClick={() => setPaymentMethod('transfer')}
-                        className={`flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border-2 transition-all duration-300 ${paymentMethod === 'transfer'
-                          ? 'bg-primary/10 dark:bg-primary/20 border-primary text-primary font-bold scale-[1.02] shadow-sm'
-                          : 'bg-muted/40 text-muted-foreground border-transparent hover:border-border hover:bg-muted/60'
-                          }`}
+                        onClick={() => setPaymentMethod("transfer")}
+                        className={`flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border-2 transition-all duration-300 ${
+                          paymentMethod === "transfer"
+                            ? "bg-primary/10 dark:bg-primary/20 border-primary text-primary font-bold scale-[1.02] shadow-sm"
+                            : "bg-muted/40 text-muted-foreground border-transparent hover:border-border hover:bg-muted/60"
+                        }`}
                       >
-                        <QrCode className={`w-7 h-7 transition-transform ${paymentMethod === 'transfer' ? 'scale-110' : ''}`} />
+                        <QrCode
+                          className={`w-7 h-7 transition-transform ${paymentMethod === "transfer" ? "scale-110" : ""}`}
+                        />
                         <span className="text-xs">Chuyển khoản</span>
                       </button>
                       <button
-                        onClick={() => setPaymentMethod('card')}
-                        className={`flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border-2 transition-all duration-300 ${paymentMethod === 'card'
-                          ? 'bg-primary/10 dark:bg-primary/20 border-primary text-primary font-bold scale-[1.02] shadow-sm'
-                          : 'bg-muted/40 text-muted-foreground border-transparent hover:border-border hover:bg-muted/60'
-                          }`}
+                        onClick={() => setPaymentMethod("card")}
+                        className={`flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border-2 transition-all duration-300 ${
+                          paymentMethod === "card"
+                            ? "bg-primary/10 dark:bg-primary/20 border-primary text-primary font-bold scale-[1.02] shadow-sm"
+                            : "bg-muted/40 text-muted-foreground border-transparent hover:border-border hover:bg-muted/60"
+                        }`}
                       >
-                        <CreditCard className={`w-7 h-7 transition-transform ${paymentMethod === 'card' ? 'scale-110' : ''}`} />
+                        <CreditCard
+                          className={`w-7 h-7 transition-transform ${paymentMethod === "card" ? "scale-110" : ""}`}
+                        />
                         <span className="text-xs">Thẻ ATM/Visa</span>
                       </button>
                       <button
-                        onClick={() => setPaymentMethod('debt')}
-                        className={`flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border-2 transition-all duration-300 ${paymentMethod === 'debt'
-                          ? 'bg-amber-500/10 dark:bg-amber-500/20 border-amber-500 text-amber-700 dark:text-amber-400 font-bold scale-[1.02] shadow-sm'
-                          : 'bg-muted/40 text-muted-foreground border-transparent hover:border-border hover:bg-muted/60'
-                          }`}
+                        onClick={() => setPaymentMethod("debt")}
+                        className={`flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border-2 transition-all duration-300 ${
+                          paymentMethod === "debt"
+                            ? "bg-amber-500/10 dark:bg-amber-500/20 border-amber-500 text-amber-700 dark:text-amber-400 font-bold scale-[1.02] shadow-sm"
+                            : "bg-muted/40 text-muted-foreground border-transparent hover:border-border hover:bg-muted/60"
+                        }`}
                       >
-                        <CoinsIcon className={`w-7 h-7 transition-transform ${paymentMethod === 'debt' ? 'scale-110' : ''}`} />
+                        <CoinsIcon
+                          className={`w-7 h-7 transition-transform ${paymentMethod === "debt" ? "scale-110" : ""}`}
+                        />
                         <span className="text-xs">Ghi nợ</span>
                       </button>
                     </div>
-                    {paymentMethod === 'debt' && !selectedCustomer && (
+                    {paymentMethod === "debt" && !selectedCustomer && (
                       <button
                         type="button"
                         onClick={() => setCustomerSearchOpen(true)}
@@ -2377,8 +2597,11 @@ export default function POSPage() {
                   {/* Received Amount Input (For Cash / general inputs) */}
                   <div className="space-y-3 animate-in fade-in duration-300">
                     <div className="flex justify-between items-center">
-                      <Label htmlFor="received-amount" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                        {paymentMethod === 'cash' ? 'Số tiền khách đưa' : 'Số tiền nhận thực tế'}
+                      <Label
+                        htmlFor="received-amount"
+                        className="text-xs font-bold text-muted-foreground uppercase tracking-wider"
+                      >
+                        {paymentMethod === "cash" ? "Số tiền khách đưa" : "Số tiền nhận thực tế"}
                       </Label>
                       <button
                         onClick={() => setReceivedAmount(finalTotal)}
@@ -2396,17 +2619,19 @@ export default function POSPage() {
                         onChange={(e) => setReceivedAmount(Number(e.target.value))}
                         className="h-14 pl-5 pr-14 text-2xl font-black text-foreground bg-muted/20 border-border focus-visible:ring-primary shadow-inner"
                       />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-muted-foreground text-sm">VND</span>
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-muted-foreground text-sm">
+                        VND
+                      </span>
                     </div>
 
                     {/* Cash Suggestion Preset Buttons (Only for Cash Payment) */}
-                    {paymentMethod === 'cash' && (
+                    {paymentMethod === "cash" && (
                       <div className="grid grid-cols-4 gap-2 pt-1 animate-in slide-in-from-top-2 duration-300">
                         {[
-                          { label: '50k', val: 50000 },
-                          { label: '100k', val: 100000 },
-                          { label: '200k', val: 200000 },
-                          { label: '500k', val: 500000 }
+                          { label: "50k", val: 50000 },
+                          { label: "100k", val: 100000 },
+                          { label: "200k", val: 200000 },
+                          { label: "500k", val: 500000 },
                         ].map((item, idx) => (
                           <Button
                             key={idx}
@@ -2433,15 +2658,18 @@ export default function POSPage() {
                           Đổi điểm tích lũy
                         </span>
                       </div>
-                      <Badge variant="outline" className="text-[10px] font-bold border-amber-500/30 text-amber-600 bg-amber-500/10">
-                        {customerAvailablePoints.toLocaleString('vi-VN')} điểm khả dụng
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] font-bold border-amber-500/30 text-amber-600 bg-amber-500/10"
+                      >
+                        {customerAvailablePoints.toLocaleString("vi-VN")} điểm khả dụng
                       </Badge>
                     </div>
 
                     {pointsToEarn > 0 && (
                       <div className="bg-emerald-500/10 rounded-lg p-2.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 flex justify-between items-center">
                         <span>Đơn này sẽ tích thêm:</span>
-                        <span className="text-sm font-black">+{pointsToEarn.toLocaleString('vi-VN')} điểm</span>
+                        <span className="text-sm font-black">+{pointsToEarn.toLocaleString("vi-VN")} điểm</span>
                       </div>
                     )}
 
@@ -2452,15 +2680,12 @@ export default function POSPage() {
                             type="number"
                             min={0}
                             max={maxPointsRedeemable}
-                            value={pointsRedeemed || ''}
+                            value={pointsRedeemed || ""}
                             onChange={(e) => {
-                              const val = Math.min(
-                                Math.max(0, Number(e.target.value)),
-                                maxPointsRedeemable
-                              );
+                              const val = Math.min(Math.max(0, Number(e.target.value)), maxPointsRedeemable);
                               setPointsRedeemed(val);
                             }}
-                            placeholder={`0 – ${maxPointsRedeemable.toLocaleString('vi-VN')} điểm`}
+                            placeholder={`0 – ${maxPointsRedeemable.toLocaleString("vi-VN")} điểm`}
                             className="h-9 font-bold text-sm text-amber-600 border-amber-500/30 bg-white dark:bg-background"
                           />
                           {pointsRedeemed > 0 && (
@@ -2476,7 +2701,9 @@ export default function POSPage() {
                         {pointsRedeemed >= minPointsToRedeem && pointsDiscount > 0 && (
                           <div className="bg-amber-500/10 rounded-lg p-2.5 text-[10px] font-bold text-amber-700 dark:text-amber-400 flex justify-between items-center">
                             <span>Giảm từ điểm tích lũy:</span>
-                            <span className="text-sm font-black">-{new Intl.NumberFormat('vi-VN').format(pointsDiscount)} Đ</span>
+                            <span className="text-sm font-black">
+                              -{new Intl.NumberFormat("vi-VN").format(pointsDiscount)} Đ
+                            </span>
                           </div>
                         )}
                         {pointsRedeemed > 0 && pointsRedeemed < minPointsToRedeem && (
@@ -2486,7 +2713,9 @@ export default function POSPage() {
                         )}
                       </div>
                     ) : hasOrderDiscount && !allowOnDiscounted ? (
-                      <p className="text-[10px] text-amber-600 font-semibold">Không thể đổi điểm khi đơn hàng đã có mã giảm giá.</p>
+                      <p className="text-[10px] text-amber-600 font-semibold">
+                        Không thể đổi điểm khi đơn hàng đã có mã giảm giá.
+                      </p>
                     ) : null}
                   </div>
                 )}
@@ -2497,23 +2726,35 @@ export default function POSPage() {
                     variant="outline"
                     className="w-1/3 h-12 rounded-xl font-bold border-muted-foreground/10 text-muted-foreground"
                     onClick={() => {
-                      if (paymentMethod === 'transfer' && transferStatus === 'waiting') {
+                      if (paymentMethod === "transfer" && transferStatus === "waiting") {
                         handleCancelTransfer();
                       } else {
                         setCheckoutOpen(false);
                       }
                     }}
                   >
-                    {paymentMethod === 'transfer' && transferStatus === 'waiting' ? 'Huỷ chờ' : 'Hủy bỏ'}
+                    {paymentMethod === "transfer" && transferStatus === "waiting" ? "Huỷ chờ" : "Hủy bỏ"}
                   </Button>
                   <Button
                     className="w-2/3 h-12 rounded-xl text-lg font-bold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-colors"
                     onClick={handleCheckout}
-                    disabled={isProcessing || (paymentMethod === 'cash' && receivedAmount < finalTotal)}
+                    disabled={isProcessing || (paymentMethod === "cash" && receivedAmount < finalTotal)}
                   >
-                    {paymentMethod === 'transfer' && transferStatus === 'idle' && (<>Tạo mã & chờ chuyển khoản <ArrowRight className="w-5 h-5" /></>)}
-                    {paymentMethod === 'transfer' && transferStatus === 'waiting' && (<>Đã nhận tiền (thủ công) <Check className="w-5 h-5" /></>)}
-                    {paymentMethod !== 'transfer' && (<>Xác nhận <ArrowRight className="w-5 h-5" /></>)}
+                    {paymentMethod === "transfer" && transferStatus === "idle" && (
+                      <>
+                        Tạo mã & chờ chuyển khoản <ArrowRight className="w-5 h-5" />
+                      </>
+                    )}
+                    {paymentMethod === "transfer" && transferStatus === "waiting" && (
+                      <>
+                        Đã nhận tiền (thủ công) <Check className="w-5 h-5" />
+                      </>
+                    )}
+                    {paymentMethod !== "transfer" && (
+                      <>
+                        Xác nhận <ArrowRight className="w-5 h-5" />
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
@@ -2522,11 +2763,15 @@ export default function POSPage() {
               <div className="w-full md:w-[45%] bg-muted/30 p-8 flex flex-col justify-between border-t md:border-t-0 md:border-l">
                 {/* Dynamic visual preview */}
                 <div className="flex-1 flex flex-col justify-center items-center">
-                  {paymentMethod === 'cash' && (
+                  {paymentMethod === "cash" && (
                     <div className="w-full space-y-6 animate-in zoom-in-95 duration-300">
                       <div className="text-center space-y-1">
-                        <span className="text-[10px] font-black tracking-widest text-muted-foreground uppercase">Giám sát giao dịch tiền mặt</span>
-                        <p className="text-xs text-muted-foreground font-semibold">Vui lòng kiểm đếm tiền trước khi giao hàng</p>
+                        <span className="text-[10px] font-black tracking-widest text-muted-foreground uppercase">
+                          Giám sát giao dịch tiền mặt
+                        </span>
+                        <p className="text-xs text-muted-foreground font-semibold">
+                          Vui lòng kiểm đếm tiền trước khi giao hàng
+                        </p>
                       </div>
 
                       <div className="space-y-4">
@@ -2539,16 +2784,21 @@ export default function POSPage() {
                         {/* Khách đưa */}
                         <div className="flex justify-between items-center bg-card p-4 rounded-xl border shadow-sm">
                           <span className="text-xs font-bold text-muted-foreground uppercase">Khách đưa</span>
-                          <span className="font-extrabold text-base text-emerald-600 dark:text-emerald-400">{formatCurrency(receivedAmount)}</span>
+                          <span className="font-extrabold text-base text-emerald-600 dark:text-emerald-400">
+                            {formatCurrency(receivedAmount)}
+                          </span>
                         </div>
 
                         {/* Tiền thừa */}
-                        <div className={`p-5 rounded-lg border-2 transition-all text-center space-y-1.5 shadow-md ${receivedAmount >= finalTotal
-                          ? 'bg-emerald-500/10 dark:bg-emerald-500/20 border-emerald-500/50 text-emerald-700 dark:text-emerald-400 animate-pulse'
-                          : 'bg-destructive/10 dark:bg-destructive/20 border-destructive/50 text-destructive'
-                          }`}>
+                        <div
+                          className={`p-5 rounded-lg border-2 transition-all text-center space-y-1.5 shadow-md ${
+                            receivedAmount >= finalTotal
+                              ? "bg-emerald-500/10 dark:bg-emerald-500/20 border-emerald-500/50 text-emerald-700 dark:text-emerald-400 animate-pulse"
+                              : "bg-destructive/10 dark:bg-destructive/20 border-destructive/50 text-destructive"
+                          }`}
+                        >
                           <span className="text-[10px] font-black tracking-wider uppercase opacity-85">
-                            {receivedAmount >= finalTotal ? 'Tiền thừa trả khách' : 'Còn thiếu'}
+                            {receivedAmount >= finalTotal ? "Tiền thừa trả khách" : "Còn thiếu"}
                           </span>
                           <h3 className="text-3xl font-black">
                             {formatCurrency(Math.abs(receivedAmount - finalTotal))}
@@ -2558,21 +2808,25 @@ export default function POSPage() {
                     </div>
                   )}
 
-                  {paymentMethod === 'transfer' && (
+                  {paymentMethod === "transfer" && (
                     <div className="w-full space-y-4 text-center animate-in zoom-in-95 duration-300">
                       <div className="space-y-1">
-                        <span className="text-[10px] font-black tracking-widest text-primary uppercase">Mã VietQR động tự sinh</span>
-                        <p className="text-xs text-muted-foreground font-semibold">Quét bằng mọi ứng dụng Smart Banking</p>
+                        <span className="text-[10px] font-black tracking-widest text-primary uppercase">
+                          Mã VietQR động tự sinh
+                        </span>
+                        <p className="text-xs text-muted-foreground font-semibold">
+                          Quét bằng mọi ứng dụng Smart Banking
+                        </p>
                       </div>
 
                       {/* Live status badge */}
                       <div className="flex items-center justify-center">
-                        {transferStatus === 'idle' && (
+                        {transferStatus === "idle" && (
                           <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-400 hover:bg-amber-500/15 border-amber-500/30 font-bold">
                             Sẵn sàng tạo mã chuyển khoản
                           </Badge>
                         )}
-                        {transferStatus === 'waiting' && (
+                        {transferStatus === "waiting" && (
                           <Badge className="bg-blue-500/15 text-blue-700 dark:text-blue-400 hover:bg-blue-500/15 border-blue-500/30 font-bold gap-1.5">
                             <span className="relative flex h-2 w-2">
                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75" />
@@ -2590,14 +2844,14 @@ export default function POSPage() {
                             bankBin: qrSettings.bankId,
                             accountNo: qrSettings.accountNo,
                             amount: finalTotal,
-                            addInfo: paymentReference || `${qrSettings.memoTemplate}${orderId || 'BILL'}`,
+                            addInfo: paymentReference || `${qrSettings.memoTemplate}${orderId || "BILL"}`,
                             accountName: qrSettings.accountName,
                           })}
                           alt="VietQR"
                           className="w-full h-full object-contain transition-transform group-hover:scale-105 duration-300"
                         />
                         <div className="absolute inset-x-0 bottom-0 bg-primary text-primary-foreground text-[8px] font-black tracking-widest uppercase py-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {transferStatus === 'waiting' ? 'Đang nhận biến động số dư' : 'Sẵn sàng'}
+                          {transferStatus === "waiting" ? "Đang nhận biến động số dư" : "Sẵn sàng"}
                         </div>
                       </div>
 
@@ -2605,30 +2859,54 @@ export default function POSPage() {
                       <div className="bg-card rounded-xl border shadow-sm p-3.5 text-left space-y-2 text-xs">
                         <div className="flex justify-between items-center border-b pb-1.5">
                           <span className="text-muted-foreground font-semibold">Ngân hàng</span>
-                          <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-none font-bold uppercase">{defaultBank?.bank_short_name || qrSettings.bankId}</Badge>
+                          <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-none font-bold uppercase">
+                            {defaultBank?.bank_short_name || qrSettings.bankId}
+                          </Badge>
                         </div>
 
-                        <div className="flex justify-between items-center border-b pb-1.5 cursor-pointer hover:bg-muted/50 p-1 rounded transition-colors group" onClick={() => handleCopy(qrSettings.accountNo, 'Số tài khoản')}>
+                        <div
+                          className="flex justify-between items-center border-b pb-1.5 cursor-pointer hover:bg-muted/50 p-1 rounded transition-colors group"
+                          onClick={() => handleCopy(qrSettings.accountNo, "Số tài khoản")}
+                        >
                           <span className="text-muted-foreground font-semibold">Số tài khoản</span>
                           <div className="flex items-center gap-1 font-mono font-bold text-foreground">
                             {qrSettings.accountNo}
-                            {copiedField === 'Số tài khoản' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />}
+                            {copiedField === "Số tài khoản" ? (
+                              <Check className="w-3.5 h-3.5 text-emerald-500" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                            )}
                           </div>
                         </div>
 
-                        <div className="flex justify-between items-center border-b pb-1.5 cursor-pointer hover:bg-muted/50 p-1 rounded transition-colors group" onClick={() => handleCopy(qrSettings.accountName, 'Tên chủ TK')}>
+                        <div
+                          className="flex justify-between items-center border-b pb-1.5 cursor-pointer hover:bg-muted/50 p-1 rounded transition-colors group"
+                          onClick={() => handleCopy(qrSettings.accountName, "Tên chủ TK")}
+                        >
                           <span className="text-muted-foreground font-semibold">Tên chủ tài khoản</span>
                           <div className="flex items-center gap-1 font-bold text-foreground uppercase">
                             {qrSettings.accountName}
-                            {copiedField === 'Tên chủ TK' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />}
+                            {copiedField === "Tên chủ TK" ? (
+                              <Check className="w-3.5 h-3.5 text-emerald-500" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                            )}
                           </div>
                         </div>
 
-                        <div className="flex justify-between items-center cursor-pointer hover:bg-muted/50 p-1 rounded transition-colors group" onClick={() => paymentReference && handleCopy(paymentReference, 'Nội dung CK')}>
+                        <div
+                          className="flex justify-between items-center cursor-pointer hover:bg-muted/50 p-1 rounded transition-colors group"
+                          onClick={() => paymentReference && handleCopy(paymentReference, "Nội dung CK")}
+                        >
                           <span className="text-muted-foreground font-semibold">Nội dung chuyển khoản</span>
                           <div className="flex items-center gap-1 font-mono font-bold text-violet-700 dark:text-violet-400">
-                            {paymentReference || '—'}
-                            {paymentReference && (copiedField === 'Nội dung CK' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />)}
+                            {paymentReference || "—"}
+                            {paymentReference &&
+                              (copiedField === "Nội dung CK" ? (
+                                <Check className="w-3.5 h-3.5 text-emerald-500" />
+                              ) : (
+                                <Copy className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                              ))}
                           </div>
                         </div>
                       </div>
@@ -2641,11 +2919,15 @@ export default function POSPage() {
                     </div>
                   )}
 
-                  {paymentMethod === 'card' && (
+                  {paymentMethod === "card" && (
                     <div className="w-full space-y-6 text-center animate-in zoom-in-95 duration-300">
                       <div className="space-y-1">
-                        <span className="text-[10px] font-black tracking-widest text-primary uppercase">Cổng thanh toán thẻ mPOS</span>
-                        <p className="text-xs text-muted-foreground font-semibold">Hỗ trợ Napas, Visa, Mastercard, JCB</p>
+                        <span className="text-[10px] font-black tracking-widest text-primary uppercase">
+                          Cổng thanh toán thẻ mPOS
+                        </span>
+                        <p className="text-xs text-muted-foreground font-semibold">
+                          Hỗ trợ Napas, Visa, Mastercard, JCB
+                        </p>
                       </div>
 
                       <div className="relative w-40 h-40 bg-card border rounded-lg shadow-md mx-auto flex items-center justify-center">
@@ -2655,7 +2937,9 @@ export default function POSPage() {
 
                       <div className="space-y-1.5">
                         <p className="text-sm font-bold text-foreground">Chờ quẹt / chạm thẻ...</p>
-                        <p className="text-xs text-muted-foreground max-w-[240px] mx-auto leading-relaxed">Vui lòng gắn thiết bị đầu đọc thẻ hoặc hướng dẫn khách hàng chạm thẻ chip để hoàn tất.</p>
+                        <p className="text-xs text-muted-foreground max-w-[240px] mx-auto leading-relaxed">
+                          Vui lòng gắn thiết bị đầu đọc thẻ hoặc hướng dẫn khách hàng chạm thẻ chip để hoàn tất.
+                        </p>
                       </div>
 
                       {/* Card Webhook Simulation Button (For Demo) */}
@@ -2690,12 +2974,14 @@ export default function POSPage() {
                 {/* Total checkout card */}
                 <div className="border-t pt-4 mt-6">
                   <div className="bg-card p-4 rounded-xl border shadow-sm space-y-1.5 text-center">
-                    <span className="text-[9px] font-black tracking-widest text-muted-foreground uppercase">Tổng tiền thanh toán</span>
+                    <span className="text-[9px] font-black tracking-widest text-muted-foreground uppercase">
+                      Tổng tiền thanh toán
+                    </span>
                     <h3 className="text-2xl font-black text-primary">{formatCurrency(finalTotal)}</h3>
                     {pointsDiscount > 0 && (
                       <div className="flex items-center justify-center gap-1.5 text-[10px] text-amber-600 font-bold">
                         <Coins className="w-3.5 h-3.5" />
-                        Đã trừ {pointsRedeemed} điểm ({new Intl.NumberFormat('vi-VN').format(pointsDiscount)}đ)
+                        Đã trừ {pointsRedeemed} điểm ({new Intl.NumberFormat("vi-VN").format(pointsDiscount)}đ)
                       </div>
                     )}
                   </div>
@@ -2706,7 +2992,13 @@ export default function POSPage() {
         </Dialog>
 
         {/* Success Modal & Receipt Preview */}
-        <Dialog open={successOpen} onOpenChange={(open) => { setSuccessOpen(open); if (!open) setLastOrder(null); }}>
+        <Dialog
+          open={successOpen}
+          onOpenChange={(open) => {
+            setSuccessOpen(open);
+            if (!open) setLastOrder(null);
+          }}
+        >
           <DialogContent className="max-w-md p-8 text-center">
             <DialogHeader className="sr-only">
               <DialogTitle>Thanh toán thành công</DialogTitle>
@@ -2718,7 +3010,10 @@ export default function POSPage() {
                 <div className="w-16 h-16 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-500 animate-in zoom-in duration-300">
                   <CheckCircle2 className="w-8 h-8 text-emerald-500" />
                 </div>
-                <div className="absolute inset-0 rounded-full bg-emerald-500/10 animate-ping opacity-25" style={{ animationDuration: '2s' }} />
+                <div
+                  className="absolute inset-0 rounded-full bg-emerald-500/10 animate-ping opacity-25"
+                  style={{ animationDuration: "2s" }}
+                />
               </div>
 
               <div className="space-y-1">
@@ -2733,18 +3028,27 @@ export default function POSPage() {
                   <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-zinc-200 via-transparent to-zinc-200 dark:from-zinc-800 dark:to-zinc-800 opacity-50" />
 
                   <div className="text-center space-y-1">
-                    <p className="font-bold text-sm tracking-wide text-zinc-900 dark:text-zinc-50 uppercase">ZPOS RETAIL</p>
+                    <p className="font-bold text-sm tracking-wide text-zinc-900 dark:text-zinc-50 uppercase">
+                      ZPOS RETAIL
+                    </p>
                     <p className="text-zinc-500 dark:text-zinc-400 text-[10px]">123 Đường ABC, Quận 1, TP.HCM</p>
-                    <p className="text-zinc-400 dark:text-zinc-500 text-[9px] font-sans mt-1">Mã HĐ: <span className="font-mono font-bold text-zinc-600 dark:text-zinc-300">{lastOrder.orderId}</span></p>
+                    <p className="text-zinc-400 dark:text-zinc-500 text-[9px] font-sans mt-1">
+                      Mã HĐ:{" "}
+                      <span className="font-mono font-bold text-zinc-600 dark:text-zinc-300">{lastOrder.orderId}</span>
+                    </p>
                   </div>
 
                   <Separator className="border-dashed border-zinc-200 dark:border-zinc-800" />
 
                   <div className="space-y-2 text-zinc-700 dark:text-zinc-300">
                     {lastOrder.cart.map((item: any) => (
-                      <div key={item.id} className="flex justify-between items-start gap-4">
-                        <span className="break-words max-w-[70%] font-medium">{item.name} x {item.quantity}</span>
-                        <span className="shrink-0 font-bold text-zinc-900 dark:text-zinc-100">{formatCurrency(item.price * item.quantity)}</span>
+                      <div key={item.cartKey || item.id} className="flex justify-between items-start gap-4">
+                        <span className="break-words max-w-[70%] font-medium">
+                          {item.name} x {item.quantity}
+                        </span>
+                        <span className="shrink-0 font-bold text-zinc-900 dark:text-zinc-100">
+                          {formatCurrency(item.price * item.quantity)}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -2781,9 +3085,12 @@ export default function POSPage() {
                     <FileText className="w-3.5 h-3.5" /> Đã phát hành HĐĐT
                   </p>
                   <p className="font-mono">
-                    {issuedInvoice.invoice_series || '—'}/{issuedInvoice.invoice_no || '—'}
+                    {issuedInvoice.invoice_series || "—"}/{issuedInvoice.invoice_no || "—"}
                     {issuedInvoice.provider_lookup_code && (
-                      <> · Tra cứu: <b>{issuedInvoice.provider_lookup_code}</b></>
+                      <>
+                        {" "}
+                        · Tra cứu: <b>{issuedInvoice.provider_lookup_code}</b>
+                      </>
                     )}
                   </p>
                   {issuedInvoice.provider_pdf_url && (
@@ -2821,13 +3128,13 @@ export default function POSPage() {
                     ) : (
                       <FileText className="w-3.5 h-3.5" />
                     )}
-                    {issuedInvoice ? 'Đã PH HĐĐT' : 'Phát hành HĐĐT'}
+                    {issuedInvoice ? "Đã PH HĐĐT" : "Phát hành HĐĐT"}
                   </Button>
                   <Button
                     variant="outline"
                     className="h-11 rounded-xl gap-2 font-semibold text-xs border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all active:scale-[0.98]"
                     onClick={() => {
-                      setPrintType('payment');
+                      setPrintType("payment");
                       setTimeout(() => window.print(), 100);
                     }}
                   >
@@ -2842,41 +3149,48 @@ export default function POSPage() {
       </div>
 
       {/* Hidden Print Area */}
-      {printType === 'payment' && lastOrder && (
-        <PrintInvoice order={{
-          order_number: lastOrder.orderId,
-          created_at: lastOrder.createdAt,
-          items: lastOrder.cart.map((item: any) => ({
-            product_name: item.name,
-            quantity: item.quantity,
-            unit_price: item.price,
-            total_price: item.price * item.quantity
-          })),
-          total_amount: lastOrder.total,
-          payment_method: lastOrder.paymentMethod,
-          customer: lastOrder.customer ? { name: lastOrder.customer.name, phone: lastOrder.customer.phone } : undefined
-        }} />
-      )}
-
-      {['provisional', 'temp_bill', 'kitchen_ticket', 'bar_ticket', 'final_receipt'].includes(printType) && provisionalOrder && (
+      {printType === "payment" && lastOrder && (
         <PrintInvoice
-          isProvisional={printType === 'provisional' || printType === 'temp_bill'}
-          printType={printType as any}
           order={{
-            order_number: provisionalOrder.orderId,
-            created_at: provisionalOrder.createdAt,
-            items: provisionalOrder.cart.map((item: any) => ({
+            order_number: lastOrder.orderId,
+            created_at: lastOrder.createdAt,
+            items: lastOrder.cart.map((item: any) => ({
               product_name: item.name,
               quantity: item.quantity,
               unit_price: item.price,
-              total_price: item.price * item.quantity
+              total_price: item.price * item.quantity,
             })),
-            total_amount: provisionalOrder.total,
-            payment_method: provisionalOrder.paymentMethod,
-            customer: provisionalOrder.customer ? { name: provisionalOrder.customer.name, phone: provisionalOrder.customer.phone } : undefined
+            total_amount: lastOrder.total,
+            payment_method: lastOrder.paymentMethod,
+            customer: lastOrder.customer
+              ? { name: lastOrder.customer.name, phone: lastOrder.customer.phone }
+              : undefined,
           }}
         />
       )}
+
+      {["provisional", "temp_bill", "kitchen_ticket", "bar_ticket", "final_receipt"].includes(printType) &&
+        provisionalOrder && (
+          <PrintInvoice
+            isProvisional={printType === "provisional" || printType === "temp_bill"}
+            printType={printType as any}
+            order={{
+              order_number: provisionalOrder.orderId,
+              created_at: provisionalOrder.createdAt,
+              items: provisionalOrder.cart.map((item: any) => ({
+                product_name: item.name,
+                quantity: item.quantity,
+                unit_price: item.price,
+                total_price: item.price * item.quantity,
+              })),
+              total_amount: provisionalOrder.total,
+              payment_method: provisionalOrder.paymentMethod,
+              customer: provisionalOrder.customer
+                ? { name: provisionalOrder.customer.name, phone: provisionalOrder.customer.phone }
+                : undefined,
+            }}
+          />
+        )}
 
       <PrintDialog
         open={printDialogOpen}
@@ -2891,7 +3205,7 @@ export default function POSPage() {
           subtotal,
           discount: discount + pointsDiscount,
           total: finalTotal,
-          customer: selectedCustomer
+          customer: selectedCustomer,
         }}
         onPrintPreview={(type) => {
           setPrintType(type);
@@ -2901,9 +3215,9 @@ export default function POSPage() {
             total: finalTotal,
             subtotal: subtotal,
             discount: discount + pointsDiscount,
-            paymentMethod: 'Chưa thanh toán',
+            paymentMethod: "Chưa thanh toán",
             cart: [...cart],
-            customer: selectedCustomer
+            customer: selectedCustomer,
           });
         }}
       />
@@ -2912,14 +3226,19 @@ export default function POSPage() {
         open={scannerOpen}
         onOpenChange={setScannerOpen}
         products={products}
-        onScanSuccess={addToCart}
+        onScanSuccess={handleScanSuccess}
       />
 
-      <OpenShiftDialog
-        open={openShiftDialog}
-        onOpenChange={setOpenShiftDialog}
-        onOpened={(s) => setActiveShift(s)}
+      <VariantPickerDialog
+        product={pickerProduct}
+        open={!!pickerProduct}
+        onOpenChange={(o) => {
+          if (!o) setPickerProduct(null);
+        }}
+        onConfirm={handleVariantConfirm}
       />
+
+      <OpenShiftDialog open={openShiftDialog} onOpenChange={setOpenShiftDialog} onOpened={(s) => setActiveShift(s)} />
     </>
   );
 }

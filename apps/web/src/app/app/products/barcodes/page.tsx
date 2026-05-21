@@ -11,6 +11,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import Link from 'next/link';
 import { BarcodeBulkPrintTable } from "../_components/barcode-bulk-print-table";
 import { RequirePermission } from "@/components/auth/require-permission";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 export default function BarcodesPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -34,11 +40,22 @@ export default function BarcodesPage() {
     }
   };
 
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    (p.barcode && p.barcode.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredProducts = products.filter(product => {
+    const search = searchTerm.toLowerCase();
+    if (product.name.toLowerCase().includes(search)) return true;
+    if (product.barcode && product.barcode.toLowerCase().includes(search)) return true;
+    if (product.sku && product.sku.toLowerCase().includes(search)) return true;
+    
+    // Check if any variant matches
+    if (product.variants && Array.isArray(product.variants)) {
+      return product.variants.some((v: any) => 
+        (v.name && v.name.toLowerCase().includes(search)) ||
+        (v.barcode && v.barcode.toLowerCase().includes(search)) ||
+        (v.sku && v.sku.toLowerCase().includes(search))
+      );
+    }
+    return false;
+  });
 
   const toggleSelect = (product: any) => {
     setSelectedProducts(prev => {
@@ -88,13 +105,19 @@ export default function BarcodesPage() {
           <table className="w-full text-sm text-left">
             <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
               <tr>
-                <th className="p-3 w-10 text-center">
+                <th className="p-3 w-12 text-center">
                    <Checkbox 
-                      checked={selectedCount === filteredProducts.length && filteredProducts.length > 0}
+                      checked={selectedCount > 0 && selectedCount >= filteredProducts.length} // Simplified logic for UI state
                       onCheckedChange={(c) => {
                         if (c) {
                           const all: Record<string, number> = {};
-                          filteredProducts.forEach(p => { all[p.id] = 1; });
+                          filteredProducts.forEach(p => {
+                            if (p.variants && p.variants.length > 0) {
+                              p.variants.forEach((v: any) => { all[v.id] = 1; });
+                            } else {
+                              all[p.id] = 1;
+                            }
+                          });
                           setSelectedProducts(all);
                         } else {
                           setSelectedProducts({});
@@ -102,10 +125,10 @@ export default function BarcodesPage() {
                       }}
                    />
                 </th>
-                <th className="p-3">Sản phẩm</th>
-                <th className="p-3">Mã SKU</th>
-                <th className="p-3">Mã vạch</th>
-                <th className="p-3 text-right">Thao tác</th>
+                <th className="p-3 w-[40%]">Sản phẩm</th>
+                <th className="p-3 w-[20%]">Mã SKU</th>
+                <th className="p-3 w-[20%]">Mã vạch</th>
+                <th className="p-3 w-[20%] text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -123,38 +146,102 @@ export default function BarcodesPage() {
                   </td>
                 </tr>
               ) : (
-                filteredProducts.map(product => (
-                  <tr key={product.id} className="border-b hover:bg-muted/30">
-                    <td className="p-3 text-center">
-                      <Checkbox 
-                         checked={!!selectedProducts[product.id]}
-                         onCheckedChange={() => toggleSelect(product)}
-                      />
-                    </td>
-                    <td className="p-3 font-medium">{product.name}</td>
-                    <td className="p-3 text-muted-foreground">{product.sku}</td>
-                    <td className="p-3">
-                      {product.barcode ? (
-                        <span className="font-mono bg-muted px-2 py-1 rounded">{product.barcode}</span>
-                      ) : (
-                        <span className="text-red-500 italic text-xs">Chưa có mã vạch</span>
-                      )}
-                    </td>
-                    <td className="p-3 text-right">
-                      {product.barcode && (
-                        <RequirePermission requiredPermission="products.barcode.print">
-                          <BarcodePrintDialog 
-                            productName={product.name}
-                            sku={product.sku}
-                            barcode={product.barcode}
-                            barcodeType={product.barcode_type}
-                            price={product.price}
-                          />
-                        </RequirePermission>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                filteredProducts.map(product => {
+                  const variants = Array.isArray(product.variants) ? product.variants : [];
+                  
+                  if (variants.length > 0) {
+                    return (
+                      <tr key={product.id} className="border-b">
+                        <td colSpan={5} className="p-0">
+                          <Accordion type="single" collapsible className="w-full">
+                            <AccordionItem value="variants" className="border-none">
+                              <AccordionTrigger className="px-3 py-3 hover:no-underline hover:bg-muted/30">
+                                <div className="flex items-center gap-3">
+                                  <span className="font-bold text-base text-primary">{product.name}</span>
+                                  <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-semibold">{variants.length} biến thể</span>
+                                </div>
+                              </AccordionTrigger>
+                              <AccordionContent className="pb-0 pt-0">
+                                <table className="w-full text-sm text-left bg-muted/10">
+                                  <tbody>
+                                    {variants.map((v: any) => (
+                                      <tr key={v.id} className="border-t border-dashed hover:bg-muted/40 transition-colors">
+                                        <td className="p-3 w-12 text-center pl-6">
+                                          <Checkbox 
+                                            checked={!!selectedProducts[v.id]}
+                                            onCheckedChange={() => toggleSelect(v)}
+                                          />
+                                        </td>
+                                        <td className="p-3 w-[40%] font-medium text-muted-foreground flex items-center gap-2">
+                                          <div className="w-1.5 h-1.5 rounded-full bg-primary/40"></div>
+                                          {v.name}
+                                        </td>
+                                        <td className="p-3 w-[20%] text-muted-foreground font-mono text-xs">{v.sku || '-'}</td>
+                                        <td className="p-3 w-[20%]">
+                                          {v.barcode ? (
+                                            <span className="font-mono bg-white px-2 py-1 rounded border shadow-sm text-xs">{v.barcode}</span>
+                                          ) : (
+                                            <span className="text-rose-500 italic text-[11px]">Chưa có mã vạch</span>
+                                          )}
+                                        </td>
+                                        <td className="p-3 w-[20%] text-right">
+                                          {v.barcode && (
+                                            <RequirePermission requiredPermission="products.barcode.print">
+                                              <BarcodePrintDialog 
+                                                productName={`${product.name} - ${v.name}`}
+                                                sku={v.sku}
+                                                barcode={v.barcode}
+                                                barcodeType={v.barcode_type || 'CODE128'}
+                                                price={v.price || product.price}
+                                              />
+                                            </RequirePermission>
+                                          )}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </AccordionContent>
+                            </AccordionItem>
+                          </Accordion>
+                        </td>
+                      </tr>
+                    );
+                  }
+
+                  return (
+                    <tr key={product.id} className="border-b hover:bg-muted/30">
+                      <td className="p-3 text-center w-12">
+                        <Checkbox 
+                           checked={!!selectedProducts[product.id]}
+                           onCheckedChange={() => toggleSelect(product)}
+                        />
+                      </td>
+                      <td className="p-3 font-medium w-[40%]">{product.name}</td>
+                      <td className="p-3 text-muted-foreground font-mono text-xs w-[20%]">{product.sku || '-'}</td>
+                      <td className="p-3 w-[20%]">
+                        {product.barcode ? (
+                          <span className="font-mono bg-muted px-2 py-1 rounded text-xs">{product.barcode}</span>
+                        ) : (
+                          <span className="text-rose-500 italic text-[11px]">Chưa có mã vạch</span>
+                        )}
+                      </td>
+                      <td className="p-3 text-right w-[20%]">
+                        {product.barcode && (
+                          <RequirePermission requiredPermission="products.barcode.print">
+                            <BarcodePrintDialog 
+                              productName={product.name}
+                              sku={product.sku}
+                              barcode={product.barcode}
+                              barcodeType={product.barcode_type || 'CODE128'}
+                              price={product.price}
+                            />
+                          </RequirePermission>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

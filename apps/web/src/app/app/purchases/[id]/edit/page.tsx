@@ -41,25 +41,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { posService } from "@/services/pos.service";
 import { toast } from "sonner";
-import { AddProductDialog } from "../../products/_components/add-product-dialog";
-import { VariantPickerDialog, PickedVariant } from "../../pos/_components/variant-picker-dialog";
-import { useRouter, useSearchParams } from "next/navigation";
+import { AddProductDialog } from "../../../products/_components/add-product-dialog";
+import { VariantPickerDialog, PickedVariant } from "../../../pos/_components/variant-picker-dialog";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from 'next/link';
 
-export default function NewPurchasePage() {
+export default function EditPurchasePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { id } = useParams();
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
-  const [selectedSupplierId, setSelectedSupplierId] = useState<string>(searchParams.get("supplierId") || "");
+  const [selectedSupplierId, setSelectedSupplierId] = useState<string>("");
   const [items, setItems] = useState<any[]>([]);
   const [note, setNote] = useState("");
-  const [code, setCode] = useState(`PN${Date.now().toString().slice(-8)}`);
+  const [code, setCode] = useState("");
   const [status, setStatus] = useState("draft");
-  const [paidAmount, setPaidAmount] = useState<number>(0);
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "transfer" | "card" | "other">("cash");
-  const [paymentNote, setPaymentNote] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [isVariantPickerOpen, setIsVariantPickerOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
@@ -82,19 +81,53 @@ export default function NewPurchasePage() {
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        const [suppliersData, productsData] = await Promise.all([
+        const [suppliersData, productsData, orderDetail] = await Promise.all([
           posService.getSuppliers(),
-          posService.getProducts()
+          posService.getProducts(),
+          posService.getPurchaseOrderDetail(id as string)
         ]);
+        
         // Only show active suppliers
         setSuppliers(suppliersData.filter((s: any) => s.is_active !== false));
         setProducts(productsData);
+
+        if (orderDetail) {
+          if (orderDetail.status === 'completed' || orderDetail.status === 'cancelled') {
+            toast.error("Không thể sửa đơn nhập hàng đã hoàn tất hoặc đã hủy");
+            router.push(`/app/purchases/${id}`);
+            return;
+          }
+
+          setCode(orderDetail.code);
+          setSelectedSupplierId(orderDetail.supplier_id || "");
+          setStatus(orderDetail.status);
+          setNote(orderDetail.note || "");
+          setDiscount(orderDetail.discount_amount || 0);
+          setShippingFee(orderDetail.shipping_fee || 0);
+
+          if (orderDetail.items) {
+            setItems(orderDetail.items.map((item: any) => ({
+              item_key: item.variant_id || item.product_id,
+              product_id: item.product_id,
+              variant_id: item.variant_id,
+              name: item.product?.name ? (item.variant_id && item.sku ? `${item.product.name} - ${item.sku}` : item.product.name) : "Sản phẩm",
+              sku: item.sku,
+              quantity: item.quantity,
+              unit_cost: item.unit_cost,
+              total_amount: item.total_amount
+            })));
+          }
+        }
       } catch (error) {
-        toast.error("Lỗi tải dữ liệu cơ sở");
+        toast.error("Lỗi tải dữ liệu đơn hàng");
+      } finally {
+        setInitialLoading(false);
       }
     };
-    loadInitialData();
-  }, []);
+    if (id) {
+      loadInitialData();
+    }
+  }, [id]);
 
   const handleProductSelect = (product: any) => {
     if (product.variants && product.variants.length > 0) {
@@ -149,8 +182,6 @@ export default function NewPurchasePage() {
     setLoading(true);
     try {
       const orderData = {
-        organization_id: '00000000-0000-0000-0000-000000000000', // Mock for now
-        branch_id: '00000000-0000-0000-0000-000000000000',
         supplier_id: selectedSupplierId,
         code,
         status,
@@ -161,26 +192,14 @@ export default function NewPurchasePage() {
         note
       };
 
-      const purchase = await posService.createPurchaseOrder(orderData, items);
-      
-      // If payment is made directly
-      if (paidAmount > 0) {
-        await posService.recordSupplierPayment(
-          selectedSupplierId,
-          paidAmount,
-          paymentMethod,
-          [{ purchase_order_id: purchase.id, amount: paidAmount }],
-          { notes: paymentNote }
-        );
-      }
-
-      toast.success("Đã tạo đơn nhập hàng", {
-        description: `Mã đơn ${code} đã được lưu thành công.`
+      await posService.updatePurchaseOrder(id as string, orderData, items);
+      toast.success("Đã cập nhật đơn nhập hàng", {
+        description: `Mã đơn ${code} đã được cập nhật thành công.`
       });
-      router.push("/app/purchases");
+      router.push(`/app/purchases/${id}`);
     } catch (error: any) {
-      console.error("Lỗi khi tạo đơn nhập:", error);
-      toast.error(`Lỗi khi tạo đơn nhập: ${error.message || "Lỗi không xác định"}`);
+      console.error("Lỗi khi cập nhật đơn nhập:", error);
+      toast.error(`Lỗi khi cập nhật đơn nhập: ${error.message || "Lỗi không xác định"}`);
     } finally {
       setLoading(false);
     }
@@ -198,17 +217,26 @@ export default function NewPurchasePage() {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
 
+  if (initialLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[400px] gap-4">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <p className="text-muted-foreground animate-pulse">Đang tải dữ liệu đơn hàng...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
-          <Link href="/app/purchases">
+          <Link href={`/app/purchases/${id}`}>
             <ArrowLeft className="w-5 h-5" />
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-black tracking-tight">Tạo đơn nhập hàng mới</h1>
-          <p className="text-sm text-muted-foreground">Nhập kho sản phẩm từ nhà cung cấp.</p>
+          <h1 className="text-2xl font-black tracking-tight">Sửa đơn nhập hàng</h1>
+          <p className="text-sm text-muted-foreground">Mã đơn: {code}</p>
         </div>
       </div>
 
@@ -396,41 +424,6 @@ export default function NewPurchasePage() {
                 <span>TỔNG CỘNG</span>
                 <span>{formatCurrency(totalAmount)}</span>
               </div>
-              <div className="h-px bg-primary/20 my-2" />
-              <div className="flex justify-between text-sm items-center">
-                <span className="text-muted-foreground">Thanh toán NCC</span>
-                <Input 
-                  type="text" 
-                  className="h-7 w-28 text-right font-bold text-green-600" 
-                  value={formatCurrencyValue(paidAmount)} 
-                  onChange={(e) => setPaidAmount(parseCurrencyValue(e.target.value))} 
-                />
-              </div>
-              {paidAmount > 0 && (
-                <div className="flex flex-col gap-2 mt-2">
-                  <Select value={paymentMethod} onValueChange={(val: any) => setPaymentMethod(val)}>
-                    <SelectTrigger className="h-8 text-xs">
-                      <SelectValue placeholder="Phương thức" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cash">Tiền mặt</SelectItem>
-                      <SelectItem value="transfer">Chuyển khoản</SelectItem>
-                      <SelectItem value="card">Quẹt thẻ</SelectItem>
-                      <SelectItem value="other">Khác</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input 
-                    placeholder="Ghi chú thanh toán..." 
-                    className="h-8 text-xs"
-                    value={paymentNote}
-                    onChange={(e) => setPaymentNote(e.target.value)}
-                  />
-                  <div className="flex justify-between text-sm mt-1">
-                    <span className="text-muted-foreground">Còn nợ</span>
-                    <span className="text-destructive font-bold">{formatCurrency(Math.max(totalAmount - paidAmount, 0))}</span>
-                  </div>
-                </div>
-              )}
             </CardContent>
             <CardFooter className="flex flex-col gap-2 pt-0">
               <Button className="w-full font-bold h-12" onClick={handleSubmit} disabled={loading}>

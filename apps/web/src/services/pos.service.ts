@@ -1,5 +1,5 @@
-import { createClient } from "@/utils/supabase/client";
 import { loyaltyService } from "@/services/loyalty.service";
+import { createClient } from "@/utils/supabase/client";
 
 const UNIVERSAL_TENANTS = new Set(["www", "app", "console", "cms"]);
 const EMPTY_UUID = "00000000-0000-0000-0000-000000000000";
@@ -14,26 +14,68 @@ export function getTenantSlug(): string {
       return "app";
     }
 
-    const parts = hostname.split('.');
+    const parts = hostname.split(".");
     if (parts.length > 1) {
       const subdomain = parts[0];
-      if (subdomain && !UNIVERSAL_TENANTS.has(subdomain) && subdomain !== 'localhost') {
+      if (subdomain && !UNIVERSAL_TENANTS.has(subdomain) && subdomain !== "localhost") {
         return subdomain;
       }
     }
     return "app";
-  } else {
-    // Server-side dynamic resolution using global request context variable
-    if (typeof global !== "undefined" && (global as any).activeTenantSlug) {
-      return (global as any).activeTenantSlug;
-    }
-    return "app";
   }
+  // Server-side dynamic resolution using global request context variable
+  if (typeof global !== "undefined" && (global as any).activeTenantSlug) {
+    return (global as any).activeTenantSlug;
+  }
+  return "app";
 }
 
 export function isValidUUID(val: any): boolean {
-  if (typeof val !== 'string') return false;
+  if (typeof val !== "string") return false;
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+}
+
+function firstRelation<T>(value: T | T[] | null | undefined): T | null {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+}
+
+export function calculateSoldItemsCOGS(items: any[] | null | undefined) {
+  return (items ?? []).reduce((sum, item: any) => {
+    const snapshotCost = Number(item.cost_price || 0);
+    const variantCost = Number(item.variant_cost_price || firstRelation(item.variant)?.cost_price || 0);
+    const unitCost = snapshotCost > 0 ? snapshotCost : variantCost;
+    return sum + Number(item.quantity || 0) * unitCost;
+  }, 0);
+}
+
+export async function fetchSoldItemsForCOGS(supabase: ReturnType<typeof createClient>, orderIds: string[]) {
+  if (orderIds.length === 0) return [];
+
+  const { data: items, error: itemsError } = await supabase
+    .from("order_items")
+    .select("order_id, quantity, variant_id")
+    .in("order_id", orderIds);
+
+  if (itemsError) throw itemsError;
+
+  const variantIds = [...new Set((items || []).map((item: any) => item.variant_id).filter(Boolean))];
+  if (variantIds.length === 0) return items || [];
+
+  const { data: variants, error: variantsError } = await supabase
+    .from("product_variants")
+    .select("id, cost_price")
+    .in("id", variantIds);
+
+  if (variantsError) throw variantsError;
+
+  const costByVariantId = new Map(
+    (variants || []).map((variant: any) => [variant.id, Number(variant.cost_price || 0)]),
+  );
+  return (items || []).map((item: any) => ({
+    ...item,
+    variant_cost_price: costByVariantId.get(item.variant_id) || 0,
+  }));
 }
 
 let cachedOrgId: string | null = null;
@@ -82,11 +124,7 @@ export async function getActiveOrganizationId(): Promise<string> {
   try {
     // Tenant subdomains are the strongest source of truth.
     if (tenantSlug !== "app") {
-      const { data: org } = await supabase
-        .from('organizations')
-        .select('id')
-        .eq('slug', tenantSlug)
-        .maybeSingle();
+      const { data: org } = await supabase.from("organizations").select("id").eq("slug", tenantSlug).maybeSingle();
 
       if (org?.id) {
         cachedOrgId = org.id;
@@ -102,10 +140,10 @@ export async function getActiveOrganizationId(): Promise<string> {
     // On the universal /app host, resolve from the current authenticated user.
     if (user?.id) {
       const { data: member } = await supabase
-        .from('organization_members')
-        .select('organization_id')
-        .eq('profile_id', user.id)
-        .order('created_at', { ascending: true })
+        .from("organization_members")
+        .select("organization_id")
+        .eq("profile_id", user.id)
+        .order("created_at", { ascending: true })
         .limit(1)
         .maybeSingle();
 
@@ -116,7 +154,6 @@ export async function getActiveOrganizationId(): Promise<string> {
         return member.organization_id;
       }
     }
-
   } catch (e) {
     console.error("Error resolving active organization for slug:", tenantSlug, e);
   }
@@ -138,14 +175,14 @@ export const posService = {
     }
 
     const { data, error } = await supabase
-      .from('products')
+      .from("products")
       .select(`
         *,
         category:categories(name),
         variants:product_variants(*)
       `)
-      .eq('organization_id', orgId)
-      .eq('is_active', true);
+      .eq("organization_id", orgId)
+      .eq("is_active", true);
 
     if (error) {
       console.error("Supabase error (getProducts):", error.message, error.details);
@@ -158,14 +195,14 @@ export const posService = {
     filteredData = filteredData.map((p: any) => {
       let cleanDesc = p.description;
       let costPrice = 0;
-      if (p.description && p.description.includes('::')) {
-        const parts = p.description.split('::');
-        const descWithoutTenant = parts.slice(1).join('::');
+      if (p.description?.includes("::")) {
+        const parts = p.description.split("::");
+        const descWithoutTenant = parts.slice(1).join("::");
 
         const costMatch = descWithoutTenant.match(/^\[cost_price:(\d+(\.\d+)?)\]/);
         if (costMatch) {
           costPrice = parseFloat(costMatch[1]);
-          cleanDesc = descWithoutTenant.replace(/^\[cost_price:(\d+(\.\d+)?)\]/, '');
+          cleanDesc = descWithoutTenant.replace(/^\[cost_price:(\d+(\.\d+)?)\]/, "");
         } else {
           cleanDesc = descWithoutTenant;
         }
@@ -173,14 +210,14 @@ export const posService = {
       return {
         ...p,
         cost_price: costPrice,
-        description: cleanDesc
+        description: cleanDesc,
       };
     });
 
     // Merge min_stock from local storage fallback if any
-    if (filteredData && typeof window !== 'undefined') {
+    if (filteredData && typeof window !== "undefined") {
       try {
-        const localMinStocks = localStorage.getItem(getTenantStorageKey('zpos_products_min_stock'));
+        const localMinStocks = localStorage.getItem(getTenantStorageKey("zpos_products_min_stock"));
         if (localMinStocks) {
           const minStockMap = JSON.parse(localMinStocks);
           filteredData.forEach((p: any) => {
@@ -202,10 +239,10 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     const { data, error } = await supabase
-      .from('categories')
-      .select('id, name, description')
-      .eq('organization_id', orgId)
-      .order('name', { ascending: true });
+      .from("categories")
+      .select("id, name, description")
+      .eq("organization_id", orgId)
+      .order("name", { ascending: true });
 
     if (error) {
       console.error("Supabase error (getCategories):", error.message);
@@ -214,7 +251,7 @@ export const posService = {
 
     // Deduplicate by name (case-insensitive)
     const seen = new Set<string>();
-    const unique = (data || []).filter(cat => {
+    const unique = (data || []).filter((cat) => {
       const key = cat.name.toLowerCase().trim();
       if (seen.has(key)) return false;
       seen.add(key);
@@ -229,41 +266,58 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
     const tenantSlug = getTenantSlug();
 
-    const costPart = productData.cost_price !== undefined ? `[cost_price:${productData.cost_price}]` : '';
-    const { cost_price, ...restProductData } = productData;
+    const costPart = productData.cost_price !== undefined ? `[cost_price:${productData.cost_price}]` : "";
+    const { cost_price, variants: variantsInput, ...restProductData } = productData;
 
     const preparedData = {
       ...restProductData,
       organization_id: orgId,
-      description: `${tenantSlug}::${costPart}${productData.description || ''}`
+      description: `${tenantSlug}::${costPart}${productData.description || ""}`,
     };
-    if (preparedData.barcode === '') preparedData.barcode = null;
-    if (preparedData.sku === '') preparedData.sku = null;
+    if (preparedData.barcode === "") preparedData.barcode = null;
+    if (preparedData.sku === "") preparedData.sku = null;
 
-    const { data, error } = await supabase
-      .from('products')
-      .insert([preparedData])
-      .select()
-      .single();
+    const { data, error } = await supabase.from("products").insert([preparedData]).select().single();
 
     if (error) throw error;
 
+    // Insert variants if provided
+    if (Array.isArray(variantsInput) && variantsInput.length > 0 && data?.id) {
+      const variantRows = variantsInput.map((v: any) => ({
+        product_id: data.id,
+        name: v.name,
+        sku: v.sku || null,
+        barcode: v.barcode || null,
+        barcode_type: v.barcode_type || "CODE128",
+        price: v.price ?? 0,
+        cost_price: v.cost_price ?? 0,
+        stock: v.stock ?? 0,
+        image_url: v.image_url || null,
+        attributes: v.attributes || {},
+      }));
+      const { error: variantError } = await supabase.from("product_variants").insert(variantRows);
+      if (variantError) {
+        console.error("Failed to insert product_variants:", variantError);
+        throw variantError;
+      }
+    }
+
     // Clean up description for UI
     let costPrice = 0;
-    if (data && data.description && data.description.includes('::')) {
-      const parts = data.description.split('::');
-      const descWithoutTenant = parts.slice(1).join('::');
+    if (data?.description?.includes("::")) {
+      const parts = data.description.split("::");
+      const descWithoutTenant = parts.slice(1).join("::");
       const costMatch = descWithoutTenant.match(/^\[cost_price:(\d+(\.\d+)?)\]/);
       if (costMatch) {
         costPrice = parseFloat(costMatch[1]);
-        data.description = descWithoutTenant.replace(/^\[cost_price:(\d+(\.\d+)?)\]/, '');
+        data.description = descWithoutTenant.replace(/^\[cost_price:(\d+(\.\d+)?)\]/, "");
       } else {
         data.description = descWithoutTenant;
       }
     }
     return {
       ...data,
-      cost_price: costPrice
+      cost_price: costPrice,
     };
   },
 
@@ -273,34 +327,44 @@ export const posService = {
     const tenantSlug = getTenantSlug();
 
     // Persist min_stock in local storage as a robust fallback first
-    if (productData.min_stock !== undefined && typeof window !== 'undefined') {
+    if (productData.min_stock !== undefined && typeof window !== "undefined") {
       try {
-        const localMinStocks = localStorage.getItem(getTenantStorageKey('zpos_products_min_stock'));
+        const localMinStocks = localStorage.getItem(getTenantStorageKey("zpos_products_min_stock"));
         const minStockMap = localMinStocks ? JSON.parse(localMinStocks) : {};
         minStockMap[id] = productData.min_stock;
-        localStorage.setItem(getTenantStorageKey('zpos_products_min_stock'), JSON.stringify(minStockMap));
+        localStorage.setItem(getTenantStorageKey("zpos_products_min_stock"), JSON.stringify(minStockMap));
       } catch (e) {
         console.warn("Error saving local min stock:", e);
       }
     }
 
+    // Sync variants if provided (handled separately from products row update)
+    if (productData.has_variants !== undefined) {
+      try {
+        await this.syncProductVariants(id, productData.variants || [], productData.has_variants);
+      } catch (variantErr: any) {
+        console.error("syncProductVariants failed:", variantErr);
+        throw variantErr;
+      }
+    }
+
     try {
-      const costPart = productData.cost_price !== undefined ? `[cost_price:${productData.cost_price}]` : '';
-      const { cost_price, ...restProductData } = productData;
+      const costPart = productData.cost_price !== undefined ? `[cost_price:${productData.cost_price}]` : "";
+      const { cost_price, variants: _variants, has_variants: _hasVariants, ...restProductData } = productData;
 
       const preparedData = { ...restProductData };
       preparedData.organization_id = orgId;
       if (productData.description !== undefined || productData.cost_price !== undefined) {
-        preparedData.description = `${tenantSlug}::${costPart}${productData.description || ''}`;
+        preparedData.description = `${tenantSlug}::${costPart}${productData.description || ""}`;
       }
-      if (preparedData.barcode === '') preparedData.barcode = null;
-      if (preparedData.sku === '') preparedData.sku = null;
+      if (preparedData.barcode === "") preparedData.barcode = null;
+      if (preparedData.sku === "") preparedData.sku = null;
 
       const { data, error } = await supabase
-        .from('products')
+        .from("products")
         .update(preparedData)
-        .eq('id', id)
-        .eq('organization_id', orgId)
+        .eq("id", id)
+        .eq("organization_id", orgId)
         .select()
         .single();
 
@@ -309,20 +373,20 @@ export const posService = {
           data.min_stock = productData.min_stock;
         }
         let costPrice = 0;
-        if (data.description && data.description.includes('::')) {
-          const parts = data.description.split('::');
-          const descWithoutTenant = parts.slice(1).join('::');
+        if (data.description?.includes("::")) {
+          const parts = data.description.split("::");
+          const descWithoutTenant = parts.slice(1).join("::");
           const costMatch = descWithoutTenant.match(/^\[cost_price:(\d+(\.\d+)?)\]/);
           if (costMatch) {
             costPrice = parseFloat(costMatch[1]);
-            data.description = descWithoutTenant.replace(/^\[cost_price:(\d+(\.\d+)?)\]/, '');
+            data.description = descWithoutTenant.replace(/^\[cost_price:(\d+(\.\d+)?)\]/, "");
           } else {
             data.description = descWithoutTenant;
           }
         }
         return {
           ...data,
-          cost_price: costPrice
+          cost_price: costPrice,
         };
       }
       console.warn("Supabase products update warning:", error?.message);
@@ -333,22 +397,22 @@ export const posService = {
     // Fallback path: fetch current product info and overlay min_stock details
     try {
       const { data: currentProduct } = await supabase
-        .from('products')
+        .from("products")
         .select(`
           *,
           category:categories(name),
           variants:product_variants(*)
         `)
-        .eq('id', id)
-        .eq('organization_id', orgId)
+        .eq("id", id)
+        .eq("organization_id", orgId)
         .single();
 
       if (currentProduct) {
         if (productData.min_stock !== undefined) {
           currentProduct.min_stock = productData.min_stock;
         }
-        if (currentProduct.description && currentProduct.description.includes('::')) {
-          currentProduct.description = currentProduct.description.split('::').slice(1).join('::');
+        if (currentProduct.description?.includes("::")) {
+          currentProduct.description = currentProduct.description.split("::").slice(1).join("::");
         }
         return currentProduct;
       }
@@ -359,15 +423,97 @@ export const posService = {
     return { id, ...productData };
   },
 
+  // Synchronize the variants of a product with the desired list.
+  // - hasVariants=false: delete every variant of this product
+  // - hasVariants=true: upsert provided variants and delete any DB variants not in the payload
+  async syncProductVariants(productId: string, variantsInput: any[], hasVariants: boolean) {
+    const supabase = createClient();
+
+    // Fetch existing variants for diff
+    const { data: existing, error: fetchErr } = await supabase
+      .from("product_variants")
+      .select("id")
+      .eq("product_id", productId);
+    if (fetchErr) {
+      console.warn("Could not fetch existing variants:", fetchErr.message);
+    }
+    const existingIds = new Set((existing || []).map((v: any) => v.id));
+
+    if (!hasVariants) {
+      // Wipe all variants of this product
+      const { error: delErr } = await supabase.from("product_variants").delete().eq("product_id", productId);
+      if (delErr && delErr.code !== "PGRST116") {
+        throw delErr;
+      }
+      return;
+    }
+
+    const incomingIds = new Set(variantsInput.filter((v: any) => v.id && existingIds.has(v.id)).map((v: any) => v.id));
+
+    // 1. Delete removed variants
+    const toDelete = Array.from(existingIds).filter((id) => !incomingIds.has(id));
+    if (toDelete.length > 0) {
+      const { error: delErr } = await supabase.from("product_variants").delete().in("id", toDelete);
+      if (delErr) {
+        console.warn("Failed to delete obsolete variants:", delErr.message);
+      }
+    }
+
+    // 2. Update existing variants
+    for (const v of variantsInput) {
+      if (v.id && existingIds.has(v.id)) {
+        const { error: upErr } = await supabase
+          .from("product_variants")
+          .update({
+            name: v.name,
+            sku: v.sku || null,
+            barcode: v.barcode || null,
+            barcode_type: v.barcode_type || "CODE128",
+            price: v.price ?? 0,
+            cost_price: v.cost_price ?? 0,
+            stock: v.stock ?? 0,
+            image_url: v.image_url || null,
+            attributes: v.attributes || {},
+          })
+          .eq("id", v.id);
+        if (upErr) {
+          console.warn(`Failed to update variant ${v.id}:`, upErr.message);
+        }
+      }
+    }
+
+    // 3. Insert new variants
+    const toInsert = variantsInput
+      .filter((v: any) => !v.id || !existingIds.has(v.id))
+      .map((v: any) => ({
+        product_id: productId,
+        name: v.name,
+        sku: v.sku || null,
+        barcode: v.barcode || null,
+        barcode_type: v.barcode_type || "CODE128",
+        price: v.price ?? 0,
+        cost_price: v.cost_price ?? 0,
+        stock: v.stock ?? 0,
+        image_url: v.image_url || null,
+        attributes: v.attributes || {},
+      }));
+    if (toInsert.length > 0) {
+      const { error: insErr } = await supabase.from("product_variants").insert(toInsert);
+      if (insErr) {
+        throw insErr;
+      }
+    }
+  },
+
   async deleteProduct(id: string) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
 
     const { error } = await supabase
-      .from('products')
+      .from("products")
       .update({ is_active: false }) // Soft delete
-      .eq('id', id)
-      .eq('organization_id', orgId);
+      .eq("id", id)
+      .eq("organization_id", orgId);
 
     if (error) throw error;
   },
@@ -389,7 +535,7 @@ export const posService = {
       // customer_credit_accounts.customer_id; unique(tenant_id, customer_id)
       // guarantees at most one row, so we take [0] in the mapper below.
       let dbQuery = supabase
-        .from('customers')
+        .from("customers")
         .select(`
           *,
           credit_account:customer_credit_accounts(
@@ -399,7 +545,7 @@ export const posService = {
             due_amount
           )
         `)
-        .eq('organization_id', orgId);
+        .eq("organization_id", orgId);
 
       if (query.trim()) {
         dbQuery = dbQuery.or(`name.ilike.%${query}%,phone.ilike.%${query}%`);
@@ -407,14 +553,13 @@ export const posService = {
       const { data: dbData, error } = await dbQuery.limit(100);
       if (error) {
         // Surface the actual error so we can debug 400/RLS/schema issues.
-        console.error('customers SELECT failed:', error.message, error.code, error.details, error.hint);
+        console.error("customers SELECT failed:", error.message, error.code, error.details, error.hint);
       } else {
         dbQueryOk = true;
         if (dbData) data = dbData;
       }
-
     } catch (e) {
-      console.error('Supabase customers query threw:', (e as any)?.message || e);
+      console.error("Supabase customers query threw:", (e as any)?.message || e);
     }
 
     let filteredData = data || [];
@@ -425,8 +570,8 @@ export const posService = {
     // c.debt only for legacy localStorage records.
     filteredData = filteredData.map((c: any) => {
       let cleanAddress = c.address;
-      if (c.address && c.address.includes('::')) {
-        cleanAddress = c.address.split('::').slice(1).join('::');
+      if (c.address?.includes("::")) {
+        cleanAddress = c.address.split("::").slice(1).join("::");
       }
       const account = Array.isArray(c.credit_account) ? c.credit_account[0] : c.credit_account;
       return {
@@ -436,7 +581,7 @@ export const posService = {
         overdue_amount: Number(account?.overdue_amount ?? 0),
         credit_limit: Number(account?.credit_limit ?? 0),
         due_amount: Number(account?.due_amount ?? 0),
-        address: cleanAddress
+        address: cleanAddress,
       };
     });
 
@@ -444,9 +589,9 @@ export const posService = {
     // outright (network down / RLS broken). If the DB returned successfully
     // with zero rows, we trust that the tenant actually has no customers,
     // and we MUST NOT inject phantom UUIDs that will break the orders FK.
-    if (!dbQueryOk && typeof window !== 'undefined') {
+    if (!dbQueryOk && typeof window !== "undefined") {
       try {
-        const local = localStorage.getItem(getTenantStorageKey('zpos_customers'));
+        const local = localStorage.getItem(getTenantStorageKey("zpos_customers"));
         if (local) {
           const localList = JSON.parse(local);
           const filteredLocal = (localList || []).filter((c: any) => {
@@ -454,7 +599,7 @@ export const posService = {
             const q = query.toLowerCase();
             return c.name?.toLowerCase().includes(q) || c.phone?.toLowerCase().includes(q);
           });
-          const dbIds = new Set(filteredData.map(c => c.id));
+          const dbIds = new Set(filteredData.map((c) => c.id));
           filteredLocal.forEach((c: any) => {
             if (!dbIds.has(c.id)) {
               // Mark as offline-only so the UI can show a badge if it wants.
@@ -463,7 +608,7 @@ export const posService = {
           });
         }
       } catch (e) {
-        console.warn('Error reading local customers:', e);
+        console.warn("Error reading local customers:", e);
       }
     }
 
@@ -476,9 +621,9 @@ export const posService = {
 
     // 1. Fetch current organization branding
     const { data: org, error: fetchError } = await supabase
-      .from('organizations')
-      .select('branding')
-      .eq('id', orgId)
+      .from("organizations")
+      .select("branding")
+      .eq("id", orgId)
       .single();
 
     if (fetchError) throw fetchError;
@@ -486,37 +631,37 @@ export const posService = {
     const currentBranding = org?.branding || {};
     const updatedBranding = {
       ...currentBranding,
-      telegram: settings
+      telegram: settings,
     };
 
     // 2. Update branding in DB
     const { error: updateError } = await supabase
-      .from('organizations')
+      .from("organizations")
       .update({ branding: updatedBranding })
-      .eq('id', orgId);
+      .eq("id", orgId);
 
     if (updateError) throw updateError;
   },
 
   async sendTelegramNotification(message: string) {
-    if (typeof window === 'undefined') return;
-    const enabled = localStorage.getItem('zpos_telegram_enabled') === 'true';
-    const token = localStorage.getItem('zpos_telegram_token');
-    const chatId = localStorage.getItem('zpos_telegram_chat_id');
+    if (typeof window === "undefined") return;
+    const enabled = localStorage.getItem("zpos_telegram_enabled") === "true";
+    const token = localStorage.getItem("zpos_telegram_token");
+    const chatId = localStorage.getItem("zpos_telegram_chat_id");
 
     if (!enabled || !token || !chatId) return;
 
     try {
       const url = `https://api.telegram.org/bot${token}/sendMessage`;
       await fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           chat_id: chatId,
           text: message,
-          parse_mode: 'HTML',
+          parse_mode: "HTML",
         }),
       });
     } catch (e) {
@@ -527,13 +672,28 @@ export const posService = {
   async createOrder(orderData: any, items: any[]) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    const sessionState = await ensureWritableOrderSession(supabase, orgId);
+    const _sessionState = await ensureWritableOrderSession(supabase, orgId);
 
+    // Group requested quantities by the row that will be debited: variant_id for
+    // variant items, product_id for non-variant items. We validate each group
+    // against the right table (product_variants vs products).
+    const requestedByVariantId = new Map<string, { quantity: number; name: string }>();
     const requestedByProductId = new Map<string, { quantity: number; name: string }>();
     for (const item of items) {
-      const productId = item.id;
-      if (!isValidUUID(productId)) continue;
       const quantity = Math.max(0, Number(item.quantity || 0));
+      if (quantity <= 0) continue;
+
+      const variantId = item.variant_id && isValidUUID(item.variant_id) ? item.variant_id : null;
+      if (variantId) {
+        const existing = requestedByVariantId.get(variantId);
+        requestedByVariantId.set(variantId, {
+          quantity: (existing?.quantity || 0) + quantity,
+          name: item.name || existing?.name || "Sản phẩm",
+        });
+        continue;
+      }
+      const productId = isValidUUID(item.id) ? item.id : null;
+      if (!productId) continue;
       const existing = requestedByProductId.get(productId);
       requestedByProductId.set(productId, {
         quantity: (existing?.quantity || 0) + quantity,
@@ -541,6 +701,37 @@ export const posService = {
       });
     }
 
+    // Variant-level validation
+    if (requestedByVariantId.size > 0) {
+      const variantIds = Array.from(requestedByVariantId.keys());
+      const { data: variantRows, error: variantStockError } = await supabase
+        .from("product_variants")
+        .select("id, name, stock, products!inner(name, organization_id)")
+        .eq("products.organization_id", orgId)
+        .in("id", variantIds);
+
+      if (variantStockError) throw variantStockError;
+
+      const variantStockById = new Map((variantRows || []).map((v: any) => [v.id, v]));
+      for (const [variantId, requested] of requestedByVariantId) {
+        const variant = variantStockById.get(variantId);
+        const stock = Number(variant?.stock ?? 0);
+        if (!variant || stock <= 0 || requested.quantity > stock) {
+          const variantLabel = variant
+            ? `${(variant as any).products?.name || requested.name} – ${(variant as any).name}`
+            : requested.name;
+          const error = new Error(
+            stock <= 0
+              ? `${variantLabel} đã hết hàng, không thể bán tiếp.`
+              : `${variantLabel} chỉ còn ${stock} sản phẩm, không đủ để bán ${requested.quantity}.`,
+          );
+          (error as any).code = "OUT_OF_STOCK";
+          throw error;
+        }
+      }
+    }
+
+    // Product-level validation (non-variant items)
     if (requestedByProductId.size > 0) {
       const productIds = Array.from(requestedByProductId.keys());
       const { data: stockRows, error: stockError } = await supabase
@@ -556,7 +747,7 @@ export const posService = {
         const product = stockById.get(productId);
         const stock = Number(product?.stock ?? 0);
         if (!product || stock <= 0 || requested.quantity > stock) {
-          const productName = product?.name || requested.name;
+          const productName = (product as any)?.name || requested.name;
           const error = new Error(
             stock <= 0
               ? `${productName} đã hết hàng, không thể bán tiếp.`
@@ -570,15 +761,15 @@ export const posService = {
 
     // Validate branch_id or auto-create main branch
     let branchId = orderData.branch_id;
-    if (!branchId || !isValidUUID(branchId) || branchId === '00000000-0000-0000-0000-000000000000') {
+    if (!branchId || !isValidUUID(branchId) || branchId === "00000000-0000-0000-0000-000000000000") {
       // 1. Try to read from localStorage first (currently selected branch by switcher or saved branches fallback)
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         try {
           const selected = localStorage.getItem(`zpos_selected_branch_id_${getTenantSlug()}`);
           if (selected && isValidUUID(selected)) {
             branchId = selected;
           } else {
-            const local = localStorage.getItem(getTenantStorageKey('zpos_branches'));
+            const local = localStorage.getItem(getTenantStorageKey("zpos_branches"));
             if (local) {
               const parsed = JSON.parse(local);
               if (Array.isArray(parsed) && parsed.length > 0) {
@@ -596,12 +787,12 @@ export const posService = {
       }
 
       // 2. Query Supabase database to verify or resolve branch if needed
-      if (!branchId || !isValidUUID(branchId) || branchId === '00000000-0000-0000-0000-000000000000') {
+      if (!branchId || !isValidUUID(branchId) || branchId === "00000000-0000-0000-0000-000000000000") {
         try {
           const { data: branches, error: selectErr } = await supabase
-            .from('branches')
-            .select('id')
-            .eq('organization_id', orgId)
+            .from("branches")
+            .select("id")
+            .eq("organization_id", orgId)
             .limit(1);
 
           if (!selectErr && branches && branches.length > 0) {
@@ -609,9 +800,9 @@ export const posService = {
           } else {
             // Self-healing: If database is empty but we have local branches in localStorage, sync them!
             let syncedBranchId = null;
-            if (typeof window !== 'undefined') {
+            if (typeof window !== "undefined") {
               try {
-                const local = localStorage.getItem(getTenantStorageKey('zpos_branches'));
+                const local = localStorage.getItem(getTenantStorageKey("zpos_branches"));
                 if (local) {
                   const parsed = JSON.parse(local);
                   if (Array.isArray(parsed) && parsed.length > 0) {
@@ -620,13 +811,13 @@ export const posService = {
                       return {
                         ...dbB,
                         organization_id: orgId,
-                        is_main_branch: status === "Chính" || b.is_main_branch || false
+                        is_main_branch: status === "Chính" || b.is_main_branch || false,
                       };
                     });
                     const { data: inserted, error: syncError } = await supabase
-                      .from('branches')
+                      .from("branches")
                       .insert(branchesToSync)
-                      .select('id');
+                      .select("id");
                     if (!syncError && inserted && inserted.length > 0) {
                       syncedBranchId = inserted[0].id;
                     }
@@ -639,35 +830,42 @@ export const posService = {
 
             if (syncedBranchId && isValidUUID(syncedBranchId)) {
               branchId = syncedBranchId;
-            } else if (getTenantSlug() === 'app') {
+            } else if (getTenantSlug() === "app") {
               // Auto-create a main branch if missing (demo only)
               const { data: newBranch, error: insertErr } = await supabase
-                .from('branches')
-                .insert([{
-                  organization_id: orgId,
-                  name: 'Chi nhánh chính',
-                  is_main_branch: true,
-                  address: 'Trụ sở chính'
-                }])
-                .select('id')
+                .from("branches")
+                .insert([
+                  {
+                    organization_id: orgId,
+                    name: "Chi nhánh chính",
+                    is_main_branch: true,
+                    address: "Trụ sở chính",
+                  },
+                ])
+                .select("id")
                 .single();
 
               if (!insertErr && newBranch?.id) {
                 branchId = newBranch.id;
               } else {
                 console.warn("Branches insertion failed or table does not exist, using fallback UUID");
-                branchId = '00000000-0000-0000-0000-000000000000';
+                branchId = "00000000-0000-0000-0000-000000000000";
               }
             } else {
-              throw new Error("Không tìm thấy chi nhánh hoạt động. Vui lòng thiết lập chi nhánh trong phần Cài đặt trước khi tạo đơn hàng.");
+              throw new Error(
+                "Không tìm thấy chi nhánh hoạt động. Vui lòng thiết lập chi nhánh trong phần Cài đặt trước khi tạo đơn hàng.",
+              );
             }
           }
         } catch (e: any) {
           console.warn("Branches table not available or error occurred:", e);
-          if (getTenantSlug() === 'app') {
-            branchId = '00000000-0000-0000-0000-000000000000';
+          if (getTenantSlug() === "app") {
+            branchId = "00000000-0000-0000-0000-000000000000";
           } else {
-            throw new Error(e?.message || "Không tìm thấy chi nhánh hoạt động. Vui lòng thiết lập chi nhánh trong phần Cài đặt trước khi tạo đơn hàng.");
+            throw new Error(
+              e?.message ||
+                "Không tìm thấy chi nhánh hoạt động. Vui lòng thiết lập chi nhánh trong phần Cài đặt trước khi tạo đơn hàng.",
+            );
           }
         }
       }
@@ -683,27 +881,25 @@ export const posService = {
     if (customerId) {
       try {
         const { data: existing } = await supabase
-          .from('customers')
-          .select('id')
-          .eq('id', customerId)
-          .eq('organization_id', orgId)
+          .from("customers")
+          .select("id")
+          .eq("id", customerId)
+          .eq("organization_id", orgId)
           .maybeSingle();
         if (!existing) {
-          console.warn(
-            `Customer ${customerId} not found in DB — order will be created without a customer link.`,
-          );
+          console.warn(`Customer ${customerId} not found in DB — order will be created without a customer link.`);
           customerId = null;
           // Best-effort: clean the phantom from localStorage so the user
           // doesn't keep selecting the same broken record.
-          if (typeof window !== 'undefined') {
+          if (typeof window !== "undefined") {
             try {
-              const raw = localStorage.getItem(getTenantStorageKey('zpos_customers'));
+              const raw = localStorage.getItem(getTenantStorageKey("zpos_customers"));
               if (raw) {
                 const list = JSON.parse(raw);
                 if (Array.isArray(list)) {
                   const cleaned = list.filter((c: any) => c?.id !== orderData.customer_id);
                   if (cleaned.length !== list.length) {
-                    localStorage.setItem(getTenantStorageKey('zpos_customers'), JSON.stringify(cleaned));
+                    localStorage.setItem(getTenantStorageKey("zpos_customers"), JSON.stringify(cleaned));
                   }
                 }
               }
@@ -711,7 +907,7 @@ export const posService = {
           }
         }
       } catch (e) {
-        console.warn('Could not verify customer_id existence:', (e as any)?.message);
+        console.warn("Could not verify customer_id existence:", (e as any)?.message);
       }
     }
 
@@ -727,12 +923,12 @@ export const posService = {
       ...rawOrderData,
       organization_id: orgId,
       branch_id: branchId,
-      customer_id: customerId
+      customer_id: customerId,
     };
 
     // 1. Create the order
     const { data: order, error: orderError } = await supabase
-      .from('orders')
+      .from("orders")
       .insert([preparedOrderData])
       .select()
       .single();
@@ -750,19 +946,22 @@ export const posService = {
         }
       })();
       console.error(
-        'Order insertion failed →',
-        'message:', orderError?.message,
-        '| code:', orderError?.code,
-        '| details:', orderError?.details,
-        '| hint:', orderError?.hint,
-        '| raw:', rawDump,
-        '| payload:', preparedOrderData,
+        "Order insertion failed →",
+        "message:",
+        orderError?.message,
+        "| code:",
+        orderError?.code,
+        "| details:",
+        orderError?.details,
+        "| hint:",
+        orderError?.hint,
+        "| raw:",
+        rawDump,
+        "| payload:",
+        preparedOrderData,
       );
       const wrapped = new Error(
-        orderError?.message ||
-          orderError?.details ||
-          orderError?.hint ||
-          `Không thể tạo đơn hàng (${rawDump})`,
+        orderError?.message || orderError?.details || orderError?.hint || `Không thể tạo đơn hàng (${rawDump})`,
       );
       (wrapped as any).code = orderError?.code;
       (wrapped as any).details = orderError?.details;
@@ -776,9 +975,9 @@ export const posService = {
     let fallbackVariantId: string | null = null;
     try {
       const { data: firstVariant } = await supabase
-        .from('product_variants')
-        .select('id, products!inner(organization_id)')
-        .eq('products.organization_id', orgId)
+        .from("product_variants")
+        .select("id, products!inner(organization_id)")
+        .eq("products.organization_id", orgId)
         .limit(1);
       if (firstVariant && firstVariant.length > 0) {
         fallbackVariantId = firstVariant[0].id;
@@ -788,10 +987,10 @@ export const posService = {
     }
 
     // 2. Create order items
-    const orderItems = items.map(item => {
+    const orderItems = items.map((item) => {
       let itemId = item.variant_id || item.id;
       if (!isValidUUID(itemId)) {
-        itemId = fallbackVariantId || '00000000-0000-0000-0000-000000000000';
+        itemId = fallbackVariantId || "00000000-0000-0000-0000-000000000000";
       }
       return {
         order_id: order.id,
@@ -799,23 +998,21 @@ export const posService = {
         quantity: item.quantity,
         unit_price: item.price,
         total_price: item.price * item.quantity,
-        discount_amount: 0
+        discount_amount: 0,
       };
     });
 
-    const { error: itemsError } = await supabase
-      .from('order_items')
-      .insert(orderItems);
+    const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
 
     if (itemsError) {
       const wrapped = new Error(
-        itemsError.message || itemsError.details || itemsError.hint || 'Không thể lưu chi tiết đơn',
+        itemsError.message || itemsError.details || itemsError.hint || "Không thể lưu chi tiết đơn",
       );
       (wrapped as any).code = itemsError.code;
       (wrapped as any).details = itemsError.details;
       (wrapped as any).hint = itemsError.hint;
       (wrapped as any).pg = itemsError;
-      console.error('Order items insertion failed:', {
+      console.error("Order items insertion failed:", {
         message: itemsError.message,
         code: itemsError.code,
         details: itemsError.details,
@@ -839,54 +1036,88 @@ export const posService = {
       }
     }
 
-    // 3. Deduct stock from products (actual inventory update)
+    // 3. Deduct stock from the right table:
+    //    - If the cart item carries a variant_id, decrement product_variants.stock for that SKU.
+    //    - Otherwise fall back to the parent products.stock column for non-variant products.
+    // The low-stock Telegram notification uses the post-deduction value of the affected row.
+    const notifyStock =
+      typeof localStorage !== "undefined" && localStorage.getItem("zpos_telegram_notify_stock") === "true";
+
     for (const item of items) {
-      // Use original item.id since that corresponds to the product.id
-      const productId = item.id;
-      if (!isValidUUID(productId)) continue;
+      const variantId = item.variant_id && isValidUUID(item.variant_id) ? item.variant_id : null;
+      const productId = isValidUUID(item.id) ? item.id : null;
+      const qty = item.quantity || 1;
 
       try {
-      const { data: productData } = await supabase
-          .from('products')
-          .select('name, stock')
-          .eq('id', productId)
-          .eq('organization_id', orgId)
-          .single();
+        if (variantId) {
+          // Variant-level deduction — pull the variant + its parent product name for notifications.
+          const { data: variantData } = await supabase
+            .from("product_variants")
+            .select("id, name, stock, product_id, products!inner(name, organization_id)")
+            .eq("id", variantId)
+            .eq("products.organization_id", orgId)
+            .single();
 
-        if (productData) {
-          const newStock = Math.max(0, (productData.stock || 0) - (item.quantity || 1));
-          await supabase
-            .from('products')
-            .update({ stock: newStock })
-            .eq('id', productId)
-            .eq('organization_id', orgId);
+          if (variantData) {
+            const newStock = Math.max(0, (variantData.stock || 0) - qty);
+            await supabase.from("product_variants").update({ stock: newStock }).eq("id", variantId);
 
-          // Telegram Notification: Low Stock Check
-          const notifyStock = localStorage.getItem('zpos_telegram_notify_stock') === 'true';
-          if (notifyStock && newStock <= 5) {
-            const warningMsg = `⚠️ <b>CẢNH BÁO TỒN KHO THẤP</b>\n\nSản phẩm <b>${productData.name}</b> chỉ còn <b>${newStock}</b> sản phẩm trong kho (mức tối thiểu: 5). Vui lòng nhập thêm hàng!`;
-            posService.sendTelegramNotification(warningMsg);
+            if (notifyStock && newStock <= 5) {
+              const parentName = (variantData as any).products?.name || "Sản phẩm";
+              const warningMsg = `⚠️ <b>CẢNH BÁO TỒN KHO THẤP</b>\n\nBiến thể <b>${parentName} – ${variantData.name}</b> chỉ còn <b>${newStock}</b> sản phẩm trong kho (mức tối thiểu: 5). Vui lòng nhập thêm hàng!`;
+              posService.sendTelegramNotification(warningMsg);
+            }
+          }
+        } else if (productId) {
+          // Product-level deduction (legacy path for non-variant products).
+          const { data: productData } = await supabase
+            .from("products")
+            .select("name, stock")
+            .eq("id", productId)
+            .eq("organization_id", orgId)
+            .single();
+
+          if (productData) {
+            const newStock = Math.max(0, (productData.stock || 0) - qty);
+            await supabase
+              .from("products")
+              .update({ stock: newStock })
+              .eq("id", productId)
+              .eq("organization_id", orgId);
+
+            if (notifyStock && newStock <= 5) {
+              const warningMsg = `⚠️ <b>CẢNH BÁO TỒN KHO THẤP</b>\n\nSản phẩm <b>${productData.name}</b> chỉ còn <b>${newStock}</b> sản phẩm trong kho (mức tối thiểu: 5). Vui lòng nhập thêm hàng!`;
+              posService.sendTelegramNotification(warningMsg);
+            }
           }
         }
       } catch (err) {
-        console.warn(`Failed to deduct stock for product ${productId}:`, err);
+        console.warn(`Failed to deduct stock (item ${variantId || productId}):`, err);
       }
     }
 
     // Telegram Notification: New Order Completed Check
-    const notifyOrder = localStorage.getItem('zpos_telegram_notify_order') === 'true';
+    const notifyOrder = localStorage.getItem("zpos_telegram_notify_order") === "true";
     if (notifyOrder) {
       try {
         const orderNum = order.order_number || `DH-${order.id.slice(0, 8)}`;
-        const totalFormatted = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.total_amount);
-        const paymentMethod = order.payment_method === 'cash' ? '💵 Tiền mặt' : (order.payment_method === 'qr' || order.payment_method === 'bank' ? '💳 Chuyển khoản (VietQR)' : '💰 Khác');
+        const totalFormatted = new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
+          order.total_amount,
+        );
+        const paymentMethod =
+          order.payment_method === "cash"
+            ? "💵 Tiền mặt"
+            : order.payment_method === "qr" || order.payment_method === "bank"
+              ? "💳 Chuyển khoản (VietQR)"
+              : "💰 Khác";
 
-        let itemsList = '';
+        let itemsList = "";
         items.forEach((item, index) => {
-          itemsList += `${index + 1}. <b>${item.name}</b> x${item.quantity} - ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price * item.quantity)}\n`;
+          itemsList += `${index + 1}. <b>${item.name}</b> x${item.quantity} - ${new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(item.price * item.quantity)}\n`;
         });
 
-        const telegramMsg = `🎉 <b>ĐƠN HÀNG MỚI ĐÃ HOÀN TẤT!</b>\n\n` +
+        const telegramMsg =
+          `🎉 <b>ĐƠN HÀNG MỚI ĐÃ HOÀN TẤT!</b>\n\n` +
           `🔹 Mã đơn: <b>#${orderNum}</b>\n` +
           `🔹 Thanh toán: <b>${paymentMethod}</b>\n` +
           `🔹 Tổng tiền: <b>${totalFormatted}</b>\n\n` +
@@ -908,7 +1139,7 @@ export const posService = {
 
     // 1. Fetch orders with customer details and basic order items details
     const { data: orders, error } = await supabase
-      .from('orders')
+      .from("orders")
       .select(`
         *,
         customer:customers(name, address, phone),
@@ -919,19 +1150,19 @@ export const posService = {
           variant_id
         )
       `)
-      .eq('organization_id', orgId)
-      .order('created_at', { ascending: false });
+      .eq("organization_id", orgId)
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
     if (!orders || orders.length === 0) return [];
 
     // 2. Fetch all products and their variants to map names in memory
     const { data: products } = await supabase
-      .from('products')
-      .select('id, name, description, variants:product_variants(id, name)')
-      .eq('organization_id', orgId);
+      .from("products")
+      .select("id, name, description, variants:product_variants(id, name)")
+      .eq("organization_id", orgId);
 
-    const variantMap = new Map<string, { productName: string, variantName: string | null }>();
+    const variantMap = new Map<string, { productName: string; variantName: string | null }>();
 
     products?.forEach((p: any) => {
       variantMap.set(p.id, { productName: p.name, variantName: null });
@@ -952,15 +1183,15 @@ export const posService = {
           variant: {
             name: mapped?.variantName || null,
             product: {
-              name: mapped?.productName || "Sản phẩm"
-            }
-          }
+              name: mapped?.productName || "Sản phẩm",
+            },
+          },
         };
       });
 
       return {
         ...o,
-        order_items: orderItemsMapped
+        order_items: orderItemsMapped,
       };
     });
 
@@ -969,10 +1200,7 @@ export const posService = {
 
   async getOrderItems(orderId: string) {
     const supabase = createClient();
-    const { data, error } = await supabase
-      .from('order_items')
-      .select('*')
-      .eq('order_id', orderId);
+    const { data, error } = await supabase.from("order_items").select("*").eq("order_id", orderId);
 
     if (error) throw error;
     return data;
@@ -983,13 +1211,13 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     const { data, error } = await supabase
-      .from('orders')
+      .from("orders")
       .update({
         ...orderData,
-        organization_id: orgId
+        organization_id: orgId,
       })
-      .eq('id', id)
-      .eq('organization_id', orgId)
+      .eq("id", id)
+      .eq("organization_id", orgId)
       .select()
       .single();
 
@@ -1002,9 +1230,9 @@ export const posService = {
 
     // 1. Get existing items from the database
     const { data: existingItems, error: fetchError } = await supabase
-      .from('order_items')
-      .select('id')
-      .eq('order_id', orderId);
+      .from("order_items")
+      .select("id")
+      .eq("order_id", orderId);
 
     if (fetchError) throw fetchError;
 
@@ -1012,12 +1240,9 @@ export const posService = {
     const currentIds = items.filter((i: any) => i.id).map((i: any) => i.id);
 
     // 2. Identify items to delete
-    const idsToDelete = existingIds.filter(id => !currentIds.includes(id));
+    const idsToDelete = existingIds.filter((id) => !currentIds.includes(id));
     if (idsToDelete.length > 0) {
-      const { error: delError } = await supabase
-        .from('order_items')
-        .delete()
-        .in('id', idsToDelete);
+      const { error: delError } = await supabase.from("order_items").delete().in("id", idsToDelete);
       if (delError) throw delError;
     }
 
@@ -1026,25 +1251,25 @@ export const posService = {
       if (item.id && existingIds.includes(item.id)) {
         // Update existing item
         const { error: updError } = await supabase
-          .from('order_items')
+          .from("order_items")
           .update({
             quantity: item.quantity,
             unit_price: item.unit_price,
-            total_price: item.total_price
+            total_price: item.total_price,
           })
-          .eq('id', item.id);
+          .eq("id", item.id);
         if (updError) throw updError;
       } else {
         // Insert new item
-        const { error: insError } = await supabase
-          .from('order_items')
-          .insert([{
+        const { error: insError } = await supabase.from("order_items").insert([
+          {
             order_id: orderId,
             variant_id: item.variant_id,
             quantity: item.quantity,
             unit_price: item.unit_price,
-            total_price: item.total_price
-          }]);
+            total_price: item.total_price,
+          },
+        ]);
         if (insError) throw insError;
       }
     }
@@ -1054,13 +1279,59 @@ export const posService = {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
 
-    const { error } = await supabase
-      .from('orders')
-      .update({ status: 'cancelled' })
-      .eq('id', id)
-      .eq('organization_id', orgId);
+    // Bail out early if the order is already cancelled to avoid double-restocking.
+    const { data: existingOrder } = await supabase
+      .from("orders")
+      .select("status")
+      .eq("id", id)
+      .eq("organization_id", orgId)
+      .single();
+    if (!existingOrder || existingOrder.status === "cancelled") return;
 
+    // 1. Mark the order cancelled
+    const { error } = await supabase
+      .from("orders")
+      .update({ status: "cancelled" })
+      .eq("id", id)
+      .eq("organization_id", orgId);
     if (error) throw error;
+
+    // 2. Restore stock from the order items. order_items.variant_id is the row
+    //    we previously decremented, so we increment that same row.
+    const { data: orderItems, error: itemsErr } = await supabase
+      .from("order_items")
+      .select("variant_id, quantity")
+      .eq("order_id", id);
+    if (itemsErr || !orderItems) {
+      console.warn("cancelOrder: could not load order_items to restore stock:", itemsErr?.message);
+      return;
+    }
+
+    for (const item of orderItems) {
+      const variantId = item.variant_id;
+      const qty = Number(item.quantity || 0);
+      if (!variantId || !isValidUUID(variantId) || qty <= 0) continue;
+
+      try {
+        // Resolve the variant + its parent so we can decide which table to update.
+        // For non-variant products created via the legacy path, order_items.variant_id
+        // points at a fallback row that does not belong to the real product. We detect
+        // that by joining on products and refusing to touch a stale row.
+        const { data: variant } = await supabase
+          .from("product_variants")
+          .select("id, stock, product_id, products!inner(organization_id)")
+          .eq("id", variantId)
+          .eq("products.organization_id", orgId)
+          .single();
+        if (!variant) continue;
+        await supabase
+          .from("product_variants")
+          .update({ stock: (variant.stock || 0) + qty })
+          .eq("id", variantId);
+      } catch (e) {
+        console.warn(`cancelOrder: failed to restore stock for variant ${variantId}:`, e);
+      }
+    }
   },
 
   async deleteOrder(id: string) {
@@ -1068,19 +1339,12 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     // Delete associated order_items first
-    const { error: itemsError } = await supabase
-      .from('order_items')
-      .delete()
-      .eq('order_id', id);
+    const { error: itemsError } = await supabase.from("order_items").delete().eq("order_id", id);
 
     if (itemsError) throw itemsError;
 
     // Delete the order itself
-    const { error: orderError } = await supabase
-      .from('orders')
-      .delete()
-      .eq('id', id)
-      .eq('organization_id', orgId);
+    const { error: orderError } = await supabase.from("orders").delete().eq("id", id).eq("organization_id", orgId);
 
     if (orderError) throw orderError;
   },
@@ -1090,7 +1354,7 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     const { data: order, error } = await supabase
-      .from('orders')
+      .from("orders")
       .select(`
         *,
         customer:customers(*),
@@ -1102,8 +1366,8 @@ export const posService = {
           total_price
         )
       `)
-      .eq('id', id)
-      .eq('organization_id', orgId)
+      .eq("id", id)
+      .eq("organization_id", orgId)
       .single();
 
     if (error) throw error;
@@ -1111,11 +1375,11 @@ export const posService = {
 
     // Fetch all products to map names in memory
     const { data: products } = await supabase
-      .from('products')
-      .select('id, name, description, variants:product_variants(id, name)')
-      .eq('organization_id', orgId);
+      .from("products")
+      .select("id, name, description, variants:product_variants(id, name)")
+      .eq("organization_id", orgId);
 
-    const variantMap = new Map<string, { productName: string, variantName: string | null }>();
+    const variantMap = new Map<string, { productName: string; variantName: string | null }>();
 
     products?.forEach((p: any) => {
       variantMap.set(p.id, { productName: p.name, variantName: null });
@@ -1130,13 +1394,13 @@ export const posService = {
       return {
         ...item,
         product_name: mapped?.productName || "Sản phẩm",
-        variant_name: mapped?.variantName || null
+        variant_name: mapped?.variantName || null,
       };
     });
 
     return {
       ...order,
-      order_items: orderItemsMapped
+      order_items: orderItemsMapped,
     };
   },
 
@@ -1147,14 +1411,16 @@ export const posService = {
 
     if (customerData.phone) {
       const { data: existingPhone } = await supabase
-        .from('customers')
-        .select('id, name')
-        .eq('organization_id', orgId)
-        .eq('phone', customerData.phone)
+        .from("customers")
+        .select("id, name")
+        .eq("organization_id", orgId)
+        .eq("phone", customerData.phone)
         .limit(1);
-        
+
       if (Array.isArray(existingPhone) && existingPhone.length > 0) {
-        throw new Error(`Số điện thoại đã được sử dụng cho khách hàng "${existingPhone[0].name}". Vui lòng sử dụng số điện thoại khác.`);
+        throw new Error(
+          `Số điện thoại đã được sử dụng cho khách hàng "${existingPhone[0].name}". Vui lòng sử dụng số điện thoại khác.`,
+        );
       }
     }
 
@@ -1166,16 +1432,16 @@ export const posService = {
       created_at: new Date().toISOString(),
       ...customerData,
       organization_id: orgId,
-      address: `${tenantSlug}::${customerData.address || ''}`
+      address: `${tenantSlug}::${customerData.address || ""}`,
     };
 
     // 1. Persist to LocalStorage overlay
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       try {
-        const local = localStorage.getItem(getTenantStorageKey('zpos_customers'));
+        const local = localStorage.getItem(getTenantStorageKey("zpos_customers"));
         const list = local ? JSON.parse(local) : [];
         list.push(finalData);
-        localStorage.setItem(getTenantStorageKey('zpos_customers'), JSON.stringify(list));
+        localStorage.setItem(getTenantStorageKey("zpos_customers"), JSON.stringify(list));
       } catch (e) {
         console.warn("Error writing local customer:", e);
       }
@@ -1190,23 +1456,19 @@ export const posService = {
         email: finalData.email || null,
         phone: finalData.phone || null,
         address: finalData.address || null,
-        loyalty_points: finalData.points || 0
+        loyalty_points: finalData.points || 0,
       };
 
-      const { data, error } = await supabase
-        .from('customers')
-        .insert([dbPayload])
-        .select()
-        .single();
+      const { data, error } = await supabase.from("customers").insert([dbPayload]).select().single();
 
       if (!error && data) {
-        if (data.address && data.address.includes('::')) {
-          data.address = data.address.split('::').slice(1).join('::');
+        if (data.address?.includes("::")) {
+          data.address = data.address.split("::").slice(1).join("::");
         }
         return {
           ...data,
           points: data.loyalty_points ?? 0,
-          debt: 0
+          debt: 0,
         };
       }
       console.warn("Supabase customer insert warning:", error?.message);
@@ -1215,8 +1477,8 @@ export const posService = {
     }
 
     const cleanData = { ...finalData };
-    if (cleanData.address && cleanData.address.includes('::')) {
-      cleanData.address = cleanData.address.split('::').slice(1).join('::');
+    if (cleanData.address?.includes("::")) {
+      cleanData.address = cleanData.address.split("::").slice(1).join("::");
     }
     return cleanData;
   },
@@ -1228,15 +1490,17 @@ export const posService = {
 
     if (customerData.phone) {
       const { data: existingPhone } = await supabase
-        .from('customers')
-        .select('id, name')
-        .eq('organization_id', orgId)
-        .eq('phone', customerData.phone)
-        .neq('id', id)
+        .from("customers")
+        .select("id, name")
+        .eq("organization_id", orgId)
+        .eq("phone", customerData.phone)
+        .neq("id", id)
         .limit(1);
-        
+
       if (Array.isArray(existingPhone) && existingPhone.length > 0) {
-        throw new Error(`Số điện thoại đã được sử dụng cho khách hàng "${existingPhone[0].name}". Vui lòng sử dụng số điện thoại khác.`);
+        throw new Error(
+          `Số điện thoại đã được sử dụng cho khách hàng "${existingPhone[0].name}". Vui lòng sử dụng số điện thoại khác.`,
+        );
       }
     }
 
@@ -1248,14 +1512,14 @@ export const posService = {
 
     const preparedData = {
       ...customerData,
-      ...(address !== undefined ? { address } : {})
+      ...(address !== undefined ? { address } : {}),
     };
 
     const { data, error } = await supabase
-      .from('customers')
+      .from("customers")
       .update(preparedData)
-      .eq('id', id)
-      .eq('organization_id', orgId)
+      .eq("id", id)
+      .eq("organization_id", orgId)
       .select()
       .single();
 
@@ -1263,14 +1527,11 @@ export const posService = {
     return data;
   },
 
-  async getSuppliers(query: string = "") {
+  async getSuppliers(query = "") {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
 
-    let q = supabase
-      .from('suppliers')
-      .select('*')
-      .eq('organization_id', orgId);
+    let q = supabase.from("suppliers").select("*").eq("organization_id", orgId);
 
     if (query) {
       q = q.or(`name.ilike.%${query}%,contact_name.ilike.%${query}%`);
@@ -1285,15 +1546,46 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     const { data, error } = await supabase
-      .from('suppliers')
-      .insert([{
-        ...supplierData,
-        organization_id: orgId
-      }])
+      .from("suppliers")
+      .insert([
+        {
+          ...supplierData,
+          organization_id: orgId,
+        },
+      ])
       .select()
       .single();
 
     if (error) throw error;
+    return data;
+  },
+
+  async recordSupplierPayment(
+    supplierId: string,
+    amount: number,
+    method: "cash" | "transfer" | "card" | "other" = "cash",
+    allocations?: { purchase_order_id: string; amount: number }[],
+    options?: {
+      paymentNo?: string;
+      reference?: string;
+      notes?: string;
+      bankAccountId?: string;
+    },
+  ) {
+    const supabase = createClient();
+    const { data, error } = await supabase.rpc("record_supplier_payment", {
+      p_supplier_id: supplierId,
+      p_amount: amount,
+      p_method: method,
+      p_allocations: allocations ?? null,
+      p_payment_no: options?.paymentNo,
+      p_reference: options?.reference,
+      p_notes: options?.notes,
+      p_bank_account_id: options?.bankAccountId,
+    });
+
+    if (error) throw error;
+    if (!data.ok) throw new Error(data.error);
     return data;
   },
 
@@ -1302,13 +1594,13 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     const { data, error } = await supabase
-      .from('purchase_orders')
+      .from("purchase_orders")
       .select(`
         *,
         supplier:suppliers(name)
       `)
-      .eq('organization_id', orgId)
-      .order('created_at', { ascending: false });
+      .eq("organization_id", orgId)
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
     return data;
@@ -1318,20 +1610,42 @@ export const posService = {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
 
+    let branchId = purchaseData.branch_id;
+    if (!branchId || branchId === "00000000-0000-0000-0000-000000000000") {
+      if (typeof window !== "undefined") {
+        const tenantSlug = localStorage.getItem("zpos_tenant_slug") || "zpos";
+        const selected = localStorage.getItem(`zpos_selected_branch_id_${tenantSlug}`);
+        if (selected && selected.length === 36) {
+          branchId = selected;
+        }
+      }
+    }
+    if (!branchId || branchId === "00000000-0000-0000-0000-000000000000") {
+      const { data: branches } = await supabase.from("branches").select("id").eq("organization_id", orgId).limit(1);
+      if (branches && branches.length > 0) branchId = branches[0].id;
+    }
+
+    const isDirectlyCompleted = purchaseData.status === "completed";
+    const initialStatus = isDirectlyCompleted ? "receiving" : purchaseData.status || "draft";
+
     // 1. Create purchase order record
     const { data: purchase, error: pError } = await supabase
-      .from('purchase_orders')
-      .insert([{
-        ...purchaseData,
-        organization_id: orgId
-      }])
+      .from("purchase_orders")
+      .insert([
+        {
+          ...purchaseData,
+          status: initialStatus,
+          branch_id: branchId,
+          organization_id: orgId,
+        },
+      ])
       .select()
       .single();
 
     if (pError) throw pError;
 
     // 2. Create purchase order items
-    const pItems = items.map(item => ({
+    const pItems = items.map((item) => ({
       purchase_order_id: purchase.id,
       product_id: item.product_id,
       variant_id: item.variant_id || null,
@@ -1342,16 +1656,99 @@ export const posService = {
       batch_number: item.batch_number || null,
       lot_number: item.lot_number || null,
       manufactured_at: item.manufactured_at || null,
-      expired_at: item.expired_at || null
+      expired_at: item.expired_at || null,
     }));
 
-    const { error: itemsError } = await supabase
-      .from('purchase_order_items')
-      .insert(pItems);
+    const { data: insertedItems, error: itemsError } = await supabase
+      .from("purchase_order_items")
+      .insert(pItems)
+      .select("id, quantity");
 
     if (itemsError) {
-      await supabase.from('purchase_orders').delete().eq('id', purchase.id);
+      await supabase.from("purchase_orders").delete().eq("id", purchase.id);
       throw itemsError;
+    }
+
+    // 3. If directly completed, receive stock immediately
+    if (isDirectlyCompleted && insertedItems) {
+      const receivePayload = insertedItems.map((i) => ({
+        itemId: i.id,
+        receivedQty: i.quantity,
+      }));
+      // This will automatically update global stock, and change PO status to 'completed', triggering the DB to update MAC and branch inventory.
+      await this.receiveStock(purchase.id, receivePayload);
+    }
+
+    return purchase;
+  },
+
+  async updatePurchaseOrder(id: string, purchaseData: any, items: any[]) {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+
+    // 1. Get existing order to check status
+    const { data: existingPO, error: fetchError } = await supabase
+      .from("purchase_orders")
+      .select("status")
+      .eq("id", id)
+      .eq("organization_id", orgId)
+      .single();
+
+    if (fetchError) throw fetchError;
+    if (existingPO.status === "completed" || existingPO.status === "cancelled") {
+      throw new Error(`Không thể sửa đơn nhập hàng ở trạng thái ${existingPO.status}`);
+    }
+
+    const isDirectlyCompleted = purchaseData.status === "completed";
+    const newStatus = isDirectlyCompleted ? "receiving" : purchaseData.status || "draft";
+
+    // 2. Update purchase order record
+    const { data: purchase, error: pError } = await supabase
+      .from("purchase_orders")
+      .update({
+        ...purchaseData,
+        status: newStatus,
+      })
+      .eq("id", id)
+      .eq("organization_id", orgId)
+      .select()
+      .single();
+
+    if (pError) throw pError;
+
+    // 3. Re-create items (delete old, insert new)
+    const { error: delError } = await supabase.from("purchase_order_items").delete().eq("purchase_order_id", id);
+
+    if (delError) throw delError;
+
+    const pItems = items.map((item) => ({
+      purchase_order_id: id,
+      product_id: item.product_id,
+      variant_id: item.variant_id || null,
+      sku: item.sku || null,
+      quantity: item.quantity || 1,
+      unit_cost: item.unit_cost || 0,
+      total_amount: (item.unit_cost || 0) * (item.quantity || 1),
+      batch_number: item.batch_number || null,
+      lot_number: item.lot_number || null,
+      manufactured_at: item.manufactured_at || null,
+      expired_at: item.expired_at || null,
+    }));
+
+    const { data: insertedItems, error: itemsError } = await supabase
+      .from("purchase_order_items")
+      .insert(pItems)
+      .select("id, quantity");
+
+    if (itemsError) throw itemsError;
+
+    // 4. If completed, receive stock immediately
+    if (isDirectlyCompleted && insertedItems) {
+      const receivePayload = insertedItems.map((i) => ({
+        itemId: i.id,
+        receivedQty: i.quantity,
+      }));
+      await this.receiveStock(id, receivePayload);
     }
 
     return purchase;
@@ -1362,7 +1759,7 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     const { data, error } = await supabase
-      .from('purchase_orders')
+      .from("purchase_orders")
       .select(`
         *,
         supplier:suppliers(*),
@@ -1371,63 +1768,87 @@ export const posService = {
           product:products(name, image)
         )
       `)
-      .eq('id', id)
-      .eq('organization_id', orgId)
+      .eq("id", id)
+      .eq("organization_id", orgId)
       .single();
 
     if (error) throw error;
     return data;
   },
 
-  async receiveStock(purchaseOrderId: string, items: { itemId: string, receivedQty: number }[]) {
+  async deletePurchaseOrder(id: string) {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+
+    const { error } = await supabase.from("purchase_orders").delete().eq("id", id).eq("organization_id", orgId);
+
+    if (error) throw error;
+    return true;
+  },
+
+  async receiveStock(purchaseOrderId: string, items: { itemId: string; receivedQty: number }[]) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
 
     for (const item of items) {
       // 1. Update received quantity in purchase_order_items
       const { data: orderItem } = await supabase
-        .from('purchase_order_items')
-        .select('received_quantity, product_id, variant_id, quantity, purchase_orders!inner(organization_id)')
-        .eq('id', item.itemId)
-        .eq('purchase_orders.organization_id', orgId)
+        .from("purchase_order_items")
+        .select("received_quantity, product_id, variant_id, quantity, purchase_orders!inner(organization_id)")
+        .eq("id", item.itemId)
+        .eq("purchase_orders.organization_id", orgId)
         .single();
 
       if (orderItem) {
         const newReceivedQty = (orderItem.received_quantity || 0) + item.receivedQty;
-        await supabase
-          .from('purchase_order_items')
-          .update({ received_quantity: newReceivedQty })
-          .eq('id', item.itemId);
+        await supabase.from("purchase_order_items").update({ received_quantity: newReceivedQty }).eq("id", item.itemId);
 
         // 2. Increase stock in products or product_variants
         if (orderItem.variant_id) {
           const { data: variant } = await supabase
-            .from('product_variants')
-            .select('stock, products!inner(organization_id)')
-            .eq('id', orderItem.variant_id)
-            .eq('products.organization_id', orgId)
+            .from("product_variants")
+            .select("stock, products!inner(organization_id)")
+            .eq("id", orderItem.variant_id)
+            .eq("products.organization_id", orgId)
             .single();
-          await supabase.from('product_variants').update({ stock: (variant?.stock || 0) + item.receivedQty }).eq('id', orderItem.variant_id);
+          await supabase
+            .from("product_variants")
+            .update({ stock: (variant?.stock || 0) + item.receivedQty })
+            .eq("id", orderItem.variant_id);
         } else {
-          const { data: product } = await supabase.from('products').select('stock').eq('id', orderItem.product_id).eq('organization_id', orgId).single();
-          await supabase.from('products').update({ stock: (product?.stock || 0) + item.receivedQty }).eq('id', orderItem.product_id).eq('organization_id', orgId);
+          const { data: product } = await supabase
+            .from("products")
+            .select("stock")
+            .eq("id", orderItem.product_id)
+            .eq("organization_id", orgId)
+            .single();
+          await supabase
+            .from("products")
+            .update({ stock: (product?.stock || 0) + item.receivedQty })
+            .eq("id", orderItem.product_id)
+            .eq("organization_id", orgId);
         }
       }
     }
 
     // 3. Update PO status if fully received
     const { data: allItems } = await supabase
-      .from('purchase_order_items')
-      .select('quantity, received_quantity, purchase_orders!inner(organization_id)')
-      .eq('purchase_order_id', purchaseOrderId)
-      .eq('purchase_orders.organization_id', orgId);
-    const fullyReceived = allItems?.every(i => i.received_quantity >= i.quantity);
+      .from("purchase_order_items")
+      .select("quantity, received_quantity, purchase_orders!inner(organization_id)")
+      .eq("purchase_order_id", purchaseOrderId)
+      .eq("purchase_orders.organization_id", orgId);
+    const fullyReceived = allItems?.every((i) => i.received_quantity >= i.quantity);
 
-    await supabase
-      .from('purchase_orders')
-      .update({ status: fullyReceived ? 'received' : 'receiving' })
-      .eq('id', purchaseOrderId)
-      .eq('organization_id', orgId);
+    const { error: updatePOError } = await supabase
+      .from("purchase_orders")
+      .update({ status: fullyReceived ? "completed" : "receiving" })
+      .eq("id", purchaseOrderId)
+      .eq("organization_id", orgId);
+
+    if (updatePOError) {
+      console.error("receiveStock: error updating PO status:", JSON.stringify(updatePOError, null, 2));
+      throw updatePOError;
+    }
   },
 
   async updateStock(productId: string, delta: number) {
@@ -1435,19 +1856,15 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     const { data: product } = await supabase
-      .from('products')
-      .select('stock')
-      .eq('id', productId)
-      .eq('organization_id', orgId)
+      .from("products")
+      .select("stock")
+      .eq("id", productId)
+      .eq("organization_id", orgId)
       .single();
 
     if (product) {
       const newStock = (product.stock || 0) + delta;
-      await supabase
-        .from('products')
-        .update({ stock: newStock })
-        .eq('id', productId)
-        .eq('organization_id', orgId);
+      await supabase.from("products").update({ stock: newStock }).eq("id", productId).eq("organization_id", orgId);
     }
   },
 
@@ -1455,28 +1872,25 @@ export const posService = {
     const supabase = createClient();
     const tenantSlug = getTenantSlug();
 
-    const { data, error } = await supabase
-      .from('employees')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const { data, error } = await supabase.from("employees").select("*").order("created_at", { ascending: false });
 
     if (error) throw error;
 
     let filteredData = data || [];
-    if (tenantSlug === 'app') {
-      filteredData = filteredData.filter((e: any) => !e.name || !e.name.includes('::') || e.name.startsWith('app::'));
+    if (tenantSlug === "app") {
+      filteredData = filteredData.filter((e: any) => !e.name?.includes("::") || e.name.startsWith("app::"));
     } else {
-      filteredData = filteredData.filter((e: any) => e.name && e.name.startsWith(`${tenantSlug}::`));
+      filteredData = filteredData.filter((e: any) => e.name?.startsWith(`${tenantSlug}::`));
     }
 
     return filteredData.map((e: any) => {
       let cleanName = e.name;
-      if (e.name && e.name.includes('::')) {
-        cleanName = e.name.split('::').slice(1).join('::');
+      if (e.name?.includes("::")) {
+        cleanName = e.name.split("::").slice(1).join("::");
       }
       return {
         ...e,
-        name: cleanName
+        name: cleanName,
       };
     });
   },
@@ -1487,19 +1901,15 @@ export const posService = {
 
     const preparedData = {
       ...employeeData,
-      name: `${tenantSlug}::${employeeData.name}`
+      name: `${tenantSlug}::${employeeData.name}`,
     };
 
-    const { data, error } = await supabase
-      .from('employees')
-      .insert([preparedData])
-      .select()
-      .single();
+    const { data, error } = await supabase.from("employees").insert([preparedData]).select().single();
 
     if (error) throw error;
 
-    if (data && data.name && data.name.includes('::')) {
-      data.name = data.name.split('::').slice(1).join('::');
+    if (data?.name?.includes("::")) {
+      data.name = data.name.split("::").slice(1).join("::");
     }
     return data;
   },
@@ -1508,49 +1918,64 @@ export const posService = {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
     const { data: allProducts } = await supabase
-      .from('products')
-      .select('*')
-      .eq('organization_id', orgId)
-      .eq('is_active', true);
+      .from("products")
+      .select("*")
+      .eq("organization_id", orgId)
+      .eq("is_active", true);
     const products = allProducts || [];
     const productsCount = products.length;
 
-    const { count: ordersCount } = await supabase.from('orders').select('*', { count: 'exact', head: true }).eq('organization_id', orgId).neq('status', 'cancelled');
+    const { count: ordersCount } = await supabase
+      .from("orders")
+      .select("*", { count: "exact", head: true })
+      .eq("organization_id", orgId)
+      .neq("status", "cancelled");
 
-    const { data: allCustomers } = await supabase.from('customers').select('id, created_at').eq('organization_id', orgId);
-    let customers = allCustomers || [];
+    const { data: allCustomers } = await supabase
+      .from("customers")
+      .select("id, created_at")
+      .eq("organization_id", orgId);
+    const customers = allCustomers || [];
     const customersCount = customers.length;
 
     const { data: orders } = await supabase
-      .from('orders')
-      .select('id, created_at, total_amount, payment_method, payment_status, payment_amount_received, debt_amount')
-      .eq('organization_id', orgId)
-      .neq('status', 'cancelled');
+      .from("orders")
+      .select("id, created_at, total_amount, payment_method, payment_status, payment_amount_received, debt_amount")
+      .eq("organization_id", orgId)
+      .neq("status", "cancelled");
 
     const { data: debtPayments } = await supabase
-      .from('debt_payments')
-      .select('id, amount, method, payment_date, created_at, status')
-      .eq('tenant_id', orgId)
-      .eq('status', 'completed');
+      .from("debt_payments")
+      .select("id, amount, method, payment_date, created_at, status")
+      .eq("tenant_id", orgId)
+      .eq("status", "completed");
 
     const getOrderRealizedRevenue = (order: any) => {
-      const method = String(order.payment_method || '').toLowerCase();
-      const status = String(order.payment_status || '').toLowerCase();
-      if (method === 'debt' || status === 'debt' || status === 'partial_debt') return 0;
-      if (status && status !== 'paid') return 0;
+      const method = String(order.payment_method || "").toLowerCase();
+      const status = String(order.payment_status || "").toLowerCase();
+      if (method === "debt" || status === "debt" || status === "partial_debt") return 0;
+      if (status && status !== "paid") return 0;
       const received = Number(order.payment_amount_received || 0);
       return received > 0 ? received : Number(order.total_amount || 0);
     };
-    const totalDebtPaymentRevenue = debtPayments?.reduce((acc, payment: any) => acc + Number(payment.amount || 0), 0) || 0;
-    const totalRevenue = (orders?.reduce((acc, curr) => acc + getOrderRealizedRevenue(curr), 0) || 0) + totalDebtPaymentRevenue;
+    const totalDebtPaymentRevenue =
+      debtPayments?.reduce((acc, payment: any) => acc + Number(payment.amount || 0), 0) || 0;
+    const totalRevenue =
+      (orders?.reduce((acc, curr) => acc + getOrderRealizedRevenue(curr), 0) || 0) + totalDebtPaymentRevenue;
     const debtInvoices = (orders || []).filter((order: any) => {
-      const method = String(order.payment_method || '').toLowerCase();
-      const status = String(order.payment_status || '').toLowerCase();
-      return method === 'debt' || status === 'debt' || status === 'partial_debt' || Number(order.debt_amount || 0) > 0;
+      const method = String(order.payment_method || "").toLowerCase();
+      const status = String(order.payment_status || "").toLowerCase();
+      return method === "debt" || status === "debt" || status === "partial_debt" || Number(order.debt_amount || 0) > 0;
     });
     const debtInvoiceCount = debtInvoices.length;
-    const debtOutstandingAmount = debtInvoices.reduce((acc: number, order: any) => acc + Number(order.debt_amount || 0), 0);
-    const debtInvoiceTotalAmount = debtInvoices.reduce((acc: number, order: any) => acc + Number(order.total_amount || 0), 0);
+    const debtOutstandingAmount = debtInvoices.reduce(
+      (acc: number, order: any) => acc + Number(order.debt_amount || 0),
+      0,
+    );
+    const debtInvoiceTotalAmount = debtInvoices.reduce(
+      (acc: number, order: any) => acc + Number(order.total_amount || 0),
+      0,
+    );
 
     // Calculate real payment method percentages dynamically from orders
     let cashAmount = 0;
@@ -1560,10 +1985,10 @@ export const posService = {
     orders?.forEach((o: any) => {
       const amt = getOrderRealizedRevenue(o);
       if (amt <= 0) return;
-      const method = String(o.payment_method || '').toLowerCase();
-      if (method === 'cash') {
+      const method = String(o.payment_method || "").toLowerCase();
+      if (method === "cash") {
         cashAmount += amt;
-      } else if (method === 'bank_transfer' || method === 'transfer') {
+      } else if (method === "bank_transfer" || method === "transfer") {
         bankAmount += amt;
       } else {
         cardAmount += amt;
@@ -1571,10 +1996,10 @@ export const posService = {
     });
     debtPayments?.forEach((payment: any) => {
       const amt = Number(payment.amount || 0);
-      const method = String(payment.method || '').toLowerCase();
-      if (method === 'cash') {
+      const method = String(payment.method || "").toLowerCase();
+      if (method === "cash") {
         cashAmount += amt;
-      } else if (method === 'bank_transfer' || method === 'bank' || method === 'transfer' || method === 'vietqr') {
+      } else if (method === "bank_transfer" || method === "bank" || method === "transfer" || method === "vietqr") {
         bankAmount += amt;
       } else {
         cardAmount += amt;
@@ -1630,7 +2055,7 @@ export const posService = {
     let revenueChange = "+0.0%";
     if (lastWeekRevenue > 0) {
       const changePct = ((thisWeekRevenue - lastWeekRevenue) / lastWeekRevenue) * 100;
-      revenueChange = `${changePct >= 0 ? '+' : ''}${changePct.toFixed(1)}%`;
+      revenueChange = `${changePct >= 0 ? "+" : ""}${changePct.toFixed(1)}%`;
     } else if (thisWeekRevenue > 0) {
       revenueChange = "+100%";
     }
@@ -1638,7 +2063,7 @@ export const posService = {
     let ordersChange = "+0.0%";
     if (lastWeekOrders > 0) {
       const changePct = ((thisWeekOrders - lastWeekOrders) / lastWeekOrders) * 100;
-      ordersChange = `${changePct >= 0 ? '+' : ''}${changePct.toFixed(1)}%`;
+      ordersChange = `${changePct >= 0 ? "+" : ""}${changePct.toFixed(1)}%`;
     } else if (thisWeekOrders > 0) {
       ordersChange = "+100%";
     }
@@ -1657,89 +2082,95 @@ export const posService = {
     let customersChange = "+0.0%";
     if (lastWeekCustomers > 0) {
       const changePct = ((thisWeekCustomers - lastWeekCustomers) / lastWeekCustomers) * 100;
-      customersChange = `${changePct >= 0 ? '+' : ''}${changePct.toFixed(1)}%`;
+      customersChange = `${changePct >= 0 ? "+" : ""}${changePct.toFixed(1)}%`;
     } else if (thisWeekCustomers > 0) {
       customersChange = "+100%";
     }
 
     // Fetch dynamic category sales and best-selling products
-    let dynamicCategorySales: { name: string, value: number }[] = [];
+    let dynamicCategorySales: { name: string; value: number }[] = [];
     let dynamicTopProducts: any[] = [];
     try {
       const orderIds = orders?.filter((o: any) => getOrderRealizedRevenue(o) > 0).map((o: any) => o.id) || [];
       if (orderIds.length > 0) {
         const { data: orderItems, error: itemsErr } = await supabase
-          .from('order_items')
-          .select('order_id, total_price, quantity, variant_id')
-          .in('order_id', orderIds);
+          .from("order_items")
+          .select("order_id, total_price, quantity, variant_id")
+          .in("order_id", orderIds);
 
         if (!itemsErr && orderItems && orderItems.length > 0) {
           const { data: products } = await supabase
-            .from('products')
-            .select('id, name, price, image, description, category:categories(name), variants:product_variants(id)')
-            .eq('organization_id', orgId);
+            .from("products")
+            .select("id, name, price, image, description, category:categories(name), variants:product_variants(id)")
+            .eq("organization_id", orgId);
 
           const finalProds = products || [];
 
-        const productMap = new Map<string, any>();
-        const variantProductMap = new Map<string, string>();
+          const productMap = new Map<string, any>();
+          const variantProductMap = new Map<string, string>();
 
-        finalProds.forEach((p: any) => {
-          const catName = p.category?.name || "Khác";
-          productMap.set(p.id, {
-            id: p.id,
-            name: p.name,
-            price: p.price,
-            image: p.image,
-            categoryName: catName
-          });
-          p.variants?.forEach((v: any) => {
-            variantProductMap.set(v.id, p.id);
-          });
-        });
-
-        const catMap = new Map<string, number>();
-        const productSalesMap = new Map<string, { salesCount: number, revenue: number }>();
-
-        orderItems.forEach((item: any) => {
-          const id = item.variant_id;
-          let productId = variantProductMap.get(id);
-          if (!productId) {
-            productId = id;
-          }
-
-          const prod = productId ? productMap.get(productId) : null;
-          const categoryName = prod?.categoryName || "Khác";
-          const qty = Number(item.quantity) || 0;
-          const price = Number(item.total_price) || 0;
-
-          catMap.set(categoryName, (catMap.get(categoryName) || 0) + price);
-
-          if (productId) {
-            const current = productSalesMap.get(productId) || { salesCount: 0, revenue: 0 };
-            productSalesMap.set(productId, {
-              salesCount: current.salesCount + qty,
-              revenue: current.revenue + price
+          finalProds.forEach((p: any) => {
+            const catName = p.category?.name || "Khác";
+            productMap.set(p.id, {
+              id: p.id,
+              name: p.name,
+              price: p.price,
+              image: p.image,
+              categoryName: catName,
             });
-          }
-        });
+            p.variants?.forEach((v: any) => {
+              variantProductMap.set(v.id, p.id);
+            });
+          });
 
-        dynamicCategorySales = Array.from(catMap.entries()).map(([name, value]) => ({
-          name,
-          value
-        })).sort((a, b) => b.value - a.value).slice(0, 5);
+          const catMap = new Map<string, number>();
+          const productSalesMap = new Map<string, { salesCount: number; revenue: number }>();
 
-        dynamicTopProducts = Array.from(productSalesMap.entries()).map(([productId, sales]) => {
-          const prod = productMap.get(productId);
-          return {
-            id: productId,
-            name: prod?.name || "Sản phẩm",
-            image: prod?.image || null,
-            price: prod?.price || 0,
-            salesCount: sales.salesCount,
-            revenue: sales.revenue
-          };
-        }).sort((a, b) => b.salesCount - a.salesCount).slice(0, 5);
+          orderItems.forEach((item: any) => {
+            const id = item.variant_id;
+            let productId = variantProductMap.get(id);
+            if (!productId) {
+              productId = id;
+            }
+
+            const prod = productId ? productMap.get(productId) : null;
+            const categoryName = prod?.categoryName || "Khác";
+            const qty = Number(item.quantity) || 0;
+            const price = Number(item.total_price) || 0;
+
+            catMap.set(categoryName, (catMap.get(categoryName) || 0) + price);
+
+            if (productId) {
+              const current = productSalesMap.get(productId) || { salesCount: 0, revenue: 0 };
+              productSalesMap.set(productId, {
+                salesCount: current.salesCount + qty,
+                revenue: current.revenue + price,
+              });
+            }
+          });
+
+          dynamicCategorySales = Array.from(catMap.entries())
+            .map(([name, value]) => ({
+              name,
+              value,
+            }))
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 5);
+
+          dynamicTopProducts = Array.from(productSalesMap.entries())
+            .map(([productId, sales]) => {
+              const prod = productMap.get(productId);
+              return {
+                id: productId,
+                name: prod?.name || "Sản phẩm",
+                image: prod?.image || null,
+                price: prod?.price || 0,
+                salesCount: sales.salesCount,
+                revenue: sales.revenue,
+              };
+            })
+            .sort((a, b) => b.salesCount - a.salesCount)
+            .slice(0, 5);
         }
       }
     } catch (e) {
@@ -1748,10 +2179,10 @@ export const posService = {
 
     if (dynamicCategorySales.length === 0) {
       const { data: dbCats } = await supabase
-        .from('categories')
-        .select('name, description')
-        .eq('organization_id', orgId)
-        .eq('is_active', true);
+        .from("categories")
+        .select("name, description")
+        .eq("organization_id", orgId)
+        .eq("is_active", true);
 
       let filteredCats = dbCats || [];
 
@@ -1760,18 +2191,16 @@ export const posService = {
       if (filteredCats.length > 0) {
         dynamicCategorySales = filteredCats.map((c: any) => {
           let cleanName = c.name;
-          if (c.name && c.name.includes('::')) {
-            cleanName = c.name.split('::').slice(1).join('::');
+          if (c.name?.includes("::")) {
+            cleanName = c.name.split("::").slice(1).join("::");
           }
           return {
             name: cleanName,
-            value: 0
+            value: 0,
           };
         });
       } else {
-        dynamicCategorySales = [
-          { name: "Chưa phân loại", value: 0 }
-        ];
+        dynamicCategorySales = [{ name: "Chưa phân loại", value: 0 }];
       }
     }
 
@@ -1799,8 +2228,8 @@ export const posService = {
         card: cardPercent,
         cashAmount,
         bankAmount,
-        cardAmount
-      }
+        cardAmount,
+      },
     };
   },
 
@@ -1809,14 +2238,14 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     const { data, error } = await supabase
-      .from('orders')
+      .from("orders")
       .select(`
         *,
         customer:customers(name, email)
       `)
-      .eq('organization_id', orgId)
-      .neq('status', 'cancelled')
-      .order('created_at', { ascending: false })
+      .eq("organization_id", orgId)
+      .neq("status", "cancelled")
+      .order("created_at", { ascending: false })
       .limit(5);
 
     if (error) throw error;
@@ -1826,18 +2255,11 @@ export const posService = {
   async updateCustomerPoints(id: string, points: number) {
     const supabase = createClient();
 
-    const { data: customer } = await supabase
-      .from('customers')
-      .select('loyalty_points')
-      .eq('id', id)
-      .single();
+    const { data: customer } = await supabase.from("customers").select("loyalty_points").eq("id", id).single();
 
     if (customer) {
       const newPoints = (customer.loyalty_points || 0) + points;
-      await supabase
-        .from('customers')
-        .update({ loyalty_points: newPoints })
-        .eq('id', id);
+      await supabase.from("customers").update({ loyalty_points: newPoints }).eq("id", id);
     }
   },
 
@@ -1846,7 +2268,7 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     const { data, error } = await supabase
-      .from('customers')
+      .from("customers")
       .select(`
         *,
         orders:orders(id, order_number, total_amount, created_at, status, payment_method, payment_status, debt_amount, due_date),
@@ -1857,18 +2279,18 @@ export const posService = {
           due_amount
         )
       `)
-      .eq('id', id)
-      .eq('organization_id', orgId)
+      .eq("id", id)
+      .eq("organization_id", orgId)
       .single();
 
     if (error) throw error;
 
     if (data?.orders) {
-      data.orders = data.orders.filter((o: any) => o.status !== 'cancelled');
+      data.orders = data.orders.filter((o: any) => o.status !== "cancelled");
     }
 
-    if (data && data.address && data.address.includes('::')) {
-      data.address = data.address.split('::').slice(1).join('::');
+    if (data?.address?.includes("::")) {
+      data.address = data.address.split("::").slice(1).join("::");
     }
 
     // Flatten the credit account so the UI can read selectedCustomer.debt
@@ -1892,24 +2314,24 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     const { data, error } = await supabase
-      .from('categories')
-      .select('*, products(id)')
-      .eq('organization_id', orgId)
-      .eq('is_active', true);
+      .from("categories")
+      .select("*, products(id)")
+      .eq("organization_id", orgId)
+      .eq("is_active", true);
 
     if (error) throw error;
 
     const filteredData = data || [];
 
-    return filteredData.map(cat => {
+    return filteredData.map((cat) => {
       let cleanDesc = cat.description;
-      if (cat.description && cat.description.includes('::')) {
-        cleanDesc = cat.description.split('::').slice(1).join('::');
+      if (cat.description?.includes("::")) {
+        cleanDesc = cat.description.split("::").slice(1).join("::");
       }
       return {
         ...cat,
         description: cleanDesc,
-        product_count: cat.products?.length || 0
+        product_count: cat.products?.length || 0,
       };
     });
   },
@@ -1922,19 +2344,15 @@ export const posService = {
     const preparedData = {
       ...categoryData,
       organization_id: orgId,
-      description: `${tenantSlug}::${categoryData.description || ''}`
+      description: `${tenantSlug}::${categoryData.description || ""}`,
     };
 
-    const { data, error } = await supabase
-      .from('categories')
-      .insert([preparedData])
-      .select()
-      .single();
+    const { data, error } = await supabase.from("categories").insert([preparedData]).select().single();
 
     if (error) throw error;
 
-    if (data && data.description && data.description.includes('::')) {
-      data.description = data.description.split('::').slice(1).join('::');
+    if (data?.description?.includes("::")) {
+      data.description = data.description.split("::").slice(1).join("::");
     }
     return data;
   },
@@ -1946,21 +2364,21 @@ export const posService = {
 
     const preparedData = { ...categoryData };
     if (categoryData.description !== undefined) {
-      preparedData.description = `${tenantSlug}::${categoryData.description || ''}`;
+      preparedData.description = `${tenantSlug}::${categoryData.description || ""}`;
     }
 
     const { data, error } = await supabase
-      .from('categories')
+      .from("categories")
       .update(preparedData)
-      .eq('id', id)
-      .eq('organization_id', orgId)
+      .eq("id", id)
+      .eq("organization_id", orgId)
       .select()
       .single();
 
     if (error) throw error;
 
-    if (data && data.description && data.description.includes('::')) {
-      data.description = data.description.split('::').slice(1).join('::');
+    if (data?.description?.includes("::")) {
+      data.description = data.description.split("::").slice(1).join("::");
     }
     return data;
   },
@@ -1970,10 +2388,10 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     const { error } = await supabase
-      .from('categories')
+      .from("categories")
       .update({ is_active: false })
-      .eq('id', id)
-      .eq('organization_id', orgId);
+      .eq("id", id)
+      .eq("organization_id", orgId);
 
     if (error) throw error;
   },
@@ -1982,13 +2400,13 @@ export const posService = {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
 
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       try {
-        const local = localStorage.getItem(getTenantStorageKey('zpos_customers'));
+        const local = localStorage.getItem(getTenantStorageKey("zpos_customers"));
         if (local) {
           const list = JSON.parse(local);
           const updated = list.filter((c: any) => c.id !== id);
-          localStorage.setItem(getTenantStorageKey('zpos_customers'), JSON.stringify(updated));
+          localStorage.setItem(getTenantStorageKey("zpos_customers"), JSON.stringify(updated));
         }
       } catch (e) {
         console.warn("Error deleting local customer:", e);
@@ -1996,11 +2414,7 @@ export const posService = {
     }
 
     try {
-      const { error } = await supabase
-        .from('customers')
-        .delete()
-        .eq('id', id)
-        .eq('organization_id', orgId);
+      const { error } = await supabase.from("customers").delete().eq("id", id).eq("organization_id", orgId);
       if (!error) return;
     } catch (e) {
       console.warn("Supabase customer delete warning:", e);
@@ -2012,13 +2426,13 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     const { data: supplier, error } = await supabase
-      .from('suppliers')
+      .from("suppliers")
       .update({
         ...data,
-        organization_id: orgId
+        organization_id: orgId,
       })
-      .eq('id', id)
-      .eq('organization_id', orgId)
+      .eq("id", id)
+      .eq("organization_id", orgId)
       .select()
       .single();
 
@@ -2030,11 +2444,7 @@ export const posService = {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
 
-    const { error } = await supabase
-      .from('suppliers')
-      .delete()
-      .eq('id', id)
-      .eq('organization_id', orgId);
+    const { error } = await supabase.from("suppliers").delete().eq("id", id).eq("organization_id", orgId);
 
     if (error) throw error;
   },
@@ -2042,10 +2452,7 @@ export const posService = {
   async deleteEmployee(id: string) {
     const supabase = createClient();
 
-    const { error } = await supabase
-      .from('employees')
-      .delete()
-      .eq('id', id);
+    const { error } = await supabase.from("employees").delete().eq("id", id);
 
     if (error) throw error;
   },
@@ -2055,12 +2462,12 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     const { data, error } = await supabase
-      .from('organization_goals')
-      .select('*')
-      .eq('organization_id', orgId)
-      .eq('period_month', month)
-      .eq('period_year', year)
-      .eq('goal_type', 'revenue')
+      .from("organization_goals")
+      .select("*")
+      .eq("organization_id", orgId)
+      .eq("period_month", month)
+      .eq("period_year", year)
+      .eq("goal_type", "revenue")
       .maybeSingle();
 
     if (error) throw error;
@@ -2072,17 +2479,20 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     const { data, error } = await supabase
-      .from('organization_goals')
-      .upsert({
-        organization_id: orgId,
-        goal_type: 'revenue',
-        target_value: targetValue,
-        period_month: month,
-        period_year: year,
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'organization_id,goal_type,period_month,period_year'
-      })
+      .from("organization_goals")
+      .upsert(
+        {
+          organization_id: orgId,
+          goal_type: "revenue",
+          target_value: targetValue,
+          period_month: month,
+          period_year: year,
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "organization_id,goal_type,period_month,period_year",
+        },
+      )
       .select()
       .single();
 
@@ -2095,10 +2505,10 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     const { data, error } = await supabase
-      .from('expense_categories')
-      .select('*')
+      .from("expense_categories")
+      .select("*")
       .or(`organization_id.eq.${orgId},organization_id.is.null`)
-      .order('name');
+      .order("name");
 
     if (error) throw error;
     return data || [];
@@ -2108,19 +2518,16 @@ export const posService = {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
 
-    let query = supabase
-      .from('expenses')
-      .select('*, category:expense_categories(name)')
-      .eq('organization_id', orgId);
+    let query = supabase.from("expenses").select("*, category:expense_categories(name)").eq("organization_id", orgId);
 
-    if (filters?.categoryId && filters.categoryId !== 'all') {
-      query = query.eq('category_id', filters.categoryId);
+    if (filters?.categoryId && filters.categoryId !== "all") {
+      query = query.eq("category_id", filters.categoryId);
     }
     if (filters?.search) {
-      query = query.ilike('title', `%${filters.search}%`);
+      query = query.ilike("title", `%${filters.search}%`);
     }
 
-    const { data, error } = await query.order('expense_date', { ascending: false });
+    const { data, error } = await query.order("expense_date", { ascending: false });
     if (error) throw error;
     return data || [];
   },
@@ -2130,8 +2537,8 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     let branchId = expense.branch_id;
-    if (!branchId || branchId === '00000000-0000-0000-0000-000000000000') {
-      const { data: branches } = await supabase.from('branches').select('id').eq('organization_id', orgId).limit(1);
+    if (!branchId || branchId === "00000000-0000-0000-0000-000000000000") {
+      const { data: branches } = await supabase.from("branches").select("id").eq("organization_id", orgId).limit(1);
       if (branches && branches.length > 0) {
         branchId = branches[0].id;
       } else {
@@ -2140,32 +2547,56 @@ export const posService = {
     }
 
     const { data, error } = await supabase
-      .from('expenses')
-      .insert([{
-        ...expense,
-        organization_id: orgId,
-        branch_id: branchId
-      }])
+      .from("expenses")
+      .insert([
+        {
+          ...expense,
+          organization_id: orgId,
+          branch_id: branchId,
+        },
+      ])
       .select()
       .single();
 
     if (error) throw error;
 
-    if (expense.status === 'paid') {
-      await supabase.from('cashflow_transactions').insert([{
-        organization_id: orgId,
-        branch_id: branchId,
-        type: 'outflow',
-        category: 'expense',
-        reference_type: 'expense',
-        reference_id: data.id,
-        amount: expense.amount,
-        transaction_date: expense.expense_date ? new Date(expense.expense_date).toISOString() : new Date().toISOString(),
-        note: expense.title
-      }]);
+    if (expense.status === "paid") {
+      await supabase.from("cashflow_transactions").insert([
+        {
+          organization_id: orgId,
+          branch_id: branchId,
+          type: "outflow",
+          category: "expense",
+          reference_type: "expense",
+          reference_id: data.id,
+          amount: expense.amount,
+          transaction_date: expense.expense_date
+            ? new Date(expense.expense_date).toISOString()
+            : new Date().toISOString(),
+          note: expense.title,
+        },
+      ]);
     }
 
     return data;
+  },
+
+  async deleteExpense(id: string) {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+
+    const { error: cashflowError } = await supabase
+      .from("cashflow_transactions")
+      .delete()
+      .eq("reference_type", "expense")
+      .eq("reference_id", id)
+      .eq("organization_id", orgId);
+
+    if (cashflowError) throw cashflowError;
+
+    const { error } = await supabase.from("expenses").delete().eq("id", id).eq("organization_id", orgId);
+
+    if (error) throw error;
   },
 
   async getFinanceOverview() {
@@ -2174,39 +2605,35 @@ export const posService = {
 
     // Pull full rows with timestamps so we can split current vs prior period.
     const { data: orders, error: ordersError } = await supabase
-      .from('orders')
-      .select('total_amount, created_at, payment_method, payment_status, payment_amount_received')
-      .eq('organization_id', orgId)
-      .neq('status', 'cancelled');
+      .from("orders")
+      .select("id, total_amount, created_at, payment_method, payment_status, payment_amount_received")
+      .eq("organization_id", orgId)
+      .neq("status", "cancelled");
     if (ordersError) throw ordersError;
 
     const { data: debtPayments, error: debtPaymentsError } = await supabase
-      .from('debt_payments')
-      .select('amount, payment_date, created_at, status')
-      .eq('tenant_id', orgId)
-      .eq('status', 'completed');
+      .from("debt_payments")
+      .select("amount, payment_date, created_at, status")
+      .eq("tenant_id", orgId)
+      .eq("status", "completed");
     if (debtPaymentsError) throw debtPaymentsError;
 
-    const { data: purchases, error: purchasesError } = await supabase
-      .from('purchase_orders')
-      .select('total_amount, paid_amount, created_at')
-      .eq('organization_id', orgId)
-      .neq('status', 'cancelled');
-    if (purchasesError) throw purchasesError;
+    const orderIds = (orders || []).map((o: any) => o.id).filter(Boolean);
+    const soldItems = await fetchSoldItemsForCOGS(supabase, orderIds);
 
     const { data: expenses, error: expensesError } = await supabase
-      .from('expenses')
-      .select('amount, created_at, expense_date')
-      .eq('organization_id', orgId)
-      .eq('status', 'paid');
+      .from("expenses")
+      .select("amount, created_at, expense_date")
+      .eq("organization_id", orgId)
+      .eq("status", "paid");
     if (expensesError) throw expensesError;
 
     // Total (all-time) figures shown in the big numbers.
     const orderAmt = (o: any) => {
-      const method = String(o.payment_method || '').toLowerCase();
-      const status = String(o.payment_status || '').toLowerCase();
-      if (method === 'debt' || status === 'debt' || status === 'partial_debt') return 0;
-      if (status && status !== 'paid') return 0;
+      const method = String(o.payment_method || "").toLowerCase();
+      const status = String(o.payment_status || "").toLowerCase();
+      if (method === "debt" || status === "debt" || status === "partial_debt") return 0;
+      if (status && status !== "paid") return 0;
       const received = Number(o.payment_amount_received || 0);
       return received > 0 ? received : Number(o.total_amount || 0);
     };
@@ -2214,17 +2641,24 @@ export const posService = {
     const totalRevenue =
       (orders?.reduce((s, o: any) => s + orderAmt(o), 0) || 0) +
       (debtPayments?.reduce((s, p: any) => s + debtPaymentAmt(p), 0) || 0);
-    const totalCOGS = purchases?.reduce((s, p: any) => s + Number(p.total_amount || 0), 0) || 0;
+    const totalCOGS = calculateSoldItemsCOGS(soldItems);
     const totalExpenses = expenses?.reduce((s, e: any) => s + Number(e.amount || 0), 0) || 0;
     const netProfit = totalRevenue - totalCOGS - totalExpenses;
 
     // Period-over-period: last 30 days vs the 30 days before that.
     const now = new Date();
-    const d30 = new Date(); d30.setDate(now.getDate() - 30);
-    const d60 = new Date(); d60.setDate(now.getDate() - 60);
+    const d30 = new Date();
+    d30.setDate(now.getDate() - 30);
+    const d60 = new Date();
+    d60.setDate(now.getDate() - 60);
 
-    const sumWindow = (rows: any[] | null, getDate: (r: any) => any, getAmount: (r: any) => number,
-                       from: Date, to: Date) => {
+    const sumWindow = (
+      rows: any[] | null,
+      getDate: (r: any) => any,
+      getAmount: (r: any) => number,
+      from: Date,
+      to: Date,
+    ) => {
       if (!rows) return 0;
       let s = 0;
       for (const r of rows) {
@@ -2238,15 +2672,20 @@ export const posService = {
 
     const orderDate = (o: any) => o.created_at;
     const debtPaymentDate = (p: any) => p.payment_date || p.created_at;
-    const purchaseAmt = (p: any) => p.total_amount;
-    const purchaseDate = (p: any) => p.created_at;
+    const orderDateById = new Map((orders || []).map((o: any) => [o.id, o.created_at]));
+    const soldItemAmt = (item: any) => calculateSoldItemsCOGS([item]);
+    const soldItemDate = (item: any) => orderDateById.get(item.order_id);
     const expenseAmt = (e: any) => e.amount;
     const expenseDate = (e: any) => e.expense_date || e.created_at;
 
-    const revCur = sumWindow(orders, orderDate, orderAmt, d30, now) + sumWindow(debtPayments, debtPaymentDate, debtPaymentAmt, d30, now);
-    const revPrev = sumWindow(orders, orderDate, orderAmt, d60, d30) + sumWindow(debtPayments, debtPaymentDate, debtPaymentAmt, d60, d30);
-    const cogsCur = sumWindow(purchases, purchaseDate, purchaseAmt, d30, now);
-    const cogsPrev = sumWindow(purchases, purchaseDate, purchaseAmt, d60, d30);
+    const revCur =
+      sumWindow(orders, orderDate, orderAmt, d30, now) +
+      sumWindow(debtPayments, debtPaymentDate, debtPaymentAmt, d30, now);
+    const revPrev =
+      sumWindow(orders, orderDate, orderAmt, d60, d30) +
+      sumWindow(debtPayments, debtPaymentDate, debtPaymentAmt, d60, d30);
+    const cogsCur = sumWindow(soldItems, soldItemDate, soldItemAmt, d30, now);
+    const cogsPrev = sumWindow(soldItems, soldItemDate, soldItemAmt, d60, d30);
     const expCur = sumWindow(expenses, expenseDate, expenseAmt, d30, now);
     const expPrev = sumWindow(expenses, expenseDate, expenseAmt, d60, d30);
 
@@ -2254,9 +2693,9 @@ export const posService = {
     const profitPrev = revPrev - cogsPrev - expPrev;
 
     const pct = (cur: number, prev: number) => {
-      if (prev === 0) return cur > 0 ? '+100%' : '+0.0%';
+      if (prev === 0) return cur > 0 ? "+100%" : "+0.0%";
       const change = ((cur - prev) / Math.abs(prev)) * 100;
-      return `${change >= 0 ? '+' : ''}${change.toFixed(1)}%`;
+      return `${change >= 0 ? "+" : ""}${change.toFixed(1)}%`;
     };
 
     return {
@@ -2286,10 +2725,10 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     const { data, error } = await supabase
-      .from('cashflow_transactions')
-      .select('*')
-      .eq('organization_id', orgId)
-      .order('transaction_date', { ascending: false });
+      .from("cashflow_transactions")
+      .select("*")
+      .eq("organization_id", orgId)
+      .order("transaction_date", { ascending: false });
 
     if (error) throw error;
     return data || [];
@@ -2304,10 +2743,10 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     const { data, error } = await supabase
-      .from('recurring_expenses')
-      .select('*, category:expense_categories(name)')
-      .eq('organization_id', orgId)
-      .order('created_at', { ascending: false });
+      .from("recurring_expenses")
+      .select("*, category:expense_categories(name)")
+      .eq("organization_id", orgId)
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
     return data || [];
@@ -2318,8 +2757,8 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     let branchId = recurring.branch_id;
-    if (!branchId || branchId === '00000000-0000-0000-0000-000000000000') {
-      const { data: branches } = await supabase.from('branches').select('id').eq('organization_id', orgId).limit(1);
+    if (!branchId || branchId === "00000000-0000-0000-0000-000000000000") {
+      const { data: branches } = await supabase.from("branches").select("id").eq("organization_id", orgId).limit(1);
       if (branches && branches.length > 0) {
         branchId = branches[0].id;
       } else {
@@ -2328,13 +2767,15 @@ export const posService = {
     }
 
     const { data, error } = await supabase
-      .from('recurring_expenses')
-      .insert([{
-        ...recurring,
-        organization_id: orgId,
-        branch_id: branchId,
-        status: 'active'
-      }])
+      .from("recurring_expenses")
+      .insert([
+        {
+          ...recurring,
+          organization_id: orgId,
+          branch_id: branchId,
+          status: "active",
+        },
+      ])
       .select()
       .single();
 
@@ -2345,13 +2786,22 @@ export const posService = {
   async toggleRecurringExpenseStatus(id: string, currentStatus: string) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    const newStatus = currentStatus === 'active' ? 'paused' : 'active';
+    const newStatus = currentStatus === "active" ? "paused" : "active";
 
     const { error } = await supabase
-      .from('recurring_expenses')
+      .from("recurring_expenses")
       .update({ status: newStatus })
-      .eq('id', id)
-      .eq('organization_id', orgId);
+      .eq("id", id)
+      .eq("organization_id", orgId);
+
+    if (error) throw error;
+  },
+
+  async deleteRecurringExpense(id: string) {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+
+    const { error } = await supabase.from("recurring_expenses").delete().eq("id", id).eq("organization_id", orgId);
 
     if (error) throw error;
   },
@@ -2361,10 +2811,10 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     const { data, error } = await supabase
-      .from('payroll')
-      .select('*, employee:employees(*)')
-      .eq('organization_id', orgId)
-      .order('created_at', { ascending: false });
+      .from("payroll")
+      .select("*, employee:employees(*)")
+      .eq("organization_id", orgId)
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
     return data || [];
@@ -2375,8 +2825,8 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     let branchId = payrollData.branch_id;
-    if (!branchId || branchId === '00000000-0000-0000-0000-000000000000') {
-      const { data: branches } = await supabase.from('branches').select('id').eq('organization_id', orgId).limit(1);
+    if (!branchId || branchId === "00000000-0000-0000-0000-000000000000") {
+      const { data: branches } = await supabase.from("branches").select("id").eq("organization_id", orgId).limit(1);
       if (branches && branches.length > 0) {
         branchId = branches[0].id;
       } else {
@@ -2385,29 +2835,35 @@ export const posService = {
     }
 
     const { data, error } = await supabase
-      .from('payroll')
-      .insert([{
-        ...payrollData,
-        organization_id: orgId,
-        branch_id: branchId
-      }])
-      .select('*, employee:employees(*)')
+      .from("payroll")
+      .insert([
+        {
+          ...payrollData,
+          organization_id: orgId,
+          branch_id: branchId,
+        },
+      ])
+      .select("*, employee:employees(*)")
       .single();
 
     if (error) throw error;
 
-    if (payrollData.payment_status === 'paid') {
-      await supabase.from('cashflow_transactions').insert([{
-        organization_id: orgId,
-        branch_id: branchId,
-        type: 'outflow',
-        category: 'salary',
-        reference_type: 'payroll',
-        reference_id: data.id,
-        amount: data.final_salary,
-        transaction_date: payrollData.payment_date ? new Date(payrollData.payment_date).toISOString() : new Date().toISOString(),
-        note: `Trả lương cho nhân viên ${data.employee?.name || ''}`
-      }]);
+    if (payrollData.payment_status === "paid") {
+      await supabase.from("cashflow_transactions").insert([
+        {
+          organization_id: orgId,
+          branch_id: branchId,
+          type: "outflow",
+          category: "salary",
+          reference_type: "payroll",
+          reference_id: data.id,
+          amount: data.final_salary,
+          transaction_date: payrollData.payment_date
+            ? new Date(payrollData.payment_date).toISOString()
+            : new Date().toISOString(),
+          note: `Trả lương cho nhân viên ${data.employee?.name || ""}`,
+        },
+      ]);
     }
 
     return data;
@@ -2418,32 +2874,34 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     const updateData: any = { payment_status: status };
-    if (status === 'paid') {
-      updateData.payment_date = paymentDate || new Date().toISOString().split('T')[0];
+    if (status === "paid") {
+      updateData.payment_date = paymentDate || new Date().toISOString().split("T")[0];
     }
 
     const { data, error } = await supabase
-      .from('payroll')
+      .from("payroll")
       .update(updateData)
-      .eq('id', id)
-      .eq('organization_id', orgId)
-      .select('*, employee:employees(*)')
+      .eq("id", id)
+      .eq("organization_id", orgId)
+      .select("*, employee:employees(*)")
       .single();
 
     if (error) throw error;
 
-    if (status === 'paid') {
-      await supabase.from('cashflow_transactions').insert([{
-        organization_id: orgId,
-        branch_id: data.branch_id || null,
-        type: 'outflow',
-        category: 'salary',
-        reference_type: 'payroll',
-        reference_id: data.id,
-        amount: data.final_salary,
-        transaction_date: new Date(updateData.payment_date).toISOString(),
-        note: `Trả lương cho nhân viên ${data.employee?.name || ''}`
-      }]);
+    if (status === "paid") {
+      await supabase.from("cashflow_transactions").insert([
+        {
+          organization_id: orgId,
+          branch_id: data.branch_id || null,
+          type: "outflow",
+          category: "salary",
+          reference_type: "payroll",
+          reference_id: data.id,
+          amount: data.final_salary,
+          transaction_date: new Date(updateData.payment_date).toISOString(),
+          note: `Trả lương cho nhân viên ${data.employee?.name || ""}`,
+        },
+      ]);
     }
     return data;
   },
@@ -2453,23 +2911,20 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     try {
-      const { data, error } = await supabase
-        .from('branches')
-        .select('*')
-        .eq('organization_id', orgId);
+      const { data, error } = await supabase.from("branches").select("*").eq("organization_id", orgId);
 
       if (!error && data && data.length > 0) {
         return data.map((b: any) => ({
           ...b,
-          status: b.is_main_branch ? "Chính" : "Phụ"
+          status: b.is_main_branch ? "Chính" : "Phụ",
         }));
       }
     } catch (e) {
       console.warn("Supabase branches table error, using local storage fallback", e);
     }
 
-    if (typeof window !== 'undefined') {
-      const local = localStorage.getItem(getTenantStorageKey('zpos_branches'));
+    if (typeof window !== "undefined") {
+      const local = localStorage.getItem(getTenantStorageKey("zpos_branches"));
       if (!local) {
         return [];
       }
@@ -2479,7 +2934,7 @@ export const posService = {
           // If it contains the mock branches, let's filter them out/clear it
           const hasMock = parsed.some((b: any) => b.name === "Chi nhánh Quận 1" || b.name === "Chi nhánh Ba Đình");
           if (hasMock) {
-            localStorage.removeItem(getTenantStorageKey('zpos_branches'));
+            localStorage.removeItem(getTenantStorageKey("zpos_branches"));
             return [];
           }
           return parsed;
@@ -2504,26 +2959,22 @@ export const posService = {
     const preparedBranchForDB = {
       ...dbBranch,
       is_main_branch: isMainBranch,
-      organization_id: orgId
+      organization_id: orgId,
     };
 
     const preparedBranchForUI = {
       ...branch,
       is_main_branch: isMainBranch,
-      organization_id: orgId
+      organization_id: orgId,
     };
 
     try {
-      const { data, error } = await supabase
-        .from('branches')
-        .upsert(preparedBranchForDB)
-        .select()
-        .single();
+      const { data, error } = await supabase.from("branches").upsert(preparedBranchForDB).select().single();
 
       if (!error && data) {
         return {
           ...data,
-          status: data.is_main_branch ? "Chính" : "Phụ"
+          status: data.is_main_branch ? "Chính" : "Phụ",
         };
       }
       if (error) {
@@ -2533,22 +2984,22 @@ export const posService = {
       console.warn("Supabase branches table upsert exception, using local storage fallback", e);
     }
 
-    if (typeof window !== 'undefined') {
-      const local = localStorage.getItem(getTenantStorageKey('zpos_branches'));
+    if (typeof window !== "undefined") {
+      const local = localStorage.getItem(getTenantStorageKey("zpos_branches"));
       let branches = local ? JSON.parse(local) : [];
 
       if (branch.id) {
-        branches = branches.map((b: any) => b.id === branch.id ? preparedBranchForUI : b);
+        branches = branches.map((b: any) => (b.id === branch.id ? preparedBranchForUI : b));
       } else {
         const newBranch = {
           ...preparedBranchForUI,
           id: crypto.randomUUID(),
-          status: branches.length === 0 ? "Chính" : "Phụ"
+          status: branches.length === 0 ? "Chính" : "Phụ",
         };
         branches.push(newBranch);
       }
 
-      localStorage.setItem(getTenantStorageKey('zpos_branches'), JSON.stringify(branches));
+      localStorage.setItem(getTenantStorageKey("zpos_branches"), JSON.stringify(branches));
       return preparedBranchForUI;
     }
     return preparedBranchForUI;
@@ -2559,44 +3010,40 @@ export const posService = {
     const orgId = await getActiveOrganizationId();
 
     try {
-      await supabase
-        .from('branches')
-        .delete()
-        .eq('id', id)
-        .eq('organization_id', orgId);
+      await supabase.from("branches").delete().eq("id", id).eq("organization_id", orgId);
     } catch (e) {
       console.warn("Supabase branches table delete error, using local storage fallback", e);
     }
 
-    if (typeof window !== 'undefined') {
-      const local = localStorage.getItem(getTenantStorageKey('zpos_branches'));
+    if (typeof window !== "undefined") {
+      const local = localStorage.getItem(getTenantStorageKey("zpos_branches"));
       if (local) {
         let branches = JSON.parse(local);
         branches = branches.filter((b: any) => b.id !== id);
-        localStorage.setItem(getTenantStorageKey('zpos_branches'), JSON.stringify(branches));
+        localStorage.setItem(getTenantStorageKey("zpos_branches"), JSON.stringify(branches));
       }
     }
   },
 
   async checkBarcodeExists(barcode: string, organizationId: string): Promise<boolean> {
     const supabase = createClient();
-    
+
     // Check in products
     const { data: pData } = await supabase
-      .from('products')
-      .select('id')
-      .eq('organization_id', organizationId)
-      .eq('barcode', barcode)
+      .from("products")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("barcode", barcode)
       .limit(1);
-      
+
     if (pData && pData.length > 0) return true;
 
     // Check in product_variants
     const { data: pvData } = await supabase
-      .from('product_variants')
-      .select('id, products!inner(organization_id)')
-      .eq('barcode', barcode)
-      .eq('products.organization_id', organizationId)
+      .from("product_variants")
+      .select("id, products!inner(organization_id)")
+      .eq("barcode", barcode)
+      .eq("products.organization_id", organizationId)
       .limit(1);
 
     if (pvData && pvData.length > 0) return true;
@@ -2607,7 +3054,7 @@ export const posService = {
   async assignBarcodeToProduct(productId: string, barcode: string) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     if (barcode) {
       const exists = await this.checkBarcodeExists(barcode, orgId);
       if (exists) {
@@ -2616,10 +3063,10 @@ export const posService = {
     }
 
     const { error } = await supabase
-      .from('products')
+      .from("products")
       .update({ barcode })
-      .eq('id', productId)
-      .eq('organization_id', orgId);
+      .eq("id", productId)
+      .eq("organization_id", orgId);
 
     if (error) throw error;
   },
@@ -2637,21 +3084,18 @@ export const posService = {
 
     // Need to verify variant belongs to organization
     const { data: verifyData } = await supabase
-      .from('product_variants')
-      .select('id, products!inner(organization_id)')
-      .eq('id', variantId)
-      .eq('products.organization_id', orgId)
+      .from("product_variants")
+      .select("id, products!inner(organization_id)")
+      .eq("id", variantId)
+      .eq("products.organization_id", orgId)
       .single();
 
     if (!verifyData) {
       throw new Error("Phiên bản không hợp lệ hoặc không thuộc về tổ chức này.");
     }
 
-    const { error } = await supabase
-      .from('product_variants')
-      .update({ barcode })
-      .eq('id', variantId);
+    const { error } = await supabase.from("product_variants").update({ barcode }).eq("id", variantId);
 
     if (error) throw error;
-  }
+  },
 };

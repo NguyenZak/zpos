@@ -37,12 +37,41 @@ export default function BulkPrintBarcodesPage() {
       // In a real scenario we could fetch just these IDs. 
       // For now we fetch all and filter to keep it simple, or write a new posService method
       const data = await posService.getProducts();
-      const filtered = data.filter((p: any) => ids.includes(p.id) && p.barcode);
+      
+      const allItems: any[] = [];
+      data.forEach((p: any) => {
+        const variants = Array.isArray(p.variants) ? p.variants : [];
+        if (variants.length > 0) {
+          variants.forEach((v: any) => {
+            allItems.push({
+              id: v.id,
+              product_id: p.id,
+              name: `${p.name} - ${v.name}`,
+              sku: v.sku || '',
+              barcode: v.barcode || '',
+              barcode_type: v.barcode_type || 'CODE128',
+              price: v.price || p.price
+            });
+          });
+        } else {
+          allItems.push({
+            id: p.id,
+            product_id: p.id,
+            name: p.name,
+            sku: p.sku || '',
+            barcode: p.barcode || '',
+            barcode_type: p.barcode_type || 'CODE128',
+            price: p.price
+          });
+        }
+      });
+
+      const filtered = allItems.filter((item: any) => ids.includes(item.id) && item.barcode);
       setProducts(filtered);
       
       const initialQtys: Record<string, number> = {};
-      filtered.forEach((p: any) => {
-        initialQtys[p.id] = 1;
+      filtered.forEach((item: any) => {
+        initialQtys[item.id] = 1;
       });
       setQuantities(initialQtys);
     } catch (error) {

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 
-import { Image as ImageIcon, Loader2, Package, Plus, Sparkles } from "lucide-react";
+import { Check, Image as ImageIcon, Layers, Loader2, Package, Plus, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -18,10 +18,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { convertToWebP } from "@/lib/image-utils";
 import { posService } from "@/services/pos.service";
 
 import { ProductBarcodeField } from "./product-barcode-field";
+import { type AttributeDef, VariantBuilder, type VariantRow } from "./variant-builder";
 
 export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void }) {
   const [open, setOpen] = useState(false);
@@ -41,6 +43,14 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
 
   const [barcodeValid, setBarcodeValid] = useState(true);
 
+  const [hasVariants, setHasVariants] = useState(false);
+  const [attributes, setAttributes] = useState<AttributeDef[]>([]);
+  const [variants, setVariants] = useState<VariantRow[]>([]);
+
+  const [creatingCategory, setCreatingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [savingCategory, setSavingCategory] = useState(false);
+
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [aiFindingImage, setAiFindingImage] = useState(false);
@@ -48,6 +58,9 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
   React.useEffect(() => {
     if (open) {
       posService.getCategoryList().then(setCategories).catch(console.error);
+      if (!formData.sku) {
+        generateSKU();
+      }
     }
   }, [open]);
 
@@ -60,6 +73,37 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
     } catch (error) {
       const random = Math.floor(1000 + Math.random() * 9000);
       setFormData((prev) => ({ ...prev, sku: `SP${random}` }));
+    }
+  };
+
+  const handleCreateCategory = async () => {
+    const name = newCategoryName.trim();
+    if (!name) {
+      toast.error("Vui lòng nhập tên danh mục");
+      return;
+    }
+    const duplicate = categories.find((c) => c.name?.trim().toLowerCase() === name.toLowerCase());
+    if (duplicate) {
+      setFormData((prev) => ({ ...prev, category_id: duplicate.id }));
+      setCreatingCategory(false);
+      setNewCategoryName("");
+      toast.info(`Danh mục "${duplicate.name}" đã tồn tại, đã chọn sẵn.`);
+      return;
+    }
+
+    setSavingCategory(true);
+    try {
+      const created = await posService.createCategory({ name, description: "", is_active: true });
+      setCategories((prev) => [...prev, { ...created, product_count: 0 }]);
+      setFormData((prev) => ({ ...prev, category_id: created.id }));
+      setCreatingCategory(false);
+      setNewCategoryName("");
+      toast.success(`Đã thêm danh mục "${name}"`);
+    } catch (err: any) {
+      console.error("createCategory error:", err);
+      toast.error(`Không thể tạo danh mục: ${err?.message || "Lỗi không xác định"}`);
+    } finally {
+      setSavingCategory(false);
     }
   };
 
@@ -171,21 +215,56 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
         }
       }
 
-      if (!barcodeValid) {
+      if (!hasVariants && !barcodeValid) {
         toast.error("Mã vạch không hợp lệ hoặc đã tồn tại. Vui lòng kiểm tra lại.");
         setLoading(false);
         return;
       }
 
+      if (hasVariants) {
+        if (variants.length === 0) {
+          toast.error("Vui lòng khai báo thuộc tính và sinh ít nhất 1 biến thể.");
+          setLoading(false);
+          return;
+        }
+        const missingPrice = variants.find((v) => !v.price || parseFloat(v.price) <= 0);
+        if (missingPrice) {
+          toast.error(`Biến thể "${missingPrice.name}" chưa có giá bán.`);
+          setLoading(false);
+          return;
+        }
+      }
+
+      const variantPayload = hasVariants
+        ? variants.map((v) => ({
+            name: v.name,
+            sku: v.sku || null,
+            barcode: v.barcode || null,
+            barcode_type: v.barcode_type || "CODE128",
+            price: parseFloat(v.price) || 0,
+            cost_price: parseFloat(v.cost_price) || 0,
+            stock: parseInt(v.stock, 10) || 0,
+            attributes: v.attributes,
+          }))
+        : undefined;
+
+      const basePrice = hasVariants
+        ? Math.min(...variants.map((v) => parseFloat(v.price) || 0))
+        : parseFloat(formData.price);
+      const baseStock = hasVariants
+        ? variants.reduce((sum, v) => sum + (parseInt(v.stock, 10) || 0), 0)
+        : parseInt(formData.stock, 10);
+
       await posService.createProduct({
         name: formData.name,
-        sku: formData.sku,
-        barcode: formData.barcode,
+        sku: hasVariants ? null : formData.sku,
+        barcode: hasVariants ? null : formData.barcode,
         category_id: formData.category_id || null,
-        price: parseFloat(formData.price),
-        stock: parseInt(formData.stock, 10),
+        price: basePrice,
+        stock: baseStock,
         image: finalImageUrl || null,
-        barcode_type: formData.barcode_type,
+        barcode_type: hasVariants ? null : formData.barcode_type,
+        variants: variantPayload,
       });
 
       toast.success("Đã thêm sản phẩm thành công!");
@@ -200,6 +279,11 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
         category_id: "",
         image: "",
       });
+      setHasVariants(false);
+      setAttributes([]);
+      setVariants([]);
+      setCreatingCategory(false);
+      setNewCategoryName("");
       if (onShowSuccess) onShowSuccess();
     } catch (error: any) {
       console.error("createProduct error:", error);
@@ -227,7 +311,7 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
           Thêm sản phẩm
         </Button>
       </DialogTrigger>
-      <DialogContent className="bottom-0 left-0 top-auto max-h-[92dvh] w-full max-w-none translate-x-0 translate-y-0 overflow-hidden rounded-b-none rounded-t-3xl p-0 sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-w-[540px] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl">
+      <DialogContent className="bottom-0 left-0 top-auto max-h-[92dvh] w-full max-w-none translate-x-0 translate-y-0 overflow-hidden rounded-b-none rounded-t-3xl p-0 sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-w-7xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl">
         <form onSubmit={handleSubmit} className="flex max-h-[92dvh] flex-col">
           <DialogHeader className="border-b bg-background/95 px-5 pb-4 pt-5 text-left backdrop-blur sm:px-6">
             <DialogTitle className="flex items-center gap-2 pr-8 text-lg font-semibold sm:text-xl">
@@ -240,170 +324,364 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
               Nhập thông tin bán hàng, tồn kho và mã vạch cho sản phẩm.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4 sm:px-6">
-            {/* Product Image Uploader Box */}
-            <div className="relative flex flex-col gap-3 rounded-2xl border bg-muted/20 p-3 sm:flex-row sm:items-center">
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleImageUpload}
-                className="hidden"
-                accept="image/*,.heic,.heif"
-              />
-              <button
-                type="button"
-                onClick={handleImageChange}
-                className="group relative flex h-24 w-full cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-muted-foreground/20 bg-background p-0 transition-all hover:bg-muted/70 sm:h-20 sm:w-20 sm:shrink-0"
-              >
-                {formData.image ? (
-                  <>
-                    <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                      <span className="text-[10px] font-bold text-white uppercase">Đổi ảnh</span>
+          <div className="flex-1 overflow-y-auto bg-muted/10">
+            <div className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+                {/* Left Form Content (8 columns) */}
+                <div className="space-y-6 lg:col-span-8">
+                  {/* Basic Info Section */}
+                  <div className="space-y-6 rounded-2xl border bg-background p-5 shadow-sm sm:p-6">
+                    <div>
+                      <h3 className="text-base font-semibold">Thông tin cơ bản</h3>
+                      <p className="text-sm text-muted-foreground">Hình ảnh, tên và danh mục sản phẩm</p>
                     </div>
-                  </>
-                ) : (
-                  <>
-                    {uploadingImage ? (
-                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                    ) : (
-                      <>
-                        <ImageIcon className="w-6 h-6 text-muted-foreground/40 mb-1" />
-                        <span className="text-[8px] font-bold text-muted-foreground uppercase">Tải ảnh</span>
-                      </>
-                    )}
-                  </>
-                )}
-              </button>
-              <div className="min-w-0 flex-1 space-y-2">
-                <span className="block text-xs font-bold uppercase text-muted-foreground">Hình ảnh sản phẩm</span>
-                <p className="text-xs leading-relaxed text-muted-foreground">
-                  Tải ảnh thực tế hoặc để trống để AI tự tìm ảnh khi lưu.
-                </p>
-                <div className="grid grid-cols-2 gap-2 sm:flex">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 rounded-xl text-xs"
-                    onClick={handleImageChange}
-                    disabled={uploadingImage}
-                  >
-                    Tải ảnh lên
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="h-8 gap-1 rounded-xl border-violet-500/20 bg-violet-500/10 text-xs font-bold text-violet-500 hover:bg-violet-500/20"
-                    onClick={handleAiFindImage}
-                    disabled={aiFindingImage || !formData.name.trim()}
-                  >
-                    {aiFindingImage ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                    AI Tự Tìm Ảnh
-                  </Button>
-                </div>
-              </div>
-            </div>
 
-            <div className="grid gap-2 rounded-2xl border bg-background p-3 sm:border-0 sm:bg-transparent sm:p-0">
-              <Label htmlFor="name" className="text-xs font-bold uppercase text-muted-foreground">
-                Tên sản phẩm
-              </Label>
-              <Input
-                id="name"
-                placeholder="Ví dụ: iPhone 15 Pro Max"
-                className="h-10 rounded-xl"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-              />
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-2 rounded-2xl border bg-background p-3 sm:border-0 sm:bg-transparent sm:p-0">
-                <Label htmlFor="sku" className="text-xs font-bold uppercase text-muted-foreground">
-                  Mã SKU
-                </Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="sku"
-                    placeholder="Mã SP (Ví dụ: SP0001)"
-                    className="h-10 flex-1 rounded-xl uppercase"
-                    value={formData.sku}
-                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-10 rounded-xl px-3"
-                    onClick={generateSKU}
-                  >
-                    Tự tạo
-                  </Button>
+                    {/* Product Image Uploader Box */}
+                    <div className="relative flex flex-col gap-4 rounded-xl border bg-muted/20 p-4 sm:flex-row sm:items-center">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        accept="image/*,.heic,.heif"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleImageChange}
+                        className="group relative flex h-28 w-full cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-muted-foreground/20 bg-background p-0 transition-all hover:bg-muted/70 sm:h-24 sm:w-24 sm:shrink-0"
+                      >
+                        {formData.image ? (
+                          <>
+                            <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                              <span className="text-[10px] font-bold text-white uppercase">Đổi ảnh</span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            {uploadingImage ? (
+                              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                            ) : (
+                              <>
+                                <ImageIcon className="w-6 h-6 text-muted-foreground/40 mb-1" />
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase">Tải ảnh</span>
+                              </>
+                            )}
+                          </>
+                        )}
+                      </button>
+                      <div className="min-w-0 flex-1 space-y-2">
+                        <span className="block text-sm font-semibold text-foreground">Hình ảnh sản phẩm</span>
+                        <p className="text-xs leading-relaxed text-muted-foreground">
+                          Tải ảnh thực tế hoặc để trống để AI tự tìm ảnh khi lưu.
+                        </p>
+                        <div className="grid grid-cols-2 gap-2 sm:flex pt-1">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-9 rounded-xl text-xs"
+                            onClick={handleImageChange}
+                            disabled={uploadingImage}
+                          >
+                            Tải ảnh lên
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="h-9 gap-1.5 rounded-xl border-violet-500/20 bg-violet-500/10 text-xs font-bold text-violet-500 hover:bg-violet-500/20"
+                            onClick={handleAiFindImage}
+                            disabled={aiFindingImage || !formData.name.trim()}
+                          >
+                            {aiFindingImage ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                            AI Tự Tìm Ảnh
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3">
+                      <Label htmlFor="name" className="text-sm font-semibold text-foreground">
+                        Tên sản phẩm
+                      </Label>
+                      <Input
+                        id="name"
+                        placeholder="Ví dụ: iPhone 15 Pro Max"
+                        className="h-10 rounded-xl"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="grid gap-3">
+                        <Label htmlFor="category" className="text-sm font-semibold text-foreground">
+                          Danh mục
+                        </Label>
+                        {creatingCategory ? (
+                          <div className="flex gap-2 animate-in fade-in slide-in-from-top-1">
+                            <Input
+                              autoFocus
+                              placeholder="Nhập tên danh mục mới..."
+                              className="h-10 flex-1 rounded-xl border-primary/40 focus-visible:ring-primary/40"
+                              value={newCategoryName}
+                              onChange={(e) => setNewCategoryName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  handleCreateCategory();
+                                } else if (e.key === "Escape") {
+                                  e.preventDefault();
+                                  setCreatingCategory(false);
+                                  setNewCategoryName("");
+                                }
+                              }}
+                              disabled={savingCategory}
+                            />
+                            <Button
+                              type="button"
+                              size="sm"
+                              className="h-10 rounded-xl px-3"
+                              onClick={handleCreateCategory}
+                              disabled={savingCategory || !newCategoryName.trim()}
+                              title="Lưu danh mục"
+                            >
+                              {savingCategory ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Check className="h-4 w-4" />
+                              )}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-10 rounded-xl px-3"
+                              onClick={() => {
+                                setCreatingCategory(false);
+                                setNewCategoryName("");
+                              }}
+                              disabled={savingCategory}
+                              title="Hủy"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <Select
+                            value={formData.category_id}
+                            onValueChange={(val) => {
+                              if (val === "CREATE_NEW_CATEGORY") {
+                                setCreatingCategory(true);
+                                return;
+                              }
+                              setFormData({ ...formData, category_id: val });
+                            }}
+                          >
+                            <SelectTrigger id="category" className="h-10 w-full rounded-xl">
+                              <SelectValue placeholder="Chọn danh mục" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {categories.map((cat) => (
+                                <SelectItem key={cat.id} value={cat.id}>
+                                  {cat.name}
+                                </SelectItem>
+                              ))}
+                              {categories.length > 0 && <div className="h-px bg-muted my-1 mx-1" />}
+                              <SelectItem
+                                value="CREATE_NEW_CATEGORY"
+                                className="text-primary focus:bg-primary/10 focus:text-primary font-medium cursor-pointer"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <Plus className="h-4 w-4" />
+                                  <span>Thêm danh mục mới...</span>
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Pricing & Inventory Section (Single Product) */}
+                  {!hasVariants && (
+                    <div className="space-y-6 rounded-2xl border bg-background p-5 shadow-sm sm:p-6">
+                      <div>
+                        <h3 className="text-base font-semibold">Giá và kho</h3>
+                        <p className="text-sm text-muted-foreground">Thiết lập giá bán và số lượng tồn kho ban đầu</p>
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="grid gap-3">
+                          <Label htmlFor="sku" className="text-sm font-semibold text-foreground">
+                            Mã SKU
+                          </Label>
+                          <div className="flex gap-2">
+                            <Input
+                              id="sku"
+                              placeholder="Mã SP (Ví dụ: SP0001)"
+                              className="h-10 flex-1 rounded-xl uppercase"
+                              value={formData.sku}
+                              onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-10 rounded-xl px-3"
+                              onClick={generateSKU}
+                            >
+                              Tự tạo
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="pt-2">
+                          <ProductBarcodeField
+                            value={formData.barcode}
+                            onChange={(val) => setFormData({ ...formData, barcode: val })}
+                            onValidationChange={setBarcodeValid}
+                            barcodeType={formData.barcode_type}
+                            onBarcodeTypeChange={(val) => setFormData({ ...formData, barcode_type: val })}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="grid gap-3">
+                          <Label htmlFor="price" className="text-sm font-semibold text-foreground">
+                            Giá bán (₫)
+                          </Label>
+                          <Input
+                            id="price"
+                            type="text"
+                            placeholder="25,000,000"
+                            className="h-10 rounded-xl"
+                            value={formatCurrencyValue(formData.price)}
+                            onChange={(e) => setFormData({ ...formData, price: parseCurrencyValue(e.target.value) })}
+                            required={!hasVariants}
+                          />
+                        </div>
+                        <div className="grid gap-3">
+                          <Label htmlFor="stock" className="text-sm font-semibold text-foreground">
+                            Tồn kho ban đầu
+                          </Label>
+                          <Input
+                            id="stock"
+                            type="number"
+                            placeholder="10"
+                            className="h-10 rounded-xl"
+                            value={formData.stock}
+                            onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                            required={!hasVariants}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Variants Section */}
+                  <div className="space-y-6 rounded-2xl border bg-background p-5 shadow-sm sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <h3 className="text-base font-semibold">Phân loại hàng</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Thêm các phiên bản theo màu sắc, kích thước, chất liệu...
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor="has-variants" className="text-sm font-semibold cursor-pointer">
+                          Sản phẩm có biến thể
+                        </Label>
+                        <Switch id="has-variants" checked={hasVariants} onCheckedChange={setHasVariants} />
+                      </div>
+                    </div>
+
+                    {hasVariants && (
+                      <div className="pt-4 border-t">
+                        <VariantBuilder
+                          attributes={attributes}
+                          onAttributesChange={setAttributes}
+                          variants={variants}
+                          onVariantsChange={setVariants}
+                          parentName={formData.name}
+                          skuPrefix={formData.sku}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className="rounded-2xl border bg-background p-3 sm:border-0 sm:bg-transparent sm:p-0">
-                <ProductBarcodeField
-                  value={formData.barcode}
-                  onChange={(val) => setFormData({ ...formData, barcode: val })}
-                  onValidationChange={setBarcodeValid}
-                  barcodeType={formData.barcode_type}
-                  onBarcodeTypeChange={(val) => setFormData({ ...formData, barcode_type: val })}
-                />
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-2 rounded-2xl border bg-background p-3 sm:border-0 sm:bg-transparent sm:p-0">
-                <Label htmlFor="category" className="text-xs font-bold uppercase text-muted-foreground">
-                  Danh mục
-                </Label>
-                <Select onValueChange={(val) => setFormData({ ...formData, category_id: val })}>
-                  <SelectTrigger className="h-10 rounded-xl">
-                    <SelectValue placeholder="Chọn danh mục" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-2 rounded-2xl border bg-background p-3 sm:border-0 sm:bg-transparent sm:p-0">
-                <Label htmlFor="price" className="text-xs font-bold uppercase text-muted-foreground">
-                  Giá bán (₫)
-                </Label>
-                <Input
-                  id="price"
-                  type="text"
-                  placeholder="25,000,000"
-                  className="h-10 rounded-xl"
-                  value={formatCurrencyValue(formData.price)}
-                  onChange={(e) => setFormData({ ...formData, price: parseCurrencyValue(e.target.value) })}
-                  required
-                />
-              </div>
-              <div className="grid gap-2 rounded-2xl border bg-background p-3 sm:border-0 sm:bg-transparent sm:p-0">
-                <Label htmlFor="stock" className="text-xs font-bold uppercase text-muted-foreground">
-                  Tồn kho ban đầu
-                </Label>
-                <Input
-                  id="stock"
-                  type="number"
-                  placeholder="10"
-                  className="h-10 rounded-xl"
-                  value={formData.stock}
-                  onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                  required
-                />
+
+                {/* Right Sidebar (4 columns) - Summary */}
+                <div className="lg:col-span-4">
+                  <div className="sticky top-0 space-y-6 rounded-2xl border bg-background p-5 shadow-sm sm:p-6">
+                    <h3 className="text-base font-semibold border-b pb-4">Tóm tắt sản phẩm</h3>
+                    
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-muted/50">
+                        {formData.image ? (
+                          <img src={formData.image} alt="Preview" className="h-full w-full object-cover" />
+                        ) : (
+                          <ImageIcon className="h-6 w-6 text-muted-foreground/30" />
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-1 overflow-hidden">
+                        <p className="truncate font-semibold text-foreground">
+                          {formData.name || "Tên sản phẩm..."}
+                        </p>
+                        <p className="truncate text-sm text-muted-foreground">
+                          {categories.find((c) => c.id === formData.category_id)?.name || "Chưa chọn danh mục"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 pt-4 border-t text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Loại sản phẩm</span>
+                        <span className="font-medium">{hasVariants ? "Nhiều biến thể" : "Sản phẩm đơn"}</span>
+                      </div>
+                      
+                      {!hasVariants ? (
+                        <>
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Mã SKU</span>
+                            <span className="font-medium uppercase">{formData.sku || "-"}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Giá bán</span>
+                            <span className="font-semibold text-primary">
+                              {formatCurrencyValue(formData.price) || "0"} ₫
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Tồn kho</span>
+                            <span className="font-medium">{formData.stock || "0"}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Số biến thể</span>
+                            <span className="font-medium">{variants.length}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Tổng tồn kho</span>
+                            <span className="font-medium">
+                              {variants.reduce((sum, v) => sum + (parseInt(v.stock, 10) || 0), 0)}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
-          <DialogFooter className="mt-0 rounded-none bg-background/95 px-5 py-4 backdrop-blur sm:px-6">
+          <DialogFooter className="sticky bottom-0 z-10 mt-0 rounded-none border-t bg-background/95 px-5 py-4 backdrop-blur sm:px-6">
             <Button
               type="button"
               variant="outline"
