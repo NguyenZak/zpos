@@ -31,6 +31,19 @@ interface BarcodeScannerDialogProps {
 
 const CAMERA_BACK_VALUE = "__zpos_camera_back";
 const CAMERA_FRONT_VALUE = "__zpos_camera_front";
+const FAST_SCAN_FPS = 18;
+const SAME_CODE_THROTTLE_MS = 900;
+
+const PRODUCT_BARCODE_FORMATS = [
+  Html5QrcodeSupportedFormats.EAN_13,
+  Html5QrcodeSupportedFormats.EAN_8,
+  Html5QrcodeSupportedFormats.CODE_128,
+  Html5QrcodeSupportedFormats.CODE_39,
+  Html5QrcodeSupportedFormats.UPC_A,
+  Html5QrcodeSupportedFormats.UPC_E,
+];
+
+const BROAD_BARCODE_FORMATS = [...PRODUCT_BARCODE_FORMATS, Html5QrcodeSupportedFormats.QR_CODE];
 
 export function BarcodeScannerDialog({
   open,
@@ -87,6 +100,16 @@ export function BarcodeScannerDialog({
     if (cameraSelection === CAMERA_BACK_VALUE) return { facingMode: "environment" };
     if (cameraSelection === CAMERA_FRONT_VALUE) return { facingMode: "user" };
     return cameraSelection;
+  };
+
+  const getScannerFormats = () => {
+    return onRawScan ? BROAD_BARCODE_FORMATS : PRODUCT_BARCODE_FORMATS;
+  };
+
+  const getFastBarcodeScanBox = (width: number, height: number) => {
+    const boxWidth = Math.min(width * 0.94, 460);
+    const boxHeight = Math.min(Math.max(height * 0.28, 88), 132, height * 0.78);
+    return { width: boxWidth, height: boxHeight };
   };
 
   const prepareScannerVideoElement = async () => {
@@ -228,18 +251,8 @@ export function BarcodeScannerDialog({
     await stopScanner();
 
     try {
-      const formats = [
-        Html5QrcodeSupportedFormats.EAN_13,
-        Html5QrcodeSupportedFormats.EAN_8,
-        Html5QrcodeSupportedFormats.CODE_128,
-        Html5QrcodeSupportedFormats.CODE_39,
-        Html5QrcodeSupportedFormats.UPC_A,
-        Html5QrcodeSupportedFormats.UPC_E,
-        Html5QrcodeSupportedFormats.QR_CODE,
-      ];
-
       const html5QrCode = new Html5Qrcode(regionId, {
-        formatsToSupport: formats,
+        formatsToSupport: getScannerFormats(),
         useBarCodeDetectorIfSupported: true,
         verbose: false,
       });
@@ -249,13 +262,9 @@ export function BarcodeScannerDialog({
       await html5QrCode.start(
         getScannerCameraTarget(cameraSelection),
         {
-          fps: 10,
-          qrbox: (width, height) => {
-            // Wider scan window to capture complete long 1D barcodes
-            const boxWidth = Math.min(width * 0.9, 380);
-            const boxHeight = Math.min(height * 0.5, 180);
-            return { width: boxWidth, height: boxHeight };
-          },
+          fps: FAST_SCAN_FPS,
+          disableFlip: cameraSelection !== CAMERA_FRONT_VALUE,
+          qrbox: getFastBarcodeScanBox,
         },
         (decodedText) => {
           handleBarcodeScanned(decodedText);
@@ -336,8 +345,8 @@ export function BarcodeScannerDialog({
     const lastTime = (window as any).lastScannedTime || 0;
     const now = Date.now();
 
-    if (lastScanned === cleanedCode && now - lastTime < 1800) {
-      return; // Ignore repetitive scans within 1.8s
+    if (lastScanned === cleanedCode && now - lastTime < SAME_CODE_THROTTLE_MS) {
+      return; // Ignore accidental duplicate reads while still allowing quick repeated sales
     }
 
     (window as any).lastScannedCode = cleanedCode;
