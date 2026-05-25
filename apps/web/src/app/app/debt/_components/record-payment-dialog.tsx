@@ -19,8 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { debtService, type DebtOrder, type DebtPaymentMethod } from "@/services/debt.service";
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat("vi-VN").format(Math.round(n || 0)) + " ₫";
+const fmt = (n: number) => new Intl.NumberFormat("vi-VN").format(Math.round(n || 0)) + " ₫";
 
 interface Props {
   open: boolean;
@@ -66,9 +65,7 @@ export function RecordPaymentDialog({
   // FIFO allocation preview: oldest order paid first.
   const allocations = useMemo(() => {
     let remaining = amount;
-    const sorted = [...orders].sort(
-      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-    );
+    const sorted = [...orders].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
     return sorted
       .map((o) => {
         // debt_amount is the still-unpaid portion of the order (charge_debt
@@ -82,10 +79,7 @@ export function RecordPaymentDialog({
       .filter(Boolean) as { order_id: string; order_number: string; amount: number }[];
   }, [amount, orders]);
 
-  const totalOutstanding = useMemo(
-    () => orders.reduce((acc, o) => acc + Number(o.debt_amount ?? 0), 0),
-    [orders],
-  );
+  const totalOutstanding = useMemo(() => orders.reduce((acc, o) => acc + Number(o.debt_amount ?? 0), 0), [orders]);
 
   const handleSubmit = async () => {
     if (!amount || amount <= 0) {
@@ -184,12 +178,7 @@ export function RecordPaymentDialog({
 
           <div className="space-y-1.5">
             <Label>Ghi chú</Label>
-            <Textarea
-              rows={2}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Ghi chú nội bộ"
-            />
+            <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Ghi chú nội bộ" />
           </div>
 
           <div className="space-y-1.5">

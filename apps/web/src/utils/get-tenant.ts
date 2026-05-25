@@ -21,9 +21,7 @@ function resolveMainDomain(host: string) {
 
 function getSubdomainFromHost(host: string) {
   const mainDomain = resolveMainDomain(host);
-  return host.endsWith(`.${mainDomain}`)
-    ? host.replace(`.${mainDomain}`, "")
-    : null;
+  return host.endsWith(`.${mainDomain}`) ? host.replace(`.${mainDomain}`, "") : null;
 }
 
 export async function getTenantFromHost() {
@@ -37,12 +35,8 @@ export async function getTenantFromHost() {
 
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
-  
-  const { data: tenant } = await supabase
-    .from("organizations")
-    .select("*")
-    .eq("slug", subdomain)
-    .maybeSingle();
+
+  const { data: tenant } = await supabase.from("organizations").select("*").eq("slug", subdomain).maybeSingle();
 
   return tenant || null;
 }

@@ -130,7 +130,8 @@ export function OpenShiftDialog({
       setPreviousNote(null);
       return;
     }
-    shiftService.getPreviousShiftNote(branchId, registerId || undefined)
+    shiftService
+      .getPreviousShiftNote(branchId, registerId || undefined)
       .then(setPreviousNote)
       .catch(() => setPreviousNote(null));
   }, [open, branchId, registerId]);
@@ -172,7 +173,9 @@ export function OpenShiftDialog({
               <Wallet className="size-5" />
             </div>
             <div className="min-w-0">
-              <DialogTitle className="font-semibold text-base leading-6 sm:text-xl sm:leading-7">Mở ca làm việc</DialogTitle>
+              <DialogTitle className="font-semibold text-base leading-6 sm:text-xl sm:leading-7">
+                Mở ca làm việc
+              </DialogTitle>
               <DialogDescription className="mt-1 text-xs leading-5 sm:text-sm">
                 Chọn điểm bán, nhập tiền mặt và bắt đầu phiên bán.
               </DialogDescription>
@@ -316,19 +319,19 @@ export function OpenShiftDialog({
                 Tóm tắt ca
               </div>
               <dl className="mt-4 space-y-3 text-sm">
-              <div>
-                <dt className="text-muted-foreground">Chi nhánh</dt>
-                <dd className="mt-1 font-medium">{selectedBranch?.name || "Chưa chọn"}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Máy thu ngân</dt>
-                <dd className="mt-1 font-medium">{selectedRegister?.name || "Không gán"}</dd>
-              </div>
-              <div className="rounded-2xl bg-background p-3">
-                <dt className="text-muted-foreground">Tiền trong két</dt>
-                <dd className="mt-1 font-semibold text-2xl tabular-nums">{fmtVND(openingCash)}</dd>
-              </div>
-            </dl>
+                <div>
+                  <dt className="text-muted-foreground">Chi nhánh</dt>
+                  <dd className="mt-1 font-medium">{selectedBranch?.name || "Chưa chọn"}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Máy thu ngân</dt>
+                  <dd className="mt-1 font-medium">{selectedRegister?.name || "Không gán"}</dd>
+                </div>
+                <div className="rounded-2xl bg-background p-3">
+                  <dt className="text-muted-foreground">Tiền trong két</dt>
+                  <dd className="mt-1 font-semibold text-2xl tabular-nums">{fmtVND(openingCash)}</dd>
+                </div>
+              </dl>
             </div>
           </div>
         </div>

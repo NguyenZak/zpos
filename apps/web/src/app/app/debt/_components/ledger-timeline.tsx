@@ -4,8 +4,7 @@ import { ArrowDownToLine, ArrowUpFromLine, Pencil, Receipt, XCircle } from "luci
 import { Badge } from "@/components/ui/badge";
 import type { DebtTransaction, DebtTxKind } from "@/services/debt.service";
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat("vi-VN").format(Math.round(n || 0)) + " ₫";
+const fmt = (n: number) => new Intl.NumberFormat("vi-VN").format(Math.round(n || 0)) + " ₫";
 
 const formatDateTime = (s?: string | null) => {
   if (!s) return "—";
@@ -41,7 +40,8 @@ export function LedgerTimeline({
       {transactions.map((tx) => {
         const meta = kindMeta[tx.kind] ?? kindMeta.adjustment;
         const Icon = meta.icon;
-        const isCredit = tx.kind === "payment" || tx.kind === "write_off" || tx.kind === "adjustment" && Number(tx.amount) < 0;
+        const isCredit =
+          tx.kind === "payment" || tx.kind === "write_off" || (tx.kind === "adjustment" && Number(tx.amount) < 0);
         return (
           <div
             key={tx.id}
@@ -56,17 +56,14 @@ export function LedgerTimeline({
                   <Badge variant="outline" className="text-[10px]">
                     {meta.label}
                   </Badge>
-                  <span className="text-[11px] text-muted-foreground">
-                    {formatDateTime(tx.created_at)}
-                  </span>
+                  <span className="text-[11px] text-muted-foreground">{formatDateTime(tx.created_at)}</span>
                 </div>
                 <span className={`font-bold text-sm ${isCredit ? "text-emerald-600" : "text-red-600"}`}>
-                  {isCredit ? "-" : "+"}{fmt(Math.abs(Number(tx.amount)))}
+                  {isCredit ? "-" : "+"}
+                  {fmt(Math.abs(Number(tx.amount)))}
                 </span>
               </div>
-              {tx.notes && (
-                <p className="text-xs text-muted-foreground mt-0.5 truncate">{tx.notes}</p>
-              )}
+              {tx.notes && <p className="text-xs text-muted-foreground mt-0.5 truncate">{tx.notes}</p>}
               <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-2">
                 <span>
                   Trước: <span className="font-mono">{fmt(Number(tx.balance_before))}</span>

@@ -2,15 +2,33 @@
 
 import React from "react";
 import {
-  ArrowDownToLine, Ban, FileText, Filter, Loader2,
-  RefreshCw, Search, ExternalLink, AlertCircle, Zap,
-  TrendingUp, ReceiptText, XCircle, CheckCircle2,
+  ArrowDownToLine,
+  Ban,
+  FileText,
+  Filter,
+  Loader2,
+  RefreshCw,
+  Search,
+  ExternalLink,
+  AlertCircle,
+  Zap,
+  TrendingUp,
+  ReceiptText,
+  XCircle,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,14 +39,14 @@ import { InvoiceStatusBadge, formatVND, formatTime } from "@/components/einvoice
 import { InvoiceDetailSheet } from "@/components/einvoice/invoice-detail-sheet";
 
 const STATUS_FILTERS: { value: InvoiceStatus | "all"; label: string }[] = [
-  { value: "all",        label: "Tất cả" },
-  { value: "issued",     label: "Đã phát hành" },
-  { value: "sent_to_tax",label: "Đã gửi CQT" },
-  { value: "pending",    label: "Đang xử lý" },
-  { value: "cancelled",  label: "Đã huỷ" },
-  { value: "adjusted",   label: "Đã điều chỉnh" },
-  { value: "replaced",   label: "Đã thay thế" },
-  { value: "failed",     label: "Lỗi" },
+  { value: "all", label: "Tất cả" },
+  { value: "issued", label: "Đã phát hành" },
+  { value: "sent_to_tax", label: "Đã gửi CQT" },
+  { value: "pending", label: "Đang xử lý" },
+  { value: "cancelled", label: "Đã huỷ" },
+  { value: "adjusted", label: "Đã điều chỉnh" },
+  { value: "replaced", label: "Đã thay thế" },
+  { value: "failed", label: "Lỗi" },
 ];
 
 export default function InvoicesPage() {
@@ -64,16 +82,19 @@ export default function InvoicesPage() {
     }
   }, [statusFilter]);
 
-  React.useEffect(() => { load(); }, [load]);
+  React.useEffect(() => {
+    load();
+  }, [load]);
 
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return invoices;
-    return invoices.filter((i) =>
-      i.invoice_no?.toLowerCase().includes(q) ||
-      i.buyer_name?.toLowerCase().includes(q) ||
-      i.buyer_tax_code?.toLowerCase().includes(q) ||
-      (i.lookup_code || i.provider_lookup_code)?.toLowerCase().includes(q),
+    return invoices.filter(
+      (i) =>
+        i.invoice_no?.toLowerCase().includes(q) ||
+        i.buyer_name?.toLowerCase().includes(q) ||
+        i.buyer_tax_code?.toLowerCase().includes(q) ||
+        (i.lookup_code || i.provider_lookup_code)?.toLowerCase().includes(q),
     );
   }, [invoices, query]);
 
@@ -89,58 +110,94 @@ export default function InvoicesPage() {
   }, [invoices]);
 
   function exportCSV() {
-    const headers = ["Ngày phát hành","Số HĐ","Ký hiệu","Khách hàng","MST","Tạm tính","VAT","Tổng tiền","Trạng thái","Mã tra cứu"];
+    const headers = [
+      "Ngày phát hành",
+      "Số HĐ",
+      "Ký hiệu",
+      "Khách hàng",
+      "MST",
+      "Tạm tính",
+      "VAT",
+      "Tổng tiền",
+      "Trạng thái",
+      "Mã tra cứu",
+    ];
     const rows = filtered.map((i) => [
-      formatTime(i.invoice_date || i.created_at), i.invoice_no || "", i.invoice_series || "",
-      i.buyer_name || "", i.buyer_tax_code || "", String(i.subtotal),
-      String(i.vat_amount), String(i.total_amount),
-      i.status, i.lookup_code || i.provider_lookup_code || "",
+      formatTime(i.invoice_date || i.created_at),
+      i.invoice_no || "",
+      i.invoice_series || "",
+      i.buyer_name || "",
+      i.buyer_tax_code || "",
+      String(i.subtotal),
+      String(i.vat_amount),
+      String(i.total_amount),
+      i.status,
+      i.lookup_code || i.provider_lookup_code || "",
     ]);
     const csv = [headers, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = `invoices-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+    a.href = url;
+    a.download = `invoices-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
     URL.revokeObjectURL(url);
   }
 
   async function handleCancel() {
-    if (!cancelTarget || !cancelReason.trim()) { toast.error("Vui lòng nhập lý do huỷ"); return; }
+    if (!cancelTarget || !cancelReason.trim()) {
+      toast.error("Vui lòng nhập lý do huỷ");
+      return;
+    }
     setCancelling(true);
     const res = await einvoiceService.cancelInvoice(cancelTarget.id, cancelReason);
     setCancelling(false);
-    if (res.ok) { toast.success("Đã huỷ hoá đơn"); setCancelTarget(null); setCancelReason(""); load(); }
-    else toast.error(res.error || "Huỷ thất bại");
+    if (res.ok) {
+      toast.success("Đã huỷ hoá đơn");
+      setCancelTarget(null);
+      setCancelReason("");
+      load();
+    } else toast.error(res.error || "Huỷ thất bại");
   }
 
   async function handleAdjust() {
-    if (!adjustTarget || !adjustNote.trim()) { toast.error("Vui lòng nhập nội dung"); return; }
+    if (!adjustTarget || !adjustNote.trim()) {
+      toast.error("Vui lòng nhập nội dung");
+      return;
+    }
     setAdjusting(true);
-    const res = adjustType === "adjust"
-      ? await einvoiceService.adjustInvoice(adjustTarget.id, adjustNote)
-      : await einvoiceService.replaceInvoice(adjustTarget.id, {
-          orderId: adjustTarget.order_id || undefined,
-          buyer: {
-            name: adjustTarget.buyer_name || undefined,
-            tax_code: adjustTarget.buyer_tax_code || undefined,
-            address: adjustTarget.buyer_address || undefined,
-            email: adjustTarget.buyer_email || undefined,
-          },
-          items: (adjustTarget.items || []).map((it: any) => ({
-            product_name: it.product_name || it.name,
-            quantity: it.quantity, unit_price: it.unit_price,
-            discount_amount: it.discount_amount || 0, vat_rate: it.vat_rate || adjustTarget.vat_rate,
-          })),
-        });
+    const res =
+      adjustType === "adjust"
+        ? await einvoiceService.adjustInvoice(adjustTarget.id, adjustNote)
+        : await einvoiceService.replaceInvoice(adjustTarget.id, {
+            orderId: adjustTarget.order_id || undefined,
+            buyer: {
+              name: adjustTarget.buyer_name || undefined,
+              tax_code: adjustTarget.buyer_tax_code || undefined,
+              address: adjustTarget.buyer_address || undefined,
+              email: adjustTarget.buyer_email || undefined,
+            },
+            items: (adjustTarget.items || []).map((it: any) => ({
+              product_name: it.product_name || it.name,
+              quantity: it.quantity,
+              unit_price: it.unit_price,
+              discount_amount: it.discount_amount || 0,
+              vat_rate: it.vat_rate || adjustTarget.vat_rate,
+            })),
+          });
     setAdjusting(false);
     if (res.ok) {
       toast.success(adjustType === "adjust" ? "Đã tạo HĐ điều chỉnh" : "Đã tạo HĐ thay thế");
-      setAdjustTarget(null); setAdjustNote("");
+      setAdjustTarget(null);
+      setAdjustNote("");
       load();
     } else toast.error(res.error || "Thao tác thất bại");
   }
 
-  function openDetail(inv: Invoice) { setDetailInvoice(inv); setDetailOpen(true); }
+  function openDetail(inv: Invoice) {
+    setDetailInvoice(inv);
+    setDetailOpen(true);
+  }
 
   return (
     <div className="p-4 md:p-6 lg:p-8 space-y-6">
@@ -168,14 +225,20 @@ export default function InvoicesPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />Đã phát hành</CardDescription>
+            <CardDescription className="flex items-center gap-1.5">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+              Đã phát hành
+            </CardDescription>
             <CardTitle className="text-3xl font-black">{stats.issuedCount}</CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-emerald-600 font-bold">HĐ hợp lệ</CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1.5"><TrendingUp className="h-3.5 w-3.5 text-violet-500" />Doanh thu trên HĐ</CardDescription>
+            <CardDescription className="flex items-center gap-1.5">
+              <TrendingUp className="h-3.5 w-3.5 text-violet-500" />
+              Doanh thu trên HĐ
+            </CardDescription>
             <CardTitle className="text-xl font-black">{formatVND(stats.issuedTotal)}</CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-muted-foreground">Đã bao gồm thuế</CardContent>
@@ -189,7 +252,10 @@ export default function InvoicesPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1.5"><AlertCircle className="h-3.5 w-3.5 text-amber-500" />Cần xử lý</CardDescription>
+            <CardDescription className="flex items-center gap-1.5">
+              <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
+              Cần xử lý
+            </CardDescription>
             <CardTitle className="text-3xl font-black">{stats.failedCount + stats.cancelledCount}</CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-amber-600 font-bold">
@@ -206,7 +272,8 @@ export default function InvoicesPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Tìm theo số HĐ, MST, tên khách, mã tra cứu..."
-                value={query} onChange={(e) => setQuery(e.target.value)}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
                 className="pl-9"
               />
             </div>
@@ -217,7 +284,11 @@ export default function InvoicesPage() {
                 onChange={(e) => setStatusFilter(e.target.value as InvoiceStatus | "all")}
                 className="h-9 rounded-md border border-input bg-background px-3 text-sm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
               >
-                {STATUS_FILTERS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
+                {STATUS_FILTERS.map((f) => (
+                  <option key={f.value} value={f.value}>
+                    {f.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -231,7 +302,9 @@ export default function InvoicesPage() {
             <div className="text-center py-16">
               <FileText className="mx-auto h-10 w-10 text-muted-foreground/30 mb-3" />
               <p className="font-bold">Chưa có hoá đơn</p>
-              <p className="text-sm text-muted-foreground mt-1">Hoá đơn xuất hiện khi bạn phát hành từ POS hoặc Đơn hàng.</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Hoá đơn xuất hiện khi bạn phát hành từ POS hoặc Đơn hàng.
+              </p>
             </div>
           ) : (
             <Table>
@@ -251,7 +324,9 @@ export default function InvoicesPage() {
               <TableBody>
                 {filtered.map((inv) => (
                   <TableRow key={inv.id} className="cursor-pointer hover:bg-muted/40" onClick={() => openDetail(inv)}>
-                    <TableCell className="font-mono text-xs">{formatTime(inv.invoice_date || inv.created_at)}</TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {formatTime(inv.invoice_date || inv.created_at)}
+                    </TableCell>
                     <TableCell className="font-mono text-xs font-bold">
                       {inv.invoice_series || "—"}/{inv.invoice_no || "—"}
                     </TableCell>
@@ -261,22 +336,38 @@ export default function InvoicesPage() {
                     </TableCell>
                     <TableCell className="font-mono text-xs">{inv.buyer_tax_code || "—"}</TableCell>
                     <TableCell className="text-right font-bold">{formatVND(Number(inv.total_amount))}</TableCell>
-                    <TableCell className="text-right text-xs text-amber-600">{formatVND(Number(inv.vat_amount))}</TableCell>
-                    <TableCell><InvoiceStatusBadge status={inv.status} /></TableCell>
-                    <TableCell className="font-mono text-xs">{inv.lookup_code || inv.provider_lookup_code || "—"}</TableCell>
+                    <TableCell className="text-right text-xs text-amber-600">
+                      {formatVND(Number(inv.vat_amount))}
+                    </TableCell>
+                    <TableCell>
+                      <InvoiceStatusBadge status={inv.status} />
+                    </TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {inv.lookup_code || inv.provider_lookup_code || "—"}
+                    </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-1 justify-end">
                         {inv.lookup_url && (
-                          <a href={inv.lookup_url} target="_blank" rel="noreferrer"
-                            className="p-1.5 hover:bg-muted rounded" title="Tra cứu HĐ">
+                          <a
+                            href={inv.lookup_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="p-1.5 hover:bg-muted rounded"
+                            title="Tra cứu HĐ"
+                          >
                             <ExternalLink className="h-3.5 w-3.5" />
                           </a>
                         )}
-                        {["issued","sent","sent_to_tax","synced"].includes(inv.status) && (
+                        {["issued", "sent", "sent_to_tax", "synced"].includes(inv.status) && (
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); setCancelTarget(inv); }}
-                            className="p-1.5 hover:bg-red-500/10 text-red-600 rounded" title="Huỷ HĐ">
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCancelTarget(inv);
+                            }}
+                            className="p-1.5 hover:bg-red-500/10 text-red-600 rounded"
+                            title="Huỷ HĐ"
+                          >
                             <Ban className="h-3.5 w-3.5" />
                           </button>
                         )}
@@ -297,32 +388,65 @@ export default function InvoicesPage() {
 
       {/* Detail Sheet */}
       <InvoiceDetailSheet
-        invoice={detailInvoice} open={detailOpen} onOpenChange={setDetailOpen}
-        onCancelRequest={(inv) => { setDetailOpen(false); setCancelTarget(inv); }}
-        onAdjustRequest={(inv) => { setDetailOpen(false); setAdjustTarget(inv); setAdjustType("adjust"); }}
-        onReplaceRequest={(inv) => { setDetailOpen(false); setAdjustTarget(inv); setAdjustType("replace"); }}
+        invoice={detailInvoice}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        onCancelRequest={(inv) => {
+          setDetailOpen(false);
+          setCancelTarget(inv);
+        }}
+        onAdjustRequest={(inv) => {
+          setDetailOpen(false);
+          setAdjustTarget(inv);
+          setAdjustType("adjust");
+        }}
+        onReplaceRequest={(inv) => {
+          setDetailOpen(false);
+          setAdjustTarget(inv);
+          setAdjustType("replace");
+        }}
         onRefresh={load}
       />
 
       {/* Cancel Dialog */}
-      <Dialog open={!!cancelTarget} onOpenChange={(o) => { if (!o) { setCancelTarget(null); setCancelReason(""); } }}>
+      <Dialog
+        open={!!cancelTarget}
+        onOpenChange={(o) => {
+          if (!o) {
+            setCancelTarget(null);
+            setCancelReason("");
+          }
+        }}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><XCircle className="h-5 w-5 text-red-500" />Huỷ hoá đơn điện tử</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <XCircle className="h-5 w-5 text-red-500" />
+              Huỷ hoá đơn điện tử
+            </DialogTitle>
             <DialogDescription>
-              HĐ <b>{cancelTarget?.invoice_series}/{cancelTarget?.invoice_no}</b> sẽ chuyển sang "Đã huỷ". Theo TT 78/2021, cần khai báo lý do với Cơ quan Thuế.
+              HĐ{" "}
+              <b>
+                {cancelTarget?.invoice_series}/{cancelTarget?.invoice_no}
+              </b>{" "}
+              sẽ chuyển sang "Đã huỷ". Theo TT 78/2021, cần khai báo lý do với Cơ quan Thuế.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-2 py-2">
-            <Label className="font-bold">Lý do huỷ <span className="text-red-500">*</span></Label>
+            <Label className="font-bold">
+              Lý do huỷ <span className="text-red-500">*</span>
+            </Label>
             <Textarea
               placeholder="Ví dụ: Sai thông tin người mua, đổi trả hàng..."
-              value={cancelReason} onChange={(e) => setCancelReason(e.target.value)}
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
               rows={3}
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCancelTarget(null)}>Đóng</Button>
+            <Button variant="outline" onClick={() => setCancelTarget(null)}>
+              Đóng
+            </Button>
             <Button variant="destructive" onClick={handleCancel} disabled={cancelling || !cancelReason.trim()}>
               {cancelling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Xác nhận huỷ
@@ -332,7 +456,15 @@ export default function InvoicesPage() {
       </Dialog>
 
       {/* Adjust/Replace Dialog */}
-      <Dialog open={!!adjustTarget} onOpenChange={(o) => { if (!o) { setAdjustTarget(null); setAdjustNote(""); } }}>
+      <Dialog
+        open={!!adjustTarget}
+        onOpenChange={(o) => {
+          if (!o) {
+            setAdjustTarget(null);
+            setAdjustNote("");
+          }
+        }}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -340,32 +472,51 @@ export default function InvoicesPage() {
               {adjustType === "adjust" ? "Điều chỉnh" : "Thay thế"} hoá đơn
             </DialogTitle>
             <DialogDescription>
-              HĐ: <b>{adjustTarget?.invoice_series}/{adjustTarget?.invoice_no}</b>
+              HĐ:{" "}
+              <b>
+                {adjustTarget?.invoice_series}/{adjustTarget?.invoice_no}
+              </b>
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="flex gap-2">
-              {(["adjust","replace"] as const).map((t) => (
-                <button key={t} type="button" onClick={() => setAdjustType(t)}
-                  className={`flex-1 py-2 rounded-lg border text-sm font-bold transition-colors ${adjustType === t ? "bg-violet-600 text-white border-violet-600" : "bg-muted/30 hover:bg-muted/60"}`}>
+              {(["adjust", "replace"] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setAdjustType(t)}
+                  className={`flex-1 py-2 rounded-lg border text-sm font-bold transition-colors ${adjustType === t ? "bg-violet-600 text-white border-violet-600" : "bg-muted/30 hover:bg-muted/60"}`}
+                >
                   {t === "adjust" ? "Điều chỉnh" : "Thay thế"}
                 </button>
               ))}
             </div>
             <div className="grid gap-1.5">
               <Label className="font-bold">
-                {adjustType === "adjust" ? "Nội dung điều chỉnh" : "Lý do thay thế"} <span className="text-red-500">*</span>
+                {adjustType === "adjust" ? "Nội dung điều chỉnh" : "Lý do thay thế"}{" "}
+                <span className="text-red-500">*</span>
               </Label>
               <Textarea
-                placeholder={adjustType === "adjust" ? "Điều chỉnh tăng/giảm số lượng SP..." : "Thay thế do sai thông tin người mua..."}
-                value={adjustNote} onChange={(e) => setAdjustNote(e.target.value)}
+                placeholder={
+                  adjustType === "adjust"
+                    ? "Điều chỉnh tăng/giảm số lượng SP..."
+                    : "Thay thế do sai thông tin người mua..."
+                }
+                value={adjustNote}
+                onChange={(e) => setAdjustNote(e.target.value)}
                 rows={3}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAdjustTarget(null)}>Huỷ</Button>
-            <Button onClick={handleAdjust} disabled={adjusting || !adjustNote.trim()} className="bg-violet-600 hover:bg-violet-700 text-white">
+            <Button variant="outline" onClick={() => setAdjustTarget(null)}>
+              Huỷ
+            </Button>
+            <Button
+              onClick={handleAdjust}
+              disabled={adjusting || !adjustNote.trim()}
+              className="bg-violet-600 hover:bg-violet-700 text-white"
+            >
               {adjusting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Xác nhận {adjustType === "adjust" ? "điều chỉnh" : "thay thế"}
             </Button>

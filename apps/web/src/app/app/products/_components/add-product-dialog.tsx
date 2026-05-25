@@ -24,6 +24,7 @@ import { posService } from "@/services/pos.service";
 
 import { ProductBarcodeField } from "./product-barcode-field";
 import { BarcodeTypeSelector } from "./barcode-type-selector";
+import { RichTextEditor } from "@/components/rich-text-editor";
 import { type AttributeDef, VariantBuilder, type VariantRow } from "./variant-builder";
 
 export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void }) {
@@ -417,7 +418,11 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
                             onClick={handleAiFindImage}
                             disabled={aiFindingImage || !formData.name.trim()}
                           >
-                            {aiFindingImage ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                            {aiFindingImage ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Sparkles className="w-3.5 h-3.5" />
+                            )}
                             AI Tự Tìm Ảnh
                           </Button>
                         </div>
@@ -437,7 +442,7 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
                         required
                       />
                     </div>
-                    
+
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="grid gap-3">
                         <Label htmlFor="category" className="text-sm font-semibold text-foreground">
@@ -538,7 +543,9 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
                             <SelectValue placeholder="Chọn nhà cung cấp (Tuỳ chọn)" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="none" className="text-muted-foreground italic">Không có / Bỏ qua</SelectItem>
+                            <SelectItem value="none" className="text-muted-foreground italic">
+                              Không có / Bỏ qua
+                            </SelectItem>
                             {suppliers.map((sup) => (
                               <SelectItem key={sup.id} value={sup.id}>
                                 {sup.name}
@@ -598,7 +605,7 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
                           />
                         </div>
                       </div>
-                      
+
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div className="grid gap-3">
                           <Label htmlFor="price" className="text-sm font-semibold text-foreground">
@@ -667,7 +674,9 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
                   <div className="space-y-6 rounded-2xl border bg-background p-5 shadow-sm sm:p-6 border-indigo-500/20">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div>
-                        <h3 className="text-base font-semibold text-indigo-600 dark:text-indigo-400">Storefront (Bán Online)</h3>
+                        <h3 className="text-base font-semibold text-indigo-600 dark:text-indigo-400">
+                          Storefront (Bán Online)
+                        </h3>
                         <p className="text-sm text-muted-foreground mt-1">
                           Đồng bộ thiết lập hiển thị lên website bán hàng của bạn
                         </p>
@@ -676,9 +685,9 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
                         <Label htmlFor="is-published-online" className="text-sm font-semibold cursor-pointer">
                           Hiển thị trên web
                         </Label>
-                        <Switch 
-                          id="is-published-online" 
-                          checked={formData.is_published_online} 
+                        <Switch
+                          id="is-published-online"
+                          checked={formData.is_published_online}
                           onCheckedChange={(v) => setFormData({ ...formData, is_published_online: v })}
                         />
                       </div>
@@ -694,7 +703,9 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
                               placeholder="Mặc định lấy giá POS"
                               className="h-10 rounded-xl border-indigo-100 dark:border-indigo-900 focus-visible:ring-indigo-500"
                               value={formatCurrencyValue(formData.online_price)}
-                              onChange={(e) => setFormData({ ...formData, online_price: parseCurrencyValue(e.target.value) })}
+                              onChange={(e) =>
+                                setFormData({ ...formData, online_price: parseCurrencyValue(e.target.value) })
+                              }
                             />
                           </div>
                           <div className="grid gap-3">
@@ -708,12 +719,13 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
                           </div>
                         </div>
                         <div className="grid gap-3">
-                          <Label className="text-sm font-semibold text-foreground">Mô tả chi tiết sản phẩm (Hiển thị ở cuối trang)</Label>
-                          <textarea
-                            placeholder="Nhập mô tả sản phẩm chi tiết hiển thị ở cuối trang trên web..."
-                            className="flex min-h-[120px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                          <Label className="text-sm font-semibold text-foreground">
+                            Mô tả chi tiết sản phẩm (Hiển thị ở cuối trang)
+                          </Label>
+                          <RichTextEditor
                             value={formData.online_description || ""}
-                            onChange={(e) => setFormData({ ...formData, online_description: e.target.value })}
+                            onChange={(value) => setFormData({ ...formData, online_description: value })}
+                            placeholder="Nhập mô tả sản phẩm chi tiết hiển thị ở cuối trang trên web..."
                           />
                         </div>
                       </div>
@@ -725,7 +737,7 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
                 <div className="lg:col-span-4">
                   <div className="sticky top-0 space-y-6 rounded-2xl border bg-background p-5 shadow-sm sm:p-6">
                     <h3 className="text-base font-semibold border-b pb-4">Tóm tắt sản phẩm</h3>
-                    
+
                     <div className="flex items-start gap-4">
                       <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-muted/50">
                         {formData.image ? (
@@ -735,9 +747,7 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
                         )}
                       </div>
                       <div className="flex-1 space-y-1 overflow-hidden">
-                        <p className="truncate font-semibold text-foreground">
-                          {formData.name || "Tên sản phẩm..."}
-                        </p>
+                        <p className="truncate font-semibold text-foreground">{formData.name || "Tên sản phẩm..."}</p>
                         <p className="truncate text-sm text-muted-foreground">
                           {categories.find((c) => c.id === formData.category_id)?.name || "Chưa chọn danh mục"}
                         </p>
@@ -749,7 +759,7 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
                         <span className="text-muted-foreground">Loại sản phẩm</span>
                         <span className="font-medium">{hasVariants ? "Nhiều biến thể" : "Sản phẩm đơn"}</span>
                       </div>
-                      
+
                       {!hasVariants ? (
                         <>
                           <div className="flex items-center justify-between">
@@ -784,7 +794,6 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
                     </div>
                   </div>
                 </div>
-
               </div>
             </div>
           </div>

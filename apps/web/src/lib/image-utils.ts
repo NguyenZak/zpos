@@ -20,7 +20,7 @@ export const convertToWebP = (file: File, quality = 0.8): Promise<File> => {
         const canvas = document.createElement("canvas");
         canvas.width = img.width;
         canvas.height = img.height;
-        
+
         const ctx = canvas.getContext("2d");
         if (!ctx) {
           reject(new Error("Không thể khởi tạo Canvas 2D context"));
@@ -37,18 +37,18 @@ export const convertToWebP = (file: File, quality = 0.8): Promise<File> => {
               reject(new Error("Lỗi chuyển đổi ảnh sang WebP Blob"));
               return;
             }
-            
+
             // Build new File object in WebP format
             const originalName = file.name.substring(0, file.name.lastIndexOf(".")) || file.name;
             const webpFile = new File([blob], `${originalName}.webp`, {
               type: "image/webp",
-              lastModified: Date.now()
+              lastModified: Date.now(),
             });
-            
+
             resolve(webpFile);
           },
           "image/webp",
-          quality
+          quality,
         );
       };
       img.onerror = () => reject(new Error("Lỗi khi tải ảnh vào thẻ Image HTML"));

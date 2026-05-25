@@ -41,11 +41,11 @@ export function usePermissions(): UserPermissionsState {
   }, []);
 
   const hasPermission = (permissionId: string): boolean => {
-    if (role.toLowerCase() === 'owner') return true;
+    if (role.toLowerCase() === "owner") return true;
     return permissions.includes(permissionId);
   };
 
-  const isOwner = role.toLowerCase() === 'owner';
+  const isOwner = role.toLowerCase() === "owner";
 
   return {
     role,
@@ -54,6 +54,6 @@ export function usePermissions(): UserPermissionsState {
     isOwner,
     loading,
     hasPermission,
-    refresh: fetchPermissions
+    refresh: fetchPermissions,
   };
 }

@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { 
-  ArrowLeft, 
-  Truck, 
-  Package, 
+import React, { useState, useEffect } from "react";
+import {
+  ArrowLeft,
+  Truck,
+  Package,
   Loader2,
   CheckCircle,
   XCircle,
@@ -16,8 +16,8 @@ import {
   Edit,
   CreditCard,
   CheckCircle2,
-  Trash
-} from 'lucide-react';
+  Trash,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -29,44 +29,26 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { posService } from "@/services/pos.service";
 import { toast } from "sonner";
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
-import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogFooter,
-  DialogDescription
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function PurchaseDetailPage() {
   const { id } = useParams();
@@ -89,10 +71,12 @@ export default function PurchaseDetailPage() {
       const detail = await posService.getPurchaseOrderDetail(id as string);
       setData(detail);
       // Prepare items for receiving dialog
-      setReceivingItems(detail.items.map((item: any) => ({
-        ...item,
-        receiving_qty: item.quantity - item.received_quantity
-      })));
+      setReceivingItems(
+        detail.items.map((item: any) => ({
+          ...item,
+          receiving_qty: item.quantity - item.received_quantity,
+        })),
+      );
     } catch (error) {
       toast.error("Lỗi khi tải chi tiết đơn nhập");
     } finally {
@@ -108,12 +92,12 @@ export default function PurchaseDetailPage() {
     setProcessing(true);
     try {
       const receiveData = receivingItems
-        .filter(i => i.receiving_qty > 0)
-        .map(i => ({
+        .filter((i) => i.receiving_qty > 0)
+        .map((i) => ({
           itemId: i.id,
-          receivedQty: i.receiving_qty
+          receivedQty: i.receiving_qty,
         }));
-      
+
       if (receiveData.length === 0) {
         toast.warning("Vui lòng nhập số lượng nhận thực tế");
         return;
@@ -121,7 +105,7 @@ export default function PurchaseDetailPage() {
 
       await posService.receiveStock(id as string, receiveData);
       toast.success("Đã nhập kho thành công", {
-        description: "Số lượng tồn kho sản phẩm đã được cập nhật."
+        description: "Số lượng tồn kho sản phẩm đã được cập nhật.",
       });
       setReceivingOpen(false);
       loadDetail();
@@ -134,19 +118,45 @@ export default function PurchaseDetailPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    const s = status?.toLowerCase() || '';
+    const s = status?.toLowerCase() || "";
     switch (s) {
-      case 'draft': return <Badge variant="outline" className="bg-slate-100 text-slate-700">Nháp</Badge>;
-      case 'ordered': return <Badge variant="outline" className="bg-blue-100 text-blue-700">Đã đặt hàng</Badge>;
-      case 'receiving': return <Badge variant="outline" className="bg-amber-100 text-amber-700">Đang nhập kho</Badge>;
-      case 'completed': return <Badge variant="outline" className="bg-green-100 text-green-700">Hoàn tất</Badge>;
-      case 'cancelled': return <Badge variant="outline" className="bg-red-100 text-red-700">Đã hủy</Badge>;
-      default: return <Badge variant="outline">{status}</Badge>;
+      case "draft":
+        return (
+          <Badge variant="outline" className="bg-slate-100 text-slate-700">
+            Nháp
+          </Badge>
+        );
+      case "ordered":
+        return (
+          <Badge variant="outline" className="bg-blue-100 text-blue-700">
+            Đã đặt hàng
+          </Badge>
+        );
+      case "receiving":
+        return (
+          <Badge variant="outline" className="bg-amber-100 text-amber-700">
+            Đang nhập kho
+          </Badge>
+        );
+      case "completed":
+        return (
+          <Badge variant="outline" className="bg-green-100 text-green-700">
+            Hoàn tất
+          </Badge>
+        );
+      case "cancelled":
+        return (
+          <Badge variant="outline" className="bg-red-100 text-red-700">
+            Đã hủy
+          </Badge>
+        );
+      default:
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
   };
 
   const handlePayment = async () => {
@@ -161,7 +171,7 @@ export default function PurchaseDetailPage() {
         paymentAmount,
         paymentMethod,
         [{ purchase_order_id: id as string, amount: paymentAmount }],
-        { notes: paymentNote }
+        { notes: paymentNote },
       );
       toast.success("Ghi nhận thanh toán thành công");
       setPaymentOpen(false);
@@ -179,7 +189,7 @@ export default function PurchaseDetailPage() {
     try {
       await posService.deletePurchaseOrder(id as string);
       toast.success("Đã xoá đơn nhập hàng");
-      router.push('/app/purchases');
+      router.push("/app/purchases");
     } catch (error: any) {
       console.error("Lỗi xoá đơn:", error);
       toast.error(`Không thể xoá đơn: ${error.message || "Lỗi không xác định"}`);
@@ -188,20 +198,24 @@ export default function PurchaseDetailPage() {
     }
   };
 
-  if (loading) return (
-    <div className="flex flex-col items-center justify-center h-[400px] gap-4">
-      <Loader2 className="w-10 h-10 animate-spin text-primary" />
-      <p className="text-muted-foreground animate-pulse">Đang tải dữ liệu đơn hàng...</p>
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="flex flex-col items-center justify-center h-[400px] gap-4">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <p className="text-muted-foreground animate-pulse">Đang tải dữ liệu đơn hàng...</p>
+      </div>
+    );
 
-  if (!data) return (
-    <div className="flex flex-col items-center justify-center h-[400px] gap-4">
-      <AlertCircle className="w-12 h-12 text-destructive opacity-50" />
-      <p className="text-muted-foreground">Không tìm thấy dữ liệu đơn hàng.</p>
-      <Button asChild><Link href="/app/purchases">Quay lại danh sách</Link></Button>
-    </div>
-  );
+  if (!data)
+    return (
+      <div className="flex flex-col items-center justify-center h-[400px] gap-4">
+        <AlertCircle className="w-12 h-12 text-destructive opacity-50" />
+        <p className="text-muted-foreground">Không tìm thấy dữ liệu đơn hàng.</p>
+        <Button asChild>
+          <Link href="/app/purchases">Quay lại danh sách</Link>
+        </Button>
+      </div>
+    );
 
   return (
     <div className="flex flex-col gap-6">
@@ -226,7 +240,7 @@ export default function PurchaseDetailPage() {
           <Button variant="outline" size="sm">
             <Printer className="mr-2 h-4 w-4" /> In phiếu
           </Button>
-          {data.status !== 'completed' && data.status !== 'cancelled' && (
+          {data.status !== "completed" && data.status !== "cancelled" && (
             <>
               <Button variant="outline" size="sm" asChild>
                 <Link href={`/app/purchases/${id}/edit`}>
@@ -238,15 +252,25 @@ export default function PurchaseDetailPage() {
               </Button>
             </>
           )}
-          {data.payment_status !== 'paid' && data.debt_amount > 0 && (
-            <Button size="sm" variant="default" className="bg-green-600 hover:bg-green-700" onClick={() => {
-              setPaymentAmount(data.debt_amount);
-              setPaymentOpen(true);
-            }}>
+          {data.payment_status !== "paid" && data.debt_amount > 0 && (
+            <Button
+              size="sm"
+              variant="default"
+              className="bg-green-600 hover:bg-green-700"
+              onClick={() => {
+                setPaymentAmount(data.debt_amount);
+                setPaymentOpen(true);
+              }}
+            >
               <CreditCard className="mr-2 h-4 w-4" /> Thanh toán
             </Button>
           )}
-          <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive hover:text-destructive-foreground border-destructive/20" onClick={() => setDeleteOpen(true)}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-destructive hover:bg-destructive hover:text-destructive-foreground border-destructive/20"
+            onClick={() => setDeleteOpen(true)}
+          >
             <Trash className="mr-2 h-4 w-4" /> Xóa
           </Button>
         </div>
@@ -279,7 +303,11 @@ export default function PurchaseDetailPage() {
                         <TableCell>
                           <div className="flex items-center gap-3">
                             {item.product?.image && (
-                              <img src={item.product.image} className="w-10 h-10 rounded-lg object-cover border" alt="" />
+                              <img
+                                src={item.product.image}
+                                className="w-10 h-10 rounded-lg object-cover border"
+                                alt=""
+                              />
                             )}
                             <div className="flex flex-col">
                               <span className="font-medium text-sm">{item.product?.name || "N/A"}</span>
@@ -289,7 +317,10 @@ export default function PurchaseDetailPage() {
                         </TableCell>
                         <TableCell className="text-center font-bold">{item.quantity}</TableCell>
                         <TableCell className="text-center">
-                          <Badge variant={item.received_quantity >= item.quantity ? 'default' : 'secondary'} className="text-[10px]">
+                          <Badge
+                            variant={item.received_quantity >= item.quantity ? "default" : "secondary"}
+                            className="text-[10px]"
+                          >
                             {item.received_quantity} / {item.quantity}
                           </Badge>
                         </TableCell>
@@ -313,9 +344,7 @@ export default function PurchaseDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                {data.note || "Không có ghi chú."}
-              </p>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{data.note || "Không có ghi chú."}</p>
             </CardContent>
           </Card>
         </div>
@@ -343,17 +372,17 @@ export default function PurchaseDetailPage() {
           <Card className="border-none shadow-sm bg-primary/5">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-black">Thông tin thanh toán</CardTitle>
-              {data.payment_status === 'paid' && (
+              {data.payment_status === "paid" && (
                 <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200">
                   <CheckCircle2 className="w-3 h-3 mr-1" /> Đã trả đủ
                 </Badge>
               )}
-              {data.payment_status === 'partial' && (
+              {data.payment_status === "partial" && (
                 <Badge variant="outline" className="bg-yellow-100 text-yellow-700 border-yellow-200">
                   Thanh toán 1 phần
                 </Badge>
               )}
-              {data.payment_status === 'unpaid' && (
+              {data.payment_status === "unpaid" && (
                 <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200">
                   Chưa thanh toán
                 </Badge>
@@ -384,7 +413,9 @@ export default function PurchaseDetailPage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Còn nợ</span>
-                  <span className="text-destructive font-black">{formatCurrency(data.debt_amount || (data.total_amount - (data.paid_amount || 0)))}</span>
+                  <span className="text-destructive font-black">
+                    {formatCurrency(data.debt_amount || data.total_amount - (data.paid_amount || 0))}
+                  </span>
                 </div>
               </div>
             </CardContent>
@@ -401,7 +432,7 @@ export default function PurchaseDetailPage() {
               Kiểm tra và nhập số lượng thực tế nhận được từ nhà cung cấp để cập nhật tồn kho.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="max-h-[400px] overflow-y-auto pr-2">
             <Table>
               <TableHeader>
@@ -417,15 +448,15 @@ export default function PurchaseDetailPage() {
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="text-sm font-medium">{item.product?.name}</span>
-                        <span className="text-[10px] text-muted-foreground">Chờ: {item.quantity - item.received_quantity} / Tổng: {item.quantity}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          Chờ: {item.quantity - item.received_quantity} / Tổng: {item.quantity}
+                        </span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-center font-bold">
-                      {item.quantity - item.received_quantity}
-                    </TableCell>
+                    <TableCell className="text-center font-bold">{item.quantity - item.received_quantity}</TableCell>
                     <TableCell>
-                      <Input 
-                        type="number" 
+                      <Input
+                        type="number"
                         max={item.quantity - item.received_quantity}
                         min={0}
                         value={item.receiving_qty}
@@ -445,10 +476,12 @@ export default function PurchaseDetailPage() {
           </div>
 
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setReceivingOpen(false)}>Hủy</Button>
+            <Button variant="outline" onClick={() => setReceivingOpen(false)}>
+              Hủy
+            </Button>
             <Button onClick={handleReceiveStock} disabled={processing}>
               {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Xác nhận nhập {receivingItems.filter(i => i.receiving_qty > 0).length} sản phẩm
+              Xác nhận nhập {receivingItems.filter((i) => i.receiving_qty > 0).length} sản phẩm
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -459,24 +492,20 @@ export default function PurchaseDetailPage() {
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Thanh toán cho Nhà cung cấp</DialogTitle>
-            <DialogDescription>
-              Ghi nhận số tiền đã trả cho đơn nhập này.
-            </DialogDescription>
+            <DialogDescription>Ghi nhận số tiền đã trả cho đơn nhập này.</DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label>Số tiền thanh toán</Label>
-              <Input 
+              <Input
                 type="number"
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(parseFloat(e.target.value) || 0)}
                 max={data?.debt_amount}
                 className="text-lg font-bold"
               />
-              <p className="text-xs text-muted-foreground">
-                Còn nợ: {formatCurrency(data?.debt_amount || 0)}
-              </p>
+              <p className="text-xs text-muted-foreground">Còn nợ: {formatCurrency(data?.debt_amount || 0)}</p>
             </div>
 
             <div className="grid gap-2">
@@ -496,7 +525,7 @@ export default function PurchaseDetailPage() {
 
             <div className="grid gap-2">
               <Label>Ghi chú (Tùy chọn)</Label>
-              <Input 
+              <Input
                 placeholder="Ví dụ: Chuyển khoản Vietcombank..."
                 value={paymentNote}
                 onChange={(e) => setPaymentNote(e.target.value)}
@@ -505,7 +534,9 @@ export default function PurchaseDetailPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPaymentOpen(false)}>Hủy</Button>
+            <Button variant="outline" onClick={() => setPaymentOpen(false)}>
+              Hủy
+            </Button>
             <Button onClick={handlePayment} disabled={processing || paymentAmount <= 0}>
               {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Xác nhận trả {formatCurrency(paymentAmount)}
@@ -520,13 +551,13 @@ export default function PurchaseDetailPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xóa đơn nhập hàng?</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa đơn nhập hàng <strong>{data?.code}</strong> không? 
-              Hành động này không thể hoàn tác và sẽ xóa toàn bộ chi tiết của đơn này.
+              Bạn có chắc chắn muốn xóa đơn nhập hàng <strong>{data?.code}</strong> không? Hành động này không thể hoàn
+              tác và sẽ xóa toàn bộ chi tiết của đơn này.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>Hủy bỏ</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
                 handleDelete();

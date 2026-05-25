@@ -1,30 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { 
-  PieChart,
-  Download,
-  Loader2,
-  Calendar,
-  TrendingUp,
-  TrendingDown,
-  Info
-} from 'lucide-react';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle,
-  CardDescription 
-} from "@/components/ui/card";
+import React, { useState, useEffect } from "react";
+import { PieChart, Download, Loader2, Calendar, TrendingUp, TrendingDown, Info } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { posService } from '@/services/pos.service';
-import { 
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { posService } from "@/services/pos.service";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function ProfitLossPage() {
   const [stats, setStats] = useState<any>(null);
@@ -45,7 +26,7 @@ export default function ProfitLossPage() {
   }, []);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
   };
 
   if (loading) {
@@ -97,7 +78,9 @@ export default function ProfitLossPage() {
                     <span className="font-bold">1. Tổng doanh thu bán hàng</span>
                     <TooltipProvider>
                       <Tooltip>
-                        <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger>
+                        <TooltipTrigger>
+                          <Info className="w-3 h-3 text-muted-foreground" />
+                        </TooltipTrigger>
                         <TooltipContent>Tổng số tiền thu được từ tất cả các đơn hàng (trừ đơn hủy)</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -111,7 +94,9 @@ export default function ProfitLossPage() {
                     <span className="font-bold">2. Giá vốn hàng bán (COGS)</span>
                     <TooltipProvider>
                       <Tooltip>
-                        <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger>
+                        <TooltipTrigger>
+                          <Info className="w-3 h-3 text-muted-foreground" />
+                        </TooltipTrigger>
                         <TooltipContent>Tổng giá vốn của các sản phẩm đã bán</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -158,7 +143,9 @@ export default function ProfitLossPage() {
         <div className="space-y-6">
           <Card className="border-none shadow-sm bg-primary/5">
             <CardHeader>
-              <CardTitle className="text-sm font-bold uppercase tracking-widest text-primary">Chỉ số biên lợi nhuận</CardTitle>
+              <CardTitle className="text-sm font-bold uppercase tracking-widest text-primary">
+                Chỉ số biên lợi nhuận
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">

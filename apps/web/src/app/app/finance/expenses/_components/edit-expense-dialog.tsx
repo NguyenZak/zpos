@@ -2,24 +2,18 @@
 
 import React, { useState, useEffect } from "react";
 import { Edit2, Loader2, Receipt } from "lucide-react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { posService } from "@/services/pos.service";
 
@@ -33,14 +27,14 @@ interface EditExpenseDialogProps {
 export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess }: EditExpenseDialogProps) {
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
-  
+
   const [formData, setFormData] = useState({
     title: "",
     category_id: "",
     amount: "",
     payment_method: "cash",
-    expense_date: new Date().toISOString().split('T')[0],
-    note: ""
+    expense_date: new Date().toISOString().split("T")[0],
+    note: "",
   });
 
   useEffect(() => {
@@ -60,8 +54,10 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess }: Ed
           category_id: expense.category_id || "",
           amount: expense.amount ? expense.amount.toString() : "",
           payment_method: expense.payment_method || "cash",
-          expense_date: expense.expense_date ? new Date(expense.expense_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-          note: expense.note || ""
+          expense_date: expense.expense_date
+            ? new Date(expense.expense_date).toISOString().split("T")[0]
+            : new Date().toISOString().split("T")[0],
+          note: expense.note || "",
         });
       }
     }
@@ -79,7 +75,7 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess }: Ed
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       await posService.updateExpense(expense.id, {
         title: formData.title,
@@ -87,9 +83,9 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess }: Ed
         amount: parseFloat(parseCurrencyValue(formData.amount)) || 0,
         payment_method: formData.payment_method,
         expense_date: formData.expense_date,
-        note: formData.note
+        note: formData.note,
       });
-      
+
       toast.success("Đã cập nhật chi phí thành công!");
       onOpenChange(false);
       if (onSuccess) onSuccess();
@@ -110,16 +106,14 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess }: Ed
               <Receipt className="w-5 h-5" />
               Sửa khoản chi phí
             </DialogTitle>
-            <DialogDescription>
-              Cập nhật thông tin khoản chi phí này.
-            </DialogDescription>
+            <DialogDescription>Cập nhật thông tin khoản chi phí này.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="title">Lý do chi / Tiêu đề</Label>
-              <Input 
-                id="title" 
-                placeholder="Ví dụ: Tiền điện tháng 5" 
+              <Input
+                id="title"
+                placeholder="Ví dụ: Tiền điện tháng 5"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 required
@@ -128,26 +122,28 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess }: Ed
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="category">Danh mục chi phí</Label>
-                <Select 
-                  value={formData.category_id} 
+                <Select
+                  value={formData.category_id}
                   onValueChange={(val) => setFormData({ ...formData, category_id: val })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Chọn danh mục" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map(cat => (
-                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="amount">Số tiền (₫)</Label>
-                <Input 
-                  id="amount" 
-                  type="text" 
-                  placeholder="1,200,000" 
+                <Input
+                  id="amount"
+                  type="text"
+                  placeholder="1,200,000"
                   value={formatCurrencyValue(formData.amount)}
                   onChange={(e) => setFormData({ ...formData, amount: parseCurrencyValue(e.target.value) })}
                   required
@@ -157,8 +153,8 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess }: Ed
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="method">Phương thức thanh toán</Label>
-                <Select 
-                  value={formData.payment_method} 
+                <Select
+                  value={formData.payment_method}
                   onValueChange={(val) => setFormData({ ...formData, payment_method: val })}
                 >
                   <SelectTrigger>
@@ -174,8 +170,8 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess }: Ed
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="date">Ngày chi</Label>
-                <Input 
-                  id="date" 
+                <Input
+                  id="date"
                   type="date"
                   value={formData.expense_date}
                   onChange={(e) => setFormData({ ...formData, expense_date: e.target.value })}
@@ -185,9 +181,9 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess }: Ed
             </div>
             <div className="grid gap-2">
               <Label htmlFor="note">Ghi chú nội bộ</Label>
-              <Input 
-                id="note" 
-                placeholder="Ghi chú chi tiết..." 
+              <Input
+                id="note"
+                placeholder="Ghi chú chi tiết..."
                 value={formData.note}
                 onChange={(e) => setFormData({ ...formData, note: e.target.value })}
               />

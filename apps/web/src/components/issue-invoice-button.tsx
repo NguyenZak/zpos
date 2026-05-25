@@ -16,11 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import {
-  einvoiceService,
-  type Invoice,
-  type InvoiceItem,
-} from "@/services/einvoice.service";
+import { einvoiceService, type Invoice, type InvoiceItem } from "@/services/einvoice.service";
 
 // Backward compat alias
 type InvoiceLineItem = InvoiceItem;
@@ -108,11 +104,7 @@ export function IssueInvoiceButton({
         variant={variant}
         size={size}
         onClick={() => setOpen(true)}
-        className={
-          variant === "default"
-            ? "bg-violet-600 hover:bg-violet-700 text-white"
-            : ""
-        }
+        className={variant === "default" ? "bg-violet-600 hover:bg-violet-700 text-white" : ""}
       >
         <FileText className="mr-2 h-4 w-4" />
         {compact ? "HĐĐT" : "Phát hành HĐĐT"}
@@ -126,8 +118,7 @@ export function IssueInvoiceButton({
               Phát hành Hoá đơn điện tử
             </DialogTitle>
             <DialogDescription>
-              Theo TT 78/2021. Hoá đơn sau khi phát hành không thể chỉnh sửa,
-              chỉ có thể huỷ/thay thế/điều chỉnh.
+              Theo TT 78/2021. Hoá đơn sau khi phát hành không thể chỉnh sửa, chỉ có thể huỷ/thay thế/điều chỉnh.
             </DialogDescription>
           </DialogHeader>
 
@@ -136,9 +127,7 @@ export function IssueInvoiceButton({
               <div className="rounded-xl border bg-emerald-500/5 border-emerald-500/30 p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                  <p className="font-bold text-emerald-800 dark:text-emerald-300">
-                    Đơn này đã có hoá đơn
-                  </p>
+                  <p className="font-bold text-emerald-800 dark:text-emerald-300">Đơn này đã có hoá đơn</p>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
@@ -153,23 +142,12 @@ export function IssueInvoiceButton({
                   </div>
                   <div className="col-span-2">
                     <span className="text-muted-foreground">Mã tra cứu:</span>{" "}
-                    <span className="font-mono">
-                      {existing.provider_lookup_code || "—"}
-                    </span>
+                    <span className="font-mono">{existing.provider_lookup_code || "—"}</span>
                   </div>
                 </div>
                 {existing.provider_pdf_url && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-3"
-                    asChild
-                  >
-                    <a
-                      href={existing.provider_pdf_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
+                  <Button variant="outline" size="sm" className="mt-3" asChild>
+                    <a href={existing.provider_pdf_url} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="mr-2 h-3.5 w-3.5" />
                       Xem PDF
                     </a>
@@ -187,31 +165,21 @@ export function IssueInvoiceButton({
               <label className="flex items-center justify-between gap-3 p-3 rounded-md border bg-muted/30 cursor-pointer">
                 <div>
                   <p className="font-bold text-sm">Phát hành cho cá nhân (không MST)</p>
-                  <p className="text-xs text-muted-foreground">
-                    Tắt nếu khách yêu cầu HĐ có MST công ty
-                  </p>
+                  <p className="text-xs text-muted-foreground">Tắt nếu khách yêu cầu HĐ có MST công ty</p>
                 </div>
                 <Switch
                   checked={form.issuePersonalInvoice}
-                  onCheckedChange={(v) =>
-                    setForm((f) => ({ ...f, issuePersonalInvoice: v }))
-                  }
+                  onCheckedChange={(v) => setForm((f) => ({ ...f, issuePersonalInvoice: v }))}
                 />
               </label>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="grid gap-1.5">
-                  <Label className="font-bold">
-                    {form.issuePersonalInvoice ? "Họ tên khách" : "Tên công ty"}
-                  </Label>
+                  <Label className="font-bold">{form.issuePersonalInvoice ? "Họ tên khách" : "Tên công ty"}</Label>
                   <Input
                     value={form.name}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, name: e.target.value }))
-                    }
-                    placeholder={
-                      form.issuePersonalInvoice ? "Nguyễn Văn A" : "CÔNG TY TNHH ABC"
-                    }
+                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                    placeholder={form.issuePersonalInvoice ? "Nguyễn Văn A" : "CÔNG TY TNHH ABC"}
                   />
                 </div>
                 {!form.issuePersonalInvoice && (
@@ -219,9 +187,7 @@ export function IssueInvoiceButton({
                     <Label className="font-bold">Mã số thuế</Label>
                     <Input
                       value={form.tax_code}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, tax_code: e.target.value }))
-                      }
+                      onChange={(e) => setForm((f) => ({ ...f, tax_code: e.target.value }))}
                       className="font-mono font-bold"
                     />
                   </div>
@@ -230,12 +196,7 @@ export function IssueInvoiceButton({
 
               <div className="grid gap-1.5">
                 <Label className="font-bold">Địa chỉ</Label>
-                <Input
-                  value={form.address}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, address: e.target.value }))
-                  }
-                />
+                <Input value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} />
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
@@ -244,9 +205,7 @@ export function IssueInvoiceButton({
                   <Input
                     type="email"
                     value={form.email}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, email: e.target.value }))
-                    }
+                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                   />
                 </div>
                 <div className="grid gap-1.5">
@@ -255,18 +214,14 @@ export function IssueInvoiceButton({
                     type="number"
                     step="0.01"
                     value={form.vatRate}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, vatRate: Number(e.target.value) }))
-                    }
+                    onChange={(e) => setForm((f) => ({ ...f, vatRate: Number(e.target.value) }))}
                     className="font-bold"
                   />
                 </div>
               </div>
 
               <div className="rounded-md border bg-muted/20 p-3 text-xs space-y-1">
-                <p className="font-bold uppercase tracking-wider text-muted-foreground">
-                  Mặt hàng ({items.length})
-                </p>
+                <p className="font-bold uppercase tracking-wider text-muted-foreground">Mặt hàng ({items.length})</p>
                 {items.slice(0, 5).map((it, i) => (
                   <div key={i} className="flex justify-between">
                     <span className="truncate flex-1">{(it as any).product_name || (it as any).name}</span>
@@ -275,11 +230,7 @@ export function IssueInvoiceButton({
                     </span>
                   </div>
                 ))}
-                {items.length > 5 && (
-                  <p className="text-muted-foreground">
-                    ... và {items.length - 5} sản phẩm khác
-                  </p>
-                )}
+                {items.length > 5 && <p className="text-muted-foreground">... và {items.length - 5} sản phẩm khác</p>}
               </div>
 
               <DialogFooter>

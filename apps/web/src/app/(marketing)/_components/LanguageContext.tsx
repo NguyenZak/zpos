@@ -30,7 +30,8 @@ const translations: Record<Language, Record<string, string>> = {
     "hero.badge": "⚡️ Hệ thống Quản lý Bán hàng & POS Toàn diện",
     "hero.title1": "Thanh toán Siêu tốc, Bảo mật và",
     "hero.title2": "Tối ưu hóa Cửa hàng ZPOS của bạn",
-    "hero.subtitle": "Giải pháp quản lý bán hàng đa kênh, đồng bộ thời gian thực và hoạt động mượt mà ngay cả khi ngoại tuyến.",
+    "hero.subtitle":
+      "Giải pháp quản lý bán hàng đa kênh, đồng bộ thời gian thực và hoạt động mượt mà ngay cả khi ngoại tuyến.",
     "hero.cta.trial": "Dùng thử miễn phí",
     "hero.cta.docs": "Xem tính năng",
     "hero.feature1.meta": "01 // ĐỒNG BỘ NGOẠI TUYẾN",
@@ -46,9 +47,11 @@ const translations: Record<Language, Record<string, string>> = {
     // FeatureGrid
     "grid.badge": "HỆ SINH THÁI BÁN HÀNG",
     "grid.title": "Mọi công cụ chuyên nghiệp để vận hành",
-    "grid.subtitle": "Không còn phải kết hợp các phần mềm rời rạc. Quản lý toàn bộ hoạt động kinh doanh từ một nền tảng POS đồng bộ và bảo mật.",
+    "grid.subtitle":
+      "Không còn phải kết hợp các phần mềm rời rạc. Quản lý toàn bộ hoạt động kinh doanh từ một nền tảng POS đồng bộ và bảo mật.",
     "grid.f1.title": "Thanh toán dưới 3 giây",
-    "grid.f1.desc": "Giao diện tối giản, tối ưu hóa thao tác chạm giúp nhân viên thu ngân phục vụ khách hàng nhanh hơn.",
+    "grid.f1.desc":
+      "Giao diện tối giản, tối ưu hóa thao tác chạm giúp nhân viên thu ngân phục vụ khách hàng nhanh hơn.",
     "grid.f2.title": "Bảo mật Dữ liệu Ca làm",
     "grid.f2.desc": "Phân quyền nhân viên chặt chẽ, chống thất thoát doanh thu và mã hóa lịch sử giao dịch.",
     "grid.f3.title": "Quản lý Chuỗi Cửa hàng",
@@ -63,7 +66,8 @@ const translations: Record<Language, Record<string, string>> = {
     // ProductDemo
     "demo.badge": "TRẢI NGHIỆM GIAO DIỆN POS",
     "demo.title": "Mạnh mẽ, Trực quan & Dễ sử dụng",
-    "demo.desc": "Thiết kế tối ưu cho máy POS cảm ứng và máy tính bảng. Tăng năng suất làm việc của nhân viên thu ngân lên tới 150%.",
+    "demo.desc":
+      "Thiết kế tối ưu cho máy POS cảm ứng và máy tính bảng. Tăng năng suất làm việc của nhân viên thu ngân lên tới 150%.",
     "demo.f1.title": "Tạo đơn hàng siêu tốc",
     "demo.f1.desc": "Chọn sản phẩm, áp dụng khuyến mãi, chọn bàn và in hóa đơn chỉ trong vài thao tác chạm.",
     "demo.f2.title": "Quản lý nhiều tab hóa đơn",
@@ -75,19 +79,23 @@ const translations: Record<Language, Record<string, string>> = {
 
     // FeatureDeepDive
     "dive.f1.title": "Đồng bộ thời gian thực trên mọi thiết bị",
-    "dive.f1.desc": "Mọi thay đổi về sản phẩm, giá bán, hoặc trạng thái đơn hàng đều được đồng bộ tức thì đến tất cả máy POS và thiết bị cầm tay của nhân viên.",
+    "dive.f1.desc":
+      "Mọi thay đổi về sản phẩm, giá bán, hoặc trạng thái đơn hàng đều được đồng bộ tức thì đến tất cả máy POS và thiết bị cầm tay của nhân viên.",
     "dive.f1.cta": "Khám phá tính năng đồng bộ",
     "dive.f2.title": "Số liệu phân tích thúc đẩy tăng trưởng",
-    "dive.f2.desc": "Biểu đồ trực quan giúp bạn nắm bắt mặt hàng bán chạy, khung giờ cao điểm và hiệu suất làm việc của từng nhân viên.",
+    "dive.f2.desc":
+      "Biểu đồ trực quan giúp bạn nắm bắt mặt hàng bán chạy, khung giờ cao điểm và hiệu suất làm việc của từng nhân viên.",
     "dive.f2.cta": "Xem báo cáo mẫu",
     "dive.f3.title": "Hệ thống mở rộng & Tích hợp",
-    "dive.f3.desc": "Dễ dàng kết nối với các ứng dụng giao hàng (Grab, ShopeeFood), phần mềm kế toán và quản lý khách hàng thân thiết (CRM).",
+    "dive.f3.desc":
+      "Dễ dàng kết nối với các ứng dụng giao hàng (Grab, ShopeeFood), phần mềm kế toán và quản lý khách hàng thân thiết (CRM).",
     "dive.f3.cta": "Xem tài liệu tích hợp",
 
     // SecuritySection
     "sec.badge": "AN TOÀN & BẢO MẬT DỮ LIỆU",
     "sec.title": "Mặc định an toàn tuyệt đối",
-    "sec.desc": "Chúng tôi áp dụng các tiêu chuẩn bảo mật dữ liệu nghiêm ngặt nhất để bảo vệ thông tin kinh doanh và lịch sử giao dịch của bạn.",
+    "sec.desc":
+      "Chúng tôi áp dụng các tiêu chuẩn bảo mật dữ liệu nghiêm ngặt nhất để bảo vệ thông tin kinh doanh và lịch sử giao dịch của bạn.",
     "sec.f1.title": "Mã hóa dữ liệu đám mây",
     "sec.f1.desc": "Mọi giao dịch và thông tin khách hàng được mã hóa hai chiều theo tiêu chuẩn doanh nghiệp.",
     "sec.f2.title": "Cam kết Hoạt động Liên tục",
@@ -121,7 +129,7 @@ const translations: Record<Language, Record<string, string>> = {
     "footer.product": "Sản phẩm",
     "footer.company": "Công ty",
     "footer.resources": "Tài nguyên",
-    "footer.legal": "Pháp lý"
+    "footer.legal": "Pháp lý",
   },
   en: {
     // Header
@@ -155,7 +163,8 @@ const translations: Record<Language, Record<string, string>> = {
     // FeatureGrid
     "grid.badge": "SALES ECOSYSTEM",
     "grid.title": "Everything you need to operate",
-    "grid.subtitle": "No more piecing together fragmented software. Manage your entire business from a unified, secure POS platform.",
+    "grid.subtitle":
+      "No more piecing together fragmented software. Manage your entire business from a unified, secure POS platform.",
     "grid.f1.title": "Sub-3s Checkout",
     "grid.f1.desc": "Minimalist touch-optimized interface helps cashiers serve customers faster.",
     "grid.f2.title": "Shift & Data Security",
@@ -167,7 +176,8 @@ const translations: Record<Language, Record<string, string>> = {
     "grid.f5.title": "Payment Gateways",
     "grid.f5.desc": "Supports dynamic QR codes, bank cards, e-wallets, and auto-verifies successful transactions.",
     "grid.f6.title": "Automated Reporting",
-    "grid.f6.desc": "Automatically aggregates revenue, orders, payment methods, and sends reports at the end of the day.",
+    "grid.f6.desc":
+      "Automatically aggregates revenue, orders, payment methods, and sends reports at the end of the day.",
 
     // ProductDemo
     "demo.badge": "POS INTERFACE EXPERIENCE",
@@ -184,19 +194,22 @@ const translations: Record<Language, Record<string, string>> = {
 
     // FeatureDeepDive
     "dive.f1.title": "Real-time sync across all devices",
-    "dive.f1.desc": "Any updates to products, prices, or order status are instantly synced across all POS terminals and handheld staff devices.",
+    "dive.f1.desc":
+      "Any updates to products, prices, or order status are instantly synced across all POS terminals and handheld staff devices.",
     "dive.f1.cta": "Explore sync features",
     "dive.f2.title": "Insights that drive growth",
     "dive.f2.desc": "Visual charts help you capture top-selling items, peak hours, and individual staff performance.",
     "dive.f2.cta": "View sample reports",
     "dive.f3.title": "Extensible & Scalable",
-    "dive.f3.desc": "Easily connect with delivery apps (Grab, ShopeeFood), accounting software, and loyalty programs (CRM).",
+    "dive.f3.desc":
+      "Easily connect with delivery apps (Grab, ShopeeFood), accounting software, and loyalty programs (CRM).",
     "dive.f3.cta": "View integration docs",
 
     // SecuritySection
     "sec.badge": "DATA SECURITY & RELIABILITY",
     "sec.title": "Secure by default",
-    "sec.desc": "We apply the strictest data security standards to protect your business information and transaction history.",
+    "sec.desc":
+      "We apply the strictest data security standards to protect your business information and transaction history.",
     "sec.f1.title": "Cloud Data Encryption",
     "sec.f1.desc": "All transactions and customer profiles are bi-directionally encrypted using enterprise standards.",
     "sec.f2.title": "Continuous Uptime",
@@ -230,8 +243,8 @@ const translations: Record<Language, Record<string, string>> = {
     "footer.product": "Product",
     "footer.company": "Company",
     "footer.resources": "Resources",
-    "footer.legal": "Legal"
-  }
+    "footer.legal": "Legal",
+  },
 };
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -254,11 +267,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return translations[language][key] || translations["vi"][key] || key;
   };
 
-  return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
-      {children}
-    </LanguageContext.Provider>
-  );
+  return <LanguageContext.Provider value={{ language, setLanguage, t }}>{children}</LanguageContext.Provider>;
 };
 
 export const useLanguage = () => {

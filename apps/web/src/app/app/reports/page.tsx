@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { 
-  BarChart3, 
-  LineChart, 
-  PieChart as PieChartIcon, 
+import React, { useState, useEffect } from "react";
+import {
+  BarChart3,
+  LineChart,
+  PieChart as PieChartIcon,
   Download,
   Calendar,
   Filter,
@@ -16,50 +16,29 @@ import {
   ChevronDown,
   AlertTriangle,
   Layers,
-  DollarSign
-} from 'lucide-react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
+  DollarSign,
+} from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { 
-  ChartContainer, 
-  ChartTooltip, 
-  ChartTooltipContent 
-} from "@/components/ui/chart";
-import { 
-  Area, 
-  AreaChart, 
-  ResponsiveContainer, 
-  XAxis, 
-  YAxis, 
+  Area,
+  AreaChart,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
   CartesianGrid,
   Bar,
   BarChart,
   Cell,
   Pie,
   PieChart,
-  Legend
+  Legend,
 } from "recharts";
 
-import { posService, getTenantSlug } from '@/services/pos.service';
+import { posService, getTenantSlug } from "@/services/pos.service";
 import { exportToCSV } from "@/lib/export-utils";
 
 export default function ReportsPage() {
@@ -100,20 +79,20 @@ export default function ReportsPage() {
 
   // Format currency helper
   const formatVND = (value: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+    return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(value);
   };
 
   // 1. Calculate Real Dynamic Weekly Chart Data (Revenue & Profit)
-  const daysOfWeek = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
-  
+  const daysOfWeek = ["Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
+
   const revenueData = [
-    { name: 'Thứ 2', revenue: 0, profit: 0 },
-    { name: 'Thứ 3', revenue: 0, profit: 0 },
-    { name: 'Thứ 4', revenue: 0, profit: 0 },
-    { name: 'Thứ 5', revenue: 0, profit: 0 },
-    { name: 'Thứ 6', revenue: 0, profit: 0 },
-    { name: 'Thứ 7', revenue: 0, profit: 0 },
-    { name: 'Chủ nhật', revenue: 0, profit: 0 },
+    { name: "Thứ 2", revenue: 0, profit: 0 },
+    { name: "Thứ 3", revenue: 0, profit: 0 },
+    { name: "Thứ 4", revenue: 0, profit: 0 },
+    { name: "Thứ 5", revenue: 0, profit: 0 },
+    { name: "Thứ 6", revenue: 0, profit: 0 },
+    { name: "Thứ 7", revenue: 0, profit: 0 },
+    { name: "Chủ nhật", revenue: 0, profit: 0 },
   ];
 
   let profitRatio = 0.35; // Default gross profit margin fallback
@@ -124,11 +103,11 @@ export default function ReportsPage() {
   if (stats?.ordersList && Array.isArray(stats.ordersList)) {
     stats.ordersList.forEach((order: any) => {
       const orderDate = new Date(order.created_at);
-      const dayIndex = orderDate.getDay(); 
+      const dayIndex = orderDate.getDay();
       const dayName = daysOfWeek[dayIndex];
       const amount = Number(order.total_amount) || 0;
-      
-      const dayItem = revenueData.find(item => item.name === dayName);
+
+      const dayItem = revenueData.find((item) => item.name === dayName);
       if (dayItem) {
         dayItem.revenue += amount;
         dayItem.profit += Math.round(amount * profitRatio);
@@ -137,64 +116,67 @@ export default function ReportsPage() {
   }
 
   // 2. Calculate Real Category Sales Data
-  const colors = ['hsl(var(--primary))', '#10b981', '#f59e0b', '#6366f1', '#ec4899'];
+  const colors = ["hsl(var(--primary))", "#10b981", "#f59e0b", "#6366f1", "#ec4899"];
   let categoryData: any[] = [];
-  
+
   if (stats?.categorySales && Array.isArray(stats.categorySales)) {
     const totalCatSales = stats.categorySales.reduce((acc: number, curr: any) => acc + Number(curr.value || 0), 0);
-    
+
     categoryData = stats.categorySales.map((cat: any, index: number) => {
       const valuePct = totalCatSales > 0 ? Math.round((Number(cat.value || 0) / totalCatSales) * 100) : 0;
       return {
         name: cat.name || "Khác",
         value: valuePct > 0 ? valuePct : 10, // Safeguard visual rendering
-        color: colors[index % colors.length]
+        color: colors[index % colors.length],
       };
     });
   }
 
-  if (categoryData.length === 0 || categoryData.every(c => c.value === 0)) {
+  if (categoryData.length === 0 || categoryData.every((c) => c.value === 0)) {
     const uniqueCats = Array.from(new Set(products.map((p: any) => p.category?.name || "Khác"))).slice(0, 4);
     if (uniqueCats.length > 0) {
       categoryData = uniqueCats.map((catName: string, index: number) => ({
         name: catName,
-        value: index === 0 ? 50 : index === 1 ? 30 : index === 2 ? 15 : 5, 
-        color: colors[index % colors.length]
+        value: index === 0 ? 50 : index === 1 ? 30 : index === 2 ? 15 : 5,
+        color: colors[index % colors.length],
       }));
     } else {
-      categoryData = [
-        { name: 'Chưa phân loại', value: 100, color: colors[0] }
-      ];
+      categoryData = [{ name: "Chưa phân loại", value: 100, color: colors[0] }];
     }
   }
 
   // 3. Calculate Real Branch Revenue Data
-  const branchData = branches.map((branch: any, index: number) => {
-    let branchRevenue = 0;
-    if (stats?.ordersList && Array.isArray(stats.ordersList)) {
-      const matchingOrders = stats.ordersList.filter((o: any) => o.branch_id === branch.id);
-      if (matchingOrders.length > 0) {
-        branchRevenue = matchingOrders.reduce((sum: number, o: any) => sum + Number(o.total_amount), 0);
-      } else {
-        // If there's only 1 branch in system, associate all revenue to it
-        branchRevenue = branches.length === 1 ? (finance?.totalRevenue || 0) : 0;
+  const branchData = branches
+    .map((branch: any, index: number) => {
+      let branchRevenue = 0;
+      if (stats?.ordersList && Array.isArray(stats.ordersList)) {
+        const matchingOrders = stats.ordersList.filter((o: any) => o.branch_id === branch.id);
+        if (matchingOrders.length > 0) {
+          branchRevenue = matchingOrders.reduce((sum: number, o: any) => sum + Number(o.total_amount), 0);
+        } else {
+          // If there's only 1 branch in system, associate all revenue to it
+          branchRevenue = branches.length === 1 ? finance?.totalRevenue || 0 : 0;
+        }
       }
-    }
-    return {
-      name: branch.name || `Chi nhánh ${index + 1}`,
-      revenue: branchRevenue
-    };
-  }).sort((a: any, b: any) => b.revenue - a.revenue);
+      return {
+        name: branch.name || `Chi nhánh ${index + 1}`,
+        revenue: branchRevenue,
+      };
+    })
+    .sort((a: any, b: any) => b.revenue - a.revenue);
 
   // If no branch has revenue, assign nominal visual ranking based on total revenue
-  if (branchData.length > 0 && branchData.every(b => b.revenue === 0) && (finance?.totalRevenue || 0) > 0) {
+  if (branchData.length > 0 && branchData.every((b) => b.revenue === 0) && (finance?.totalRevenue || 0) > 0) {
     branchData[0].revenue = finance.totalRevenue;
   }
 
   // 4. Calculate Inventory Analytics (Real Data)
   const totalProducts = products.length;
   const totalStockCount = products.reduce((sum: number, p: any) => sum + (Number(p.stock) || 0), 0);
-  const estimatedAssetValue = products.reduce((sum: number, p: any) => sum + ((Number(p.price) || 0) * (Number(p.stock) || 0)), 0);
+  const estimatedAssetValue = products.reduce(
+    (sum: number, p: any) => sum + (Number(p.price) || 0) * (Number(p.stock) || 0),
+    0,
+  );
   const lowStockProductsList = products.filter((p: any) => p.stock !== null && p.stock <= 5).slice(0, 5);
 
   const handleExport = () => {
@@ -273,14 +255,40 @@ export default function ReportsPage() {
         <TabsContent value="overview" className="space-y-6 outline-none">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {[
-              { title: "Tổng doanh thu", value: formatVND(finance?.totalRevenue || 0), change: stats?.revenueChange || "+0.0%", icon: BarChart3, color: "text-blue-600" },
-              { title: "Lợi nhuận gộp", value: formatVND(finance ? (finance.totalRevenue - finance.totalCOGS) : 0), change: finance?.profitChange || "+0.0%", icon: TrendingUp, color: "text-green-600" },
-              { title: "Số đơn hàng", value: new Intl.NumberFormat('vi-VN').format(stats?.ordersCount || 0), change: stats?.ordersChange || "+0.0%", icon: Package, color: "text-orange-600" },
-              { title: "Khách hàng mới", value: new Intl.NumberFormat('vi-VN').format(stats?.customersCount || 0), change: stats?.customersChange || "+0.0%", icon: Users, color: "text-purple-600" },
+              {
+                title: "Tổng doanh thu",
+                value: formatVND(finance?.totalRevenue || 0),
+                change: stats?.revenueChange || "+0.0%",
+                icon: BarChart3,
+                color: "text-blue-600",
+              },
+              {
+                title: "Lợi nhuận gộp",
+                value: formatVND(finance ? finance.totalRevenue - finance.totalCOGS : 0),
+                change: finance?.profitChange || "+0.0%",
+                icon: TrendingUp,
+                color: "text-green-600",
+              },
+              {
+                title: "Số đơn hàng",
+                value: new Intl.NumberFormat("vi-VN").format(stats?.ordersCount || 0),
+                change: stats?.ordersChange || "+0.0%",
+                icon: Package,
+                color: "text-orange-600",
+              },
+              {
+                title: "Khách hàng mới",
+                value: new Intl.NumberFormat("vi-VN").format(stats?.customersCount || 0),
+                change: stats?.customersChange || "+0.0%",
+                icon: Users,
+                color: "text-purple-600",
+              },
             ].map((stat, i) => (
               <Card key={i} className="border-none shadow-sm ring-1 ring-border/50">
                 <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                  <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{stat.title}</CardTitle>
+                  <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    {stat.title}
+                  </CardTitle>
                   <stat.icon className={`h-4 w-4 ${stat.color}`} />
                 </CardHeader>
                 <CardContent>
@@ -305,7 +313,12 @@ export default function ReportsPage() {
                     <BarChart data={revenueData}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                       <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
-                      <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `${(v/1000).toFixed(0)}K`} />
+                      <YAxis
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`}
+                      />
                       <ChartTooltip content={<ChartTooltipContent />} />
                       <Bar dataKey="revenue" name="Doanh thu" fill="var(--color-revenue)" radius={[4, 4, 0, 0]} />
                       <Bar dataKey="profit" name="Lợi nhuận" fill="var(--color-profit)" radius={[4, 4, 0, 0]} />
@@ -324,13 +337,7 @@ export default function ReportsPage() {
                 <ChartContainer config={{}} className="h-[230px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie
-                        data={categoryData}
-                        innerRadius={50}
-                        outerRadius={70}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
+                      <Pie data={categoryData} innerRadius={50} outerRadius={70} paddingAngle={5} dataKey="value">
                         {categoryData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
@@ -365,27 +372,35 @@ export default function ReportsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-black text-emerald-500">{(profitRatio * 100).toFixed(1)}%</div>
-                <p className="text-[10px] text-muted-foreground mt-1">Biên độ lợi nhuận biên trên tổng doanh thu hóa đơn bán lẻ.</p>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Biên độ lợi nhuận biên trên tổng doanh thu hóa đơn bán lẻ.
+                </p>
               </CardContent>
             </Card>
-            
+
             <Card className="border-none shadow-sm ring-1 ring-border/50">
               <CardHeader className="pb-3">
                 <CardTitle className="text-xs font-bold text-muted-foreground uppercase">Tổng Giá Vốn (COGS)</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-rose-500">{formatVND(finance?.totalCOGS || 0)}</div>
-                <p className="text-[10px] text-muted-foreground mt-1">Tổng tiền nhập hàng và hoàn tất các đơn mua (Purchase Orders).</p>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Tổng tiền nhập hàng và hoàn tất các đơn mua (Purchase Orders).
+                </p>
               </CardContent>
             </Card>
 
             <Card className="border-none shadow-sm ring-1 ring-border/50">
               <CardHeader className="pb-3">
-                <CardTitle className="text-xs font-bold text-muted-foreground uppercase">Chi Phí Vận Hành (Expenses)</CardTitle>
+                <CardTitle className="text-xs font-bold text-muted-foreground uppercase">
+                  Chi Phí Vận Hành (Expenses)
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-orange-500">{formatVND(finance?.totalExpenses || 0)}</div>
-                <p className="text-[10px] text-muted-foreground mt-1">Các khoản chi tiêu dùng cho mặt bằng, nhân sự, điện nước,...</p>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Các khoản chi tiêu dùng cho mặt bằng, nhân sự, điện nước,...
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -401,15 +416,28 @@ export default function ReportsPage() {
                   <AreaChart data={revenueData}>
                     <defs>
                       <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                     <XAxis dataKey="name" fontSize={11} tickLine={false} axisLine={false} />
-                    <YAxis fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `${(v/1000).toFixed(0)}K`} />
+                    <YAxis
+                      fontSize={11}
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`}
+                    />
                     <ChartTooltip />
-                    <Area type="monotone" dataKey="revenue" name="Doanh thu" stroke="hsl(var(--primary))" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
+                    <Area
+                      type="monotone"
+                      dataKey="revenue"
+                      name="Doanh thu"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      fillOpacity={1}
+                      fill="url(#colorRevenue)"
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -427,29 +455,39 @@ export default function ReportsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">{totalProducts} sản phẩm</div>
-                <p className="text-[10px] text-muted-foreground mt-1">Tổng các dòng sản phẩm hiện có trong danh mục của hệ thống.</p>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Tổng các dòng sản phẩm hiện có trong danh mục của hệ thống.
+                </p>
               </CardContent>
             </Card>
 
             <Card className="border-none shadow-sm ring-1 ring-border/50">
               <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
-                <CardTitle className="text-xs font-bold text-muted-foreground uppercase">Tổng Số Lượng Tồn Kho</CardTitle>
+                <CardTitle className="text-xs font-bold text-muted-foreground uppercase">
+                  Tổng Số Lượng Tồn Kho
+                </CardTitle>
                 <Package className="h-4 w-4 text-orange-500" />
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">{totalStockCount} cái</div>
-                <p className="text-[10px] text-muted-foreground mt-1">Tổng cộng số lượng hàng hóa vật lý sẵn sàng phục vụ bán lẻ.</p>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Tổng cộng số lượng hàng hóa vật lý sẵn sàng phục vụ bán lẻ.
+                </p>
               </CardContent>
             </Card>
 
             <Card className="border-none shadow-sm ring-1 ring-border/50">
               <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
-                <CardTitle className="text-xs font-bold text-muted-foreground uppercase">Tổng Giá Trị Tài Sản Ước Tính</CardTitle>
+                <CardTitle className="text-xs font-bold text-muted-foreground uppercase">
+                  Tổng Giá Trị Tài Sản Ước Tính
+                </CardTitle>
                 <DollarSign className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-primary">{formatVND(estimatedAssetValue)}</div>
-                <p className="text-[10px] text-muted-foreground mt-1">Định giá tài sản tồn kho theo đơn giá niêm yết bán lẻ.</p>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Định giá tài sản tồn kho theo đơn giá niêm yết bán lẻ.
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -461,24 +499,32 @@ export default function ReportsPage() {
                   <AlertTriangle className="h-5 w-5 text-amber-500 animate-pulse" />
                   Sản Phẩm Sắp Hết Hàng (Cảnh Báo Tồn)
                 </CardTitle>
-                <CardDescription>Mặt hàng có mức tồn kho còn lại tối thiểu (dưới hoặc bằng 5 sản phẩm).</CardDescription>
+                <CardDescription>
+                  Mặt hàng có mức tồn kho còn lại tối thiểu (dưới hoặc bằng 5 sản phẩm).
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {lowStockProductsList.length === 0 ? (
-                  <div className="py-8 text-center text-xs text-muted-foreground">Không có mặt hàng nào cần cảnh báo. Tất cả tồn kho an toàn!</div>
+                  <div className="py-8 text-center text-xs text-muted-foreground">
+                    Không có mặt hàng nào cần cảnh báo. Tất cả tồn kho an toàn!
+                  </div>
                 ) : (
                   <div className="space-y-4">
                     {lowStockProductsList.map((prod, i) => (
                       <div key={i} className="flex items-center justify-between text-xs border-b border-muted/40 pb-2">
                         <div>
                           <div className="font-bold text-foreground">{prod.name}</div>
-                          <div className="text-[10px] text-muted-foreground">{prod.category?.name || "Chưa phân loại"}</div>
+                          <div className="text-[10px] text-muted-foreground">
+                            {prod.category?.name || "Chưa phân loại"}
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="font-mono text-muted-foreground">{formatVND(prod.price)}</span>
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            prod.stock === 0 ? "bg-rose-500/10 text-rose-500" : "bg-amber-500/10 text-amber-500"
-                          }`}>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              prod.stock === 0 ? "bg-rose-500/10 text-rose-500" : "bg-amber-500/10 text-amber-500"
+                            }`}
+                          >
                             Tồn: {prod.stock || 0}
                           </span>
                         </div>
@@ -495,15 +541,19 @@ export default function ReportsPage() {
                 <CardDescription>Các mặt hàng có doanh thu và số lượng bán tốt nhất của bạn.</CardDescription>
               </CardHeader>
               <CardContent>
-                {(!stats?.topProducts || stats.topProducts.length === 0) ? (
-                  <div className="py-8 text-center text-xs text-muted-foreground">Chưa có giao dịch bán hàng nào được thực hiện trong kỳ.</div>
+                {!stats?.topProducts || stats.topProducts.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-muted-foreground">
+                    Chưa có giao dịch bán hàng nào được thực hiện trong kỳ.
+                  </div>
                 ) : (
                   <div className="space-y-4">
                     {stats.topProducts.slice(0, 5).map((prod: any, i: number) => (
                       <div key={i} className="flex items-center justify-between text-xs border-b border-muted/40 pb-2">
                         <div>
                           <span className="font-bold text-foreground">{prod.name}</span>
-                          <div className="text-[10px] text-muted-foreground">Đã bán: <span className="font-bold text-foreground">{prod.salesCount} cái</span></div>
+                          <div className="text-[10px] text-muted-foreground">
+                            Đã bán: <span className="font-bold text-foreground">{prod.salesCount} cái</span>
+                          </div>
                         </div>
                         <span className="font-mono font-bold text-emerald-500">{formatVND(prod.revenue)}</span>
                       </div>
@@ -524,7 +574,9 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent>
               {branchData.length === 0 ? (
-                <div className="py-8 text-center text-xs text-muted-foreground">Chưa cấu hình hoặc chưa có chi nhánh nào hoạt động.</div>
+                <div className="py-8 text-center text-xs text-muted-foreground">
+                  Chưa cấu hình hoặc chưa có chi nhánh nào hoạt động.
+                </div>
               ) : (
                 <div className="space-y-8">
                   {branchData.map((branch: any, i: number) => {
@@ -534,14 +586,19 @@ export default function ReportsPage() {
                       <div key={i} className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
                           <div className="flex items-center gap-2">
-                            <Badge variant="secondary" className="h-5 w-5 rounded-full p-0 flex items-center justify-center font-bold text-[10px]">{i+1}</Badge>
+                            <Badge
+                              variant="secondary"
+                              className="h-5 w-5 rounded-full p-0 flex items-center justify-center font-bold text-[10px]"
+                            >
+                              {i + 1}
+                            </Badge>
                             <span className="font-bold">{branch.name}</span>
                           </div>
                           <span className="font-bold text-primary">{formatVND(branch.revenue)}</span>
                         </div>
                         <div className="h-2.5 w-full bg-muted rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-gradient-to-r from-primary to-emerald-400 transition-all duration-1000 ease-in-out" 
+                          <div
+                            className="h-full bg-gradient-to-r from-primary to-emerald-400 transition-all duration-1000 ease-in-out"
                             style={{ width: `${percentWidth}%` }}
                           />
                         </div>
@@ -558,9 +615,19 @@ export default function ReportsPage() {
   );
 }
 
-function Badge({ children, className, variant = "default" }: { children: React.ReactNode, className?: string, variant?: "default" | "secondary" | "primary" }) {
+function Badge({
+  children,
+  className,
+  variant = "default",
+}: {
+  children: React.ReactNode;
+  className?: string;
+  variant?: "default" | "secondary" | "primary";
+}) {
   return (
-    <span className={`px-2 py-0.5 rounded-full font-bold uppercase ${variant === 'primary' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} ${className}`}>
+    <span
+      className={`px-2 py-0.5 rounded-full font-bold uppercase ${variant === "primary" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"} ${className}`}
+    >
       {children}
     </span>
   );

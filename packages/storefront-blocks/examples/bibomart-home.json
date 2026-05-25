@@ -1,0 +1,66 @@
+[
+  {
+    "type": "hero",
+    "props": {
+      "headline": "Yêu thương từng khoảnh khắc",
+      "subheadline": "Sản phẩm cho mẹ và bé — chính hãng, giao nhanh trong 2 giờ",
+      "image": "https://cdn.bibomart.zshop.click/hero-mom-baby.jpg",
+      "cta": { "label": "Mua ngay", "href": "/products" },
+      "align": "left"
+    }
+  },
+  {
+    "type": "category-grid",
+    "props": {
+      "title": "Mua theo danh mục",
+      "categorySlugs": ["sua-cong-thuc", "ta-bim", "do-choi", "quan-ao-be"],
+      "columns": 4,
+      "showProductCount": true
+    }
+  },
+  {
+    "type": "product-grid",
+    "props": {
+      "title": "Best seller tháng này",
+      "source": "best-seller",
+      "limit": 8,
+      "columns": 4,
+      "layout": "grid"
+    }
+  },
+  {
+    "type": "banner-split",
+    "props": {
+      "left": {
+        "image": "https://cdn.bibomart.zshop.click/banner-sua.jpg",
+        "headline": "Sữa công thức -20%",
+        "href": "/categories/sua-cong-thuc"
+      },
+      "right": {
+        "image": "https://cdn.bibomart.zshop.click/banner-bim.jpg",
+        "headline": "Bỉm Merries mua 2 tặng 1",
+        "href": "/categories/ta-bim"
+      }
+    }
+  },
+  {
+    "type": "footer",
+    "props": {
+      "about": "Bibomart — Hệ thống mẹ và bé uy tín từ 2010.",
+      "columns": [
+        {
+          "title": "Hỗ trợ",
+          "links": [
+            { "label": "Chính sách đổi trả", "href": "/pages/doi-tra" },
+            { "label": "Vận chuyển", "href": "/pages/van-chuyen" }
+          ]
+        }
+      ],
+      "social": [
+        { "platform": "facebook", "href": "https://fb.com/bibomart" },
+        { "platform": "zalo", "href": "https://zalo.me/bibomart" }
+      ],
+      "copyright": "© 2026 Bibomart"
+    }
+  }
+]

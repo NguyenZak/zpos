@@ -196,7 +196,7 @@ export interface CreateInvoiceResult {
   invoice_no: string;
   invoice_series?: string;
   provider_invoice_id?: string;
-  tax_authority_code?: string;  // Mã CQT
+  tax_authority_code?: string; // Mã CQT
   lookup_code?: string;
   lookup_url?: string;
   qr_code_url?: string;

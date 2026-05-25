@@ -1,6 +1,6 @@
-import { createClient } from '@/utils/supabase/client';
+import { createClient } from "@/utils/supabase/client";
 
-export type PrintType = 'temp_bill' | 'kitchen_ticket' | 'bar_ticket' | 'final_receipt';
+export type PrintType = "temp_bill" | "kitchen_ticket" | "bar_ticket" | "final_receipt";
 
 export interface PrintLog {
   id: string;
@@ -24,38 +24,36 @@ class PrintService {
     try {
       const supabase = createClient();
       const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (userError || !userData?.user) throw new Error('User not authenticated');
+      if (userError || !userData?.user) throw new Error("User not authenticated");
 
       // Fetch organization_id directly or rely on RLS/triggers if configured.
-      // Assuming we get it from a local utility or context. 
+      // Assuming we get it from a local utility or context.
       // For now, we will query the user's organization from the 'users' table or just let RLS handle it if it uses default auth.uid() function.
-      
-      const { data: member } = await supabase
-        .from('organization_members')
-        .select('organization_id')
-        .eq('profile_id', userData.user.id)
-        .maybeSingle();
-        
-      if (!member?.organization_id) throw new Error('Organization not found');
 
-      const { error } = await supabase
-        .from('print_logs')
-        .insert({
-          organization_id: member.organization_id,
-          order_id: params.orderId,
-          type: params.type,
-          printer_id: params.printerId || null,
-          printed_by: userData.user.id,
-        });
+      const { data: member } = await supabase
+        .from("organization_members")
+        .select("organization_id")
+        .eq("profile_id", userData.user.id)
+        .maybeSingle();
+
+      if (!member?.organization_id) throw new Error("Organization not found");
+
+      const { error } = await supabase.from("print_logs").insert({
+        organization_id: member.organization_id,
+        order_id: params.orderId,
+        type: params.type,
+        printer_id: params.printerId || null,
+        printed_by: userData.user.id,
+      });
 
       if (error) {
-        console.error('Failed to log print:', error);
+        console.error("Failed to log print:", error);
         return { ok: false, error: error.message };
       }
 
       return { ok: true };
     } catch (e: any) {
-      console.error('Exception in logPrint:', e);
+      console.error("Exception in logPrint:", e);
       return { ok: false, error: e.message };
     }
   }
@@ -67,19 +65,18 @@ class PrintService {
     try {
       const supabase = createClient();
       const { data, error } = await supabase
-        .from('print_logs')
-        .select('*')
-        .eq('order_id', orderId)
-        .order('printed_at', { ascending: false });
+        .from("print_logs")
+        .select("*")
+        .eq("order_id", orderId)
+        .order("printed_at", { ascending: false });
 
       if (error) throw error;
       return data as PrintLog[];
     } catch (e) {
-      console.error('Failed to fetch print logs:', e);
+      console.error("Failed to fetch print logs:", e);
       return [];
     }
   }
 }
 
 export const printService = new PrintService();
-

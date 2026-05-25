@@ -7,7 +7,7 @@ import { createClient } from "@/utils/supabase/client";
 async function findOrCreateProductCategory(name: string) {
   const supabase = createClient();
   const cleanName = name.trim();
-  
+
   // 1. Search for category
   const { data: cat } = await supabase
     .from("categories")
@@ -15,11 +15,11 @@ async function findOrCreateProductCategory(name: string) {
     .ilike("name", cleanName)
     .eq("is_active", true)
     .limit(1);
-  
+
   if (cat && cat.length > 0) {
     return cat[0].id;
   }
-  
+
   // 2. Create category
   const { data: newCat, error } = await supabase
     .from("categories")
@@ -29,7 +29,7 @@ async function findOrCreateProductCategory(name: string) {
     })
     .select("id")
     .single();
-  
+
   if (error) throw error;
   return newCat.id;
 }
@@ -38,18 +38,14 @@ async function findOrCreateProductCategory(name: string) {
 async function findOrCreateExpenseCategory(name: string) {
   const supabase = createClient();
   const cleanName = name.trim();
-  
+
   // 1. Search for category
-  const { data: cat } = await supabase
-    .from("expense_categories")
-    .select("id")
-    .ilike("name", cleanName)
-    .limit(1);
-  
+  const { data: cat } = await supabase.from("expense_categories").select("id").ilike("name", cleanName).limit(1);
+
   if (cat && cat.length > 0) {
     return cat[0].id;
   }
-  
+
   // 2. Create category
   const { data: newCat, error } = await supabase
     .from("expense_categories")
@@ -58,7 +54,7 @@ async function findOrCreateExpenseCategory(name: string) {
     })
     .select("id")
     .single();
-  
+
   if (error) throw error;
   return newCat.id;
 }
@@ -66,29 +62,25 @@ async function findOrCreateExpenseCategory(name: string) {
 // Executor for AI Tool calls in the database
 async function executeTool(name: string, args: any) {
   const supabase = createClient();
-  
+
   if (name === "create_product") {
     const { name: prodName, price, stock, category_name } = args;
     let categoryId = null;
     if (category_name) {
       categoryId = await findOrCreateProductCategory(category_name);
     } else {
-      const { data: cats } = await supabase
-        .from("categories")
-        .select("id")
-        .eq("is_active", true)
-        .limit(1);
+      const { data: cats } = await supabase.from("categories").select("id").eq("is_active", true).limit(1);
       if (cats && cats.length > 0) {
         categoryId = cats[0].id;
       } else {
         categoryId = await findOrCreateProductCategory("Mặc định");
       }
     }
-    
+
     // Generate simple SKU
     const random = Math.floor(1000 + Math.random() * 9000);
     const sku = `SP${random}`;
-    
+
     const productData = {
       name: prodName,
       barcode: sku,
@@ -97,7 +89,7 @@ async function executeTool(name: string, args: any) {
       category_id: categoryId,
       is_active: true,
     };
-    
+
     const product = await posService.createProduct(productData);
     return {
       success: true,
@@ -105,12 +97,12 @@ async function executeTool(name: string, args: any) {
       data: product,
     };
   }
-  
+
   if (name === "update_product") {
     const { product_name_or_id, price, stock } = args;
     let product = null;
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(product_name_or_id);
-    
+
     if (isUuid) {
       const { data } = await supabase.from("products").select("*").eq("id", product_name_or_id).single();
       product = data;
@@ -125,30 +117,31 @@ async function executeTool(name: string, args: any) {
         product = data[0];
       }
     }
-    
+
     if (!product) {
       throw new Error(`Không tìm thấy sản phẩm '${product_name_or_id}' trong hệ thống.`);
     }
-    
+
     const updateData: any = {};
     if (price !== undefined) updateData.price = Number(price);
     if (stock !== undefined) updateData.stock = Number(stock);
-    
+
     const updated = await posService.updateProduct(product.id, updateData);
     return {
       success: true,
-      message: `Đã cập nhật sản phẩm '${product.name}' thành công.` + 
-        (price !== undefined ? ` Giá mới: ${price}đ.` : "") + 
+      message:
+        `Đã cập nhật sản phẩm '${product.name}' thành công.` +
+        (price !== undefined ? ` Giá mới: ${price}đ.` : "") +
         (stock !== undefined ? ` Tồn kho mới: ${stock}.` : ""),
       data: updated,
     };
   }
-  
+
   if (name === "delete_product") {
     const { product_name_or_id } = args;
     let product = null;
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(product_name_or_id);
-    
+
     if (isUuid) {
       const { data } = await supabase.from("products").select("*").eq("id", product_name_or_id).single();
       product = data;
@@ -163,11 +156,11 @@ async function executeTool(name: string, args: any) {
         product = data[0];
       }
     }
-    
+
     if (!product) {
       throw new Error(`Không tìm thấy sản phẩm '${product_name_or_id}' trong hệ thống.`);
     }
-    
+
     await posService.deleteProduct(product.id);
     return {
       success: true,
@@ -175,7 +168,7 @@ async function executeTool(name: string, args: any) {
       data: product,
     };
   }
-  
+
   if (name === "create_customer") {
     const { name: custName, phone, points } = args;
     const customerData = {
@@ -190,12 +183,12 @@ async function executeTool(name: string, args: any) {
       data: customer,
     };
   }
-  
+
   if (name === "delete_customer") {
     const { customer_name_or_id } = args;
     let customer = null;
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(customer_name_or_id);
-    
+
     if (isUuid) {
       const { data } = await supabase.from("customers").select("*").eq("id", customer_name_or_id).single();
       customer = data;
@@ -209,11 +202,11 @@ async function executeTool(name: string, args: any) {
         customer = data[0];
       }
     }
-    
+
     if (!customer) {
       throw new Error(`Không tìm thấy khách hàng '${customer_name_or_id}' trong hệ thống.`);
     }
-    
+
     await posService.deleteCustomer(customer.id);
     return {
       success: true,
@@ -221,7 +214,7 @@ async function executeTool(name: string, args: any) {
       data: customer,
     };
   }
-  
+
   if (name === "create_supplier") {
     const { name: supName, contact_name, phone, address } = args;
     const supplierData = {
@@ -237,30 +230,26 @@ async function executeTool(name: string, args: any) {
       data: supplier,
     };
   }
-  
+
   if (name === "delete_supplier") {
     const { supplier_name_or_id } = args;
     let supplier = null;
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(supplier_name_or_id);
-    
+
     if (isUuid) {
       const { data } = await supabase.from("suppliers").select("*").eq("id", supplier_name_or_id).single();
       supplier = data;
     } else {
-      const { data } = await supabase
-        .from("suppliers")
-        .select("*")
-        .ilike("name", `%${supplier_name_or_id}%`)
-        .limit(1);
+      const { data } = await supabase.from("suppliers").select("*").ilike("name", `%${supplier_name_or_id}%`).limit(1);
       if (data && data.length > 0) {
         supplier = data[0];
       }
     }
-    
+
     if (!supplier) {
       throw new Error(`Không tìm thấy nhà cung cấp '${supplier_name_or_id}' trong hệ thống.`);
     }
-    
+
     await posService.deleteSupplier(supplier.id);
     return {
       success: true,
@@ -268,7 +257,7 @@ async function executeTool(name: string, args: any) {
       data: supplier,
     };
   }
-  
+
   if (name === "create_expense") {
     const { title, amount, category_name, status } = args;
     let categoryId = null;
@@ -282,7 +271,7 @@ async function executeTool(name: string, args: any) {
         categoryId = await findOrCreateExpenseCategory("Khác");
       }
     }
-    
+
     const expenseData = {
       title,
       amount: Number(amount),
@@ -290,7 +279,7 @@ async function executeTool(name: string, args: any) {
       status: status || "paid",
       expense_date: new Date().toISOString().split("T")[0],
     };
-    
+
     const expense = await posService.createExpense(expenseData);
     return {
       success: true,
@@ -298,7 +287,7 @@ async function executeTool(name: string, args: any) {
       data: expense,
     };
   }
-  
+
   throw new Error(`Hành động '${name}' không được hỗ trợ.`);
 }
 
@@ -309,10 +298,10 @@ export async function POST(req: NextRequest) {
     let activeTenant = "app";
     const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || "localhost:3000";
     if (host && host !== mainDomain && host !== `www.${mainDomain}`) {
-      const parts = host.split('.');
+      const parts = host.split(".");
       if (parts.length > 1) {
         const subdomain = parts[0];
-        if (subdomain !== 'www' && subdomain !== 'localhost:3000' && subdomain !== 'localhost') {
+        if (subdomain !== "www" && subdomain !== "localhost:3000" && subdomain !== "localhost") {
           activeTenant = subdomain;
         }
       }
@@ -323,7 +312,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     let messages = body.messages;
-    
+
     // Support single message string or array of messages
     if (!messages || !Array.isArray(messages)) {
       if (body.message) {
@@ -332,7 +321,7 @@ export async function POST(req: NextRequest) {
         messages = [];
       }
     }
-    
+
     const lastMessage = messages[messages.length - 1]?.content || "";
 
     const apiKey = process.env.GROQ_API_KEY;
@@ -387,11 +376,14 @@ Quy trình hoạt động:
                 name: { type: "string", description: "Tên đầy đủ của sản phẩm" },
                 price: { type: "number", description: "Giá bán sản phẩm (VND)" },
                 stock: { type: "number", description: "Số lượng tồn kho ban đầu" },
-                category_name: { type: "string", description: "Tên danh mục sản phẩm (ví dụ: Nước ngọt, Đồ ăn vặt, Thiết bị)" }
+                category_name: {
+                  type: "string",
+                  description: "Tên danh mục sản phẩm (ví dụ: Nước ngọt, Đồ ăn vặt, Thiết bị)",
+                },
               },
-              required: ["name", "price", "stock"]
-            }
-          }
+              required: ["name", "price", "stock"],
+            },
+          },
         },
         {
           type: "function",
@@ -403,11 +395,11 @@ Quy trình hoạt động:
               properties: {
                 product_name_or_id: { type: "string", description: "Tên sản phẩm hoặc ID sản phẩm cần cập nhật" },
                 price: { type: "number", description: "Giá bán mới cần thay đổi (nếu có)" },
-                stock: { type: "number", description: "Số lượng tồn kho mới cần thay đổi (nếu có)" }
+                stock: { type: "number", description: "Số lượng tồn kho mới cần thay đổi (nếu có)" },
               },
-              required: ["product_name_or_id"]
-            }
-          }
+              required: ["product_name_or_id"],
+            },
+          },
         },
         {
           type: "function",
@@ -417,11 +409,11 @@ Quy trình hoạt động:
             parameters: {
               type: "object",
               properties: {
-                product_name_or_id: { type: "string", description: "Tên sản phẩm hoặc ID sản phẩm cần xoá" }
+                product_name_or_id: { type: "string", description: "Tên sản phẩm hoặc ID sản phẩm cần xoá" },
               },
-              required: ["product_name_or_id"]
-            }
-          }
+              required: ["product_name_or_id"],
+            },
+          },
         },
         {
           type: "function",
@@ -433,11 +425,11 @@ Quy trình hoạt động:
               properties: {
                 name: { type: "string", description: "Tên của khách hàng" },
                 phone: { type: "string", description: "Số điện thoại liên lạc" },
-                points: { type: "number", description: "Điểm thưởng tích luỹ ban đầu (mặc định 0)" }
+                points: { type: "number", description: "Điểm thưởng tích luỹ ban đầu (mặc định 0)" },
               },
-              required: ["name"]
-            }
-          }
+              required: ["name"],
+            },
+          },
         },
         {
           type: "function",
@@ -447,11 +439,11 @@ Quy trình hoạt động:
             parameters: {
               type: "object",
               properties: {
-                customer_name_or_id: { type: "string", description: "Tên, số điện thoại hoặc ID khách hàng cần xoá" }
+                customer_name_or_id: { type: "string", description: "Tên, số điện thoại hoặc ID khách hàng cần xoá" },
               },
-              required: ["customer_name_or_id"]
-            }
-          }
+              required: ["customer_name_or_id"],
+            },
+          },
         },
         {
           type: "function",
@@ -464,11 +456,11 @@ Quy trình hoạt động:
                 name: { type: "string", description: "Tên nhà cung cấp / Tên công ty" },
                 contact_name: { type: "string", description: "Tên người đại diện liên hệ" },
                 phone: { type: "string", description: "Số điện thoại nhà cung cấp" },
-                address: { type: "string", description: "Địa chỉ văn phòng / kho của nhà cung cấp" }
+                address: { type: "string", description: "Địa chỉ văn phòng / kho của nhà cung cấp" },
               },
-              required: ["name"]
-            }
-          }
+              required: ["name"],
+            },
+          },
         },
         {
           type: "function",
@@ -478,11 +470,11 @@ Quy trình hoạt động:
             parameters: {
               type: "object",
               properties: {
-                supplier_name_or_id: { type: "string", description: "Tên hoặc ID nhà cung cấp cần xoá" }
+                supplier_name_or_id: { type: "string", description: "Tên hoặc ID nhà cung cấp cần xoá" },
               },
-              required: ["supplier_name_or_id"]
-            }
-          }
+              required: ["supplier_name_or_id"],
+            },
+          },
         },
         {
           type: "function",
@@ -494,27 +486,27 @@ Quy trình hoạt động:
               properties: {
                 title: { type: "string", description: "Tiêu đề của chi phí (ví dụ: Trả tiền nước, Mua giấy in bill)" },
                 amount: { type: "number", description: "Số tiền chi phí (VND)" },
-                category_name: { type: "string", description: "Tên danh mục chi phí (ví dụ: Điện nước, Lương, Mặt bằng)" },
-                status: { type: "string", description: "Trạng thái thanh toán ('paid' hoặc 'pending')" }
+                category_name: {
+                  type: "string",
+                  description: "Tên danh mục chi phí (ví dụ: Điện nước, Lương, Mặt bằng)",
+                },
+                status: { type: "string", description: "Trạng thái thanh toán ('paid' hoặc 'pending')" },
               },
-              required: ["title", "amount"]
-            }
-          }
-        }
+              required: ["title", "amount"],
+            },
+          },
+        },
       ];
 
       // Formulate completion messages
-      const apiMessages = [
-        { role: "system", content: systemPrompt },
-        ...messages
-      ];
+      const apiMessages = [{ role: "system", content: systemPrompt }, ...messages];
 
       // 1. Initial LLM Call
       const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json"
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           model: process.env.AI_MODEL || "llama-3.3-70b-versatile",
@@ -522,7 +514,7 @@ Quy trình hoạt động:
           tools: tools,
           tool_choice: "auto",
           temperature: 0.5,
-        })
+        }),
       });
 
       const aiData = await response.json();
@@ -540,21 +532,21 @@ Quy trình hoạt động:
           try {
             // Execute database modifications!
             result = await executeTool(name, args);
-            executedActions.push({ 
+            executedActions.push({
               id: call.id,
-              name, 
-              args, 
-              result, 
-              success: true 
+              name,
+              args,
+              result,
+              success: true,
             });
           } catch (err: any) {
             result = { error: err.message };
-            executedActions.push({ 
+            executedActions.push({
               id: call.id,
-              name, 
-              args, 
-              error: err.message, 
-              success: false 
+              name,
+              args,
+              error: err.message,
+              success: false,
             });
           }
 
@@ -562,7 +554,7 @@ Quy trình hoạt động:
             role: "tool",
             tool_call_id: call.id,
             name: name,
-            content: JSON.stringify(result)
+            content: JSON.stringify(result),
           });
         }
 
@@ -570,44 +562,40 @@ Quy trình hoạt động:
         const finalResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${apiKey}`,
-            "Content-Type": "application/json"
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             model: process.env.AI_MODEL || "llama-3.3-70b-versatile",
-            messages: [
-              ...apiMessages,
-              assistantMessage,
-              ...toolMessages
-            ],
-            temperature: 0.5
-          })
+            messages: [...apiMessages, assistantMessage, ...toolMessages],
+            temperature: 0.5,
+          }),
         });
 
         const finalData = await finalResponse.json();
         const finalReply = finalData?.choices?.[0]?.message?.content;
-        
+
         const returnedReply = finalReply || "Tôi đã xử lý lệnh và cập nhật hệ thống thành công.";
-        return NextResponse.json({ 
+        return NextResponse.json({
           content: returnedReply,
           reply: returnedReply,
-          actions: executedActions 
+          actions: executedActions,
         });
       }
 
       // No tool calls, return simple response
       const aiReply = assistantMessage?.content;
       if (aiReply) {
-        return NextResponse.json({ 
+        return NextResponse.json({
           content: aiReply,
-          reply: aiReply
+          reply: aiReply,
         });
       }
     }
 
     // 3. Fallback logic if Groq key isn't set or fails
     let reply = "";
-    
+
     // Quick regex parsing for offline/no-API fallback commands
     if (lowerMsg.startsWith("thêm sản phẩm")) {
       // Format: "Thêm sản phẩm [tên] giá [giá] tồn kho [số lượng]"
@@ -616,20 +604,20 @@ Quy trình hoạt động:
         const name = match[1].trim();
         const price = parseInt(match[2].replace(/[.,\sđ]/g, ""));
         const stock = match[3] ? parseInt(match[3]) : 10;
-        
+
         try {
           const res = await executeTool("create_product", { name, price, stock });
           const fallbackText = `### ZPOS AI Offline Mode 📡\n\n${res.message}`;
           return NextResponse.json({
             content: fallbackText,
             reply: fallbackText,
-            actions: [{ name: "create_product", args: { name, price, stock }, result: res, success: true }]
+            actions: [{ name: "create_product", args: { name, price, stock }, result: res, success: true }],
           });
         } catch (e: any) {
           const failText = `❌ Thêm sản phẩm thất bại: ${e.message}`;
-          return NextResponse.json({ 
+          return NextResponse.json({
             content: failText,
-            reply: failText
+            reply: failText,
           });
         }
       }
@@ -660,8 +648,15 @@ Phân tích cấu trúc lợi chính xác của cửa hàng:
 **📈 Khuyến nghị từ AI:**
 * **Kiểm soát giá vốn:** Biên lợi nhuận đang ở mức tốt. Tuy nhiên cần đàm phán thêm chiết khấu với các nhà cung cấp lớn để đẩy biên lợi nhuận cao hơn nữa.
 * **Tối ưu chi phí:** Rà soát lại các khoản chi phí vận hành định kỳ như tiền điện, nước để cắt giảm hao phí.`;
-    } else if (lowerMsg.includes("tồn kho") || lowerMsg.includes("sản phẩm") || lowerMsg.includes("inventory") || lowerMsg.includes("stock")) {
-      const itemsText = lowStock.map((i) => `- **${i.name}**: Tồn kho hiện tại chỉ còn \`${i.stock}\` chiếc.`).join("\n");
+    } else if (
+      lowerMsg.includes("tồn kho") ||
+      lowerMsg.includes("sản phẩm") ||
+      lowerMsg.includes("inventory") ||
+      lowerMsg.includes("stock")
+    ) {
+      const itemsText = lowStock
+        .map((i) => `- **${i.name}**: Tồn kho hiện tại chỉ còn \`${i.stock}\` chiếc.`)
+        .join("\n");
       reply = `### 📦 Báo cáo Cảnh báo Tồn kho AI
 
 Trạng thái tồn kho của cửa hàng:
@@ -672,7 +667,12 @@ ${lowStock.length > 0 ? `**Danh sách cảnh báo hết hàng:**\n${itemsText}` 
 **💡 Khuyến nghị nhập hàng:**
 * Nên lên đơn nhập hàng nháp tự động từ mục **Nhập hàng** cho các sản phẩm thiếu hụt để tránh gián đoạn việc bán lẻ.`;
     } else if (lowerMsg.includes("chi phí") || lowerMsg.includes("expense")) {
-      const catText = expenses.categories.map((c: any) => `- **${c.name}**: \`${new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(c.amount)}\``).join("\n");
+      const catText = expenses.categories
+        .map(
+          (c: any) =>
+            `- **${c.name}**: \`${new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(c.amount)}\``,
+        )
+        .join("\n");
       reply = `### 🧾 Cấu trúc chi phí vận hành
 
 Tổng chi phí vận hành đã chi trả: **${new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(expenses.totalExpenses)}**
@@ -699,9 +699,9 @@ Tôi có thể giúp bạn phân tích dữ liệu cửa hàng theo thời gian 
 - Cảnh báo hết hàng: \`${lowStock.length} sản phẩm\``;
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       content: reply,
-      reply: reply
+      reply: reply,
     });
   } catch (error: any) {
     console.error("API error:", error);

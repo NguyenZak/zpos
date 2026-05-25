@@ -117,11 +117,7 @@ export class ManualProvider implements InvoiceProvider {
 // ─────────────────────────────────────────────────────────────────────────────
 // Factory: tạo stub provider với thông báo rõ ràng cho provider chưa tích hợp
 // ─────────────────────────────────────────────────────────────────────────────
-function createStubProvider(
-  name: string,
-  hint: string,
-  docs?: string,
-): InvoiceProvider {
+function createStubProvider(name: string, hint: string, docs?: string): InvoiceProvider {
   const err = () => {
     throw new Error(
       `Provider "${name}" chưa được tích hợp đầy đủ.\n` +
@@ -148,82 +144,58 @@ function createStubProvider(
 // VNPT eInvoice — Stub (sẽ implement khi có credential thật)
 // API doc: https://einvoice.vnpt.vn/api-docs
 // ─────────────────────────────────────────────────────────────────────────────
-export class VNPTProvider extends (
-  createStubProvider(
-    "VNPT eInvoice",
-    "Cần username, password, certificateSerial từ cổng einvoice.vnpt.vn",
-    "https://einvoice.vnpt.vn/api-docs",
-  ).constructor as any
-) {}
+export class VNPTProvider extends (createStubProvider(
+  "VNPT eInvoice",
+  "Cần username, password, certificateSerial từ cổng einvoice.vnpt.vn",
+  "https://einvoice.vnpt.vn/api-docs",
+).constructor as any) {}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Viettel eInvoice — Stub
 // ─────────────────────────────────────────────────────────────────────────────
-export class ViettelProvider extends (
-  createStubProvider(
-    "Viettel eInvoice",
-    "Cần API Token từ cổng viettel-invoice.vn",
-    "https://viettel-invoice.vn/api",
-  ).constructor as any
-) {}
+export class ViettelProvider extends (createStubProvider(
+  "Viettel eInvoice",
+  "Cần API Token từ cổng viettel-invoice.vn",
+  "https://viettel-invoice.vn/api",
+).constructor as any) {}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MISA meInvoice — Stub
 // ─────────────────────────────────────────────────────────────────────────────
-export class MISAProvider extends (
-  createStubProvider(
-    "MISA meInvoice",
-    "Cần ClientId, ClientSecret từ cổng meinvoice.vn",
-    "https://api.meinvoice.vn/swagger",
-  ).constructor as any
-) {}
+export class MISAProvider extends (createStubProvider(
+  "MISA meInvoice",
+  "Cần ClientId, ClientSecret từ cổng meinvoice.vn",
+  "https://api.meinvoice.vn/swagger",
+).constructor as any) {}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BKAV eHoaDon — Stub
 // ─────────────────────────────────────────────────────────────────────────────
-export class BKAVProvider extends (
-  createStubProvider(
-    "BKAV eHoaDon",
-    "Cần Token từ cổng ehoadon.bkav.com.vn",
-  ).constructor as any
-) {}
+export class BKAVProvider extends (createStubProvider("BKAV eHoaDon", "Cần Token từ cổng ehoadon.bkav.com.vn")
+  .constructor as any) {}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EasyInvoice — Stub
 // ─────────────────────────────────────────────────────────────────────────────
-export class EasyInvoiceProvider extends (
-  createStubProvider(
-    "EasyInvoice",
-    "Cần API Key từ easyinvoice.com.vn",
-  ).constructor as any
-) {}
+export class EasyInvoiceProvider extends (createStubProvider("EasyInvoice", "Cần API Key từ easyinvoice.com.vn")
+  .constructor as any) {}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SInvoice — Stub (Tổng Công ty Bưu điện VN)
 // ─────────────────────────────────────────────────────────────────────────────
-export class SInvoiceProvider extends (
-  createStubProvider(
-    "SInvoice (Bưu điện)",
-    "Cần account từ cổng sinvoice.com.vn",
-  ).constructor as any
-) {}
+export class SInvoiceProvider extends (createStubProvider("SInvoice (Bưu điện)", "Cần account từ cổng sinvoice.com.vn")
+  .constructor as any) {}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CyberBill — Stub
 // ─────────────────────────────────────────────────────────────────────────────
-export class CyberbillProvider extends (
-  createStubProvider(
-    "CyberBill",
-    "Cần API Key từ cyberbill.vn",
-  ).constructor as any
-) {}
+export class CyberbillProvider extends (createStubProvider("CyberBill", "Cần API Key từ cyberbill.vn")
+  .constructor as any) {}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MobiFone Invoice — Stub
 // ─────────────────────────────────────────────────────────────────────────────
-export class MobiFoneProvider extends (
-  createStubProvider(
-    "MobiFone Invoice",
-    "Cần tài khoản từ cổng minvoice.mobifone.vn",
-  ).constructor as any
-) {}
+export class MobiFoneProvider extends (createStubProvider(
+  "MobiFone Invoice",
+  "Cần tài khoản từ cổng minvoice.mobifone.vn",
+).constructor as any) {}

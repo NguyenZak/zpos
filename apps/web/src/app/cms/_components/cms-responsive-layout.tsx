@@ -19,13 +19,7 @@ interface CMSResponsiveLayoutProps {
   users: any[];
 }
 
-export function CMSResponsiveLayout({
-  children,
-  defaultOpen,
-  variant,
-  collapsible,
-  users
-}: CMSResponsiveLayoutProps) {
+export function CMSResponsiveLayout({ children, defaultOpen, variant, collapsible, users }: CMSResponsiveLayoutProps) {
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -36,7 +30,9 @@ export function CMSResponsiveLayout({
 
     try {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         setIsAuthenticated(true);
       } else {
@@ -53,7 +49,7 @@ export function CMSResponsiveLayout({
   useEffect(() => {
     setMounted(true);
     checkSession();
-    
+
     const mediaQuery = window.matchMedia("(max-width: 768px)");
     setIsMobile(mediaQuery.matches);
 
@@ -88,9 +84,7 @@ export function CMSResponsiveLayout({
   if (isMobile) {
     return (
       <div className="min-h-screen flex flex-col bg-background text-foreground animate-in fade-in duration-300">
-        <main className="flex-1 overflow-y-auto px-4 pb-20 pt-2 min-h-screen">
-          {children}
-        </main>
+        <main className="flex-1 overflow-y-auto px-4 pb-20 pt-2 min-h-screen">{children}</main>
       </div>
     );
   }
@@ -105,12 +99,8 @@ export function CMSResponsiveLayout({
       }
     >
       <CMSSidebar variant={variant} collapsible={collapsible} />
-      <SidebarInset
-        className="[html[data-content-layout=centered]_&>*]:mx-auto [html[data-content-layout=centered]_&>*]:w-full [html[data-content-layout=centered]_&>*]:max-w-screen-2xl peer-data-[variant=inset]:border"
-      >
-        <header
-          className="flex h-12 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 [html[data-navbar-style=sticky]_&]:sticky [html[data-navbar-style=sticky]_&]:top-0 [html[data-navbar-style=sticky]_&]:z-50 [html[data-navbar-style=sticky]_&]:overflow-hidden [html[data-navbar-style=sticky]_&]:rounded-t-[inherit] [html[data-navbar-style=sticky]_&]:bg-background/50 [html[data-navbar-style=sticky]_&]:backdrop-blur-md"
-        >
+      <SidebarInset className="[html[data-content-layout=centered]_&>*]:mx-auto [html[data-content-layout=centered]_&>*]:w-full [html[data-content-layout=centered]_&>*]:max-w-screen-2xl peer-data-[variant=inset]:border">
+        <header className="flex h-12 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 [html[data-navbar-style=sticky]_&]:sticky [html[data-navbar-style=sticky]_&]:top-0 [html[data-navbar-style=sticky]_&]:z-50 [html[data-navbar-style=sticky]_&]:overflow-hidden [html[data-navbar-style=sticky]_&]:rounded-t-[inherit] [html[data-navbar-style=sticky]_&]:bg-background/50 [html[data-navbar-style=sticky]_&]:backdrop-blur-md">
           <div className="flex w-full items-center justify-between px-4 lg:px-6">
             <div className="flex items-center gap-1 lg:gap-2">
               <SidebarTrigger className="-ml-1" />
@@ -118,7 +108,9 @@ export function CMSResponsiveLayout({
                 orientation="vertical"
                 className="mx-2 data-[orientation=vertical]:h-4 data-[orientation=vertical]:self-center"
               />
-              <span className="font-semibold text-sm hidden md:inline-flex text-muted-foreground">CMS Quản trị Web</span>
+              <span className="font-semibold text-sm hidden md:inline-flex text-muted-foreground">
+                CMS Quản trị Web
+              </span>
               <Separator
                 orientation="vertical"
                 className="mx-2 hidden md:block data-[orientation=vertical]:h-4 data-[orientation=vertical]:self-center"
@@ -132,9 +124,7 @@ export function CMSResponsiveLayout({
             </div>
           </div>
         </header>
-        <div className="h-full p-4 md:p-6 bg-slate-100 dark:bg-slate-950">
-          {children}
-        </div>
+        <div className="h-full p-4 md:p-6 bg-slate-100 dark:bg-slate-950">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   );

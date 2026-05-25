@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { 
-  TrendingUp, 
-  DollarSign, 
+import React, { useState, useEffect } from "react";
+import {
+  TrendingUp,
+  DollarSign,
   TrendingDown,
   ArrowUpRight,
   ArrowDownRight,
@@ -14,45 +14,28 @@ import {
   Receipt,
   Wallet,
   PieChart,
-  Activity
-} from 'lucide-react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
+  Activity,
+} from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  ChartContainer, 
-  ChartTooltip, 
-  ChartTooltipContent 
-} from "@/components/ui/chart";
-import { 
-  Area, 
-  AreaChart, 
-  ResponsiveContainer, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid,
-} from "recharts";
-import { posService } from '@/services/pos.service';
-import { Badge } from '@/components/ui/badge';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid } from "recharts";
+import { posService } from "@/services/pos.service";
+import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import Link from 'next/link';
+import Link from "next/link";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 
 const cashflowData = [
-  { name: 'T2', income: 4000, expense: 2400 },
-  { name: 'T3', income: 3000, expense: 1398 },
-  { name: 'T4', income: 5000, expense: 3800 },
-  { name: 'T5', income: 2780, expense: 3908 },
-  { name: 'T6', income: 4890, expense: 4800 },
-  { name: 'T7', income: 6390, expense: 3800 },
-  { name: 'CN', income: 5490, expense: 4300 },
+  { name: "T2", income: 4000, expense: 2400 },
+  { name: "T3", income: 3000, expense: 1398 },
+  { name: "T4", income: 5000, expense: 3800 },
+  { name: "T5", income: 2780, expense: 3908 },
+  { name: "T6", income: 4890, expense: 4800 },
+  { name: "T7", income: 6390, expense: 3800 },
+  { name: "CN", income: 5490, expense: 4300 },
 ];
 
 const chartConfig = {
@@ -63,11 +46,11 @@ const chartConfig = {
   expense: {
     label: "Chi phí",
     color: "hsl(var(--destructive))",
-  }
+  },
 };
 
 const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+  return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
 };
 
 export default function FinanceOverviewPage() {
@@ -81,9 +64,9 @@ export default function FinanceOverviewPage() {
     const today = new Date();
     const d30 = new Date();
     d30.setDate(today.getDate() - 30);
-    
-    setStartDate(d30.toISOString().split('T')[0]);
-    setEndDate(today.toISOString().split('T')[0]);
+
+    setStartDate(d30.toISOString().split("T")[0]);
+    setEndDate(today.toISOString().split("T")[0]);
   }, []);
 
   const loadInitialData = async () => {
@@ -113,28 +96,28 @@ export default function FinanceOverviewPage() {
 
     if (timeRange === "today") {
       const today = new Date();
-      startStr = today.toISOString().split('T')[0];
-      endStr = today.toISOString().split('T')[0];
+      startStr = today.toISOString().split("T")[0];
+      endStr = today.toISOString().split("T")[0];
     } else if (timeRange === "7days") {
       const today = new Date();
       const d7 = new Date();
       d7.setDate(today.getDate() - 6);
-      startStr = d7.toISOString().split('T')[0];
-      endStr = today.toISOString().split('T')[0];
+      startStr = d7.toISOString().split("T")[0];
+      endStr = today.toISOString().split("T")[0];
     } else if (timeRange === "30days") {
       const today = new Date();
       const d30 = new Date();
       d30.setDate(today.getDate() - 30);
-      startStr = d30.toISOString().split('T')[0];
-      endStr = today.toISOString().split('T')[0];
+      startStr = d30.toISOString().split("T")[0];
+      endStr = today.toISOString().split("T")[0];
     }
-    
+
     if (timeRange === "custom" && (!startDate || !endDate)) return null;
 
     const computed = posService.calculateFinanceStats(
       rawData,
       startStr ? new Date(startStr).toISOString() : undefined,
-      endStr ? new Date(new Date(endStr).setHours(23, 59, 59, 999)).toISOString() : undefined
+      endStr ? new Date(new Date(endStr).setHours(23, 59, 59, 999)).toISOString() : undefined,
     );
     return computed;
   }, [rawData, timeRange, startDate, endDate]);
@@ -145,11 +128,15 @@ export default function FinanceOverviewPage() {
       const headers = ["Chỉ tiêu", "Số tiền (VND)", "Tỷ trọng / Ghi chú"];
       const rows = [
         ["Doanh thu thuần", stats.totalRevenue, ""],
-        ["Giá vốn hàng bán (COGS)", stats.totalCOGS, `${stats.totalRevenue > 0 ? Math.round(stats.totalCOGS/stats.totalRevenue*100) : 0}%`],
+        [
+          "Giá vốn hàng bán (COGS)",
+          stats.totalCOGS,
+          `${stats.totalRevenue > 0 ? Math.round((stats.totalCOGS / stats.totalRevenue) * 100) : 0}%`,
+        ],
         ["Lợi nhuận gộp", stats.totalRevenue - stats.totalCOGS, ""],
         ["Chi phí vận hành", stats.totalExpenses, ""],
       ];
-      
+
       if (stats.costStructure && stats.costStructure.length > 0) {
         stats.costStructure.forEach((item: any) => {
           if (item.name !== "Giá vốn hàng đã bán (COGS)") {
@@ -157,11 +144,15 @@ export default function FinanceOverviewPage() {
           }
         });
       }
-      
-      rows.push(["Lợi nhuận ròng", stats.netProfit, `${stats.totalRevenue > 0 ? Math.round(stats.netProfit/stats.totalRevenue*100) : 0}%`]);
 
-      const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(r => `"${r[0]}","${r[1]}","${r[2]}"`)].join("\n");
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      rows.push([
+        "Lợi nhuận ròng",
+        stats.netProfit,
+        `${stats.totalRevenue > 0 ? Math.round((stats.netProfit / stats.totalRevenue) * 100) : 0}%`,
+      ]);
+
+      const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((r) => `"${r[0]}","${r[1]}","${r[2]}"`)].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
@@ -190,40 +181,40 @@ export default function FinanceOverviewPage() {
           <h1 className="text-3xl font-bold tracking-tight">Tài chính & Dòng tiền</h1>
           <p className="text-muted-foreground text-sm flex items-center gap-2">
             <CalendarDays className="w-4 h-4" />
-            Dữ liệu tài chính tính đến hôm nay, {new Date().toLocaleDateString('vi-VN')}
+            Dữ liệu tài chính tính đến hôm nay, {new Date().toLocaleDateString("vi-VN")}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {/* Time range picker filter */}
           <div className="flex flex-wrap items-center gap-2 bg-background p-1 rounded-xl border shadow-sm mr-1">
             <div className="flex border rounded-lg overflow-hidden bg-muted/30">
-              <Button 
-                variant={timeRange === "today" ? "default" : "ghost"} 
-                size="sm" 
+              <Button
+                variant={timeRange === "today" ? "default" : "ghost"}
+                size="sm"
                 className="rounded-none h-8 text-[11px] font-bold px-3"
                 onClick={() => setTimeRange("today")}
               >
                 Hôm nay
               </Button>
-              <Button 
-                variant={timeRange === "7days" ? "default" : "ghost"} 
-                size="sm" 
+              <Button
+                variant={timeRange === "7days" ? "default" : "ghost"}
+                size="sm"
                 className="rounded-none h-8 text-[11px] font-bold border-l px-3"
                 onClick={() => setTimeRange("7days")}
               >
                 7 ngày
               </Button>
-              <Button 
-                variant={timeRange === "30days" ? "default" : "ghost"} 
-                size="sm" 
+              <Button
+                variant={timeRange === "30days" ? "default" : "ghost"}
+                size="sm"
                 className="rounded-none h-8 text-[11px] font-bold border-l px-3"
                 onClick={() => setTimeRange("30days")}
               >
                 Tháng này
               </Button>
-              <Button 
-                variant={timeRange === "custom" ? "default" : "ghost"} 
-                size="sm" 
+              <Button
+                variant={timeRange === "custom" ? "default" : "ghost"}
+                size="sm"
                 className="rounded-none h-8 text-[11px] font-bold border-l px-3"
                 onClick={() => setTimeRange("custom")}
               >
@@ -236,19 +227,19 @@ export default function FinanceOverviewPage() {
               <div className="flex items-center gap-1.5 pl-2 border-l animate-in slide-in-from-left-2 duration-200">
                 <div className="flex items-center gap-1">
                   <span className="text-[9px] font-bold text-muted-foreground uppercase">Từ:</span>
-                  <Input 
-                    type="date" 
-                    value={startDate} 
-                    onChange={(e) => setStartDate(e.target.value)} 
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
                     className="h-8 text-xs font-semibold px-2 py-1 w-[125px] border-muted bg-background focus:ring-primary focus:border-primary"
                   />
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="text-[9px] font-bold text-muted-foreground uppercase">Đến:</span>
-                  <Input 
-                    type="date" 
-                    value={endDate} 
-                    onChange={(e) => setEndDate(e.target.value)} 
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
                     className="h-8 text-xs font-semibold px-2 py-1 w-[125px] border-muted bg-background focus:ring-primary focus:border-primary"
                   />
                 </div>
@@ -256,12 +247,22 @@ export default function FinanceOverviewPage() {
             )}
           </div>
 
-          <Button variant="outline" size="sm" className="gap-2 h-9 text-xs font-bold shadow-sm" onClick={handleExportPL}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 h-9 text-xs font-bold shadow-sm"
+            onClick={handleExportPL}
+          >
             <Download className="w-4 h-4" />
             Báo cáo P&L
           </Button>
           <Link href="/app/finance/recurring">
-            <Button size="sm" className="h-9 text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm">Cấu hình định kỳ</Button>
+            <Button
+              size="sm"
+              className="h-9 text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+            >
+              Cấu hình định kỳ
+            </Button>
           </Link>
         </div>
       </div>
@@ -324,7 +325,9 @@ export default function FinanceOverviewPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(stats?.netProfit || 0)}</div>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+              {formatCurrency(stats?.netProfit || 0)}
+            </div>
             <div className="flex items-center mt-1 text-xs font-medium text-emerald-600">
               <ArrowUpRight className="w-3 h-3 mr-1" />
               <span>{stats?.profitChange} hiệu quả cao</span>
@@ -340,7 +343,9 @@ export default function FinanceOverviewPage() {
               <CardTitle>Xu hướng dòng tiền</CardTitle>
               <CardDescription>So sánh thu nhập và chi phí hàng ngày</CardDescription>
             </div>
-            <Badge variant="outline" className="font-bold">7 Ngày qua</Badge>
+            <Badge variant="outline" className="font-bold">
+              7 Ngày qua
+            </Badge>
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[350px] w-full">
@@ -348,12 +353,12 @@ export default function FinanceOverviewPage() {
                 <AreaChart data={cashflowData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--color-income)" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="var(--color-income)" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="var(--color-income)" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="var(--color-income)" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--color-expense)" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="var(--color-expense)" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="var(--color-expense)" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="var(--color-expense)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
@@ -370,7 +375,7 @@ export default function FinanceOverviewPage() {
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(value) => `${value/1000}M`}
+                    tickFormatter={(value) => `${value / 1000}M`}
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Area
@@ -419,7 +424,10 @@ export default function FinanceOverviewPage() {
 
             <div className="pt-4 border-t">
               <Link href="/app/finance/profit-loss">
-                <Button variant="outline" className="w-full gap-2 text-primary font-bold border-primary/20 bg-primary/5">
+                <Button
+                  variant="outline"
+                  className="w-full gap-2 text-primary font-bold border-primary/20 bg-primary/5"
+                >
                   <PieChart className="w-4 h-4" />
                   Chi tiết Báo cáo Lợi nhuận
                 </Button>

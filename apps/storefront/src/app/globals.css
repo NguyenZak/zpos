@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Colors */
+    --color-pitch-black: #000000;
+    --color-luminous-white: #ffffff;
+    --color-subtle-gray: #757575;
+
+    /* Base theme compatibility mappings */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+    --border: 0 0% 0%;
+
+    /* Typography — Scale */
+    --text-caption: 11px;
+    --text-body-sm: 12px;
+    --text-body: 13px;
+    --text-body-lg: 15px;
+    --text-heading-sm: 16px;
+
+    /* Spacing */
+    --spacing-unit: 4px;
+    
+    /* Layout */
+    --section-gap: 48px;
+    --card-padding: 20px;
+    --element-gap: 16px;
+
+    /* Named Radii */
+    --radius-all: 0px;
+
+    /* Default Theme Tokens - Override by ThemeRegistry if needed */
+    --sb-cta-bg: 0 0% 0%;
+    --sb-cta-fg: 0 0% 100%;
+    --sb-hero-bg: 0 0% 100%;
+    --sb-hero-fg: 0 0% 0%;
+    --sb-footer-bg: 0 0% 100%;
+    --sb-footer-fg: 0 0% 0%;
+    --sb-badge-bg: 0 0% 0%;
+    --sb-badge-fg: 0 0% 100%;
+    --sb-radius: 0px;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-[#000000];
+    border-radius: var(--radius-all) !important;
+  }
+  body {
+    @apply bg-white text-black;
+    font-family: 'Helvetica Now Text', 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 400;
+  }
+  
+  button, input, select, textarea {
+    font-family: inherit;
+    border-radius: 0px !important;
+  }
+}

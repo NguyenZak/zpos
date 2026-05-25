@@ -2,11 +2,25 @@
 
 import React from "react";
 import {
-  FileText, Loader2, Search, AlertCircle, CheckCircle2, Receipt,
-  Building2, User, Mail, MapPin, QrCode,
+  FileText,
+  Loader2,
+  Search,
+  AlertCircle,
+  CheckCircle2,
+  Receipt,
+  Building2,
+  User,
+  Mail,
+  MapPin,
+  QrCode,
 } from "lucide-react";
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,8 +59,15 @@ function formatVND(v: number) {
 }
 
 export function IssueInvoiceDialog({
-  open, onOpenChange, orderId, branchId, customerId,
-  cartItems, totalAmount, paymentMethod, onSuccess,
+  open,
+  onOpenChange,
+  orderId,
+  branchId,
+  customerId,
+  cartItems,
+  totalAmount,
+  paymentMethod,
+  onSuccess,
 }: IssueInvoiceDialogProps) {
   const [step, setStep] = React.useState<"buyer" | "confirm" | "result">("buyer");
   const [loading, setLoading] = React.useState(false);
@@ -54,7 +75,11 @@ export function IssueInvoiceDialog({
   const [result, setResult] = React.useState<Invoice | null>(null);
   const [vatRate, setVatRate] = React.useState<number>(0);
   const [buyer, setBuyer] = React.useState({
-    name: "", tax_code: "", address: "", email: "", phone: "",
+    name: "",
+    tax_code: "",
+    address: "",
+    email: "",
+    phone: "",
   });
 
   // Reset on open
@@ -72,7 +97,10 @@ export function IssueInvoiceDialog({
 
   async function handleLookupTax() {
     const code = buyer.tax_code.trim().replace(/[^0-9-]/g, "");
-    if (!code || code.length < 10) { toast.error("Nhập mã số thuế hợp lệ (10+ ký tự)"); return; }
+    if (!code || code.length < 10) {
+      toast.error("Nhập mã số thuế hợp lệ (10+ ký tự)");
+      return;
+    }
     setLookingUp(true);
     try {
       const res = await fetch(`https://api.vietqr.io/v2/business/${code}`);
@@ -84,22 +112,28 @@ export function IssueInvoiceDialog({
       } else {
         toast.error(json.desc || "Không tìm thấy doanh nghiệp với MST này");
       }
-    } catch { toast.error("Lỗi kết nối tra cứu MST"); }
-    finally { setLookingUp(false); }
+    } catch {
+      toast.error("Lỗi kết nối tra cứu MST");
+    } finally {
+      setLookingUp(false);
+    }
   }
 
   async function handleIssue() {
     setLoading(true);
     try {
       const input: IssueInvoiceInput = {
-        orderId, branchId, customerId,
+        orderId,
+        branchId,
+        customerId,
         invoiceType: buyer.tax_code ? "B2B" : "B2C",
         buyer,
         items: cartItems.map((c) => ({
           product_name: c.product_name,
           product_id: c.product_id,
           order_item_id: c.order_item_id,
-          sku: c.sku, unit: c.unit,
+          sku: c.sku,
+          unit: c.unit,
           quantity: c.quantity,
           unit_price: c.unit_price,
           discount_amount: c.discount_amount || 0,
@@ -166,7 +200,13 @@ export function IssueInvoiceDialog({
                   className="font-mono"
                   onKeyDown={(e) => e.key === "Enter" && handleLookupTax()}
                 />
-                <Button type="button" variant="outline" size="icon" onClick={handleLookupTax} disabled={lookingUp || !buyer.tax_code}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={handleLookupTax}
+                  disabled={lookingUp || !buyer.tax_code}
+                >
                   {lookingUp ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                 </Button>
               </div>
@@ -245,10 +285,26 @@ export function IssueInvoiceDialog({
           <div className="space-y-3 py-2">
             <div className="rounded-lg border bg-card p-4 space-y-2 text-sm">
               <p className="font-bold text-base">Thông tin người mua</p>
-              {buyer.name && <p><span className="text-muted-foreground">Tên:</span> <b>{buyer.name}</b></p>}
-              {buyer.tax_code && <p><span className="text-muted-foreground">MST:</span> <b className="font-mono">{buyer.tax_code}</b></p>}
-              {buyer.address && <p><span className="text-muted-foreground">Địa chỉ:</span> {buyer.address}</p>}
-              {buyer.email && <p><span className="text-muted-foreground">Email:</span> {buyer.email}</p>}
+              {buyer.name && (
+                <p>
+                  <span className="text-muted-foreground">Tên:</span> <b>{buyer.name}</b>
+                </p>
+              )}
+              {buyer.tax_code && (
+                <p>
+                  <span className="text-muted-foreground">MST:</span> <b className="font-mono">{buyer.tax_code}</b>
+                </p>
+              )}
+              {buyer.address && (
+                <p>
+                  <span className="text-muted-foreground">Địa chỉ:</span> {buyer.address}
+                </p>
+              )}
+              {buyer.email && (
+                <p>
+                  <span className="text-muted-foreground">Email:</span> {buyer.email}
+                </p>
+              )}
               {!buyer.name && !buyer.tax_code && (
                 <p className="text-muted-foreground italic">Không có thông tin người mua (B2C)</p>
               )}
@@ -270,7 +326,8 @@ export function IssueInvoiceDialog({
             </div>
             <p className="text-xs text-muted-foreground flex items-start gap-1.5">
               <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0 text-amber-500" />
-              Sau khi phát hành, hoá đơn sẽ được gửi lên nhà cung cấp HĐĐT và không thể sửa nội dung (chỉ hủy hoặc điều chỉnh).
+              Sau khi phát hành, hoá đơn sẽ được gửi lên nhà cung cấp HĐĐT và không thể sửa nội dung (chỉ hủy hoặc điều
+              chỉnh).
             </p>
           </div>
         )}
@@ -282,7 +339,10 @@ export function IssueInvoiceDialog({
               <div>
                 <p className="font-bold text-emerald-700 dark:text-emerald-400">Phát hành thành công!</p>
                 <p className="text-sm text-muted-foreground">
-                  Số HĐ: <span className="font-mono font-bold">{result.invoice_series}/{result.invoice_no}</span>
+                  Số HĐ:{" "}
+                  <span className="font-mono font-bold">
+                    {result.invoice_series}/{result.invoice_no}
+                  </span>
                 </p>
               </div>
             </div>
@@ -303,8 +363,12 @@ export function IssueInvoiceDialog({
               {result.lookup_url && (
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Link tra cứu</span>
-                  <a href={result.lookup_url} target="_blank" rel="noreferrer"
-                    className="text-violet-600 underline text-xs truncate max-w-[200px]">
+                  <a
+                    href={result.lookup_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-violet-600 underline text-xs truncate max-w-[200px]"
+                  >
                     Xem HĐ →
                   </a>
                 </div>
@@ -312,8 +376,12 @@ export function IssueInvoiceDialog({
               {result.provider_pdf_url && (
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">PDF</span>
-                  <a href={result.provider_pdf_url} target="_blank" rel="noreferrer"
-                    className="text-violet-600 underline text-xs">
+                  <a
+                    href={result.provider_pdf_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-violet-600 underline text-xs"
+                  >
                     Tải PDF
                   </a>
                 </div>
@@ -334,7 +402,9 @@ export function IssueInvoiceDialog({
         <DialogFooter>
           {step === "buyer" && (
             <>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>Huỷ</Button>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Huỷ
+              </Button>
               <Button onClick={() => setStep("confirm")} className="bg-violet-600 hover:bg-violet-700 text-white">
                 <Receipt className="mr-2 h-4 w-4" /> Xem lại & Xác nhận
               </Button>
@@ -342,7 +412,9 @@ export function IssueInvoiceDialog({
           )}
           {step === "confirm" && (
             <>
-              <Button variant="outline" onClick={() => setStep("buyer")} disabled={loading}>Quay lại</Button>
+              <Button variant="outline" onClick={() => setStep("buyer")} disabled={loading}>
+                Quay lại
+              </Button>
               <Button onClick={handleIssue} disabled={loading} className="bg-violet-600 hover:bg-violet-700 text-white">
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
                 Phát hành hoá đơn

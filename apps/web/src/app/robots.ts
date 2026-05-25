@@ -47,21 +47,8 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: "Googlebot",
-        allow: [
-          "/",
-          "/pricing",
-          "/solutions",
-          "/features",
-          "/blog",
-          "/blog/*",
-          "/docs",
-        ],
-        disallow: [
-          "/app/*",
-          "/console/*",
-          "/cms/*",
-          "/api/*",
-        ],
+        allow: ["/", "/pricing", "/solutions", "/features", "/blog", "/blog/*", "/docs"],
+        disallow: ["/app/*", "/console/*", "/cms/*", "/api/*"],
       },
     ],
     sitemap: `${siteUrl}/sitemap.xml`,

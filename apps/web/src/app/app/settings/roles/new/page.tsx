@@ -87,7 +87,9 @@ export default function NewRolePage() {
         </div>
         <div className="grid max-w-md gap-1">
           <h1 className="text-2xl font-semibold tracking-tight">Bạn chưa có quyền tạo vai trò</h1>
-          <p className="text-sm text-muted-foreground">Bạn cần quyền roles.manage để tạo vai trò và cấu hình ma trận quyền.</p>
+          <p className="text-sm text-muted-foreground">
+            Bạn cần quyền roles.manage để tạo vai trò và cấu hình ma trận quyền.
+          </p>
         </div>
         <Button asChild variant="outline">
           <Link href="/settings/roles">Quay lại vai trò</Link>
@@ -121,7 +123,9 @@ export default function NewRolePage() {
           <Shield className="size-6 text-primary" />
           <h1 className="text-3xl font-semibold tracking-tight leading-none">Tạo vai trò mới</h1>
         </div>
-        <p className="text-sm text-muted-foreground">Đặt tên vai trò, chọn từng quyền và lưu ma trận phân quyền cho nhân sự.</p>
+        <p className="text-sm text-muted-foreground">
+          Đặt tên vai trò, chọn từng quyền và lưu ma trận phân quyền cho nhân sự.
+        </p>
       </div>
 
       <Card className="border-muted shadow-xs">
@@ -133,11 +137,23 @@ export default function NewRolePage() {
             <label htmlFor="role-name" className="text-sm font-medium">
               Tên vai trò <span className="text-destructive">*</span>
             </label>
-            <Input id="role-name" value={roleName} onChange={(event) => setRoleName(event.target.value)} placeholder="Ví dụ: Quản lý chi nhánh" />
+            <Input
+              id="role-name"
+              value={roleName}
+              onChange={(event) => setRoleName(event.target.value)}
+              placeholder="Ví dụ: Quản lý chi nhánh"
+            />
           </div>
           <div className="grid gap-2">
-            <label htmlFor="role-desc" className="text-sm font-medium">Mô tả vai trò</label>
-            <Input id="role-desc" value={roleDesc} onChange={(event) => setRoleDesc(event.target.value)} placeholder="Phạm vi vận hành của vai trò này" />
+            <label htmlFor="role-desc" className="text-sm font-medium">
+              Mô tả vai trò
+            </label>
+            <Input
+              id="role-desc"
+              value={roleDesc}
+              onChange={(event) => setRoleDesc(event.target.value)}
+              placeholder="Phạm vi vận hành của vai trò này"
+            />
           </div>
         </CardContent>
       </Card>

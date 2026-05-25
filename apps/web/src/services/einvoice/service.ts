@@ -28,11 +28,7 @@ export type { EInvoiceProviderName as EInvoiceProvider };
 async function getTaxSettings(): Promise<TaxSettings | null> {
   const supabase = createClient();
   const orgId = await getActiveOrganizationId();
-  const { data } = await supabase
-    .from("tax_settings")
-    .select("*")
-    .eq("tenant_id", orgId)
-    .maybeSingle();
+  const { data } = await supabase.from("tax_settings").select("*").eq("tenant_id", orgId).maybeSingle();
   return (data as TaxSettings) || null;
 }
 
@@ -60,7 +56,10 @@ async function listConfigs(): Promise<EInvoiceConfig[]> {
     .eq("tenant_id", orgId)
     .order("is_default", { ascending: false })
     .order("created_at", { ascending: false });
-  if (error) { console.warn("listConfigs:", error.message); return []; }
+  if (error) {
+    console.warn("listConfigs:", error.message);
+    return [];
+  }
   return (data || []) as EInvoiceConfig[];
 }
 
@@ -100,12 +99,16 @@ async function saveConfig(config: Partial<EInvoiceConfig> & { id?: string }): Pr
   const payload = { ...config, tenant_id: orgId };
   if (config.id) {
     const { data, error } = await supabase
-      .from("einvoice_configs").update(payload).eq("id", config.id).eq("tenant_id", orgId).select().single();
+      .from("einvoice_configs")
+      .update(payload)
+      .eq("id", config.id)
+      .eq("tenant_id", orgId)
+      .select()
+      .single();
     if (error) throw error;
     return data as EInvoiceConfig;
   }
-  const { data, error } = await supabase
-    .from("einvoice_configs").insert([payload]).select().single();
+  const { data, error } = await supabase.from("einvoice_configs").insert([payload]).select().single();
   if (error) throw error;
   return data as EInvoiceConfig;
 }
@@ -120,7 +123,12 @@ async function deleteConfig(id: string): Promise<void> {
 async function testConnection(configId: string): Promise<{ ok: boolean; message: string }> {
   const supabase = createClient();
   const orgId = await getActiveOrganizationId();
-  const { data } = await supabase.from("einvoice_configs").select("*").eq("id", configId).eq("tenant_id", orgId).maybeSingle();
+  const { data } = await supabase
+    .from("einvoice_configs")
+    .select("*")
+    .eq("id", configId)
+    .eq("tenant_id", orgId)
+    .maybeSingle();
   if (!data) return { ok: false, message: "Không tìm thấy cấu hình" };
   try {
     const provider = getProvider(data.provider);
@@ -154,10 +162,15 @@ async function listInvoices(opts?: {
   if (opts?.toDate) q = q.lte("invoice_date", opts.toDate);
   if (opts?.branchId) q = q.eq("branch_id", opts.branchId);
   if (opts?.search) {
-    q = q.or(`buyer_name.ilike.%${opts.search}%,invoice_no.ilike.%${opts.search}%,buyer_tax_code.ilike.%${opts.search}%,lookup_code.ilike.%${opts.search}%`);
+    q = q.or(
+      `buyer_name.ilike.%${opts.search}%,invoice_no.ilike.%${opts.search}%,buyer_tax_code.ilike.%${opts.search}%,lookup_code.ilike.%${opts.search}%`,
+    );
   }
   const { data, error } = await q;
-  if (error) { console.warn("listInvoices:", error.message); return []; }
+  if (error) {
+    console.warn("listInvoices:", error.message);
+    return [];
+  }
   return (data || []) as Invoice[];
 }
 
@@ -172,8 +185,13 @@ async function getInvoiceForOrder(orderId: string): Promise<Invoice | null> {
   const supabase = createClient();
   const orgId = await getActiveOrganizationId();
   const { data } = await supabase
-    .from("invoices").select("*").eq("tenant_id", orgId).eq("order_id", orderId)
-    .order("created_at", { ascending: false }).limit(1).maybeSingle();
+    .from("invoices")
+    .select("*")
+    .eq("tenant_id", orgId)
+    .eq("order_id", orderId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
   return (data as Invoice) || null;
 }
 
@@ -181,8 +199,10 @@ async function getInvoiceLogs(invoiceId: string): Promise<InvoiceLog[]> {
   const supabase = createClient();
   const orgId = await getActiveOrganizationId();
   const { data } = await supabase
-    .from("invoice_logs").select("*")
-    .eq("tenant_id", orgId).eq("invoice_id", invoiceId)
+    .from("invoice_logs")
+    .select("*")
+    .eq("tenant_id", orgId)
+    .eq("invoice_id", invoiceId)
     .order("created_at", { ascending: true });
   return (data || []) as InvoiceLog[];
 }
@@ -224,7 +244,12 @@ async function issueInvoice(input: IssueInvoiceInput): Promise<IssueResult> {
   const [tax, config] = await Promise.all([
     getTaxSettings(),
     input.configId
-      ? supabase.from("einvoice_configs").select("*").eq("id", input.configId).maybeSingle().then(r => r.data as EInvoiceConfig)
+      ? supabase
+          .from("einvoice_configs")
+          .select("*")
+          .eq("id", input.configId)
+          .maybeSingle()
+          .then((r) => r.data as EInvoiceConfig)
       : getDefaultConfig(input.branchId),
   ]);
 
@@ -247,28 +272,34 @@ async function issueInvoice(input: IssueInvoiceInput): Promise<IssueResult> {
   // Create pending invoice row
   const { data: created, error: createErr } = await supabase
     .from("invoices")
-    .insert([{
-      tenant_id: orgId,
-      branch_id: input.branchId || null,
-      order_id: input.orderId || null,
-      customer_id: input.customerId || null,
-      config_id: config.id,
-      invoice_type: input.invoiceType || (input.buyer.tax_code ? "B2B" : "B2C"),
-      buyer_name: input.buyer.name || null,
-      buyer_tax_code: input.buyer.tax_code || null,
-      buyer_address: input.buyer.address || null,
-      buyer_email: input.buyer.email || null,
-      buyer_phone: input.buyer.phone || null,
-      invoice_series: config.invoice_series || null,
-      invoice_template_code: config.invoice_template_code || null,
-      subtotal, discount_amount: discount, vat_rate: vatRate, vat_amount: vatAmount,
-      total_amount: total, currency: tax.default_currency || "VND",
-      payment_method: input.paymentMethod || null,
-      items: items, // legacy jsonb
-      status: "pending",
-      provider: config.provider,
-      notes: input.notes || null,
-    }])
+    .insert([
+      {
+        tenant_id: orgId,
+        branch_id: input.branchId || null,
+        order_id: input.orderId || null,
+        customer_id: input.customerId || null,
+        config_id: config.id,
+        invoice_type: input.invoiceType || (input.buyer.tax_code ? "B2B" : "B2C"),
+        buyer_name: input.buyer.name || null,
+        buyer_tax_code: input.buyer.tax_code || null,
+        buyer_address: input.buyer.address || null,
+        buyer_email: input.buyer.email || null,
+        buyer_phone: input.buyer.phone || null,
+        invoice_series: config.invoice_series || null,
+        invoice_template_code: config.invoice_template_code || null,
+        subtotal,
+        discount_amount: discount,
+        vat_rate: vatRate,
+        vat_amount: vatAmount,
+        total_amount: total,
+        currency: tax.default_currency || "VND",
+        payment_method: input.paymentMethod || null,
+        items: items, // legacy jsonb
+        status: "pending",
+        provider: config.provider,
+        notes: input.notes || null,
+      },
+    ])
     .select()
     .single();
 
@@ -278,9 +309,7 @@ async function issueInvoice(input: IssueInvoiceInput): Promise<IssueResult> {
 
   // Save line items to invoice_items table
   if (items.length > 0) {
-    await supabase.from("invoice_items").insert(
-      items.map((it) => ({ ...it, invoice_id: created.id }))
-    );
+    await supabase.from("invoice_items").insert(items.map((it) => ({ ...it, invoice_id: created.id })));
   }
 
   // Call provider
@@ -304,19 +333,29 @@ async function issueInvoice(input: IssueInvoiceInput): Promise<IssueResult> {
       raw_response: res.raw_response || null,
     };
     const { data: updated, error: updErr } = await supabase
-      .from("invoices").update(update).eq("id", created.id).select().single();
+      .from("invoices")
+      .update(update)
+      .eq("id", created.id)
+      .select()
+      .single();
 
     if (updErr) return { ok: false, error: updErr.message, invoice: created as Invoice };
 
     // Link order → invoice
     if (input.orderId) {
-      await supabase.from("orders").update({ invoice_id: created.id, invoice_status: "issued" }).eq("id", input.orderId);
+      await supabase
+        .from("orders")
+        .update({ invoice_id: created.id, invoice_status: "issued" })
+        .eq("id", input.orderId);
     }
 
     // Write audit log
     await writeLog(supabase, {
-      tenant_id: orgId, invoice_id: created.id, action: "issue",
-      status_before: "pending", status_after: "issued",
+      tenant_id: orgId,
+      invoice_id: created.id,
+      action: "issue",
+      status_before: "pending",
+      status_after: "issued",
       message: `Phát hành qua ${config.provider}`,
       response_payload: res.raw_response,
     });
@@ -326,8 +365,12 @@ async function issueInvoice(input: IssueInvoiceInput): Promise<IssueResult> {
     const msg = e?.message || String(e);
     await supabase.from("invoices").update({ status: "failed", error_message: msg }).eq("id", created.id);
     await writeLog(supabase, {
-      tenant_id: orgId, invoice_id: created.id, action: "issue_failed",
-      status_before: "pending", status_after: "failed", message: msg,
+      tenant_id: orgId,
+      invoice_id: created.id,
+      action: "issue_failed",
+      status_before: "pending",
+      status_after: "failed",
+      message: msg,
     });
     return { ok: false, error: msg, invoice: created as Invoice };
   }
@@ -349,18 +392,28 @@ async function cancelInvoice(id: string, reason: string): Promise<CancelResult> 
     try {
       const provider = getProvider(inv.provider);
       await provider.cancelInvoice({ config, invoice: inv as Invoice, reason });
-    } catch (_) { /* provider cancel is best-effort */ }
+    } catch (_) {
+      /* provider cancel is best-effort */
+    }
   }
 
-  const { error } = await supabase.from("invoices").update({
-    status: "cancelled", cancelled_at: new Date().toISOString(), cancelled_reason: reason,
-  }).eq("id", id);
+  const { error } = await supabase
+    .from("invoices")
+    .update({
+      status: "cancelled",
+      cancelled_at: new Date().toISOString(),
+      cancelled_reason: reason,
+    })
+    .eq("id", id);
 
   if (error) return { ok: false, error: error.message };
 
   await writeLog(supabase, {
-    tenant_id: orgId, invoice_id: id, action: "cancel",
-    status_before: inv.status, status_after: "cancelled",
+    tenant_id: orgId,
+    invoice_id: id,
+    action: "cancel",
+    status_before: inv.status,
+    status_after: "cancelled",
     message: `Lý do: ${reason}`,
   });
 
@@ -379,46 +432,59 @@ async function adjustInvoice(id: string, note: string): Promise<AdjustResult> {
   const items = await getInvoiceItems(id);
   try {
     const provider = getProvider(config.provider);
-    const res = await provider.adjustInvoice({ config, taxProfile: tax, originalInvoice: inv, adjustmentNote: note, items });
+    const res = await provider.adjustInvoice({
+      config,
+      taxProfile: tax,
+      originalInvoice: inv,
+      adjustmentNote: note,
+      items,
+    });
 
     // Create adjustment invoice record
     const { data: adjInvoice, error: adjErr } = await supabase
       .from("invoices")
-      .insert([{
-        tenant_id: orgId,
-        order_id: inv.order_id,
-        config_id: config.id,
-        invoice_type: "ADJUST",
-        buyer_name: inv.buyer_name,
-        buyer_tax_code: inv.buyer_tax_code,
-        buyer_address: inv.buyer_address,
-        buyer_email: inv.buyer_email,
-        invoice_series: res.invoice_series || config.invoice_series,
-        invoice_no: res.invoice_no,
-        subtotal: inv.subtotal,
-        discount_amount: inv.discount_amount,
-        vat_rate: inv.vat_rate,
-        vat_amount: inv.vat_amount,
-        total_amount: inv.total_amount,
-        currency: inv.currency,
-        items: items,
-        status: "issued",
-        provider: config.provider,
-        provider_invoice_id: res.provider_invoice_id,
-        lookup_code: res.lookup_code,
-        lookup_url: res.lookup_url,
-        notes: `Điều chỉnh HĐ ${inv.invoice_series}/${inv.invoice_no}: ${note}`,
-        replaced_by_id: inv.id,
-      }])
-      .select().single();
+      .insert([
+        {
+          tenant_id: orgId,
+          order_id: inv.order_id,
+          config_id: config.id,
+          invoice_type: "ADJUST",
+          buyer_name: inv.buyer_name,
+          buyer_tax_code: inv.buyer_tax_code,
+          buyer_address: inv.buyer_address,
+          buyer_email: inv.buyer_email,
+          invoice_series: res.invoice_series || config.invoice_series,
+          invoice_no: res.invoice_no,
+          subtotal: inv.subtotal,
+          discount_amount: inv.discount_amount,
+          vat_rate: inv.vat_rate,
+          vat_amount: inv.vat_amount,
+          total_amount: inv.total_amount,
+          currency: inv.currency,
+          items: items,
+          status: "issued",
+          provider: config.provider,
+          provider_invoice_id: res.provider_invoice_id,
+          lookup_code: res.lookup_code,
+          lookup_url: res.lookup_url,
+          notes: `Điều chỉnh HĐ ${inv.invoice_series}/${inv.invoice_no}: ${note}`,
+          replaced_by_id: inv.id,
+        },
+      ])
+      .select()
+      .single();
 
     if (adjErr) return { ok: false, error: adjErr.message };
 
     // Mark original as adjusted
     await supabase.from("invoices").update({ status: "adjusted", adjusted_at: new Date().toISOString() }).eq("id", id);
     await writeLog(supabase, {
-      tenant_id: orgId, invoice_id: id, action: "adjust",
-      status_before: inv.status, status_after: "adjusted", message: note,
+      tenant_id: orgId,
+      invoice_id: id,
+      action: "adjust",
+      status_before: inv.status,
+      status_after: "adjusted",
+      message: note,
     });
 
     return { ok: true, newInvoice: adjInvoice as Invoice };
@@ -436,14 +502,17 @@ async function replaceInvoice(id: string, input: IssueInvoiceInput): Promise<Adj
   if (!inv || !tax || !config) return { ok: false, error: "Thiếu dữ liệu để thay thế HĐ" };
 
   const items: InvoiceItem[] = input.items.map((it) => ({
-    ...it, tax_rate: it.vat_rate ?? inv.vat_rate, tax_amount: 0,
+    ...it,
+    tax_rate: it.vat_rate ?? inv.vat_rate,
+    tax_amount: 0,
     line_total: it.unit_price * it.quantity - (it.discount_amount || 0),
   }));
 
   try {
     const provider = getProvider(config.provider);
     const res = await provider.replaceInvoice({
-      config, taxProfile: tax,
+      config,
+      taxProfile: tax,
       invoice: { ...inv, ...input.buyer } as Invoice,
       items,
       originalInvoiceNo: inv.invoice_no || "",
@@ -455,33 +524,47 @@ async function replaceInvoice(id: string, input: IssueInvoiceInput): Promise<Adj
     const vatAmount = Math.round(((subtotal - discount) * inv.vat_rate) / 100);
 
     const { data: newInv, error: newErr } = await supabase
-      .from("invoices").insert([{
-        tenant_id: orgId,
-        order_id: inv.order_id,
-        config_id: config.id,
-        invoice_type: "REPLACE",
-        buyer_name: input.buyer.name || inv.buyer_name,
-        buyer_tax_code: input.buyer.tax_code || inv.buyer_tax_code,
-        buyer_address: input.buyer.address || inv.buyer_address,
-        buyer_email: input.buyer.email || inv.buyer_email,
-        invoice_series: res.invoice_series || config.invoice_series,
-        invoice_no: res.invoice_no,
-        subtotal, discount_amount: discount, vat_rate: inv.vat_rate, vat_amount: vatAmount,
-        total_amount: subtotal - discount + vatAmount,
-        currency: inv.currency, items,
-        status: "issued", provider: config.provider,
-        provider_invoice_id: res.provider_invoice_id,
-        lookup_code: res.lookup_code, lookup_url: res.lookup_url,
-        notes: `Thay thế HĐ ${inv.invoice_series}/${inv.invoice_no}`,
-        replaced_by_id: inv.id,
-      }]).select().single();
+      .from("invoices")
+      .insert([
+        {
+          tenant_id: orgId,
+          order_id: inv.order_id,
+          config_id: config.id,
+          invoice_type: "REPLACE",
+          buyer_name: input.buyer.name || inv.buyer_name,
+          buyer_tax_code: input.buyer.tax_code || inv.buyer_tax_code,
+          buyer_address: input.buyer.address || inv.buyer_address,
+          buyer_email: input.buyer.email || inv.buyer_email,
+          invoice_series: res.invoice_series || config.invoice_series,
+          invoice_no: res.invoice_no,
+          subtotal,
+          discount_amount: discount,
+          vat_rate: inv.vat_rate,
+          vat_amount: vatAmount,
+          total_amount: subtotal - discount + vatAmount,
+          currency: inv.currency,
+          items,
+          status: "issued",
+          provider: config.provider,
+          provider_invoice_id: res.provider_invoice_id,
+          lookup_code: res.lookup_code,
+          lookup_url: res.lookup_url,
+          notes: `Thay thế HĐ ${inv.invoice_series}/${inv.invoice_no}`,
+          replaced_by_id: inv.id,
+        },
+      ])
+      .select()
+      .single();
 
     if (newErr) return { ok: false, error: newErr.message };
 
     await supabase.from("invoices").update({ status: "replaced", replaced_at: new Date().toISOString() }).eq("id", id);
     await writeLog(supabase, {
-      tenant_id: orgId, invoice_id: id, action: "replace",
-      status_before: inv.status, status_after: "replaced",
+      tenant_id: orgId,
+      invoice_id: id,
+      action: "replace",
+      status_before: inv.status,
+      status_after: "replaced",
       message: `Thay thế bằng HĐ ${res.invoice_no}`,
     });
 
@@ -504,19 +587,26 @@ async function syncInvoiceStatus(id: string): Promise<{ ok: boolean; status?: In
   try {
     const provider = getProvider(inv.provider);
     const res = await provider.getInvoiceStatus({
-      config, invoiceNo: inv.invoice_no || "",
+      config,
+      invoiceNo: inv.invoice_no || "",
       invoiceSeries: inv.invoice_series || undefined,
       providerInvoiceId: inv.provider_invoice_id || undefined,
     });
-    const newStatus = res.status === inv.status ? "synced" as InvoiceStatus : res.status;
-    await supabase.from("invoices").update({
-      status: newStatus,
-      tax_authority_code: res.taxAuthorityCode || inv.tax_authority_code,
-      lookup_url: res.lookupUrl || inv.lookup_url,
-    }).eq("id", id);
+    const newStatus = res.status === inv.status ? ("synced" as InvoiceStatus) : res.status;
+    await supabase
+      .from("invoices")
+      .update({
+        status: newStatus,
+        tax_authority_code: res.taxAuthorityCode || inv.tax_authority_code,
+        lookup_url: res.lookupUrl || inv.lookup_url,
+      })
+      .eq("id", id);
     await writeLog(supabase, {
-      tenant_id: orgId, invoice_id: id, action: "sync",
-      status_before: inv.status, status_after: newStatus,
+      tenant_id: orgId,
+      invoice_id: id,
+      action: "sync",
+      status_before: inv.status,
+      status_after: newStatus,
       message: "Đồng bộ trạng thái từ provider",
     });
     return { ok: true, status: newStatus };
@@ -532,8 +622,11 @@ function buildItemsFromCart(
   vatRate = 0,
 ): IssueInvoiceInput["items"] {
   return cart.map((c) => ({
-    product_name: c.name, quantity: c.quantity, unit_price: c.price,
-    discount_amount: c.discount || 0, vat_rate: vatRate,
+    product_name: c.name,
+    quantity: c.quantity,
+    unit_price: c.price,
+    discount_amount: c.discount || 0,
+    vat_rate: vatRate,
     line_total: c.quantity * c.price - (c.discount || 0),
   }));
 }

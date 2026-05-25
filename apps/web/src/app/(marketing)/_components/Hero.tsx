@@ -7,7 +7,13 @@ import { useLanguage } from "./LanguageContext";
 // Blueprint App Store style icon with grid lines
 const BlueprintIcon = () => (
   <span className="inline-flex items-center justify-center bg-gradient-to-br from-[#0093ff] to-[#0036ff] w-12 h-12 md:w-16 md:h-16 rounded-[14px] md:rounded-[18px] shadow-[0_4px_20px_rgba(0,54,255,0.4),inset_0_1px_2px_rgba(255,255,255,0.4)] relative overflow-hidden align-middle mx-1 md:mx-2 border border-white/10">
-    <svg className="absolute inset-0 w-full h-full text-white/30" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <svg
+      className="absolute inset-0 w-full h-full text-white/30"
+      viewBox="0 0 100 100"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
       <circle cx="50" cy="50" r="35" strokeDasharray="3 3" />
       <circle cx="50" cy="50" r="20" />
       <circle cx="50" cy="50" r="5" fill="currentColor" />
@@ -29,9 +35,15 @@ const IsometricCubeIcon = () => (
       <line x1="50" y1="0" x2="50" y2="100" stroke="currentColor" strokeWidth="0.5" strokeDasharray="1 4" />
       <line x1="0" y1="50" x2="100" y2="50" stroke="currentColor" strokeWidth="0.5" strokeDasharray="1 4" />
     </svg>
-    
+
     {/* Wireframe Rotating Cube SVG */}
-    <svg className="w-10 h-10 text-[#0093ff] animate-[pulse_3s_ease-in-out_infinite]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <svg
+      className="w-10 h-10 text-[#0093ff] animate-[pulse_3s_ease-in-out_infinite]"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
       <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="#00f0ff" />
       <path d="M2 17l10 5 10-5" stroke="#0036ff" />
       <path d="M2 12l10 5 10-5" stroke="#0093ff" />
@@ -49,26 +61,56 @@ const IsometricCubeIcon = () => (
 // Symmetrical glowing background circuits with moving data pulses
 const CircuitLinesBg = () => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10 select-none">
-    <svg className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[1400px] h-full text-white/5 opacity-50" viewBox="0 0 1400 800" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <svg
+      className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[1400px] h-full text-white/5 opacity-50"
+      viewBox="0 0 1400 800"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
       {/* Central vertical track */}
       <line x1="700" y1="0" x2="700" y2="800" strokeDasharray="5 5" className="text-white/10" />
-      
+
       {/* Symmetrical Left Circuits */}
       <path d="M 500 150 L 350 150 L 300 200 L 100 200" />
       <path d="M 550 300 L 400 300 L 350 350 L 150 350 L 100 400" />
       <path d="M 600 500 L 450 500 L 400 550 L 200 550" />
-      
+
       {/* Symmetrical Right Circuits */}
       <path d="M 900 150 L 1050 150 L 1100 200 L 1300 200" />
       <path d="M 850 300 L 1000 300 L 1050 350 L 1250 350 L 1300 400" />
       <path d="M 800 500 L 950 500 L 1000 550 L 1200 550" />
 
       {/* Symmetrical Glowing Moving Data Pulses */}
-      <path d="M 500 150 L 350 150 L 300 200 L 100 200" stroke="#0093ff" strokeWidth="2" strokeDasharray="8 60" className="animate-dash-slow opacity-80" />
-      <path d="M 900 150 L 1050 150 L 1100 200 L 1300 200" stroke="#00f0ff" strokeWidth="2" strokeDasharray="8 60" className="animate-dash-slow-reverse opacity-80" />
-      
-      <path d="M 550 300 L 400 300 L 350 350 L 150 350 L 100 400" stroke="#0036ff" strokeWidth="2" strokeDasharray="10 80" className="animate-dash-fast opacity-80" />
-      <path d="M 850 300 L 1000 300 L 1050 350 L 1250 350 L 1300 400" stroke="#0093ff" strokeWidth="2" strokeDasharray="10 80" className="animate-dash-slow-reverse opacity-80" />
+      <path
+        d="M 500 150 L 350 150 L 300 200 L 100 200"
+        stroke="#0093ff"
+        strokeWidth="2"
+        strokeDasharray="8 60"
+        className="animate-dash-slow opacity-80"
+      />
+      <path
+        d="M 900 150 L 1050 150 L 1100 200 L 1300 200"
+        stroke="#00f0ff"
+        strokeWidth="2"
+        strokeDasharray="8 60"
+        className="animate-dash-slow-reverse opacity-80"
+      />
+
+      <path
+        d="M 550 300 L 400 300 L 350 350 L 150 350 L 100 400"
+        stroke="#0036ff"
+        strokeWidth="2"
+        strokeDasharray="10 80"
+        className="animate-dash-fast opacity-80"
+      />
+      <path
+        d="M 850 300 L 1000 300 L 1050 350 L 1250 350 L 1300 400"
+        stroke="#0093ff"
+        strokeWidth="2"
+        strokeDasharray="10 80"
+        className="animate-dash-slow-reverse opacity-80"
+      />
 
       {/* Connection Joints */}
       <circle cx="300" cy="200" r="3" fill="#0093ff" className="shadow-[0_0_8px_rgba(0,147,255,0.5)]" />
@@ -78,7 +120,7 @@ const CircuitLinesBg = () => (
       <circle cx="400" cy="550" r="3" fill="#00f0ff" />
       <circle cx="1000" cy="550" r="3" fill="#0036ff" />
     </svg>
-    
+
     {/* Soft neon blue glows */}
     <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#0036ff]/10 rounded-full blur-[120px]" />
     <div className="absolute top-1/2 left-1/4 w-[200px] h-[200px] bg-[#0093ff]/5 rounded-full blur-[80px]" />
@@ -102,7 +144,7 @@ export function Hero({ dynamicConfig }: { dynamicConfig?: any }) {
   const { t } = useLanguage();
 
   return (
-    <section 
+    <section
       className="relative pt-36 pb-20 md:pt-44 md:pb-28 overflow-hidden text-white flex items-center bg-transparent min-h-[90vh]"
       style={{ fontFamily: "'Aeonik Pro', sans-serif" }}
     >
@@ -154,9 +196,11 @@ export function Hero({ dynamicConfig }: { dynamicConfig?: any }) {
             <Link
               href="/register"
               className="button-primary w-full sm:w-auto px-6 py-2.5 text-sm transition-all flex items-center justify-center gap-1.5 font-semibold"
-              style={{ 
+              style={{
                 fontFamily: "'Aeonik Pro', sans-serif",
-                ...(dynamicConfig?.accentColor ? { backgroundColor: dynamicConfig.accentColor, borderColor: dynamicConfig.accentColor } : {})
+                ...(dynamicConfig?.accentColor
+                  ? { backgroundColor: dynamicConfig.accentColor, borderColor: dynamicConfig.accentColor }
+                  : {}),
               }}
             >
               {dynamicConfig?.primaryButtonText || t("hero.cta.trial")} <ArrowRight size={15} strokeWidth={2.5} />
@@ -174,18 +218,22 @@ export function Hero({ dynamicConfig }: { dynamicConfig?: any }) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-y-12 md:gap-y-0 w-full">
             {/* Feature 1 */}
             <div className="flex flex-col items-center text-center group px-6">
-              <span className="text-[10px] font-mono text-white/30 mb-4 block tracking-widest">{t("hero.feature1.meta")}</span>
+              <span className="text-[10px] font-mono text-white/30 mb-4 block tracking-widest">
+                {t("hero.feature1.meta")}
+              </span>
               <CircularGridIcon>
                 <AppWindow size={20} />
               </CircularGridIcon>
-              <h3 
+              <h3
                 className="text-sm font-semibold text-white mt-5 mb-1.5 flex items-center gap-1.5"
                 style={{ fontFamily: "'Aeonik Pro', sans-serif", fontFeatureSettings: "'ss02', 'ss05', 'ss10'" }}
               >
                 {t("hero.feature1.title")}
-                <span className="text-[9px] font-mono bg-blue-500/10 text-[#0093ff] px-1 py-0.2 rounded border border-blue-500/20 font-bold uppercase scale-90">CLI</span>
+                <span className="text-[9px] font-mono bg-blue-500/10 text-[#0093ff] px-1 py-0.2 rounded border border-blue-500/20 font-bold uppercase scale-90">
+                  CLI
+                </span>
               </h3>
-              <p 
+              <p
                 className="text-xs text-white/50 leading-relaxed font-light max-w-[260px]"
                 style={{ fontFamily: "'Aeonik Pro', sans-serif" }}
               >
@@ -195,18 +243,22 @@ export function Hero({ dynamicConfig }: { dynamicConfig?: any }) {
 
             {/* Feature 2 */}
             <div className="flex flex-col items-center text-center group md:border-x border-white/10 px-6">
-              <span className="text-[10px] font-mono text-white/30 mb-4 block tracking-widest">{t("hero.feature2.meta")}</span>
+              <span className="text-[10px] font-mono text-white/30 mb-4 block tracking-widest">
+                {t("hero.feature2.meta")}
+              </span>
               <CircularGridIcon>
                 <Shield size={20} />
               </CircularGridIcon>
-              <h3 
+              <h3
                 className="text-sm font-semibold text-white mt-5 mb-1.5 flex items-center gap-1.5"
                 style={{ fontFamily: "'Aeonik Pro', sans-serif", fontFeatureSettings: "'ss02', 'ss05', 'ss10'" }}
               >
                 {t("hero.feature2.title")}
-                <span className="text-[9px] font-mono bg-[#00f0ff]/10 text-[#00f0ff] px-1 py-0.2 rounded border border-[#00f0ff]/20 font-bold uppercase scale-90">SOC2</span>
+                <span className="text-[9px] font-mono bg-[#00f0ff]/10 text-[#00f0ff] px-1 py-0.2 rounded border border-[#00f0ff]/20 font-bold uppercase scale-90">
+                  SOC2
+                </span>
               </h3>
-              <p 
+              <p
                 className="text-xs text-white/50 leading-relaxed font-light max-w-[260px]"
                 style={{ fontFamily: "'Aeonik Pro', sans-serif" }}
               >
@@ -216,18 +268,22 @@ export function Hero({ dynamicConfig }: { dynamicConfig?: any }) {
 
             {/* Feature 3 */}
             <div className="flex flex-col items-center text-center group px-6">
-              <span className="text-[10px] font-mono text-white/30 mb-4 block tracking-widest">{t("hero.feature3.meta")}</span>
+              <span className="text-[10px] font-mono text-white/30 mb-4 block tracking-widest">
+                {t("hero.feature3.meta")}
+              </span>
               <CircularGridIcon>
                 <MousePointerClick size={20} className="group-hover:scale-110 transition-transform duration-300" />
               </CircularGridIcon>
-              <h3 
+              <h3
                 className="text-sm font-semibold text-white mt-5 mb-1.5 flex items-center gap-1.5"
                 style={{ fontFamily: "'Aeonik Pro', sans-serif", fontFeatureSettings: "'ss02', 'ss05', 'ss10'" }}
               >
                 {t("hero.feature3.title")}
-                <span className="text-[9px] font-mono bg-purple-500/10 text-purple-300 px-1 py-0.2 rounded border border-purple-500/20 font-bold uppercase scale-90">CDN</span>
+                <span className="text-[9px] font-mono bg-purple-500/10 text-purple-300 px-1 py-0.2 rounded border border-purple-500/20 font-bold uppercase scale-90">
+                  CDN
+                </span>
               </h3>
-              <p 
+              <p
                 className="text-xs text-white/50 leading-relaxed font-light max-w-[260px]"
                 style={{ fontFamily: "'Aeonik Pro', sans-serif" }}
               >

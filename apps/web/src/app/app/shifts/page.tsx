@@ -2,7 +2,18 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Plus, RefreshCw, Wallet, BarChart3, AlertTriangle, ChevronRight, Lock, CalendarDays, CheckCircle2, XCircle } from "lucide-react";
+import {
+  Plus,
+  RefreshCw,
+  Wallet,
+  BarChart3,
+  AlertTriangle,
+  ChevronRight,
+  Lock,
+  CalendarDays,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -84,7 +95,11 @@ export default function ShiftsListPage() {
   }, [shifts, statusFilter]);
 
   const stats = useMemo(() => {
-    let cash = 0, diff = 0, openCount = 0, hasDifference = 0, sales = 0;
+    let cash = 0,
+      diff = 0,
+      openCount = 0,
+      hasDifference = 0,
+      sales = 0;
     for (const s of shifts) {
       sales += Number(s.total_sales_amount || 0);
       cash += Number(s.cash_sales_amount || 0);
@@ -136,7 +151,9 @@ export default function ShiftsListPage() {
       <div className="flex h-full flex-col items-center justify-center gap-2 py-20 text-center">
         <Lock className="size-10 text-muted-foreground" />
         <h2 className="text-lg font-semibold">Bạn không có quyền truy cập</h2>
-        <p className="text-sm text-muted-foreground">Cần quyền <code>shifts.view</code> để xem ca làm việc.</p>
+        <p className="text-sm text-muted-foreground">
+          Cần quyền <code>shifts.view</code> để xem ca làm việc.
+        </p>
       </div>
     );
   }
@@ -146,17 +163,23 @@ export default function ShiftsListPage() {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="text-3xl tracking-tight">Quản lý ca làm việc</h1>
-          <p className="text-sm text-muted-foreground">Theo dõi tiền mặt đầu/cuối ca, đối soát doanh thu và duyệt ca.</p>
+          <p className="text-sm text-muted-foreground">
+            Theo dõi tiền mặt đầu/cuối ca, đối soát doanh thu và duyệt ca.
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={load} disabled={loading}>
             <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} /> Làm mới
           </Button>
           <Button variant="outline" asChild>
-            <Link href="/shifts/reports"><BarChart3 className="size-4" /> Báo cáo</Link>
+            <Link href="/shifts/reports">
+              <BarChart3 className="size-4" /> Báo cáo
+            </Link>
           </Button>
           {canOpen && !activeShift && (
-            <Button onClick={() => setOpenDialog(true)}><Plus className="size-4" /> Mở ca mới</Button>
+            <Button onClick={() => setOpenDialog(true)}>
+              <Plus className="size-4" /> Mở ca mới
+            </Button>
           )}
         </div>
       </div>
@@ -166,13 +189,18 @@ export default function ShiftsListPage() {
           <CardHeader>
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle className="flex items-center gap-2"><Wallet className="size-5 text-emerald-700" /> Ca của bạn đang mở</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Wallet className="size-5 text-emerald-700" /> Ca của bạn đang mở
+                </CardTitle>
                 <CardDescription>
-                  Mở lúc {fmtDate(activeShift.opened_at)} · Thời lượng {fmtDuration(activeShift.opened_at)} · Tiền đầu ca {fmtVND(activeShift.opening_cash_amount)}
+                  Mở lúc {fmtDate(activeShift.opened_at)} · Thời lượng {fmtDuration(activeShift.opened_at)} · Tiền đầu
+                  ca {fmtVND(activeShift.opening_cash_amount)}
                 </CardDescription>
               </div>
               <Button asChild>
-                <Link href={`/shifts/${activeShift.id}`}>Mở chi tiết <ChevronRight className="size-4" /></Link>
+                <Link href={`/shifts/${activeShift.id}`}>
+                  Mở chi tiết <ChevronRight className="size-4" />
+                </Link>
               </Button>
             </div>
           </CardHeader>
@@ -180,11 +208,45 @@ export default function ShiftsListPage() {
       )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Tổng ca</p><p className="mt-1 text-2xl font-semibold">{shifts.length}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Đang mở</p><p className="mt-1 text-2xl font-semibold text-emerald-600">{stats.openCount}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Doanh thu</p><p className="mt-1 text-xl font-semibold">{fmtVND(stats.sales)}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Tiền mặt</p><p className="mt-1 text-xl font-semibold">{fmtVND(stats.cash)}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Chênh lệch</p><p className={`mt-1 text-xl font-semibold ${stats.diff === 0 ? "" : stats.diff > 0 ? "text-emerald-600" : "text-rose-600"}`}>{fmtVND(stats.diff)}</p>{stats.hasDifference > 0 && <p className="mt-1 text-[10px] text-amber-600 flex items-center gap-1"><AlertTriangle className="size-3" /> {stats.hasDifference} ca lệch</p>}</CardContent></Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Tổng ca</p>
+            <p className="mt-1 text-2xl font-semibold">{shifts.length}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Đang mở</p>
+            <p className="mt-1 text-2xl font-semibold text-emerald-600">{stats.openCount}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Doanh thu</p>
+            <p className="mt-1 text-xl font-semibold">{fmtVND(stats.sales)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Tiền mặt</p>
+            <p className="mt-1 text-xl font-semibold">{fmtVND(stats.cash)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Chênh lệch</p>
+            <p
+              className={`mt-1 text-xl font-semibold ${stats.diff === 0 ? "" : stats.diff > 0 ? "text-emerald-600" : "text-rose-600"}`}
+            >
+              {fmtVND(stats.diff)}
+            </p>
+            {stats.hasDifference > 0 && (
+              <p className="mt-1 text-[10px] text-amber-600 flex items-center gap-1">
+                <AlertTriangle className="size-3" /> {stats.hasDifference} ca lệch
+              </p>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
@@ -207,58 +269,110 @@ export default function ShiftsListPage() {
                   <CardContent className="grid gap-3">
                     <div className="grid gap-1.5">
                       <Label>Nhân viên</Label>
-                      <Select value={assignmentForm.employee_id} onValueChange={(value) => setAssignmentForm((prev) => ({ ...prev, employee_id: value }))}>
-                        <SelectTrigger className="w-full"><SelectValue placeholder="Chọn nhân viên" /></SelectTrigger>
+                      <Select
+                        value={assignmentForm.employee_id}
+                        onValueChange={(value) => setAssignmentForm((prev) => ({ ...prev, employee_id: value }))}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Chọn nhân viên" />
+                        </SelectTrigger>
                         <SelectContent>
                           {employees.map((employee) => (
-                            <SelectItem key={employee.id} value={employee.id}>{employee.name || employee.email || employee.id}</SelectItem>
+                            <SelectItem key={employee.id} value={employee.id}>
+                              {employee.name || employee.email || employee.id}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="grid gap-1.5">
                       <Label>Chi nhánh</Label>
-                      <Select value={assignmentForm.branch_id || "__none__"} onValueChange={(value) => setAssignmentForm((prev) => ({ ...prev, branch_id: value === "__none__" ? "" : value }))}>
-                        <SelectTrigger className="w-full"><SelectValue placeholder="Chọn chi nhánh" /></SelectTrigger>
+                      <Select
+                        value={assignmentForm.branch_id || "__none__"}
+                        onValueChange={(value) =>
+                          setAssignmentForm((prev) => ({ ...prev, branch_id: value === "__none__" ? "" : value }))
+                        }
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Chọn chi nhánh" />
+                        </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="__none__">Không gán chi nhánh</SelectItem>
                           {branches.map((branch) => (
-                            <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>
+                            <SelectItem key={branch.id} value={branch.id}>
+                              {branch.name}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="grid gap-1.5">
                       <Label>Tên ca / vị trí</Label>
-                      <Input value={assignmentForm.title} onChange={(event) => setAssignmentForm((prev) => ({ ...prev, title: event.target.value }))} placeholder="Ca bán hàng, Ca kho..." />
+                      <Input
+                        value={assignmentForm.title}
+                        onChange={(event) => setAssignmentForm((prev) => ({ ...prev, title: event.target.value }))}
+                        placeholder="Ca bán hàng, Ca kho..."
+                      />
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <div className="grid gap-1.5">
                         <Label>Ngày</Label>
-                        <Input type="date" value={assignmentForm.work_date} onChange={(event) => setAssignmentForm((prev) => ({ ...prev, work_date: event.target.value }))} />
+                        <Input
+                          type="date"
+                          value={assignmentForm.work_date}
+                          onChange={(event) =>
+                            setAssignmentForm((prev) => ({ ...prev, work_date: event.target.value }))
+                          }
+                        />
                       </div>
                       <div className="grid gap-1.5">
                         <Label>Bắt đầu</Label>
-                        <Input type="time" value={assignmentForm.start_time} onChange={(event) => setAssignmentForm((prev) => ({ ...prev, start_time: event.target.value }))} />
+                        <Input
+                          type="time"
+                          value={assignmentForm.start_time}
+                          onChange={(event) =>
+                            setAssignmentForm((prev) => ({ ...prev, start_time: event.target.value }))
+                          }
+                        />
                       </div>
                       <div className="grid gap-1.5">
                         <Label>Kết thúc</Label>
-                        <Input type="time" value={assignmentForm.end_time} onChange={(event) => setAssignmentForm((prev) => ({ ...prev, end_time: event.target.value }))} />
+                        <Input
+                          type="time"
+                          value={assignmentForm.end_time}
+                          onChange={(event) => setAssignmentForm((prev) => ({ ...prev, end_time: event.target.value }))}
+                        />
                       </div>
                     </div>
                     <div className="grid gap-1.5">
                       <Label>Nghỉ giữa ca (phút)</Label>
-                      <Input type="number" min={0} value={assignmentForm.break_minutes} onChange={(event) => setAssignmentForm((prev) => ({ ...prev, break_minutes: Number(event.target.value) || 0 }))} />
+                      <Input
+                        type="number"
+                        min={0}
+                        value={assignmentForm.break_minutes}
+                        onChange={(event) =>
+                          setAssignmentForm((prev) => ({ ...prev, break_minutes: Number(event.target.value) || 0 }))
+                        }
+                      />
                     </div>
                     <div className="grid gap-1.5">
                       <Label>Ghi chú</Label>
-                      <Textarea value={assignmentForm.note} onChange={(event) => setAssignmentForm((prev) => ({ ...prev, note: event.target.value }))} placeholder="Khu vực làm việc, bàn giao, yêu cầu riêng..." />
+                      <Textarea
+                        value={assignmentForm.note}
+                        onChange={(event) => setAssignmentForm((prev) => ({ ...prev, note: event.target.value }))}
+                        placeholder="Khu vực làm việc, bàn giao, yêu cầu riêng..."
+                      />
                     </div>
-                    <Button onClick={saveAssignment} disabled={!canSchedule || savingAssignment || employees.length === 0}>
+                    <Button
+                      onClick={saveAssignment}
+                      disabled={!canSchedule || savingAssignment || employees.length === 0}
+                    >
                       <Plus className="size-4" />
                       Lưu phân ca
                     </Button>
-                    {!canSchedule && <p className="text-xs text-muted-foreground">Cần quyền quản lý ca hoặc nhân viên để phân ca.</p>}
+                    {!canSchedule && (
+                      <p className="text-xs text-muted-foreground">Cần quyền quản lý ca hoặc nhân viên để phân ca.</p>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -277,36 +391,60 @@ export default function ShiftsListPage() {
                     </TableHeader>
                     <TableBody>
                       {assignments.length === 0 ? (
-                        <TableRow><TableCell colSpan={7} className="h-28 text-center text-sm text-muted-foreground">Chưa có lịch phân ca.</TableCell></TableRow>
-                      ) : assignments.map((assignment) => {
-                        const employee = assignment.employee || employees.find((item) => item.id === assignment.employee_id);
-                        const branch = assignment.branch || branches.find((item) => item.id === assignment.branch_id);
-                        return (
-                          <TableRow key={assignment.id}>
-                            <TableCell className="font-medium">{assignment.work_date}</TableCell>
-                            <TableCell>{employee?.name || employee?.email || assignment.employee_id}</TableCell>
-                            <TableCell>
-                              <div className="font-medium">{assignment.title}</div>
-                              <div className="text-xs text-muted-foreground">{assignment.start_time} - {assignment.end_time} · nghỉ {assignment.break_minutes || 0} phút</div>
-                            </TableCell>
-                            <TableCell>{branch?.name || "—"}</TableCell>
-                            <TableCell className="max-w-[220px] truncate text-sm text-muted-foreground">{assignment.note || "—"}</TableCell>
-                            <TableCell>
-                              <span className="rounded-full bg-muted px-2 py-1 text-xs font-medium">{assignment.status}</span>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-1">
-                                <Button variant="ghost" size="icon-sm" disabled={!canSchedule || assignment.status === "confirmed"} onClick={() => updateAssignmentStatus(assignment.id, "confirmed")}>
-                                  <CheckCircle2 className="size-4 text-emerald-600" />
-                                </Button>
-                                <Button variant="ghost" size="icon-sm" disabled={!canSchedule || assignment.status === "cancelled"} onClick={() => updateAssignmentStatus(assignment.id, "cancelled")}>
-                                  <XCircle className="size-4 text-rose-600" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
+                        <TableRow>
+                          <TableCell colSpan={7} className="h-28 text-center text-sm text-muted-foreground">
+                            Chưa có lịch phân ca.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        assignments.map((assignment) => {
+                          const employee =
+                            assignment.employee || employees.find((item) => item.id === assignment.employee_id);
+                          const branch = assignment.branch || branches.find((item) => item.id === assignment.branch_id);
+                          return (
+                            <TableRow key={assignment.id}>
+                              <TableCell className="font-medium">{assignment.work_date}</TableCell>
+                              <TableCell>{employee?.name || employee?.email || assignment.employee_id}</TableCell>
+                              <TableCell>
+                                <div className="font-medium">{assignment.title}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {assignment.start_time} - {assignment.end_time} · nghỉ {assignment.break_minutes || 0}{" "}
+                                  phút
+                                </div>
+                              </TableCell>
+                              <TableCell>{branch?.name || "—"}</TableCell>
+                              <TableCell className="max-w-[220px] truncate text-sm text-muted-foreground">
+                                {assignment.note || "—"}
+                              </TableCell>
+                              <TableCell>
+                                <span className="rounded-full bg-muted px-2 py-1 text-xs font-medium">
+                                  {assignment.status}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    disabled={!canSchedule || assignment.status === "confirmed"}
+                                    onClick={() => updateAssignmentStatus(assignment.id, "confirmed")}
+                                  >
+                                    <CheckCircle2 className="size-4 text-emerald-600" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    disabled={!canSchedule || assignment.status === "cancelled"}
+                                    onClick={() => updateAssignmentStatus(assignment.id, "cancelled")}
+                                  >
+                                    <XCircle className="size-4 text-rose-600" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
                     </TableBody>
                   </Table>
                 </div>
@@ -355,18 +493,26 @@ export default function ShiftsListPage() {
                         <TableCell>{s.cashier?.full_name || s.cashier?.email || "—"}</TableCell>
                         <TableCell className="text-sm">
                           {s.branch?.name || "—"}
-                          {s.cash_register?.name && <span className="text-muted-foreground"> · {s.cash_register.name}</span>}
+                          {s.cash_register?.name && (
+                            <span className="text-muted-foreground"> · {s.cash_register.name}</span>
+                          )}
                         </TableCell>
-                        <TableCell><ShiftStatusBadge status={s.status} /></TableCell>
+                        <TableCell>
+                          <ShiftStatusBadge status={s.status} />
+                        </TableCell>
                         <TableCell className="text-xs text-muted-foreground">{fmtDate(s.opened_at)}</TableCell>
                         <TableCell className="text-xs">{fmtDuration(s.opened_at, s.closed_at)}</TableCell>
                         <TableCell className="text-right font-medium">{fmtVND(s.total_sales_amount)}</TableCell>
-                        <TableCell className={`text-right font-medium ${diff === 0 ? "" : diff > 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                        <TableCell
+                          className={`text-right font-medium ${diff === 0 ? "" : diff > 0 ? "text-emerald-600" : "text-rose-600"}`}
+                        >
                           {s.status === "open" ? "—" : fmtVND(diff)}
                         </TableCell>
                         <TableCell>
                           <Button variant="ghost" size="sm" asChild>
-                            <Link href={`/shifts/${s.id}`}><ChevronRight className="size-4" /></Link>
+                            <Link href={`/shifts/${s.id}`}>
+                              <ChevronRight className="size-4" />
+                            </Link>
                           </Button>
                         </TableCell>
                       </TableRow>

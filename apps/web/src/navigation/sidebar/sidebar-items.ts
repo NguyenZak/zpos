@@ -114,6 +114,13 @@ export const sidebarItems: NavGroup[] = [
         icon: MessageCircle,
         isNew: true,
       },
+      {
+        title: "Storefront (Web)",
+        url: "/storefront",
+        icon: Store,
+        isNew: true,
+        newTab: true,
+      },
     ],
   },
   {

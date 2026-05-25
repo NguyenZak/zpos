@@ -240,8 +240,7 @@ export function MobileOrders({ orders, branches = [], loading = false, onRefresh
           : undefined,
       items: items.map((item: any) => {
         const prodName = item.variant?.product?.name || item.product_name || "Sản phẩm";
-        const variantName =
-          item.variant?.name && item.variant.name !== "Default" ? ` (${item.variant.name})` : "";
+        const variantName = item.variant?.name && item.variant.name !== "Default" ? ` (${item.variant.name})` : "";
         return {
           product_name: `${prodName}${variantName}`,
           quantity: item.quantity,
@@ -334,8 +333,7 @@ export function MobileOrders({ orders, branches = [], loading = false, onRefresh
       "Sản phẩm": (o.items || o.order_items || [])
         .map((item: any) => {
           const prodName = item.variant?.product?.name || item.product_name || "Sản phẩm";
-          const variantName =
-            item.variant?.name && item.variant.name !== "Default" ? ` (${item.variant.name})` : "";
+          const variantName = item.variant?.name && item.variant.name !== "Default" ? ` (${item.variant.name})` : "";
           return `${prodName}${variantName} x${item.quantity}`;
         })
         .join("; "),
@@ -574,9 +572,7 @@ export function MobileOrders({ orders, branches = [], loading = false, onRefresh
                 new Date(ord.created_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
 
               const isDebt =
-                ord.payment_method === "debt" ||
-                ord.payment_status === "debt" ||
-                ord.payment_status === "partial_debt";
+                ord.payment_method === "debt" || ord.payment_status === "debt" || ord.payment_status === "partial_debt";
               const isPaidDebt = isDebt && ord.payment_status === "paid";
               const hasReturns = ord.return_orders && ord.return_orders.length > 0;
               const invStatus = invoiceStatusMap[ord.id];
@@ -670,9 +666,7 @@ export function MobileOrders({ orders, branches = [], loading = false, onRefresh
                     </div>
 
                     <div className="text-right shrink-0 space-y-1">
-                      <p className="text-xs font-black font-mono text-primary">
-                        {formatCurrency(ord.total_amount)}
-                      </p>
+                      <p className="text-xs font-black font-mono text-primary">{formatCurrency(ord.total_amount)}</p>
                       {isDebt ? (
                         isPaidDebt ? (
                           <Badge
@@ -808,8 +802,7 @@ export function MobileOrders({ orders, branches = [], loading = false, onRefresh
                 <div className="flex justify-between items-center mt-2">
                   <div className="min-w-0">
                     <DrawerTitle className="text-base font-black tracking-tight flex items-center gap-2">
-                      Chi tiết:{" "}
-                      <span className="text-primary font-mono">{selectedOrder.order_number}</span>
+                      Chi tiết: <span className="text-primary font-mono">{selectedOrder.order_number}</span>
                     </DrawerTitle>
                     <DrawerDescription className="text-xs text-muted-foreground">
                       {format(new Date(selectedOrder.created_at), "dd MMMM yyyy, HH:mm", { locale: vi })}
@@ -981,9 +974,7 @@ export function MobileOrders({ orders, branches = [], loading = false, onRefresh
                     event="order_paid"
                     orderId={selectedOrder.id}
                     customerId={selectedOrder.customer?.id || selectedOrder.customer_id}
-                    defaultPhone={
-                      selectedOrder.customer?.phone || selectedOrder.customer_phone
-                    }
+                    defaultPhone={selectedOrder.customer?.phone || selectedOrder.customer_phone}
                     templateData={{
                       order_number: selectedOrder.order_number || selectedOrder.id,
                       total: new Intl.NumberFormat("vi-VN").format(Number(selectedOrder.total_amount || 0)),
@@ -1169,12 +1160,10 @@ export function MobileOrders({ orders, branches = [], loading = false, onRefresh
       <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-bold text-destructive">
-              Xác nhận xóa vĩnh viễn đơn hàng?
-            </AlertDialogTitle>
+            <AlertDialogTitle className="font-bold text-destructive">Xác nhận xóa vĩnh viễn đơn hàng?</AlertDialogTitle>
             <AlertDialogDescription>
-              Hành động này <strong>không thể khôi phục</strong>. Hóa đơn và toàn bộ chi tiết sẽ bị xóa khỏi
-              cơ sở dữ liệu.
+              Hành động này <strong>không thể khôi phục</strong>. Hóa đơn và toàn bộ chi tiết sẽ bị xóa khỏi cơ sở dữ
+              liệu.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1222,8 +1211,8 @@ export function MobileOrders({ orders, branches = [], loading = false, onRefresh
               Xóa vĩnh viễn {selectedOrders.length} đơn hàng?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Hành động này không thể khôi phục. Toàn bộ đơn hàng đã chọn và chi tiết đi kèm sẽ bị xóa khỏi cơ
-              sở dữ liệu.
+              Hành động này không thể khôi phục. Toàn bộ đơn hàng đã chọn và chi tiết đi kèm sẽ bị xóa khỏi cơ sở dữ
+              liệu.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1338,11 +1327,7 @@ function StatCard({
     <div className="shrink-0 w-[150px] rounded-xl border bg-card p-3 shadow-sm snap-start">
       <div className="flex items-center justify-between pb-1">
         <span className="font-bold text-[9px] text-ash uppercase tracking-wider truncate">{label}</span>
-        <div
-          className={`flex h-6 w-6 items-center justify-center rounded-lg shrink-0 ${colorMap[color]}`}
-        >
-          {icon}
-        </div>
+        <div className={`flex h-6 w-6 items-center justify-center rounded-lg shrink-0 ${colorMap[color]}`}>{icon}</div>
       </div>
       <div className={`font-black text-sm font-mono ${valueColorMap[color]} truncate`}>{value}</div>
       {subLabel && <p className="mt-0.5 text-[9px] text-ash truncate">{subLabel}</p>}

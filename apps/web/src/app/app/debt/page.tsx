@@ -7,16 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import {
-  debtService,
-  type AgingBucket,
-  type CreditAccount,
-  type DashboardStats,
-} from "@/services/debt.service";
+import { debtService, type AgingBucket, type CreditAccount, type DashboardStats } from "@/services/debt.service";
 import { DebtKPIStrip } from "./_components/debt-kpi-strip";
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat("vi-VN").format(Math.round(n || 0)) + " ₫";
+const fmt = (n: number) => new Intl.NumberFormat("vi-VN").format(Math.round(n || 0)) + " ₫";
 
 export default function DebtDashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -87,9 +81,7 @@ export default function DebtDashboardPage() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl leading-none tracking-tight">Công nợ</h1>
-          <p className="text-muted-foreground text-sm">
-            Theo dõi khoản phải thu, nhắc nợ và báo cáo aging.
-          </p>
+          <p className="text-muted-foreground text-sm">Theo dõi khoản phải thu, nhắc nợ và báo cáo aging.</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handleRefreshOverdue} disabled={refreshing}>
@@ -120,28 +112,19 @@ export default function DebtDashboardPage() {
             {loading ? (
               <p className="text-sm text-muted-foreground italic">Đang tải...</p>
             ) : topDebtors.length === 0 ? (
-              <p className="text-sm text-muted-foreground italic text-center py-6">
-                Chưa có khách hàng nào nợ.
-              </p>
+              <p className="text-sm text-muted-foreground italic text-center py-6">Chưa có khách hàng nào nợ.</p>
             ) : (
               <ul className="divide-y">
                 {topDebtors.map((d) => (
                   <li key={d.id} className="py-2 flex items-center justify-between gap-3">
-                    <Link
-                      href={`/debt/customers/${d.customer_id}`}
-                      className="flex-1 min-w-0"
-                    >
+                    <Link href={`/debt/customers/${d.customer_id}`} className="flex-1 min-w-0">
                       <p className="font-bold text-sm truncate hover:underline">
                         {d.customer?.name || `Khách #${d.customer_id.slice(0, 8)}`}
                       </p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {d.customer?.phone || "—"}
-                      </p>
+                      <p className="text-[10px] text-muted-foreground">{d.customer?.phone || "—"}</p>
                     </Link>
                     <div className="text-right">
-                      <p className="font-bold text-red-600 text-sm">
-                        {fmt(Number(d.current_balance))}
-                      </p>
+                      <p className="font-bold text-red-600 text-sm">{fmt(Number(d.current_balance))}</p>
                       {Number(d.overdue_amount) > 0 && (
                         <Badge variant="destructive" className="text-[9px] h-4 px-1 mt-0.5">
                           Quá hạn {fmt(Number(d.overdue_amount))}
@@ -168,9 +151,7 @@ export default function DebtDashboardPage() {
             {loading ? (
               <p className="text-sm text-muted-foreground italic">Đang tải...</p>
             ) : agingTotal === 0 ? (
-              <p className="text-sm text-muted-foreground italic text-center py-6">
-                Chưa có dữ liệu công nợ.
-              </p>
+              <p className="text-sm text-muted-foreground italic text-center py-6">Chưa có dữ liệu công nợ.</p>
             ) : (
               <div className="space-y-3">
                 <div className="flex h-3 rounded-full overflow-hidden bg-muted">
@@ -213,9 +194,7 @@ export default function DebtDashboardPage() {
             <Link href="/debt/debtors?filter=overdue">
               <div className="flex flex-col items-start text-left">
                 <span className="font-bold text-sm">Khách quá hạn</span>
-                <span className="text-[10px] text-muted-foreground">
-                  Lọc nhanh và gửi nhắc nợ
-                </span>
+                <span className="text-[10px] text-muted-foreground">Lọc nhanh và gửi nhắc nợ</span>
               </div>
             </Link>
           </Button>
@@ -223,9 +202,7 @@ export default function DebtDashboardPage() {
             <Link href="/debt/aging">
               <div className="flex flex-col items-start text-left">
                 <span className="font-bold text-sm">Báo cáo aging</span>
-                <span className="text-[10px] text-muted-foreground">
-                  Phân tích theo 5 buckets thời gian
-                </span>
+                <span className="text-[10px] text-muted-foreground">Phân tích theo 5 buckets thời gian</span>
               </div>
             </Link>
           </Button>
@@ -233,9 +210,7 @@ export default function DebtDashboardPage() {
             <Link href="/settings?tab=debt">
               <div className="flex flex-col items-start text-left">
                 <span className="font-bold text-sm">Cài đặt công nợ</span>
-                <span className="text-[10px] text-muted-foreground">
-                  Hạn mức, ngày tới hạn, nhắc nợ tự động
-                </span>
+                <span className="text-[10px] text-muted-foreground">Hạn mức, ngày tới hạn, nhắc nợ tự động</span>
               </div>
             </Link>
           </Button>

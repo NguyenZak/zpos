@@ -1,10 +1,15 @@
-export const fmtVND = (n: number) =>
-  new Intl.NumberFormat("vi-VN").format(Math.round(Number(n) || 0)) + " ₫";
+export const fmtVND = (n: number) => new Intl.NumberFormat("vi-VN").format(Math.round(Number(n) || 0)) + " ₫";
 
 export const fmtDate = (d?: string | null) => {
   if (!d) return "—";
   try {
-    return new Date(d).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" });
+    return new Date(d).toLocaleString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
   } catch {
     return d;
   }

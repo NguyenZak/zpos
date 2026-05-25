@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { 
-  TrendingUp, 
-  Users, 
-  DollarSign, 
+import {
+  TrendingUp,
+  Users,
+  DollarSign,
   Package,
   CalendarDays,
   ChevronRight,
@@ -24,7 +24,7 @@ import {
   CreditCard,
   Target,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -43,18 +43,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { 
-  Area, 
-  AreaChart, 
-  ResponsiveContainer, 
-  XAxis, 
-  YAxis, 
-  Bar,
-  BarChart,
-  Line,
-  LineChart,
-  Tooltip
-} from "recharts";
+import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, Bar, BarChart, Line, LineChart, Tooltip } from "recharts";
 import { cn } from "@/lib/utils";
 
 interface MobileDashboardProps {
@@ -138,7 +127,7 @@ export function MobileDashboard({
   newTarget,
   setNewTarget,
   handleUpdateGoal,
-  handleExportReport
+  handleExportReport,
 }: MobileDashboardProps) {
   const [refreshing, setRefreshing] = useState(false);
 
@@ -156,7 +145,7 @@ export function MobileDashboard({
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(amount);
   };
 
@@ -173,7 +162,6 @@ export function MobileDashboard({
 
   return (
     <div className="space-y-5 pb-24 animate-in fade-in duration-300 px-1">
-      
       {/* MOBILE HEADER & REFRESH ACTION */}
       <div className="flex items-center justify-between border-b pb-4 mt-2">
         <div className="flex items-center gap-3">
@@ -182,8 +170,15 @@ export function MobileDashboard({
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <h1 className="text-base font-extrabold text-foreground truncate max-w-[140px]">Xin chào, {tenantName}</h1>
-              <Badge variant="secondary" className="text-[9px] h-4.5 px-1 py-0 border-none font-bold uppercase tracking-wider bg-primary/10 text-primary">PRO</Badge>
+              <h1 className="text-base font-extrabold text-foreground truncate max-w-[140px]">
+                Xin chào, {tenantName}
+              </h1>
+              <Badge
+                variant="secondary"
+                className="text-[9px] h-4.5 px-1 py-0 border-none font-bold uppercase tracking-wider bg-primary/10 text-primary"
+              >
+                PRO
+              </Badge>
             </div>
             <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider flex items-center gap-1 mt-0.5">
               <Store className="w-3 h-3 text-primary" />
@@ -193,8 +188,8 @@ export function MobileDashboard({
         </div>
 
         <div className="flex items-center gap-2">
-          <button 
-            onClick={handleRefresh} 
+          <button
+            onClick={handleRefresh}
             disabled={refreshing || loading}
             className="w-9 h-9 bg-card border rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground active:scale-95 transition-all shadow-xs"
           >
@@ -215,16 +210,18 @@ export function MobileDashboard({
             Bộ lọc thời gian
           </span>
           {timeRange === "custom" && (
-            <Badge variant="outline" className="text-[9px] font-bold bg-background text-primary border-primary/25">Tự chọn ngày</Badge>
+            <Badge variant="outline" className="text-[9px] font-bold bg-background text-primary border-primary/25">
+              Tự chọn ngày
+            </Badge>
           )}
         </div>
-        
+
         <div className="grid grid-cols-4 gap-1.5">
           {[
             { id: "today", label: "Hôm nay" },
             { id: "7days", label: "7 ngày" },
             { id: "30days", label: "Tháng này" },
-            { id: "custom", label: "Tùy chọn" }
+            { id: "custom", label: "Tùy chọn" },
           ].map((tab) => {
             const isSelected = timeRange === tab.id;
             return (
@@ -233,9 +230,9 @@ export function MobileDashboard({
                 onClick={() => setTimeRange(tab.id)}
                 className={cn(
                   "py-2 px-1 text-center rounded-lg text-[10px] font-bold transition-all border active:scale-95 cursor-pointer",
-                  isSelected 
-                    ? "bg-primary border-primary text-primary-foreground shadow-sm" 
-                    : "bg-background border-muted text-muted-foreground hover:text-foreground"
+                  isSelected
+                    ? "bg-primary border-primary text-primary-foreground shadow-sm"
+                    : "bg-background border-muted text-muted-foreground hover:text-foreground",
                 )}
               >
                 {tab.label}
@@ -249,19 +246,19 @@ export function MobileDashboard({
           <div className="grid grid-cols-2 gap-2.5 pt-2.5 border-t border-muted animate-in slide-in-from-top-2 duration-200">
             <div className="space-y-1">
               <Label className="text-[9px] font-bold text-muted-foreground uppercase">Từ ngày</Label>
-              <Input 
-                type="date" 
-                value={startDate} 
-                onChange={(e) => setStartDate(e.target.value)} 
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
                 className="h-8.5 text-[11px] font-semibold px-2 py-1 bg-background border-muted"
               />
             </div>
             <div className="space-y-1">
               <Label className="text-[9px] font-bold text-muted-foreground uppercase">Đến ngày</Label>
-              <Input 
-                type="date" 
-                value={endDate} 
-                onChange={(e) => setEndDate(e.target.value)} 
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
                 className="h-8.5 text-[11px] font-semibold px-2 py-1 bg-background border-muted"
               />
             </div>
@@ -270,10 +267,10 @@ export function MobileDashboard({
 
         {/* Global Export Report Button */}
         <div className="flex gap-2.5 pt-1.5">
-          <Button 
+          <Button
             onClick={handleExportReport}
-            variant="outline" 
-            size="sm" 
+            variant="outline"
+            size="sm"
             className="w-full h-9 text-[10px] font-bold gap-1.5 shadow-sm bg-background border-muted hover:bg-muted"
           >
             <Download className="w-3.5 h-3.5" />
@@ -292,13 +289,19 @@ export function MobileDashboard({
               </div>
               <div>
                 <h4 className="text-[11px] font-bold text-foreground uppercase tracking-wider">Mục tiêu kinh doanh</h4>
-                <p className="text-[9px] text-muted-foreground font-semibold">Doanh thu tháng {new Date().getMonth() + 1}</p>
+                <p className="text-[9px] text-muted-foreground font-semibold">
+                  Doanh thu tháng {new Date().getMonth() + 1}
+                </p>
               </div>
             </div>
-            
+
             <Dialog open={goalDialogOpen} onOpenChange={setGoalDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-7 text-[9px] font-bold border hover:bg-muted py-0.5 px-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-[9px] font-bold border hover:bg-muted py-0.5 px-2"
+                >
                   {goal ? "Sửa" : "Thiết lập"}
                 </Button>
               </DialogTrigger>
@@ -314,7 +317,9 @@ export function MobileDashboard({
                 </DialogHeader>
                 <div className="space-y-3.5 py-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="mobile-target" className="text-[10px] font-bold text-muted-foreground uppercase">Mục tiêu doanh thu (₫)</Label>
+                    <Label htmlFor="mobile-target" className="text-[10px] font-bold text-muted-foreground uppercase">
+                      Mục tiêu doanh thu (₫)
+                    </Label>
                     <Input
                       id="mobile-target"
                       type="text"
@@ -326,7 +331,12 @@ export function MobileDashboard({
                   </div>
                 </div>
                 <DialogFooter className="flex flex-row gap-2 justify-end">
-                  <Button type="button" variant="outline" onClick={() => setGoalDialogOpen(false)} className="text-xs h-9 py-1 px-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setGoalDialogOpen(false)}
+                    className="text-xs h-9 py-1 px-3"
+                  >
                     Hủy bỏ
                   </Button>
                   <Button type="button" onClick={handleUpdateGoal} className="text-xs h-9 font-bold py-1 px-4">
@@ -340,9 +350,15 @@ export function MobileDashboard({
           <div className="space-y-1.5">
             <div className="flex justify-between items-end">
               <span className="text-xs text-muted-foreground font-semibold">Hoàn thành:</span>
-              <span className="text-sm font-black text-primary">{goal ? `${Math.round(goalProgress)}%` : "Chưa thiết lập"}</span>
+              <span className="text-sm font-black text-primary">
+                {goal ? `${Math.round(goalProgress)}%` : "Chưa thiết lập"}
+              </span>
             </div>
-            <Progress value={goal ? goalProgress : 0} className="h-2 bg-muted indicator-primary shadow-xs" indicatorClassName="bg-primary animate-pulse" />
+            <Progress
+              value={goal ? goalProgress : 0}
+              className="h-2 bg-muted indicator-primary shadow-xs"
+              indicatorClassName="bg-primary animate-pulse"
+            />
             <div className="flex justify-between text-[9px] text-muted-foreground font-semibold pt-0.5">
               <span>Hiện tại: {formatCurrency(displayRevenue)}</span>
               <span>Mục tiêu: {goal ? formatCurrency(goal.target_value) : "Chưa có"}</span>
@@ -358,7 +374,9 @@ export function MobileDashboard({
         <Card className="border border-muted/50 rounded-xl bg-gradient-to-br from-primary to-primary/90 text-primary-foreground shadow-sm">
           <CardContent className="p-3.5 flex flex-col justify-between h-full space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[9px] font-extrabold tracking-widest uppercase text-primary-foreground/75 leading-none">Thực nhận</span>
+              <span className="text-[9px] font-extrabold tracking-widest uppercase text-primary-foreground/75 leading-none">
+                Thực nhận
+              </span>
               <div className="p-1.5 bg-primary-foreground/10 text-primary-foreground rounded-lg">
                 <DollarSign className="w-3.5 h-3.5" />
               </div>
@@ -377,16 +395,22 @@ export function MobileDashboard({
         <Card className="border border-muted/50 rounded-xl bg-card shadow-sm">
           <CardContent className="p-3.5 flex flex-col justify-between h-full space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[9px] font-extrabold tracking-widest uppercase text-muted-foreground leading-none">Lợi nhuận ròng</span>
+              <span className="text-[9px] font-extrabold tracking-widest uppercase text-muted-foreground leading-none">
+                Lợi nhuận ròng
+              </span>
               <div className="p-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg">
                 <TrendingUp className="w-3.5 h-3.5" />
               </div>
             </div>
             <div className="space-y-1">
-              <h3 className="text-sm font-black tracking-tight text-emerald-600 dark:text-emerald-500 leading-none">{formatCurrency(displayNetProfit)}</h3>
+              <h3 className="text-sm font-black tracking-tight text-emerald-600 dark:text-emerald-500 leading-none">
+                {formatCurrency(displayNetProfit)}
+              </h3>
               <div className="flex items-center gap-0.5 text-[9px] font-semibold text-emerald-600 dark:text-emerald-400">
                 <ArrowUpRight className="w-3 h-3" />
-                <span>Tỉ lệ ròng: {displayRevenue > 0 ? Math.round((displayNetProfit / displayRevenue) * 100) : 0}%</span>
+                <span>
+                  Tỉ lệ ròng: {displayRevenue > 0 ? Math.round((displayNetProfit / displayRevenue) * 100) : 0}%
+                </span>
               </div>
             </div>
           </CardContent>
@@ -396,7 +420,9 @@ export function MobileDashboard({
         <Card className="border border-muted/50 rounded-xl bg-card shadow-sm">
           <CardContent className="p-3.5 flex flex-col justify-between h-full space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[9px] font-extrabold tracking-widest uppercase text-muted-foreground leading-none">Tổng đơn hàng</span>
+              <span className="text-[9px] font-extrabold tracking-widest uppercase text-muted-foreground leading-none">
+                Tổng đơn hàng
+              </span>
               <div className="p-1.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-lg">
                 <Package className="w-3.5 h-3.5" />
               </div>
@@ -415,13 +441,17 @@ export function MobileDashboard({
         <Card className="border border-muted/50 rounded-xl bg-card shadow-sm">
           <CardContent className="p-3.5 flex flex-col justify-between h-full space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[9px] font-extrabold tracking-widest uppercase text-muted-foreground leading-none">Hoá đơn nợ</span>
+              <span className="text-[9px] font-extrabold tracking-widest uppercase text-muted-foreground leading-none">
+                Hoá đơn nợ
+              </span>
               <div className="p-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg">
                 <Coins className="w-3.5 h-3.5" />
               </div>
             </div>
             <div className="space-y-1">
-              <h3 className="text-sm font-black tracking-tight text-amber-600 dark:text-amber-500 leading-none">{displayDebtInvoiceCount} đơn</h3>
+              <h3 className="text-sm font-black tracking-tight text-amber-600 dark:text-amber-500 leading-none">
+                {displayDebtInvoiceCount} đơn
+              </h3>
               <div className="text-[9px] font-semibold text-muted-foreground leading-tight">
                 Còn nợ {formatCurrency(displayDebtOutstandingAmount)}
               </div>
@@ -436,13 +466,17 @@ export function MobileDashboard({
         <Card className="border border-muted/50 rounded-xl bg-card shadow-sm">
           <CardContent className="p-3.5 flex flex-col justify-between h-full space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[9px] font-extrabold tracking-widest uppercase text-muted-foreground leading-none">Khách hàng mới</span>
+              <span className="text-[9px] font-extrabold tracking-widest uppercase text-muted-foreground leading-none">
+                Khách hàng mới
+              </span>
               <div className="p-1.5 bg-pink-500/10 text-pink-600 dark:text-pink-400 rounded-lg">
                 <Users className="w-3.5 h-3.5" />
               </div>
             </div>
             <div className="space-y-1">
-              <h3 className="text-sm font-black tracking-tight text-foreground leading-none">{displayCustomers} khách</h3>
+              <h3 className="text-sm font-black tracking-tight text-foreground leading-none">
+                {displayCustomers} khách
+              </h3>
               <div className="flex items-center gap-0.5 text-[9px] font-semibold text-pink-600 dark:text-pink-400">
                 <ArrowUpRight className="w-3 h-3" />
                 <span>Đăng ký mới</span>
@@ -466,18 +500,29 @@ export function MobileDashboard({
                 Live
               </span>
             </div>
-            <CardDescription className="text-[10px] text-muted-foreground">Chọn biểu đồ thống kê kinh doanh</CardDescription>
+            <CardDescription className="text-[10px] text-muted-foreground">
+              Chọn biểu đồ thống kê kinh doanh
+            </CardDescription>
 
             <TabsList className="grid grid-cols-3 gap-1 bg-muted p-1 rounded-lg mt-3 h-8.5">
-              <TabsTrigger value="revenue" className="text-[9.5px] font-bold py-1 px-2.5 flex gap-1 items-center justify-center">
+              <TabsTrigger
+                value="revenue"
+                className="text-[9.5px] font-bold py-1 px-2.5 flex gap-1 items-center justify-center"
+              >
                 <LineIcon className="w-3 h-3" />
                 Thực nhận
               </TabsTrigger>
-              <TabsTrigger value="comparison" className="text-[9.5px] font-bold py-1 px-2.5 flex gap-1 items-center justify-center">
+              <TabsTrigger
+                value="comparison"
+                className="text-[9.5px] font-bold py-1 px-2.5 flex gap-1 items-center justify-center"
+              >
                 <TrendingUp className="w-3 h-3" />
                 So sánh
               </TabsTrigger>
-              <TabsTrigger value="hourly" className="text-[9.5px] font-bold py-1 px-2.5 flex gap-1 items-center justify-center">
+              <TabsTrigger
+                value="hourly"
+                className="text-[9.5px] font-bold py-1 px-2.5 flex gap-1 items-center justify-center"
+              >
                 <Clock className="w-3 h-3" />
                 Khung giờ
               </TabsTrigger>
@@ -492,17 +537,36 @@ export function MobileDashboard({
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={dynamicRevenueData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
                       <XAxis dataKey="name" tick={{ fontSize: 9, fill: "#888888" }} axisLine={false} tickLine={false} />
-                      <YAxis tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} tick={{ fontSize: 9, fill: "#888888" }} axisLine={false} tickLine={false} />
-                      <Tooltip 
-                        contentStyle={{ background: "rgba(255,255,255,0.95)", border: "1px solid #e2e8f0", borderRadius: "10px", fontSize: "10px" }}
+                      <YAxis
+                        tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+                        tick={{ fontSize: 9, fill: "#888888" }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          background: "rgba(255,255,255,0.95)",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "10px",
+                          fontSize: "10px",
+                        }}
                         formatter={(val: any) => [formatCurrency(Number(val) || 0), "Doanh thu thực nhận"]}
                       />
-                      <Line type="monotone" dataKey="sales" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={{ r: 3, strokeWidth: 1.5 }} activeDot={{ r: 5 }} />
+                      <Line
+                        type="monotone"
+                        dataKey="sales"
+                        stroke="hsl(var(--primary))"
+                        strokeWidth={2.5}
+                        dot={{ r: 3, strokeWidth: 1.5 }}
+                        activeDot={{ r: 5 }}
+                      />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="text-center py-10 text-[10px] text-muted-foreground">Không có dữ liệu doanh thu đồ thị.</div>
+                <div className="text-center py-10 text-[10px] text-muted-foreground">
+                  Không có dữ liệu doanh thu đồ thị.
+                </div>
               )}
             </TabsContent>
 
@@ -513,9 +577,19 @@ export function MobileDashboard({
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={dynamicComparisonData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
                       <XAxis dataKey="name" tick={{ fontSize: 9, fill: "#888888" }} axisLine={false} tickLine={false} />
-                      <YAxis tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} tick={{ fontSize: 9, fill: "#888888" }} axisLine={false} tickLine={false} />
-                      <Tooltip 
-                        contentStyle={{ background: "rgba(255,255,255,0.95)", border: "1px solid #e2e8f0", borderRadius: "10px", fontSize: "10px" }}
+                      <YAxis
+                        tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+                        tick={{ fontSize: 9, fill: "#888888" }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          background: "rgba(255,255,255,0.95)",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "10px",
+                          fontSize: "10px",
+                        }}
                         formatter={(val: any) => [formatCurrency(Number(val) || 0)]}
                       />
                       <Bar dataKey="currentWeek" name="Kỳ này" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
@@ -524,7 +598,9 @@ export function MobileDashboard({
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="text-center py-10 text-[10px] text-muted-foreground">Không có dữ liệu so sánh đồ thị.</div>
+                <div className="text-center py-10 text-[10px] text-muted-foreground">
+                  Không có dữ liệu so sánh đồ thị.
+                </div>
               )}
             </TabsContent>
 
@@ -535,23 +611,42 @@ export function MobileDashboard({
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={dynamicHourlySalesList} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
                       <XAxis dataKey="hour" tick={{ fontSize: 9, fill: "#888888" }} axisLine={false} tickLine={false} />
-                      <YAxis tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} tick={{ fontSize: 9, fill: "#888888" }} axisLine={false} tickLine={false} />
-                      <Tooltip 
-                        contentStyle={{ background: "rgba(255,255,255,0.95)", border: "1px solid #e2e8f0", borderRadius: "10px", fontSize: "10px" }}
+                      <YAxis
+                        tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+                        tick={{ fontSize: 9, fill: "#888888" }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          background: "rgba(255,255,255,0.95)",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "10px",
+                          fontSize: "10px",
+                        }}
                         formatter={(val: any) => [formatCurrency(Number(val) || 0), "Doanh thu thực nhận"]}
                       />
                       <defs>
                         <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
-                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <Area type="monotone" dataKey="sales" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorSales)" strokeWidth={2} />
+                      <Area
+                        type="monotone"
+                        dataKey="sales"
+                        stroke="hsl(var(--primary))"
+                        fillOpacity={1}
+                        fill="url(#colorSales)"
+                        strokeWidth={2}
+                      />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="text-center py-10 text-[10px] text-muted-foreground">Không có dữ liệu phân bổ khung giờ.</div>
+                <div className="text-center py-10 text-[10px] text-muted-foreground">
+                  Không có dữ liệu phân bổ khung giờ.
+                </div>
               )}
             </TabsContent>
           </CardContent>
@@ -565,21 +660,43 @@ export function MobileDashboard({
           <CardDescription className="text-[10px] text-muted-foreground">Cơ cấu dòng tiền chi tiết</CardDescription>
         </CardHeader>
         <CardContent className="p-4 space-y-4">
-          
           {/* Net profit, COGS, and Expenses bar chart representation */}
           <div className="space-y-3.5">
             {[
-              { name: "Lợi nhuận ròng", amount: displayNetProfit, pct: displayRevenue > 0 ? (displayNetProfit / displayRevenue) * 100 : 45, color: "bg-emerald-500", text: "text-emerald-600 dark:text-emerald-400" },
-              { name: "Giá vốn hàng bán (COGS)", amount: displayCOGS, pct: displayRevenue > 0 ? (displayCOGS / displayRevenue) * 100 : 35, color: "bg-amber-500", text: "text-amber-600 dark:text-amber-400" },
-              { name: "Chi phí vận hành", amount: displayExpenses, pct: displayRevenue > 0 ? (displayExpenses / displayRevenue) * 100 : 20, color: "bg-rose-500", text: "text-rose-600 dark:text-rose-400" },
+              {
+                name: "Lợi nhuận ròng",
+                amount: displayNetProfit,
+                pct: displayRevenue > 0 ? (displayNetProfit / displayRevenue) * 100 : 45,
+                color: "bg-emerald-500",
+                text: "text-emerald-600 dark:text-emerald-400",
+              },
+              {
+                name: "Giá vốn hàng bán (COGS)",
+                amount: displayCOGS,
+                pct: displayRevenue > 0 ? (displayCOGS / displayRevenue) * 100 : 35,
+                color: "bg-amber-500",
+                text: "text-amber-600 dark:text-amber-400",
+              },
+              {
+                name: "Chi phí vận hành",
+                amount: displayExpenses,
+                pct: displayRevenue > 0 ? (displayExpenses / displayRevenue) * 100 : 20,
+                color: "bg-rose-500",
+                text: "text-rose-600 dark:text-rose-400",
+              },
             ].map((finance) => (
               <div key={finance.name} className="space-y-1">
                 <div className="flex justify-between items-center text-[10px] font-bold">
                   <span className="text-foreground">{finance.name}</span>
-                  <span className={cn(finance.text)}>{formatCurrency(finance.amount)} ({Math.round(finance.pct)}%)</span>
+                  <span className={cn(finance.text)}>
+                    {formatCurrency(finance.amount)} ({Math.round(finance.pct)}%)
+                  </span>
                 </div>
                 <div className="h-2 w-full bg-muted rounded-full overflow-hidden shadow-2xs">
-                  <div className={cn("h-full rounded-full", finance.color)} style={{ width: `${Math.max(5, Math.min(100, finance.pct))}%` }} />
+                  <div
+                    className={cn("h-full rounded-full", finance.color)}
+                    style={{ width: `${Math.max(5, Math.min(100, finance.pct))}%` }}
+                  />
                 </div>
               </div>
             ))}
@@ -588,18 +705,23 @@ export function MobileDashboard({
           <div className="bg-muted/40 p-3 rounded-lg border border-muted/50 flex justify-around text-center gap-1.5">
             <div className="space-y-0.5 flex-1 border-r border-muted last:border-none">
               <p className="text-[9px] font-bold text-muted-foreground uppercase">Biên ròng</p>
-              <p className="text-xs font-black text-emerald-600">~{displayRevenue > 0 ? Math.round((displayNetProfit / displayRevenue) * 100) : 45}%</p>
+              <p className="text-xs font-black text-emerald-600">
+                ~{displayRevenue > 0 ? Math.round((displayNetProfit / displayRevenue) * 100) : 45}%
+              </p>
             </div>
             <div className="space-y-0.5 flex-1 border-r border-muted last:border-none">
               <p className="text-[9px] font-bold text-muted-foreground uppercase">Giá vốn</p>
-              <p className="text-xs font-black text-amber-600">~{displayRevenue > 0 ? Math.round((displayCOGS / displayRevenue) * 100) : 35}%</p>
+              <p className="text-xs font-black text-amber-600">
+                ~{displayRevenue > 0 ? Math.round((displayCOGS / displayRevenue) * 100) : 35}%
+              </p>
             </div>
             <div className="space-y-0.5 flex-1 last:border-none">
               <p className="text-[9px] font-bold text-muted-foreground uppercase">Chi phí</p>
-              <p className="text-xs font-black text-rose-600">~{displayRevenue > 0 ? Math.round((displayExpenses / displayRevenue) * 100) : 20}%</p>
+              <p className="text-xs font-black text-rose-600">
+                ~{displayRevenue > 0 ? Math.round((displayExpenses / displayRevenue) * 100) : 20}%
+              </p>
             </div>
           </div>
-
         </CardContent>
       </Card>
 
@@ -614,9 +736,33 @@ export function MobileDashboard({
         </CardHeader>
         <CardContent className="p-4 space-y-3.5">
           <div className="flex h-6.5 rounded-xl overflow-hidden shadow-xs border bg-muted">
-            {cashPercent > 0 && <div className="bg-emerald-500 flex items-center justify-center text-[9px] font-extrabold text-white transition-all" style={{ width: `${cashPercent}%` }} title={`Tiền mặt: ${cashPercent}%`}>{cashPercent}%</div>}
-            {bankPercent > 0 && <div className="bg-indigo-500 flex items-center justify-center text-[9px] font-extrabold text-white transition-all" style={{ width: `${bankPercent}%` }} title={`Chuyển khoản: ${bankPercent}%`}>{bankPercent}%</div>}
-            {cardPercent > 0 && <div className="bg-amber-500 flex items-center justify-center text-[9px] font-extrabold text-white transition-all" style={{ width: `${cardPercent}%` }} title={`Thẻ ATM: ${cardPercent}%`}>{cardPercent}%</div>}
+            {cashPercent > 0 && (
+              <div
+                className="bg-emerald-500 flex items-center justify-center text-[9px] font-extrabold text-white transition-all"
+                style={{ width: `${cashPercent}%` }}
+                title={`Tiền mặt: ${cashPercent}%`}
+              >
+                {cashPercent}%
+              </div>
+            )}
+            {bankPercent > 0 && (
+              <div
+                className="bg-indigo-500 flex items-center justify-center text-[9px] font-extrabold text-white transition-all"
+                style={{ width: `${bankPercent}%` }}
+                title={`Chuyển khoản: ${bankPercent}%`}
+              >
+                {bankPercent}%
+              </div>
+            )}
+            {cardPercent > 0 && (
+              <div
+                className="bg-amber-500 flex items-center justify-center text-[9px] font-extrabold text-white transition-all"
+                style={{ width: `${cardPercent}%` }}
+                title={`Thẻ ATM: ${cardPercent}%`}
+              >
+                {cardPercent}%
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-3 gap-2.5 text-center">
@@ -662,10 +808,15 @@ export function MobileDashboard({
                   <div key={cat.name} className="space-y-1">
                     <div className="flex justify-between items-center text-[10px] font-bold">
                       <span className="text-foreground">{cat.name}</span>
-                      <span className="text-primary">{formatCurrency(cat.value)} ({ratio}%)</span>
+                      <span className="text-primary">
+                        {formatCurrency(cat.value)} ({ratio}%)
+                      </span>
                     </div>
                     <div className="h-1.5 w-full bg-muted rounded-md overflow-hidden">
-                      <div className="h-full bg-primary rounded-md" style={{ width: `${ratio}%`, opacity: cat.opacity || 1.0 }} />
+                      <div
+                        className="h-full bg-primary rounded-md"
+                        style={{ width: `${ratio}%`, opacity: cat.opacity || 1.0 }}
+                      />
                     </div>
                   </div>
                 );
@@ -693,18 +844,27 @@ export function MobileDashboard({
                       </div>
                       <div className="min-w-0">
                         <p className="font-bold text-foreground truncate max-w-[170px]">{prod.name}</p>
-                        <p className="text-[9px] text-muted-foreground font-semibold">Đã bán {prod.salesCount} sản phẩm</p>
+                        <p className="text-[9px] text-muted-foreground font-semibold">
+                          Đã bán {prod.salesCount} sản phẩm
+                        </p>
                       </div>
                     </div>
                     <div className="text-right shrink-0">
                       <p className="font-black text-primary">{formatCurrency(prod.revenue)}</p>
-                      <Badge variant="outline" className="text-[8px] font-bold h-4 px-1 py-0 border-primary/20 text-primary">Tăng trưởng</Badge>
+                      <Badge
+                        variant="outline"
+                        className="text-[8px] font-bold h-4 px-1 py-0 border-primary/20 text-primary"
+                      >
+                        Tăng trưởng
+                      </Badge>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-5 text-[10px] text-muted-foreground">Không có dữ liệu mặt hàng bán chạy.</div>
+              <div className="text-center py-5 text-[10px] text-muted-foreground">
+                Không có dữ liệu mặt hàng bán chạy.
+              </div>
             )}
           </CardContent>
         </Card>
@@ -724,9 +884,9 @@ export function MobileDashboard({
               </p>
               <div className="flex flex-wrap gap-1.5 pt-2">
                 {lowStockProducts.slice(0, 4).map((prod) => (
-                  <Badge 
-                    key={prod.id} 
-                    variant="outline" 
+                  <Badge
+                    key={prod.id}
+                    variant="outline"
                     className="text-[8.5px] bg-background border-amber-500/20 text-amber-700 dark:text-amber-400 font-bold px-2 py-0.5 rounded-md truncate max-w-[130px]"
                   >
                     {prod.name}: Tồn {prod.stock ?? 0}
@@ -744,27 +904,34 @@ export function MobileDashboard({
           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
             Nhật ký giao dịch gần đây
           </p>
-          <Badge variant="secondary" className="text-[9px] font-bold bg-muted text-muted-foreground border-none">Thời gian thực</Badge>
+          <Badge variant="secondary" className="text-[9px] font-bold bg-muted text-muted-foreground border-none">
+            Thời gian thực
+          </Badge>
         </div>
 
         <div className="space-y-2.5">
           {recentSales && recentSales.length > 0 ? (
             recentSales.slice(0, 5).map((sale) => {
               const customerName = sale.customer?.name || "Khách vãng lai";
-              const customerInitials = customerName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
-              
+              const customerInitials = customerName
+                .split(" ")
+                .map((n: string) => n[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase();
+
               const method = sale.payment_method || "cash";
               const methodLabels: Record<string, string> = {
                 cash: "Tiền mặt",
                 transfer: "C.Khoản",
                 bank: "C.Khoản",
                 bank_transfer: "C.Khoản",
-                card: "Thẻ ATM"
+                card: "Thẻ ATM",
               };
 
               return (
-                <Card 
-                  key={sale.id} 
+                <Card
+                  key={sale.id}
                   className="border border-muted/50 rounded-xl active:scale-[0.99] transition-all bg-card shadow-xs hover:border-primary/25"
                 >
                   <CardContent className="p-3.5 flex items-center justify-between gap-3">
@@ -773,29 +940,34 @@ export function MobileDashboard({
                         {sale.customer?.avatar_url && sale.customer.avatar_url !== "" ? (
                           <AvatarImage src={sale.customer.avatar_url} />
                         ) : (
-                          <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">{customerInitials}</AvatarFallback>
+                          <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">
+                            {customerInitials}
+                          </AvatarFallback>
                         )}
                       </Avatar>
                       <div className="min-w-0 space-y-0.5">
                         <p className="text-xs font-bold text-foreground truncate max-w-[150px]">{customerName}</p>
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[8.5px] text-muted-foreground font-mono font-semibold">{sale.order_number}</span>
+                          <span className="text-[8.5px] text-muted-foreground font-mono font-semibold">
+                            {sale.order_number}
+                          </span>
                           <span className="text-[8.5px] text-muted-foreground">•</span>
-                          <span className="text-[8.5px] text-muted-foreground font-semibold">{methodLabels[method] || "Tiền mặt"}</span>
+                          <span className="text-[8.5px] text-muted-foreground font-semibold">
+                            {methodLabels[method] || "Tiền mặt"}
+                          </span>
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="text-right shrink-0 space-y-1">
-                      <p className="text-xs font-black text-primary">
-                        {formatCurrency(sale.total_amount)}
-                      </p>
-                      <Badge 
-                        variant="secondary" 
+                      <p className="text-xs font-black text-primary">{formatCurrency(sale.total_amount)}</p>
+                      <Badge
+                        variant="secondary"
                         className={cn(
                           "text-[8.5px] h-4.5 px-1 py-0 font-bold uppercase",
-                          sale.status === "completed" && "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-none",
-                          sale.status === "pending" && "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-none"
+                          sale.status === "completed" &&
+                            "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-none",
+                          sale.status === "pending" && "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-none",
                         )}
                       >
                         {sale.status === "completed" ? "Thành công" : "Chờ"}
@@ -812,7 +984,6 @@ export function MobileDashboard({
           )}
         </div>
       </div>
-
     </div>
   );
 }

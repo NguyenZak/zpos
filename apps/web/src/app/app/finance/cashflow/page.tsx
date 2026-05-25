@@ -1,34 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { 
-  Search, 
-  ArrowUpCircle,
-  ArrowDownCircle,
-  Loader2,
-  Calendar,
-  Wallet,
-  ArrowRightLeft
-} from 'lucide-react';
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
+import React, { useState, useEffect } from "react";
+import { Search, ArrowUpCircle, ArrowDownCircle, Loader2, Calendar, Wallet, ArrowRightLeft } from "lucide-react";
+import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { posService } from '@/services/pos.service';
-import { format } from 'date-fns';
+import { posService } from "@/services/pos.service";
+import { format } from "date-fns";
 
 export default function CashflowPage() {
   const [data, setData] = useState<any[]>([]);
@@ -51,7 +31,7 @@ export default function CashflowPage() {
   }, []);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
   };
 
   const columns: ColumnDef<any>[] = [
@@ -72,16 +52,20 @@ export default function CashflowPage() {
         const type = row.getValue("type") as string;
         return (
           <div className="flex items-center gap-2">
-            {type === 'inflow' ? (
+            {type === "inflow" ? (
               <ArrowUpCircle className="w-4 h-4 text-emerald-500" />
             ) : (
               <ArrowDownCircle className="w-4 h-4 text-red-500" />
             )}
-            <Badge 
-              variant={type === 'inflow' ? "secondary" : "destructive"} 
-              className={type === 'inflow' ? "text-[10px] px-1.5 h-4 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-none font-bold" : "text-[10px] px-1.5 h-4 font-bold"}
+            <Badge
+              variant={type === "inflow" ? "secondary" : "destructive"}
+              className={
+                type === "inflow"
+                  ? "text-[10px] px-1.5 h-4 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-none font-bold"
+                  : "text-[10px] px-1.5 h-4 font-bold"
+              }
             >
-              {type === 'inflow' ? "THU" : "CHI"}
+              {type === "inflow" ? "THU" : "CHI"}
             </Badge>
           </div>
         );
@@ -97,26 +81,29 @@ export default function CashflowPage() {
           salary: "Lương",
           purchase: "Nhập hàng",
           other_income: "Thu khác",
-          other_expense: "Chi khác"
+          other_expense: "Chi khác",
         };
-        return <span className="text-sm font-medium">{categories[row.getValue("category") as string] || row.getValue("category")}</span>;
+        return (
+          <span className="text-sm font-medium">
+            {categories[row.getValue("category") as string] || row.getValue("category")}
+          </span>
+        );
       },
     },
     {
       accessorKey: "note",
       header: "Nội dung",
-      cell: ({ row }) => (
-        <div className="max-w-[300px] truncate text-sm">
-          {row.getValue("note") || "---"}
-        </div>
-      ),
+      cell: ({ row }) => <div className="max-w-[300px] truncate text-sm">{row.getValue("note") || "---"}</div>,
     },
     {
       accessorKey: "amount",
       header: "Số tiền",
       cell: ({ row }) => (
-        <div className={`font-black ${row.original.type === 'inflow' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-          {row.original.type === 'inflow' ? '+' : '-'}{formatCurrency(row.getValue("amount"))}
+        <div
+          className={`font-black ${row.original.type === "inflow" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
+        >
+          {row.original.type === "inflow" ? "+" : "-"}
+          {formatCurrency(row.getValue("amount"))}
         </div>
       ),
     },
@@ -128,8 +115,8 @@ export default function CashflowPage() {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const totalIn = data.filter(d => d.type === 'inflow').reduce((acc, d) => acc + Number(d.amount), 0);
-  const totalOut = data.filter(d => d.type === 'outflow').reduce((acc, d) => acc + Number(d.amount), 0);
+  const totalIn = data.filter((d) => d.type === "inflow").reduce((acc, d) => acc + Number(d.amount), 0);
+  const totalOut = data.filter((d) => d.type === "outflow").reduce((acc, d) => acc + Number(d.amount), 0);
   const balance = totalIn - totalOut;
 
   return (
@@ -156,7 +143,9 @@ export default function CashflowPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
         <div className="bg-emerald-50 dark:bg-emerald-950/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/50">
-          <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Tổng thu</p>
+          <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">
+            Tổng thu
+          </p>
           <p className="text-2xl font-black text-emerald-700 dark:text-emerald-300">+{formatCurrency(totalIn)}</p>
         </div>
         <div className="bg-red-50 dark:bg-red-950/20 p-4 rounded-xl border border-red-100 dark:border-red-900/50">
@@ -175,7 +164,10 @@ export default function CashflowPage() {
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                  <TableHead
+                    key={header.id}
+                    className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
+                  >
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}

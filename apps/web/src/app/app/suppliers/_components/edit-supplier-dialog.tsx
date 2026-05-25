@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import { Loader2, Building2 } from "lucide-react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +30,7 @@ export function EditSupplierDialog({ supplier, open, onOpenChange, onShowSuccess
     contact_name: "",
     phone: "",
     email: "",
-    address: ""
+    address: "",
   });
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export function EditSupplierDialog({ supplier, open, onOpenChange, onShowSuccess
         contact_name: supplier.contact_name || "",
         phone: supplier.phone || "",
         email: supplier.email || "",
-        address: supplier.address || ""
+        address: supplier.address || "",
       });
     }
   }, [supplier]);
@@ -48,7 +48,7 @@ export function EditSupplierDialog({ supplier, open, onOpenChange, onShowSuccess
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       await posService.updateSupplier(supplier.id, formData);
       toast.success("Đã cập nhật thông tin nhà cung cấp!");
@@ -71,15 +71,13 @@ export function EditSupplierDialog({ supplier, open, onOpenChange, onShowSuccess
               <Building2 className="w-5 h-5 text-primary" />
               Cập nhật nhà cung cấp
             </DialogTitle>
-            <DialogDescription>
-              Chỉnh sửa thông tin đối tác cung ứng.
-            </DialogDescription>
+            <DialogDescription>Chỉnh sửa thông tin đối tác cung ứng.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="name">Tên công ty / Nhà cung cấp</Label>
-              <Input 
-                id="name" 
+              <Input
+                id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
@@ -87,8 +85,8 @@ export function EditSupplierDialog({ supplier, open, onOpenChange, onShowSuccess
             </div>
             <div className="grid gap-2">
               <Label htmlFor="contact_name">Người liên hệ</Label>
-              <Input 
-                id="contact_name" 
+              <Input
+                id="contact_name"
                 value={formData.contact_name}
                 onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
               />
@@ -96,8 +94,8 @@ export function EditSupplierDialog({ supplier, open, onOpenChange, onShowSuccess
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="phone">Số điện thoại</Label>
-                <Input 
-                  id="phone" 
+                <Input
+                  id="phone"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   required
@@ -105,8 +103,8 @@ export function EditSupplierDialog({ supplier, open, onOpenChange, onShowSuccess
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
+                <Input
+                  id="email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -115,8 +113,8 @@ export function EditSupplierDialog({ supplier, open, onOpenChange, onShowSuccess
             </div>
             <div className="grid gap-2">
               <Label htmlFor="address">Địa chỉ trụ sở</Label>
-              <Input 
-                id="address" 
+              <Input
+                id="address"
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               />

@@ -2,25 +2,19 @@
 
 import React, { useState, useEffect } from "react";
 import { Plus, Loader2, UserCheck, DollarSign } from "lucide-react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { posService } from "@/services/pos.service";
 
@@ -28,16 +22,16 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState<any[]>([]);
-  
+
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [salesData, setSalesData] = useState<{revenue: number, bonus: number, rule: any, nextRule: any} | null>(null);
+  const [salesData, setSalesData] = useState<{ revenue: number; bonus: number; rule: any; nextRule: any } | null>(null);
   const [shiftCount, setShiftCount] = useState<number | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
-  
+
   const [salaryType, setSalaryType] = useState<"monthly" | "shift">("monthly");
   const [shiftWage, setShiftWage] = useState("150000");
-  
+
   const [formData, setFormData] = useState({
     staff_id: "",
     base_salary: "",
@@ -45,8 +39,8 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
     allowance: "0",
     deduction: "0",
     payment_status: "pending",
-    payment_date: new Date().toISOString().split('T')[0],
-    note: ""
+    payment_date: new Date().toISOString().split("T")[0],
+    note: "",
   });
 
   useEffect(() => {
@@ -55,7 +49,7 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
         const data = await posService.getEmployees();
         setEmployees(data || []);
         if (data && data.length > 0) {
-          setFormData(prev => ({ ...prev, staff_id: data[0].id }));
+          setFormData((prev) => ({ ...prev, staff_id: data[0].id }));
         }
       } catch (error) {
         console.error(error);
@@ -70,7 +64,7 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
       setIsCalculating(true);
       try {
         const rules = await posService.getCommissionRules();
-        const employee = employees.find(e => e.id === formData.staff_id);
+        const employee = employees.find((e) => e.id === formData.staff_id);
         if (!employee || !employee.profile_id) {
           setSalesData(null);
           return;
@@ -79,13 +73,13 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
         const [revenue, shifts, advances] = await Promise.all([
           posService.getEmployeeRevenueForMonth(employee.profile_id, selectedMonth, selectedYear),
           posService.getEmployeeShiftCountForMonth(employee.profile_id, selectedMonth, selectedYear),
-          posService.getEmployeeAdvancesForMonth(employee.id, selectedMonth, selectedYear)
+          posService.getEmployeeAdvancesForMonth(employee.id, selectedMonth, selectedYear),
         ]);
-        
+
         let calculatedBonus = 0;
         let matchedRule = null;
         let nextRule = null;
-        
+
         // Rules are sorted DESC by min_revenue
         for (let i = 0; i < rules.length; i++) {
           if (revenue >= rules[i].min_revenue) {
@@ -93,28 +87,28 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
             break;
           }
         }
-        
+
         // Find next rule if any
         if (!matchedRule && rules.length > 0) {
           nextRule = rules[rules.length - 1]; // lowest rule
         } else if (matchedRule) {
           const reversed = [...rules].reverse();
-          nextRule = reversed.find(r => r.min_revenue > revenue);
+          nextRule = reversed.find((r) => r.min_revenue > revenue);
         }
-        
+
         if (matchedRule) {
           calculatedBonus = (revenue * matchedRule.commission_percentage) / 100;
         }
-        
+
         setSalesData({ revenue, bonus: calculatedBonus, rule: matchedRule, nextRule });
         setShiftCount(shifts);
         // Only auto-update if bonus is calculated or we had a previous calculation
         if (calculatedBonus > 0 || (salesData && salesData.bonus > 0)) {
-          setFormData(prev => ({ ...prev, bonus: calculatedBonus.toString() }));
+          setFormData((prev) => ({ ...prev, bonus: calculatedBonus.toString() }));
         }
-        
+
         if (advances > 0) {
-          setFormData(prev => ({ ...prev, deduction: advances.toString() }));
+          setFormData((prev) => ({ ...prev, deduction: advances.toString() }));
         }
       } catch (error) {
         console.error("Error calculating bonus:", error);
@@ -122,14 +116,13 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
         setIsCalculating(false);
       }
     };
-    
+
     // Slight debounce so it doesn't spam on open
     const t = setTimeout(() => {
       calculateBonus();
     }, 300);
     return () => clearTimeout(t);
   }, [formData.staff_id, selectedMonth, selectedYear, open]); // Removed employees dependency to avoid loop if it references new array
-
 
   const formatCurrencyValue = (value: string | number) => {
     if (!value) return "";
@@ -143,12 +136,12 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     let base = parseFloat(parseCurrencyValue(formData.base_salary)) || 0;
     if (salaryType === "shift") {
       base = (parseFloat(parseCurrencyValue(shiftWage)) || 0) * (shiftCount || 0);
     }
-    
+
     const bonus = parseFloat(parseCurrencyValue(formData.bonus)) || 0;
     const allowance = parseFloat(parseCurrencyValue(formData.allowance)) || 0;
     const deduction = parseFloat(parseCurrencyValue(formData.deduction)) || 0;
@@ -163,10 +156,10 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
         deduction,
         final_salary: finalSalary,
         payment_status: formData.payment_status,
-        payment_date: formData.payment_status === 'paid' ? formData.payment_date : null,
-        note: formData.note
+        payment_date: formData.payment_status === "paid" ? formData.payment_date : null,
+        note: formData.note,
       });
-      
+
       toast.success("Đã lập bảng lương thành công!");
       setOpen(false);
       setFormData({
@@ -176,8 +169,8 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
         allowance: "0",
         deduction: "0",
         payment_status: "pending",
-        payment_date: new Date().toISOString().split('T')[0],
-        note: ""
+        payment_date: new Date().toISOString().split("T")[0],
+        note: "",
       });
       if (onShowSuccess) onShowSuccess();
     } catch (error: any) {
@@ -203,24 +196,21 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
               <UserCheck className="w-5 h-5 text-emerald-600" />
               Tính lương & Thưởng
             </DialogTitle>
-            <DialogDescription>
-              Tạo phiếu chi lương cho nhân viên thuộc hệ thống cửa hàng.
-            </DialogDescription>
+            <DialogDescription>Tạo phiếu chi lương cho nhân viên thuộc hệ thống cửa hàng.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="staff">Nhân viên</Label>
-                <Select 
-                  value={formData.staff_id} 
-                  onValueChange={(val) => setFormData({ ...formData, staff_id: val })}
-                >
+                <Select value={formData.staff_id} onValueChange={(val) => setFormData({ ...formData, staff_id: val })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Chọn nhân viên" />
                   </SelectTrigger>
                   <SelectContent>
-                    {employees.map(emp => (
-                      <SelectItem key={emp.id} value={emp.id}>{emp.name} ({emp.role})</SelectItem>
+                    {employees.map((emp) => (
+                      <SelectItem key={emp.id} value={emp.id}>
+                        {emp.name} ({emp.role})
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -234,19 +224,29 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
                 <Label>Kỳ lương</Label>
                 <div className="flex gap-2">
                   <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(Number(v))}>
-                    <SelectTrigger><SelectValue placeholder="Tháng" /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Tháng" />
+                    </SelectTrigger>
                     <SelectContent>
-                      {Array.from({length: 12}).map((_, i) => (
-                        <SelectItem key={i+1} value={(i+1).toString()}>Tháng {i+1}</SelectItem>
+                      {Array.from({ length: 12 }).map((_, i) => (
+                        <SelectItem key={i + 1} value={(i + 1).toString()}>
+                          Tháng {i + 1}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                   <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(Number(v))}>
-                    <SelectTrigger><SelectValue placeholder="Năm" /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Năm" />
+                    </SelectTrigger>
                     <SelectContent>
-                      {[0, 1, 2].map(offset => {
+                      {[0, 1, 2].map((offset) => {
                         const y = new Date().getFullYear() - offset;
-                        return <SelectItem key={y} value={y.toString()}>{y}</SelectItem>;
+                        return (
+                          <SelectItem key={y} value={y.toString()}>
+                            {y}
+                          </SelectItem>
+                        );
                       })}
                     </SelectContent>
                   </Select>
@@ -262,18 +262,22 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="monthly" className="text-xs">Theo tháng cố định</SelectItem>
-                    <SelectItem value="shift" className="text-xs">Theo số ca làm việc</SelectItem>
+                    <SelectItem value="monthly" className="text-xs">
+                      Theo tháng cố định
+                    </SelectItem>
+                    <SelectItem value="shift" className="text-xs">
+                      Theo số ca làm việc
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              
+
               {salaryType === "monthly" ? (
                 <div className="grid gap-2">
-                  <Input 
-                    id="base_salary" 
-                    type="text" 
-                    placeholder="5,000,000" 
+                  <Input
+                    id="base_salary"
+                    type="text"
+                    placeholder="5,000,000"
                     value={formatCurrencyValue(formData.base_salary)}
                     onChange={(e) => setFormData({ ...formData, base_salary: parseCurrencyValue(e.target.value) })}
                     required
@@ -284,10 +288,10 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label className="text-xs text-muted-foreground">Tiền lương 1 ca (₫)</Label>
-                    <Input 
-                      id="shift_wage" 
-                      type="text" 
-                      placeholder="150,000" 
+                    <Input
+                      id="shift_wage"
+                      type="text"
+                      placeholder="150,000"
                       value={formatCurrencyValue(shiftWage)}
                       onChange={(e) => setShiftWage(parseCurrencyValue(e.target.value))}
                       required
@@ -309,22 +313,28 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
                   Khen thưởng doanh thu (₫)
                   {isCalculating && <Loader2 className="inline w-3 h-3 animate-spin ml-2 text-emerald-600" />}
                 </Label>
-                <Input 
-                  id="bonus" 
-                  type="text" 
+                <Input
+                  id="bonus"
+                  type="text"
                   value={formatCurrencyValue(formData.bonus)}
                   onChange={(e) => setFormData({ ...formData, bonus: parseCurrencyValue(e.target.value) })}
                 />
                 {salesData && (
                   <div className="text-[11px] text-muted-foreground leading-tight mt-1 bg-emerald-50 p-2 rounded border border-emerald-100">
-                    Doanh thu T{selectedMonth}: <strong className="text-emerald-600 font-medium">{formatCurrencyValue(salesData.revenue)}₫</strong>
+                    Doanh thu T{selectedMonth}:{" "}
+                    <strong className="text-emerald-600 font-medium">{formatCurrencyValue(salesData.revenue)}₫</strong>
                     {salesData.rule ? (
                       <span className="block text-emerald-600 mt-0.5">
                         Đạt mốc: {salesData.rule.name} (+{salesData.rule.commission_percentage}%)
-                        {salesData.nextRule && ` • Cần thêm ${formatCurrencyValue(salesData.nextRule.min_revenue - salesData.revenue)}₫ đạt ${salesData.nextRule.name}`}
+                        {salesData.nextRule &&
+                          ` • Cần thêm ${formatCurrencyValue(salesData.nextRule.min_revenue - salesData.revenue)}₫ đạt ${salesData.nextRule.name}`}
                       </span>
                     ) : salesData.nextRule ? (
-                      <span className="block mt-0.5 text-zinc-500">Chưa đạt thưởng • Cần thêm {formatCurrencyValue(salesData.nextRule.min_revenue - salesData.revenue)}₫ đạt {salesData.nextRule.name}</span>
+                      <span className="block mt-0.5 text-zinc-500">
+                        Chưa đạt thưởng • Cần thêm{" "}
+                        {formatCurrencyValue(salesData.nextRule.min_revenue - salesData.revenue)}₫ đạt{" "}
+                        {salesData.nextRule.name}
+                      </span>
                     ) : (
                       <span className="block mt-0.5 text-zinc-500">Chưa có mốc thưởng nào</span>
                     )}
@@ -336,18 +346,18 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="allowance">Phụ cấp (₫)</Label>
-                <Input 
-                  id="allowance" 
-                  type="text" 
+                <Input
+                  id="allowance"
+                  type="text"
                   value={formatCurrencyValue(formData.allowance)}
                   onChange={(e) => setFormData({ ...formData, allowance: parseCurrencyValue(e.target.value) })}
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="deduction">Khấu trừ / Phạt (₫)</Label>
-                <Input 
-                  id="deduction" 
-                  type="text" 
+                <Input
+                  id="deduction"
+                  type="text"
                   value={formatCurrencyValue(formData.deduction)}
                   onChange={(e) => setFormData({ ...formData, deduction: parseCurrencyValue(e.target.value) })}
                 />
@@ -357,8 +367,8 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="status">Trạng thái thanh toán</Label>
-                <Select 
-                  value={formData.payment_status} 
+                <Select
+                  value={formData.payment_status}
                   onValueChange={(val) => setFormData({ ...formData, payment_status: val })}
                 >
                   <SelectTrigger>
@@ -370,11 +380,11 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
                   </SelectContent>
                 </Select>
               </div>
-              {formData.payment_status === 'paid' && (
+              {formData.payment_status === "paid" && (
                 <div className="grid gap-2">
                   <Label htmlFor="date">Ngày thanh toán</Label>
-                  <Input 
-                    id="date" 
+                  <Input
+                    id="date"
                     type="date"
                     value={formData.payment_date}
                     onChange={(e) => setFormData({ ...formData, payment_date: e.target.value })}
@@ -386,9 +396,9 @@ export function AddPayrollDialog({ onShowSuccess }: { onShowSuccess?: () => void
 
             <div className="grid gap-2">
               <Label htmlFor="note">Ghi chú chi tiết</Label>
-              <Input 
-                id="note" 
-                placeholder="Ghi chú thêm về ca trực, ngày công..." 
+              <Input
+                id="note"
+                placeholder="Ghi chú thêm về ca trực, ngày công..."
                 value={formData.note}
                 onChange={(e) => setFormData({ ...formData, note: e.target.value })}
               />

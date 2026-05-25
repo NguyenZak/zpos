@@ -4,7 +4,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import type { Shift } from "@/services/shift.service";
 import { fmtVND, fmtDate, fmtDuration } from "./format";
 import { ShiftStatusBadge } from "./shift-status-badge";
-import { CreditCard, Banknote, Smartphone, QrCode, Coins, Receipt, ArrowLeftRight, AlertTriangle, CheckCircle2 } from "lucide-react";
+import {
+  CreditCard,
+  Banknote,
+  Smartphone,
+  QrCode,
+  Coins,
+  Receipt,
+  ArrowLeftRight,
+  AlertTriangle,
+  CheckCircle2,
+} from "lucide-react";
 
 interface ShiftSummaryCardProps {
   shift: Shift;
@@ -80,7 +90,9 @@ export function ShiftSummaryCard({ shift }: ShiftSummaryCardProps) {
           </div>
 
           {shift.status !== "open" && (
-            <div className={`flex items-center gap-2 rounded-lg border p-3 ${diff === 0 ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-rose-300 bg-rose-50 text-rose-700"}`}>
+            <div
+              className={`flex items-center gap-2 rounded-lg border p-3 ${diff === 0 ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-rose-300 bg-rose-50 text-rose-700"}`}
+            >
               {diff === 0 ? <CheckCircle2 className="size-4" /> : <AlertTriangle className="size-4" />}
               <div className="text-sm">
                 {diff === 0 && "Khớp tiền — không có chênh lệch."}

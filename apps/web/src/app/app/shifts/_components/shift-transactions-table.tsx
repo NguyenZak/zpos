@@ -38,7 +38,11 @@ export function ShiftTransactionsTable({ transactions }: { transactions: ShiftTr
             return (
               <TableRow key={t.id}>
                 <TableCell className="text-xs text-muted-foreground">{fmtDate(t.created_at)}</TableCell>
-                <TableCell><Badge className={m.className} variant="secondary">{m.label}</Badge></TableCell>
+                <TableCell>
+                  <Badge className={m.className} variant="secondary">
+                    {m.label}
+                  </Badge>
+                </TableCell>
                 <TableCell>{t.payment_method || "—"}</TableCell>
                 <TableCell className="max-w-[280px] truncate">{t.note || "—"}</TableCell>
                 <TableCell className="text-right font-medium">{fmtVND(t.amount)}</TableCell>

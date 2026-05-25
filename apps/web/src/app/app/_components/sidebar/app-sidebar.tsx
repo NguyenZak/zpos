@@ -51,18 +51,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const supabase = createClient();
 
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (user) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", user.id)
-            .maybeSingle();
+          const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
 
           setCurrentUser({
             name: profile?.full_name || user.user_metadata?.full_name || "Chủ doanh nghiệp",
             email: user.email || "",
-            avatar: profile?.avatar_url || user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile?.full_name || user.user_metadata?.full_name || 'User')}`,
+            avatar:
+              profile?.avatar_url ||
+              user.user_metadata?.avatar_url ||
+              `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile?.full_name || user.user_metadata?.full_name || "User")}`,
           });
           return;
         }
@@ -78,35 +79,39 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const filteredSidebarItems = React.useMemo(() => {
     if (loading) return []; // Keep empty while loading to avoid layout shift
 
-    return sidebarItems.map(group => {
-      const filteredItems = group.items.map(item => {
-        const requiredPerm = getRequiredPermissionForPath(item.url);
-        
-        // Hide if unauthorized
-        if (requiredPerm && !hasPermission(requiredPerm)) {
-          return null;
-        }
+    return sidebarItems
+      .map((group) => {
+        const filteredItems = group.items
+          .map((item) => {
+            const requiredPerm = getRequiredPermissionForPath(item.url);
 
-        // Filter subitems if any
-        if (item.subItems) {
-          const filteredSub = item.subItems.filter(sub => {
-            const subPerm = getRequiredPermissionForPath(sub.url);
-            return !subPerm || hasPermission(subPerm);
-          });
-          return {
-            ...item,
-            subItems: filteredSub
-          };
-        }
+            // Hide if unauthorized
+            if (requiredPerm && !hasPermission(requiredPerm)) {
+              return null;
+            }
 
-        return item;
-      }).filter((item): item is typeof group.items[number] => item !== null);
+            // Filter subitems if any
+            if (item.subItems) {
+              const filteredSub = item.subItems.filter((sub) => {
+                const subPerm = getRequiredPermissionForPath(sub.url);
+                return !subPerm || hasPermission(subPerm);
+              });
+              return {
+                ...item,
+                subItems: filteredSub,
+              };
+            }
 
-      return {
-        ...group,
-        items: filteredItems
-      };
-    }).filter(group => group.items.length > 0);
+            return item;
+          })
+          .filter((item): item is (typeof group.items)[number] => item !== null);
+
+        return {
+          ...group,
+          items: filteredItems,
+        };
+      })
+      .filter((group) => group.items.length > 0);
   }, [loading, hasPermission]);
 
   return (

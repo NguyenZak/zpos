@@ -4,8 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CircleAlert, Clock3, Coins, Users } from "lucide-react";
 import type { DashboardStats } from "@/services/debt.service";
 
-const formatVND = (n: number) =>
-  new Intl.NumberFormat("vi-VN").format(Math.round(n || 0)) + " ₫";
+const formatVND = (n: number) => new Intl.NumberFormat("vi-VN").format(Math.round(n || 0)) + " ₫";
 
 export function DebtKPIStrip({ stats, loading }: { stats: DashboardStats | null; loading?: boolean }) {
   const items = [
@@ -47,12 +46,8 @@ export function DebtKPIStrip({ stats, loading }: { stats: DashboardStats | null;
           <Card key={it.label} className={`border ${it.bg}`}>
             <CardContent className="p-4 flex items-start justify-between">
               <div>
-                <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">
-                  {it.label}
-                </p>
-                <p className={`text-2xl font-black mt-1 ${it.tone}`}>
-                  {loading ? "—" : it.value}
-                </p>
+                <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{it.label}</p>
+                <p className={`text-2xl font-black mt-1 ${it.tone}`}>{loading ? "—" : it.value}</p>
               </div>
               <div className={`p-2 rounded-lg bg-background/60 ${it.tone}`}>
                 <Icon className="w-4 h-4" />

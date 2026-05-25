@@ -10,5 +10,9 @@ const STATUS_META: Record<ShiftStatus, { label: string; className: string }> = {
 
 export function ShiftStatusBadge({ status }: { status: ShiftStatus }) {
   const meta = STATUS_META[status] || STATUS_META.open;
-  return <Badge className={meta.className} variant="secondary">{meta.label}</Badge>;
+  return (
+    <Badge className={meta.className} variant="secondary">
+      {meta.label}
+    </Badge>
+  );
 }

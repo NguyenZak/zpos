@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import { Settings, Loader2, Plus, Trash2 } from "lucide-react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,9 +27,9 @@ interface CommissionRule {
 export function ConfigBonusDialog() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   const [rules, setRules] = useState<CommissionRule[]>([
-    { name: "Mức 1", min_revenue: "50000000", commission_percentage: "1" }
+    { name: "Mức 1", min_revenue: "50000000", commission_percentage: "1" },
   ]);
 
   useEffect(() => {
@@ -39,12 +39,14 @@ export function ConfigBonusDialog() {
         if (fetchedRules && fetchedRules.length > 0) {
           // Sort by min_revenue ASC for editing
           const sorted = fetchedRules.sort((a: any, b: any) => a.min_revenue - b.min_revenue);
-          setRules(sorted.map((r: any) => ({
-            id: r.id,
-            name: r.name || "Mức thưởng",
-            min_revenue: r.min_revenue.toString(),
-            commission_percentage: r.commission_percentage.toString()
-          })));
+          setRules(
+            sorted.map((r: any) => ({
+              id: r.id,
+              name: r.name || "Mức thưởng",
+              min_revenue: r.min_revenue.toString(),
+              commission_percentage: r.commission_percentage.toString(),
+            })),
+          );
         } else {
           setRules([{ name: "Mức 1", min_revenue: "50000000", commission_percentage: "1" }]);
         }
@@ -82,16 +84,16 @@ export function ConfigBonusDialog() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
-      const parsedRules = rules.map(r => ({
+      const parsedRules = rules.map((r) => ({
         name: r.name,
         min_revenue: parseFloat(parseCurrencyValue(r.min_revenue)) || 0,
-        commission_percentage: parseFloat(r.commission_percentage) || 0
+        commission_percentage: parseFloat(r.commission_percentage) || 0,
       }));
-      
+
       await posService.saveCommissionRules(parsedRules);
-      
+
       toast.success("Đã lưu cấu hình thưởng thành công!");
       setOpen(false);
     } catch (error: any) {
@@ -121,14 +123,14 @@ export function ConfigBonusDialog() {
               Thiết lập nhiều mức thưởng tự động. Nhân viên đạt mức doanh thu cao nhất nào sẽ nhận % của mức đó.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="py-6 space-y-4">
             {rules.map((rule, index) => (
               <div key={index} className="flex items-end gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
                 <div className="grid gap-2 flex-1">
                   <Label>Tên mốc</Label>
-                  <Input 
-                    placeholder="VD: Mức 1" 
+                  <Input
+                    placeholder="VD: Mức 1"
                     value={rule.name}
                     onChange={(e) => handleRuleChange(index, "name", e.target.value)}
                     required
@@ -136,8 +138,8 @@ export function ConfigBonusDialog() {
                 </div>
                 <div className="grid gap-2 flex-1">
                   <Label>Doanh thu tối thiểu (₫)</Label>
-                  <Input 
-                    placeholder="50,000,000" 
+                  <Input
+                    placeholder="50,000,000"
                     value={formatCurrencyValue(rule.min_revenue)}
                     onChange={(e) => handleRuleChange(index, "min_revenue", parseCurrencyValue(e.target.value))}
                     required
@@ -146,7 +148,7 @@ export function ConfigBonusDialog() {
                 <div className="grid gap-2 w-[120px]">
                   <Label>Thưởng (%)</Label>
                   <div className="flex items-center gap-2">
-                    <Input 
+                    <Input
                       type="number"
                       step="0.1"
                       min="0"
@@ -157,9 +159,9 @@ export function ConfigBonusDialog() {
                     />
                   </div>
                 </div>
-                <Button 
-                  type="button" 
-                  variant="ghost" 
+                <Button
+                  type="button"
+                  variant="ghost"
                   size="icon"
                   className="text-red-500 hover:text-red-600 hover:bg-red-50 mb-0.5"
                   onClick={() => removeRule(index)}
@@ -169,14 +171,8 @@ export function ConfigBonusDialog() {
                 </Button>
               </div>
             ))}
-            
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm" 
-              className="w-full border-dashed gap-2"
-              onClick={addRule}
-            >
+
+            <Button type="button" variant="outline" size="sm" className="w-full border-dashed gap-2" onClick={addRule}>
               <Plus className="h-4 w-4" />
               Thêm mốc thưởng mới
             </Button>

@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { 
-  Search, 
-  MoreHorizontal, 
+import React, { useState, useEffect } from "react";
+import {
+  Search,
+  MoreHorizontal,
   ArrowUpDown,
   Filter,
   Package,
@@ -14,8 +14,8 @@ import {
   RefreshCcw,
   ArrowRightLeft,
   Check,
-  Edit2
-} from 'lucide-react';
+  Edit2,
+} from "lucide-react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -38,22 +38,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { posService } from '@/services/pos.service';
-import { toast } from 'sonner';
-import { MobileInventory } from '../_components/mobile/mobile-inventory';
-import { AdjustStockDialog } from './_components/adjust-stock-dialog';
-import { StockHistoryDialog } from './_components/stock-history-dialog';
+import { posService } from "@/services/pos.service";
+import { toast } from "sonner";
+import { MobileInventory } from "../_components/mobile/mobile-inventory";
+import { AdjustStockDialog } from "./_components/adjust-stock-dialog";
+import { StockHistoryDialog } from "./_components/stock-history-dialog";
 import { createClient } from "@/utils/supabase/client";
-
 
 export type InventoryItem = {
   id: string;
@@ -67,7 +59,6 @@ export type InventoryItem = {
   price?: number;
   image?: string;
 };
-
 
 export default function InventoryPage() {
   const [isMobile, setIsMobile] = useState(false);
@@ -96,7 +87,7 @@ export default function InventoryPage() {
     try {
       const products = await posService.getProducts();
       let inventoryList: InventoryItem[] = [];
-      
+
       products.forEach((p: any) => {
         if (p.has_variants && p.variants && p.variants.length > 0) {
           p.variants.forEach((v: any) => {
@@ -105,12 +96,12 @@ export default function InventoryPage() {
               product_id: p.id,
               is_variant: true,
               name: `${p.name} - ${v.name}`,
-              sku: v.sku || p.sku || 'N/A',
-              category: p.category?.name || 'Chưa phân loại',
+              sku: v.sku || p.sku || "N/A",
+              category: p.category?.name || "Chưa phân loại",
               stock: v.stock || 0,
               min_stock: p.min_stock || 5, // fallback to product min_stock
               price: v.price || p.price || 0,
-              image: v.image_url || p.image || ''
+              image: v.image_url || p.image || "",
             });
           });
         } else {
@@ -119,16 +110,16 @@ export default function InventoryPage() {
             product_id: p.id,
             is_variant: false,
             name: p.name,
-            sku: p.sku || 'N/A',
-            category: p.category?.name || 'Chưa phân loại',
+            sku: p.sku || "N/A",
+            category: p.category?.name || "Chưa phân loại",
             stock: p.stock || 0,
             min_stock: p.min_stock || 5,
             price: p.price || 0,
-            image: p.image || ''
+            image: p.image || "",
           });
         }
       });
-      
+
       setData(inventoryList);
     } catch (error) {
       console.error("Lỗi tải kho:", error);
@@ -136,7 +127,6 @@ export default function InventoryPage() {
       setLoading(false);
     }
   };
-
 
   useEffect(() => {
     loadInventory();
@@ -161,7 +151,11 @@ export default function InventoryPage() {
     {
       accessorKey: "category",
       header: "Danh mục",
-      cell: ({ row }) => <Badge variant="outline" className="border-pebble bg-mist/20 text-ash">{row.getValue("category")}</Badge>,
+      cell: ({ row }) => (
+        <Badge variant="outline" className="border-pebble bg-mist/20 text-ash">
+          {row.getValue("category")}
+        </Badge>
+      ),
     },
     {
       accessorKey: "stock",
@@ -172,9 +166,7 @@ export default function InventoryPage() {
         const isLow = stock <= minStock;
         return (
           <div className="flex items-center gap-3">
-            <div className={`text-xl font-black ${isLow ? 'text-red-500' : 'text-obsidian'}`}>
-              {stock}
-            </div>
+            <div className={`text-xl font-black ${isLow ? "text-red-500" : "text-obsidian"}`}>{stock}</div>
             {isLow && (
               <Badge className="bg-red-50 text-red-600 border-red-100 hover:bg-red-100 gap-1 px-2 py-0.5">
                 <AlertTriangle className="w-3 h-3" />
@@ -191,8 +183,8 @@ export default function InventoryPage() {
       cell: ({ row }) => {
         const item = row.original;
         return (
-          <MinStockCell 
-            item={item} 
+          <MinStockCell
+            item={item}
             onSave={async (newVal) => {
               try {
                 await posService.updateProduct(item.id, { min_stock: newVal });
@@ -201,10 +193,10 @@ export default function InventoryPage() {
               } catch (e) {
                 toast.error("Không thể cập nhật hạn mức cảnh báo!");
               }
-            }} 
+            }}
           />
         );
-      }
+      },
     },
     {
       id: "actions",
@@ -222,25 +214,35 @@ export default function InventoryPage() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Điều chỉnh kho</DropdownMenuLabel>
-                <DropdownMenuItem className="gap-2" onClick={() => {
-                  setAdjustMode("ADJUST");
-                  setAdjustItem(row.original);
-                  setIsAdjustOpen(true);
-                }}>
+                <DropdownMenuItem
+                  className="gap-2"
+                  onClick={() => {
+                    setAdjustMode("ADJUST");
+                    setAdjustItem(row.original);
+                    setIsAdjustOpen(true);
+                  }}
+                >
                   <RefreshCcw className="w-4 h-4" /> Cập nhật số dư
                 </DropdownMenuItem>
-                <DropdownMenuItem className="gap-2" onClick={() => {
-                  setAdjustItem(row.original);
-                  setIsHistoryOpen(true);
-                }}>
+                <DropdownMenuItem
+                  className="gap-2"
+                  onClick={() => {
+                    setAdjustItem(row.original);
+                    setIsHistoryOpen(true);
+                  }}
+                >
                   <History className="w-4 h-4" /> Xem thẻ kho
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => {
-                  setAdjustMode("LOSS");
-                  setAdjustItem(row.original);
-                  setIsAdjustOpen(true);
-                }}>Báo mất / hỏng</DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setAdjustMode("LOSS");
+                    setAdjustItem(row.original);
+                    setIsAdjustOpen(true);
+                  }}
+                >
+                  Báo mất / hỏng
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -279,11 +281,11 @@ export default function InventoryPage() {
     }));
 
     return (
-      <MobileInventory 
+      <MobileInventory
         products={mappedMobileProducts}
         loading={loading}
         onUpdateStock={async (productId, newStock) => {
-          const target = data.find(i => i.id === productId.toString());
+          const target = data.find((i) => i.id === productId.toString());
           if (!target) return;
           const supabase = createClient();
           if (target.is_variant) {
@@ -299,7 +301,6 @@ export default function InventoryPage() {
 
   return (
     <div className="flex flex-col gap-4">
-
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl leading-none tracking-tight">Tồn kho</h1>
@@ -333,7 +334,7 @@ export default function InventoryPage() {
           </div>
           <div>
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Sắp hết hàng</p>
-            <p className="text-2xl font-bold">{data.filter(i => i.stock <= i.min_stock && i.stock > 0).length}</p>
+            <p className="text-2xl font-bold">{data.filter((i) => i.stock <= i.min_stock && i.stock > 0).length}</p>
           </div>
         </div>
         <div className="bg-card border p-6 rounded-xl flex items-center gap-4">
@@ -342,7 +343,7 @@ export default function InventoryPage() {
           </div>
           <div>
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Hết hàng</p>
-            <p className="text-2xl font-bold text-red-600">{data.filter(i => i.stock <= 0).length}</p>
+            <p className="text-2xl font-bold text-red-600">{data.filter((i) => i.stock <= 0).length}</p>
           </div>
         </div>
       </div>
@@ -369,7 +370,10 @@ export default function InventoryPage() {
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="font-bold text-obsidian uppercase text-[10px] tracking-widest h-12">
+                  <TableHead
+                    key={header.id}
+                    className="font-bold text-obsidian uppercase text-[10px] tracking-widest h-12"
+                  >
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
@@ -406,24 +410,20 @@ export default function InventoryPage() {
           </TableBody>
         </Table>
       </div>
-      
-      <AdjustStockDialog 
-        open={isAdjustOpen} 
-        onOpenChange={setIsAdjustOpen} 
-        item={adjustItem} 
+
+      <AdjustStockDialog
+        open={isAdjustOpen}
+        onOpenChange={setIsAdjustOpen}
+        item={adjustItem}
         mode={adjustMode}
-        onSuccess={loadInventory} 
+        onSuccess={loadInventory}
       />
-      <StockHistoryDialog 
-        open={isHistoryOpen} 
-        onOpenChange={setIsHistoryOpen} 
-        item={adjustItem} 
-      />
+      <StockHistoryDialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen} item={adjustItem} />
     </div>
   );
 }
 
-function MinStockCell({ item, onSave }: { item: InventoryItem, onSave: (val: number) => Promise<void> }) {
+function MinStockCell({ item, onSave }: { item: InventoryItem; onSave: (val: number) => Promise<void> }) {
   const [val, setVal] = useState(item.min_stock);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -451,19 +451,25 @@ function MinStockCell({ item, onSave }: { item: InventoryItem, onSave: (val: num
   if (isEditing) {
     return (
       <div className="flex items-center gap-1.5 max-w-[120px]" onClick={(e) => e.stopPropagation()}>
-        <Input 
-          type="number" 
-          value={val} 
-          onChange={(e) => setVal(parseInt(e.target.value) || 0)} 
+        <Input
+          type="number"
+          value={val}
+          onChange={(e) => setVal(parseInt(e.target.value) || 0)}
           className="h-8 py-1 px-2 text-sm font-bold text-center w-16"
           autoFocus
           disabled={loading}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') handleSave();
-            if (e.key === 'Escape') setIsEditing(false);
+            if (e.key === "Enter") handleSave();
+            if (e.key === "Escape") setIsEditing(false);
           }}
         />
-        <Button size="icon" variant="ghost" className="h-8 w-8 text-primary hover:bg-primary/10 shrink-0" onClick={handleSave} disabled={loading}>
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-8 w-8 text-primary hover:bg-primary/10 shrink-0"
+          onClick={handleSave}
+          disabled={loading}
+        >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
         </Button>
       </div>
@@ -471,9 +477,12 @@ function MinStockCell({ item, onSave }: { item: InventoryItem, onSave: (val: num
   }
 
   return (
-    <div 
+    <div
       className="flex items-center gap-2 group cursor-pointer hover:bg-muted/30 p-1.5 -m-1.5 rounded-lg transition-colors max-w-[140px]"
-      onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
+      onClick={(e) => {
+        e.stopPropagation();
+        setIsEditing(true);
+      }}
     >
       <span className="font-bold text-ink text-sm">{val} sp</span>
       <Edit2 className="w-3 h-3 text-ash opacity-0 group-hover:opacity-100 transition-opacity" />

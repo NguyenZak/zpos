@@ -1,14 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { 
-  Terminal, 
-  GitBranch, 
-  Activity, 
-  Globe, 
-  Cpu, 
-  Server
-} from "lucide-react";
+import { Terminal, GitBranch, Activity, Globe, Cpu, Server } from "lucide-react";
 import { useLanguage } from "./LanguageContext";
 
 export function ProductDemo() {
@@ -19,45 +12,44 @@ export function ProductDemo() {
       title: t("demo.f1.title"),
       tag: "POS TERMINAL",
       desc: t("demo.f1.desc"),
-      icon: Terminal
+      icon: Terminal,
     },
     {
       title: t("demo.f2.title"),
       tag: "MULTI-TAB",
       desc: t("demo.f2.desc"),
-      icon: GitBranch
+      icon: GitBranch,
     },
     {
       title: t("demo.f3.title"),
       tag: "SYNC SPEED < 50ms",
       desc: t("demo.f3.desc"),
-      icon: Activity
+      icon: Activity,
     },
     {
       title: t("demo.f4.title"),
       tag: "AES-256 SECURE",
       desc: t("demo.f4.desc"),
-      icon: Globe
-    }
+      icon: Globe,
+    },
   ];
 
   return (
     <section className="py-24 bg-transparent overflow-hidden relative" id="products">
       {/* High-tech Dotted Grid Mesh Background */}
-      <div 
+      <div
         className="absolute inset-0 opacity-[0.4] pointer-events-none"
         style={{
           backgroundImage: `radial-gradient(rgba(0, 54, 255, 0.07) 1.2px, transparent 1.2px)`,
-          backgroundSize: "24px 24px"
+          backgroundSize: "24px 24px",
         }}
       />
-      
+
       {/* Decorative Radial Light Glares */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-gradient-to-tr from-[#0036ff]/5 to-[#0093ff]/5 rounded-full blur-[100px] pointer-events-none -z-10" />
 
       <div className="max-w-[1200px] mx-auto px-6 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          
           {/* Left Column: Tech Content & Features */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -71,26 +63,33 @@ export function ProductDemo() {
               {t("demo.badge")}
             </div>
 
-            <h2 
+            <h2
               className="text-3xl md:text-5xl font-bold text-[#090114] mb-6 tracking-tight leading-[1.15]"
-              style={{ fontFamily: "var(--font-aeonik-pro, sans-serif)", fontFeatureSettings: "'ss02', 'ss05', 'ss10'" }}
+              style={{
+                fontFamily: "var(--font-aeonik-pro, sans-serif)",
+                fontFeatureSettings: "'ss02', 'ss05', 'ss10'",
+              }}
             >
               {language === "vi" ? (
-                <>Công cụ mạnh mẽ cho <br /><span className="text-[#0036ff]">chuyên gia</span></>
+                <>
+                  Công cụ mạnh mẽ cho <br />
+                  <span className="text-[#0036ff]">chuyên gia</span>
+                </>
               ) : (
-                <>Powerful tools for <br /><span className="text-[#0036ff]">power users</span></>
+                <>
+                  Powerful tools for <br />
+                  <span className="text-[#0036ff]">power users</span>
+                </>
               )}
             </h2>
-            
-            <p className="text-base text-gray-500 mb-8 max-w-lg leading-relaxed">
-              {t("demo.desc")}
-            </p>
+
+            <p className="text-base text-gray-500 mb-8 max-w-lg leading-relaxed">{t("demo.desc")}</p>
 
             {/* Re-designed Technical Features List */}
             <div className="space-y-4">
               {features.map((item, i) => (
-                <div 
-                  key={i} 
+                <div
+                  key={i}
                   className="flex gap-4 p-3 rounded-xl hover:bg-gray-50 border border-transparent hover:border-gray-100/80 transition-all duration-300 group"
                 >
                   <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-50 border border-blue-100/40 flex items-center justify-center text-[#0036ff] group-hover:bg-[#0036ff] group-hover:text-white transition-colors duration-300 shadow-[0_2px_8px_rgba(0,54,255,0.05)]">
@@ -99,7 +98,9 @@ export function ProductDemo() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-[#090114] text-sm md:text-base">{item.title}</span>
-                      <span className="text-[9px] font-mono bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded uppercase tracking-wider font-semibold">{item.tag}</span>
+                      <span className="text-[9px] font-mono bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded uppercase tracking-wider font-semibold">
+                        {item.tag}
+                      </span>
                     </div>
                     <p className="text-xs text-gray-500 mt-1 leading-relaxed">{item.desc}</p>
                   </div>
@@ -110,7 +111,6 @@ export function ProductDemo() {
 
           {/* Right Column: High-tech Terminal & Floating Status cards */}
           <div className="relative h-[520px] flex items-center justify-center">
-            
             {/* Glowing Aura Background */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,54,255,0.06)_0%,transparent_70%)] pointer-events-none" />
 
@@ -129,10 +129,12 @@ export function ProductDemo() {
                   <div className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
                   <div className="w-3 h-3 rounded-full bg-[#27c93f]" />
                 </div>
-                <span className="text-2xs text-white/30 font-mono tracking-wider uppercase">bash — zpos-sync-daemon v2.4</span>
+                <span className="text-2xs text-white/30 font-mono tracking-wider uppercase">
+                  bash — zpos-sync-daemon v2.4
+                </span>
                 <div className="w-8" /> {/* Spacer to center title */}
               </div>
-              
+
               {/* Terminal Code Content */}
               <div className="p-6 font-mono text-xs leading-6 text-white/80">
                 <p className="text-white/40 mb-2 flex items-center gap-2">
@@ -143,11 +145,19 @@ export function ProductDemo() {
                 <p className="text-white/60 mb-1">▸ Syncing multi-tenant restaurant orders...</p>
                 <p className="text-white/40 mb-2">▸ Sync status: [================] 100%</p>
                 <p className="text-emerald-400 font-semibold flex items-center gap-2 mt-3">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  ✓ POS Terminals synchronized (0.8s)
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />✓ POS Terminals
+                  synchronized (0.8s)
                 </p>
                 <p className="text-white/60 mt-1 flex items-center gap-1.5">
-                  URL: <a href="https://demo.zpos.vn" className="text-[#0093ff] hover:underline" target="_blank" rel="noreferrer">https://demo.zpos.vn</a>
+                  URL:{" "}
+                  <a
+                    href="https://demo.zpos.vn"
+                    className="text-[#0093ff] hover:underline"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    https://demo.zpos.vn
+                  </a>
                 </p>
               </div>
             </motion.div>
@@ -179,7 +189,12 @@ export function ProductDemo() {
               {/* Sparkline & Latency */}
               <div className="flex items-end justify-between mt-4 gap-4">
                 <div className="w-24 h-6">
-                  <svg className="w-full h-full text-emerald-500" viewBox="0 0 100 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg
+                    className="w-full h-full text-emerald-500"
+                    viewBox="0 0 100 30"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
                     <path
                       d="M0 25 L10 20 L20 28 L30 15 L40 18 L50 8 L60 14 L70 5 L80 12 L90 7 L100 10"
                       stroke="currentColor"
@@ -221,7 +236,6 @@ export function ProductDemo() {
               </div>
             </motion.div>
           </div>
-
         </div>
       </div>
     </section>

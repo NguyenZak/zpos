@@ -7,10 +7,7 @@
     "message": "Tôi muốn nhận báo giá hệ thống POS quản lý chuỗi 15 chi nhánh siêu thị mẹ và bé tại Hà Nội. Yêu cầu tích hợp xuất hóa đơn đỏ và chuyển kho nội bộ tức thời.",
     "status": "new",
     "date": "2026-05-17 18:35",
-    "notes": [
-      "Khách hàng là đại diện chuỗi BiboMart Hà Nội.",
-      "Cần demo hệ thống trực tiếp vào chiều thứ 4 này."
-    ]
+    "notes": ["Khách hàng là đại diện chuỗi BiboMart Hà Nội.", "Cần demo hệ thống trực tiếp vào chiều thứ 4 này."]
   },
   {
     "id": "inq-2",
@@ -33,9 +30,6 @@
     "message": "Cần tích hợp ZPOS với phần mềm ERP SAP có sẵn của doanh nghiệp. Xin gửi tài liệu hướng dẫn API SDK.",
     "status": "completed",
     "date": "2026-05-14 09:45",
-    "notes": [
-      "Đã bàn giao bộ tài liệu API Swagger.",
-      "Kỹ thuật hai bên đã kết nối thử nghiệm Sandbox thành công."
-    ]
+    "notes": ["Đã bàn giao bộ tài liệu API Swagger.", "Kỹ thuật hai bên đã kết nối thử nghiệm Sandbox thành công."]
   }
 ]

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { createServerClient } from "@supabase/ssr";
 
+import { getTenantBySlug, resolveStorefrontHost } from "@/lib/tenant-cache";
 import { updateSession } from "@/utils/supabase/middleware";
 import { isSuperAdminUser } from "@/utils/super-admin";
 
@@ -21,6 +22,19 @@ function resolveMainDomain(hostname: string) {
   }
 
   return mainDomain;
+}
+
+function resolveStorefrontDomain(hostname: string) {
+  // Domain riêng cho storefront (tách khỏi admin `*.zpos.click`)
+  const configured = process.env.NEXT_PUBLIC_STOREFRONT_DOMAIN;
+  if (configured) return configured;
+
+  if (hostname.includes("localhost")) {
+    const port = hostname.includes(":") ? hostname.split(":").pop() : "";
+    return port ? `shop.localhost:${port}` : "shop.localhost";
+  }
+
+  return "zshop.click";
 }
 
 // Helper: create a lightweight Supabase client for auth checks in proxy
@@ -60,6 +74,36 @@ export async function proxy(request: NextRequest) {
   const isLocal = hostname.includes("localhost") || hostname.includes("127.0.0.1");
 
   const mainDomain = resolveMainDomain(hostname);
+  const storefrontDomain = resolveStorefrontDomain(hostname);
+
+  // ─── STOREFRONT ROUTING (public, no auth) ─────────────────────────────
+  // Phải check TRƯỚC khi chạy auth flow của admin app.
+  // Match nếu: hostname là *.zshop.click (subdomain mặc định)
+  //         hoặc hostname là custom domain đã verified.
+  const isStorefrontHost = hostname.endsWith(`.${storefrontDomain}`) || (!hostname.endsWith(mainDomain) && !isLocal); // có thể là custom domain
+
+  if (isStorefrontHost) {
+    const storefrontTenant = await resolveStorefrontHost(hostname, storefrontDomain);
+
+    if (storefrontTenant) {
+      const targetPath = url.pathname.startsWith("/storefront") ? url.pathname : `/storefront${url.pathname}`;
+
+      const storefrontResponse = NextResponse.rewrite(new URL(`${targetPath}${url.search}`, request.url));
+      storefrontResponse.headers.set("x-zpos-storefront-tenant", storefrontTenant.tenantSlug);
+      storefrontResponse.headers.set("x-zpos-storefront-tenant-id", storefrontTenant.tenantId);
+      if (storefrontTenant.isCustomDomain) {
+        storefrontResponse.headers.set("x-zpos-storefront-custom-domain", "1");
+      }
+      // KHÔNG set noindex — storefront cần SEO
+      return storefrontResponse;
+    }
+
+    // Custom domain trỏ về nhưng tenant chưa active → 404 friendly
+    if (!hostname.endsWith(mainDomain)) {
+      return NextResponse.rewrite(new URL("/storefront/not-found", request.url));
+    }
+  }
+  // ──────────────────────────────────────────────────────────────────────
 
   // Extract subdomain
   const subdomain = hostname.endsWith(`.${mainDomain}`) ? hostname.replace(`.${mainDomain}`, "") : null;
@@ -127,6 +171,7 @@ export async function proxy(request: NextRequest) {
 
     if (
       url.pathname.startsWith("/cms") ||
+      url.pathname.startsWith("/storefront") ||
       url.pathname.startsWith("/api") ||
       url.pathname.startsWith("/_next") ||
       isAuthRoute
@@ -144,7 +189,11 @@ export async function proxy(request: NextRequest) {
     }
 
     // 3. Auto-rewrite root-relative paths like /dashboard, /pos to /app/*
-    if (!url.pathname.startsWith("/app")) {
+    if (
+      !url.pathname.startsWith("/app") &&
+      !url.pathname.startsWith("/cms") &&
+      !url.pathname.startsWith("/storefront")
+    ) {
       if (!user) {
         const loginUrl = new URL("/login", request.url);
         loginUrl.searchParams.set("redirectTo", url.pathname);
@@ -188,7 +237,10 @@ export async function proxy(request: NextRequest) {
       return rewriteWithSession("/app");
     }
 
-    const targetPath = url.pathname.startsWith("/app") ? url.pathname : `/app${url.pathname}`;
+    const targetPath =
+      url.pathname.startsWith("/app") || url.pathname.startsWith("/cms") || url.pathname.startsWith("/storefront")
+        ? url.pathname
+        : `/app${url.pathname}`;
     return rewriteWithSession(`${targetPath}${url.search}`);
   }
 
@@ -224,15 +276,15 @@ export async function proxy(request: NextRequest) {
 
   // --- Tenant Subdomain Routing (bibomart.zpos.click, juno.zpos.click …) ---
   if (subdomain && !["www", "app", "console", "cms"].includes(subdomain)) {
-    // Validate tenant exists
+    // Validate tenant exists — dùng tenant-cache (loại bỏ DB query mỗi request)
     let tenantExists = false;
     try {
-      const { data: tenant } = await supabase.from("organizations").select("slug").eq("slug", subdomain).maybeSingle();
-      if (tenant) {
+      const tenant = await getTenantBySlug(subdomain);
+      if (tenant?.tenantId) {
         tenantExists = true;
       }
     } catch (e) {
-      console.warn("Database tenant lookup failed, checking static list:", e);
+      console.warn("Tenant cache lookup failed, checking static list:", e);
     }
 
     // Fail-safe fallback for RLS or offline mock scenarios
@@ -298,7 +350,10 @@ export async function proxy(request: NextRequest) {
     }
 
     // Rewrite to /app/* and attach tenant header
-    const targetPath = url.pathname.startsWith("/app") ? url.pathname : `/app${url.pathname}`;
+    const targetPath =
+      url.pathname.startsWith("/app") || url.pathname.startsWith("/cms") || url.pathname.startsWith("/storefront")
+        ? url.pathname
+        : `/app${url.pathname}`;
     const tenantResponse = rewriteWithSession(`${targetPath}${url.search}`);
     tenantResponse.headers.set("x-zpos-tenant", subdomain);
     return tenantResponse;

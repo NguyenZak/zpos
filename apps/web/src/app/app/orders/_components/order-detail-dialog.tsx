@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React from "react";
 import {
   Dialog,
   DialogContent,
@@ -26,7 +26,7 @@ interface OrderDetailDialogProps {
 }
 
 export function OrderDetailDialog({ order, open, onOpenChange, onPrint }: OrderDetailDialogProps) {
-  const [shippingProvider, setShippingProvider] = React.useState('GHN');
+  const [shippingProvider, setShippingProvider] = React.useState("GHN");
   const [pushing, setPushing] = React.useState(false);
   const [shippingData, setShippingData] = React.useState<any>(null);
   const [shippingFee, setShippingFee] = React.useState(25000);
@@ -42,8 +42,9 @@ export function OrderDetailDialog({ order, open, onOpenChange, onPrint }: OrderD
   const [custWardId, setCustWardId] = React.useState("25747");
   const [customerPhone, setCustomerPhone] = React.useState("");
 
-  const getProvinceName = (id: string) => VN_LOCATIONS.find(p => p.id === id)?.name || "";
-  const getWardName = (provId: string, wardId: string) => VN_LOCATIONS.find(p => p.id === provId)?.wards.find(w => w.id === wardId)?.name || "";
+  const getProvinceName = (id: string) => VN_LOCATIONS.find((p) => p.id === id)?.name || "";
+  const getWardName = (provId: string, wardId: string) =>
+    VN_LOCATIONS.find((p) => p.id === provId)?.wards.find((w) => w.id === wardId)?.name || "";
 
   const buildAddressStr = (street: string, wardId: string, provId: string) => {
     const w = getWardName(provId, wardId);
@@ -59,8 +60,8 @@ export function OrderDetailDialog({ order, open, onOpenChange, onPrint }: OrderD
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           to_address: addr,
-          weight: 500
-        })
+          weight: 500,
+        }),
       });
       const json = await res.json();
       if (json.success && json.data.length > 0) {
@@ -85,11 +86,17 @@ export function OrderDetailDialog({ order, open, onOpenChange, onPrint }: OrderD
     if (addressStr) {
       const lower = addressStr.toLowerCase();
       // Find Province
-      const matchedProvince = VN_LOCATIONS.find(p => lower.includes(p.name.toLowerCase()) || (p.id === "79" && (lower.includes("hcm") || lower.includes("hồ chí minh"))));
+      const matchedProvince = VN_LOCATIONS.find(
+        (p) =>
+          lower.includes(p.name.toLowerCase()) ||
+          (p.id === "79" && (lower.includes("hcm") || lower.includes("hồ chí minh"))),
+      );
       if (matchedProvince) {
         provinceId = matchedProvince.id;
         // Find Ward
-        const matchedWard = matchedProvince.wards.find(w => lower.includes(w.name.toLowerCase()) || lower.includes(w.name.toLowerCase().replace("phường ", "p.")));
+        const matchedWard = matchedProvince.wards.find(
+          (w) => lower.includes(w.name.toLowerCase()) || lower.includes(w.name.toLowerCase().replace("phường ", "p.")),
+        );
         if (matchedWard) {
           wardId = matchedWard.id;
         } else {
@@ -110,22 +117,26 @@ export function OrderDetailDialog({ order, open, onOpenChange, onPrint }: OrderD
   React.useEffect(() => {
     if (order) {
       // Parse shop address
-      const storedShopAddr = typeof window !== 'undefined' ? (localStorage.getItem('zpos_biz_addr') || '') : '';
-      const parsedShop = parseAddress(storedShopAddr || '123 Đường ABC, Quận 1, Thành phố Hồ Chí Minh');
-      setShopStreet(parsedShop.street.split(',')[0]);
+      const storedShopAddr = typeof window !== "undefined" ? localStorage.getItem("zpos_biz_addr") || "" : "";
+      const parsedShop = parseAddress(storedShopAddr || "123 Đường ABC, Quận 1, Thành phố Hồ Chí Minh");
+      setShopStreet(parsedShop.street.split(",")[0]);
       setShopProvinceId(parsedShop.provinceId);
       setShopWardId(parsedShop.wardId);
 
       // Parse customer address
-      const parsedCust = parseAddress(order.customer_address || '');
-      setCustStreet(parsedCust.street.split(',')[0] || parsedCust.street);
+      const parsedCust = parseAddress(order.customer_address || "");
+      setCustStreet(parsedCust.street.split(",")[0] || parsedCust.street);
       setCustProvinceId(parsedCust.provinceId);
       setCustWardId(parsedCust.wardId);
 
-      setCustomerPhone(order.customer_phone || '');
+      setCustomerPhone(order.customer_phone || "");
       setShippingData(null); // Reset when order changes
 
-      const fullCustAddr = buildAddressStr(parsedCust.street.split(',')[0] || parsedCust.street, parsedCust.wardId, parsedCust.provinceId);
+      const fullCustAddr = buildAddressStr(
+        parsedCust.street.split(",")[0] || parsedCust.street,
+        parsedCust.wardId,
+        parsedCust.provinceId,
+      );
       if (fullCustAddr) {
         fetchEstimatedFee(fullCustAddr, shippingProvider);
       }
@@ -142,7 +153,7 @@ export function OrderDetailDialog({ order, open, onOpenChange, onPrint }: OrderD
   if (!order) return null;
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN').format(amount) + " đ";
+    return new Intl.NumberFormat("vi-VN").format(amount) + " đ";
   };
 
   const handlePushShipping = async () => {
@@ -165,8 +176,8 @@ export function OrderDetailDialog({ order, open, onOpenChange, onPrint }: OrderD
           cod_amount: order.total_amount,
           from_address: fullShop,
           to_address: fullCust,
-          customer_phone: customerPhone
-        })
+          customer_phone: customerPhone,
+        }),
       });
       const json = await res.json();
       if (json.success) {
@@ -190,14 +201,16 @@ export function OrderDetailDialog({ order, open, onOpenChange, onPrint }: OrderD
               <DialogTitle className="text-xl font-bold flex items-center gap-2">
                 Chi tiết đơn hàng <span className="text-primary font-black">#{order.order_number}</span>
               </DialogTitle>
-              <Badge className={
-                order.status === 'completed'
-                  ? 'bg-green-500 hover:bg-green-600 text-white font-semibold'
-                  : order.status === 'cancelled'
-                    ? 'bg-red-500 hover:bg-red-600 text-white font-semibold'
-                    : 'bg-yellow-500 hover:bg-yellow-600 font-semibold'
-              }>
-                {order.status === 'completed' ? 'Hoàn tất' : order.status === 'cancelled' ? 'Đã hủy' : 'Đang xử lý'}
+              <Badge
+                className={
+                  order.status === "completed"
+                    ? "bg-green-500 hover:bg-green-600 text-white font-semibold"
+                    : order.status === "cancelled"
+                      ? "bg-red-500 hover:bg-red-600 text-white font-semibold"
+                      : "bg-yellow-500 hover:bg-yellow-600 font-semibold"
+                }
+              >
+                {order.status === "completed" ? "Hoàn tất" : order.status === "cancelled" ? "Đã hủy" : "Đang xử lý"}
               </Badge>
             </div>
             <DialogDescription className="flex flex-wrap items-center gap-4 text-xs mt-1">
@@ -207,8 +220,13 @@ export function OrderDetailDialog({ order, open, onOpenChange, onPrint }: OrderD
               </span>
               <span className="flex items-center gap-1.5">
                 <CreditCard className="w-3.5 h-3.5 text-muted-foreground" />
-                Thanh toán: <span className="font-semibold uppercase text-primary">
-                  {order.payment_method === 'cash' ? 'Tiền mặt' : order.payment_method === 'card' ? 'Thẻ' : 'Chuyển khoản'}
+                Thanh toán:{" "}
+                <span className="font-semibold uppercase text-primary">
+                  {order.payment_method === "cash"
+                    ? "Tiền mặt"
+                    : order.payment_method === "card"
+                      ? "Thẻ"
+                      : "Chuyển khoản"}
                 </span>
               </span>
             </DialogDescription>
@@ -237,7 +255,7 @@ export function OrderDetailDialog({ order, open, onOpenChange, onPrint }: OrderD
           <h3 className="text-sm font-bold text-muted-foreground flex items-center gap-2 mb-3">
             <Truck className="w-4 h-4" /> Vận chuyển & Giao hàng
           </h3>
-          
+
           {shippingData ? (
             <div className="p-3.5 rounded-xl bg-orange-500/5 border border-orange-500/20 flex flex-col gap-1.5 text-sm">
               <div className="flex justify-between">
@@ -248,169 +266,196 @@ export function OrderDetailDialog({ order, open, onOpenChange, onPrint }: OrderD
                 <span className="text-muted-foreground">Mã vận đơn (Tracking):</span>
                 <span className="font-mono font-bold flex items-center gap-1">
                   {shippingData.tracking_code}
-                  <a href={shippingData.label_url} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                  <a
+                    href={shippingData.label_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary hover:underline"
+                  >
                     <ExternalLink className="w-3.5 h-3.5 text-orange-500 hover:text-orange-600" />
                   </a>
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Trạng thái vận đơn:</span>
-                <span className="px-2 py-0.5 rounded bg-orange-500 text-white text-[10px] font-bold">READY_TO_PICK</span>
+                <span className="px-2 py-0.5 rounded bg-orange-500 text-white text-[10px] font-bold">
+                  READY_TO_PICK
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Cước phí giao hàng:</span>
                 <span className="font-semibold">{formatCurrency(shippingData.shipping_fee)}</span>
               </div>
             </div>
-          ) : (() => {
-            const selectedShopProvince = VN_LOCATIONS.find(p => p.id === shopProvinceId) || VN_LOCATIONS[0];
-            const selectedShopWard = selectedShopProvince.wards.find(w => w.id === shopWardId) || selectedShopProvince.wards[0];
+          ) : (
+            (() => {
+              const selectedShopProvince = VN_LOCATIONS.find((p) => p.id === shopProvinceId) || VN_LOCATIONS[0];
+              const selectedShopWard =
+                selectedShopProvince.wards.find((w) => w.id === shopWardId) || selectedShopProvince.wards[0];
 
-            const selectedCustProvince = VN_LOCATIONS.find(p => p.id === custProvinceId) || VN_LOCATIONS[0];
-            const selectedCustWard = selectedCustProvince.wards.find(w => w.id === custWardId) || selectedCustProvince.wards[0];
+              const selectedCustProvince = VN_LOCATIONS.find((p) => p.id === custProvinceId) || VN_LOCATIONS[0];
+              const selectedCustWard =
+                selectedCustProvince.wards.find((w) => w.id === custWardId) || selectedCustProvince.wards[0];
 
-            return (
-              <div className="p-3.5 rounded-xl bg-muted/40 border space-y-3">
-                {/* 🚚 Địa chỉ Gửi (Shop Sender) */}
-                <div className="space-y-1.5 border-b pb-3">
-                  <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
-                    📍 Địa chỉ gửi hàng (Cửa hàng)
-                  </span>
-                  
-                  <div className="grid grid-cols-2 gap-2">
-                    <select
-                      value={shopProvinceId}
-                      onChange={(e) => {
-                        const provId = e.target.value;
-                        setShopProvinceId(provId);
-                        const prov = VN_LOCATIONS.find(p => p.id === provId)!;
-                        setShopWardId(prov.wards[0]?.id || "");
-                      }}
-                      className="flex h-8 w-full rounded border bg-background px-2 py-1 text-[11px] font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-                    >
-                      {VN_LOCATIONS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </select>
-
-                    <select
-                      value={shopWardId}
-                      onChange={(e) => setShopWardId(e.target.value)}
-                      className="flex h-8 w-full rounded border bg-background px-2 py-1 text-[11px] font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-                    >
-                      {selectedShopProvince.wards.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                    </select>
-                  </div>
-
-                  <input
-                    type="text"
-                    value={shopStreet}
-                    onChange={(e) => setShopStreet(e.target.value)}
-                    className="flex h-8 w-full rounded border bg-background px-2.5 py-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-                    placeholder="Số nhà, ngõ ngách, tên đường..."
-                  />
-                </div>
-
-                {/* 📦 Địa chỉ Nhận (Customer Receiver) */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center">
+              return (
+                <div className="p-3.5 rounded-xl bg-muted/40 border space-y-3">
+                  {/* 🚚 Địa chỉ Gửi (Shop Sender) */}
+                  <div className="space-y-1.5 border-b pb-3">
                     <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
-                      👤 Địa chỉ nhận hàng (Khách hàng)
+                      📍 Địa chỉ gửi hàng (Cửa hàng)
                     </span>
-                    {order.customer_name && (
-                      <span className="text-[10px] font-bold text-primary">Khách: {order.customer_name}</span>
-                    )}
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-2">
-                    <select
-                      value={custProvinceId}
-                      onChange={(e) => {
-                        const provId = e.target.value;
-                        setCustProvinceId(provId);
-                        const prov = VN_LOCATIONS.find(p => p.id === provId)!;
-                        const nextW = prov.wards[0]?.id || "";
-                        setCustWardId(nextW);
-                        handleCustAddressChange(custStreet, nextW, provId);
-                      }}
-                      className="flex h-8 w-full rounded border bg-background px-2 py-1 text-[11px] font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-                    >
-                      {VN_LOCATIONS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </select>
 
-                    <select
-                      value={custWardId}
-                      onChange={(e) => {
-                        const wId = e.target.value;
-                        setCustWardId(wId);
-                        handleCustAddressChange(custStreet, wId, custProvinceId);
-                      }}
-                      className="flex h-8 w-full rounded border bg-background px-2 py-1 text-[11px] font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-                    >
-                      {selectedCustProvince.wards.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                    </select>
-                  </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <select
+                        value={shopProvinceId}
+                        onChange={(e) => {
+                          const provId = e.target.value;
+                          setShopProvinceId(provId);
+                          const prov = VN_LOCATIONS.find((p) => p.id === provId)!;
+                          setShopWardId(prov.wards[0]?.id || "");
+                        }}
+                        className="flex h-8 w-full rounded border bg-background px-2 py-1 text-[11px] font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                      >
+                        {VN_LOCATIONS.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                          </option>
+                        ))}
+                      </select>
 
-                  <div className="grid grid-cols-3 gap-2">
+                      <select
+                        value={shopWardId}
+                        onChange={(e) => setShopWardId(e.target.value)}
+                        className="flex h-8 w-full rounded border bg-background px-2 py-1 text-[11px] font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                      >
+                        {selectedShopProvince.wards.map((w) => (
+                          <option key={w.id} value={w.id}>
+                            {w.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
                     <input
                       type="text"
-                      value={custStreet}
-                      onChange={(e) => setCustStreet(e.target.value)}
-                      onBlur={() => handleCustAddressChange(custStreet, custWardId, custProvinceId)}
-                      className="col-span-2 flex h-8 w-full rounded border bg-background px-2.5 py-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                      value={shopStreet}
+                      onChange={(e) => setShopStreet(e.target.value)}
+                      className="flex h-8 w-full rounded border bg-background px-2.5 py-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
                       placeholder="Số nhà, ngõ ngách, tên đường..."
                     />
-                    <input
-                      type="text"
-                      value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
-                      className="flex h-8 w-full rounded border bg-background px-2.5 py-1 text-xs font-mono font-bold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-                      placeholder="SĐT nhận..."
-                    />
                   </div>
-                </div>
 
-                {/* 🚚 Chọn hãng Vận chuyển & Giá Ship */}
-                <div className="grid grid-cols-2 gap-3 pt-2 border-t">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
-                      Hãng vận chuyển
-                    </span>
-                    <select
-                      value={shippingProvider}
-                      onChange={(e) => setShippingProvider(e.target.value)}
-                      className="flex h-8 w-full rounded border bg-background px-2 py-1 text-xs font-bold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary text-orange-600 border-orange-200"
-                    >
-                      <option value="GHN">Giao Hàng Nhanh (GHN)</option>
-                      <option value="GHTK">Giao Hàng Tiết Kiệm (GHTK)</option>
-                      <option value="VIETTEL_POST">Viettel Post</option>
-                      <option value="AHAMOVE">AhaMove</option>
-                      <option value="LALAMOVE">Lalamove</option>
-                    </select>
+                  {/* 📦 Địa chỉ Nhận (Customer Receiver) */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
+                        👤 Địa chỉ nhận hàng (Khách hàng)
+                      </span>
+                      {order.customer_name && (
+                        <span className="text-[10px] font-bold text-primary">Khách: {order.customer_name}</span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <select
+                        value={custProvinceId}
+                        onChange={(e) => {
+                          const provId = e.target.value;
+                          setCustProvinceId(provId);
+                          const prov = VN_LOCATIONS.find((p) => p.id === provId)!;
+                          const nextW = prov.wards[0]?.id || "";
+                          setCustWardId(nextW);
+                          handleCustAddressChange(custStreet, nextW, provId);
+                        }}
+                        className="flex h-8 w-full rounded border bg-background px-2 py-1 text-[11px] font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                      >
+                        {VN_LOCATIONS.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                          </option>
+                        ))}
+                      </select>
+
+                      <select
+                        value={custWardId}
+                        onChange={(e) => {
+                          const wId = e.target.value;
+                          setCustWardId(wId);
+                          handleCustAddressChange(custStreet, wId, custProvinceId);
+                        }}
+                        className="flex h-8 w-full rounded border bg-background px-2 py-1 text-[11px] font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                      >
+                        {selectedCustProvince.wards.map((w) => (
+                          <option key={w.id} value={w.id}>
+                            {w.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2">
+                      <input
+                        type="text"
+                        value={custStreet}
+                        onChange={(e) => setCustStreet(e.target.value)}
+                        onBlur={() => handleCustAddressChange(custStreet, custWardId, custProvinceId)}
+                        className="col-span-2 flex h-8 w-full rounded border bg-background px-2.5 py-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                        placeholder="Số nhà, ngõ ngách, tên đường..."
+                      />
+                      <input
+                        type="text"
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        className="flex h-8 w-full rounded border bg-background px-2.5 py-1 text-xs font-mono font-bold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                        placeholder="SĐT nhận..."
+                      />
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
-                      Cước ước tính
-                    </span>
-                    <input
-                      type="number"
-                      value={shippingFee}
-                      onChange={(e) => setShippingFee(Number(e.target.value))}
-                      className="flex h-8 w-full rounded border bg-background px-2.5 py-1 text-xs font-black text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-                    />
+
+                  {/* 🚚 Chọn hãng Vận chuyển & Giá Ship */}
+                  <div className="grid grid-cols-2 gap-3 pt-2 border-t">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
+                        Hãng vận chuyển
+                      </span>
+                      <select
+                        value={shippingProvider}
+                        onChange={(e) => setShippingProvider(e.target.value)}
+                        className="flex h-8 w-full rounded border bg-background px-2 py-1 text-xs font-bold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary text-orange-600 border-orange-200"
+                      >
+                        <option value="GHN">Giao Hàng Nhanh (GHN)</option>
+                        <option value="GHTK">Giao Hàng Tiết Kiệm (GHTK)</option>
+                        <option value="VIETTEL_POST">Viettel Post</option>
+                        <option value="AHAMOVE">AhaMove</option>
+                        <option value="LALAMOVE">Lalamove</option>
+                      </select>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
+                        Cước ước tính
+                      </span>
+                      <input
+                        type="number"
+                        value={shippingFee}
+                        onChange={(e) => setShippingFee(Number(e.target.value))}
+                        className="flex h-8 w-full rounded border bg-background px-2.5 py-1 text-xs font-black text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                      />
+                    </div>
                   </div>
+
+                  <Button
+                    size="sm"
+                    onClick={handlePushShipping}
+                    disabled={pushing}
+                    className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold gap-2 text-xs h-8.5 mt-2"
+                  >
+                    {pushing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Truck className="w-3.5 h-3.5" />}
+                    Đẩy đơn sang hãng vận chuyển
+                  </Button>
                 </div>
-                
-                <Button
-                  size="sm"
-                  onClick={handlePushShipping}
-                  disabled={pushing}
-                  className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold gap-2 text-xs h-8.5 mt-2"
-                >
-                  {pushing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Truck className="w-3.5 h-3.5" />}
-                  Đẩy đơn sang hãng vận chuyển
-                </Button>
-              </div>
-            );
-          })()}
+              );
+            })()
+          )}
         </div>
 
         {/* Order Items */}
@@ -431,12 +476,15 @@ export function OrderDetailDialog({ order, open, onOpenChange, onPrint }: OrderD
               <tbody className="divide-y">
                 {(order.order_items || []).map((item: any, index: number) => {
                   const prodName = item.product_name || "Sản phẩm";
-                  const variantName = item.variant_name && item.variant_name !== 'Default' ? ` (${item.variant_name})` : '';
+                  const variantName =
+                    item.variant_name && item.variant_name !== "Default" ? ` (${item.variant_name})` : "";
                   return (
                     <tr key={index} className="hover:bg-muted/10">
                       <td className="p-3 font-semibold text-foreground">
                         {prodName}
-                        {variantName && <span className="block text-xs font-normal text-muted-foreground mt-0.5">{variantName}</span>}
+                        {variantName && (
+                          <span className="block text-xs font-normal text-muted-foreground mt-0.5">{variantName}</span>
+                        )}
                       </td>
                       <td className="p-3 text-center font-bold text-muted-foreground">{item.quantity}</td>
                       <td className="p-3 text-right font-medium">{formatCurrency(item.unit_price)}</td>
@@ -466,7 +514,15 @@ export function OrderDetailDialog({ order, open, onOpenChange, onPrint }: OrderD
           {order.return_orders && order.return_orders.length > 0 && (
             <div className="flex justify-between text-orange-600 font-semibold">
               <span>Đã hoàn tiền ({order.return_orders.length} lần):</span>
-              <span>-{formatCurrency(order.return_orders.reduce((acc: number, curr: any) => acc + (Number(curr.total_refund_amount) || 0), 0))}</span>
+              <span>
+                -
+                {formatCurrency(
+                  order.return_orders.reduce(
+                    (acc: number, curr: any) => acc + (Number(curr.total_refund_amount) || 0),
+                    0,
+                  ),
+                )}
+              </span>
             </div>
           )}
           <div className="flex justify-between font-black text-lg border-t pt-3.5 text-foreground">

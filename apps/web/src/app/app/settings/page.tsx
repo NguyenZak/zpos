@@ -1,13 +1,13 @@
 "use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { 
-  Building2, 
+import React from "react";
+import Link from "next/link";
+import {
+  Building2,
   Bell,
-  Store, 
-  Printer, 
-  ShieldCheck, 
+  Store,
+  Printer,
+  ShieldCheck,
   CreditCard,
   Image as ImageIcon,
   Save,
@@ -16,14 +16,9 @@ import {
   Send,
   Truck,
   Search,
-  FileText
-} from 'lucide-react';
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
+  FileText,
+} from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -32,22 +27,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { posService } from '@/services/pos.service';
-import { permissionService } from '@/services/permission.service';
-import { BankAccountsManager } from './_components/bank-accounts-manager';
-import { EInvoiceManager } from './_components/einvoice-manager';
-import { ZaloManager } from './_components/zalo-manager';
-import { DebtSettingsManager } from './_components/debt-settings-manager';
-import { InvoiceTemplateManager } from './_components/invoice-template-manager';
-import { Coins, MessageCircle } from 'lucide-react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
+import { posService } from "@/services/pos.service";
+import { permissionService } from "@/services/permission.service";
+import { BankAccountsManager } from "./_components/bank-accounts-manager";
+import { EInvoiceManager } from "./_components/einvoice-manager";
+import { ZaloManager } from "./_components/zalo-manager";
+import { DebtSettingsManager } from "./_components/debt-settings-manager";
+import { InvoiceTemplateManager } from "./_components/invoice-template-manager";
+import { Coins, MessageCircle, Globe } from "lucide-react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -68,26 +56,34 @@ import {
 } from "@/lib/app-notifications";
 
 const VIETNAMESE_BANKS = [
-  { id: 'vcb', name: 'Vietcombank (VCB)' },
-  { id: 'mb', name: 'MBBank (MB)' },
-  { id: 'tcb', name: 'Techcombank (TCB)' },
-  { id: 'acb', name: 'Ngân hàng ACB' },
-  { id: 'ctg', name: 'VietinBank' },
-  { id: 'bidv', name: 'BIDV' },
-  { id: 'vpb', name: 'VPBank' },
-  { id: 'tpb', name: 'TPBank' },
-  { id: 'stb', name: 'Sacombank' },
-  { id: 'shb', name: 'SHB' },
-  { id: 'hdb', name: 'HDBank' },
-  { id: 'vib', name: 'VIB' }
+  { id: "vcb", name: "Vietcombank (VCB)" },
+  { id: "mb", name: "MBBank (MB)" },
+  { id: "tcb", name: "Techcombank (TCB)" },
+  { id: "acb", name: "Ngân hàng ACB" },
+  { id: "ctg", name: "VietinBank" },
+  { id: "bidv", name: "BIDV" },
+  { id: "vpb", name: "VPBank" },
+  { id: "tpb", name: "TPBank" },
+  { id: "stb", name: "Sacombank" },
+  { id: "shb", name: "SHB" },
+  { id: "hdb", name: "HDBank" },
+  { id: "vib", name: "VIB" },
 ];
 
-const APP_NOTIFICATION_CATEGORY_ORDER: AppNotificationCategory[] = ["order", "payment", "inventory", "shift", "staff", "system", "report"];
+const APP_NOTIFICATION_CATEGORY_ORDER: AppNotificationCategory[] = [
+  "order",
+  "payment",
+  "inventory",
+  "shift",
+  "staff",
+  "system",
+  "report",
+];
 
 export default function SettingsPage() {
   const [loading, setLoading] = React.useState(false);
   const [bankList, setBankList] = React.useState<any[]>(VIETNAMESE_BANKS);
-  const [activeTab, setActiveTab] = React.useState('business');
+  const [activeTab, setActiveTab] = React.useState("business");
   const [isOwner, setIsOwner] = React.useState(false);
 
   React.useEffect(() => {
@@ -95,27 +91,35 @@ export default function SettingsPage() {
     permissionService.isCurrentUserOwner().then((value) => {
       if (!cancelled) setIsOwner(value);
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Brand / Store State
-  const [bizName, setBizName] = React.useState('ZPOS Retail Store');
-  const [bizTax, setBizTax] = React.useState('');
-  const [bizAddr, setBizAddr] = React.useState('123 Đường ABC, Quận 1, TP. Hồ Chí Minh');
-  const [logoUrl, setLogoUrl] = React.useState('');
+  const [bizName, setBizName] = React.useState("ZPOS Retail Store");
+  const [bizTax, setBizTax] = React.useState("");
+  const [bizAddr, setBizAddr] = React.useState("123 Đường ABC, Quận 1, TP. Hồ Chí Minh");
+  const [logoUrl, setLogoUrl] = React.useState("");
   const [searchingTax, setSearchingTax] = React.useState(false);
 
+  // Storefront Config State
+  const [storefrontEnabled, setStorefrontEnabled] = React.useState(false);
+  const [storefrontCustomDomain, setStorefrontCustomDomain] = React.useState("");
+  const [storefrontContactInfo, setStorefrontContactInfo] = React.useState("");
+  const [storefrontSocialLinks, setStorefrontSocialLinks] = React.useState("");
+
   // VietQR Config State
-  const [bankId, setBankId] = React.useState('vcb');
-  const [accountNo, setAccountNo] = React.useState('0071001234567');
-  const [accountName, setAccountName] = React.useState('ZPOS RETAIL');
-  const [memoTemplate, setMemoTemplate] = React.useState('ZPOS_');
+  const [bankId, setBankId] = React.useState("vcb");
+  const [accountNo, setAccountNo] = React.useState("0071001234567");
+  const [accountName, setAccountName] = React.useState("ZPOS RETAIL");
+  const [memoTemplate, setMemoTemplate] = React.useState("ZPOS_");
 
   // Printer Settings State
   const [autoPrint, setAutoPrint] = React.useState(true);
-  const [paperSize, setPaperSize] = React.useState('K80 (80mm)');
+  const [paperSize, setPaperSize] = React.useState("K80 (80mm)");
   const [printCopies, setPrintCopies] = React.useState(1);
-  const [footerText, setFooterText] = React.useState('Cảm ơn quý khách. Hẹn gặp lại!');
+  const [footerText, setFooterText] = React.useState("Cảm ơn quý khách. Hẹn gặp lại!");
 
   // Security Settings State
   const [enable2FA, setEnable2FA] = React.useState(false);
@@ -124,18 +128,18 @@ export default function SettingsPage() {
   const [idleTimeoutMinutes, setIdleTimeoutMinutes] = React.useState(5);
 
   // Shipping Settings State
-  const [shippingProvider, setShippingProvider] = React.useState('ghn');
-  const [shippingToken, setShippingToken] = React.useState('');
+  const [shippingProvider, setShippingProvider] = React.useState("ghn");
+  const [shippingToken, setShippingToken] = React.useState("");
 
   // Telegram Settings State
   const [telegramEnabled, setTelegramEnabled] = React.useState(false);
-  const [telegramToken, setTelegramToken] = React.useState('');
-  const [telegramChatId, setTelegramChatId] = React.useState('');
-  const [telegramThreadId, setTelegramThreadId] = React.useState('');
-  const [telegramThreadIdSales, setTelegramThreadIdSales] = React.useState('');
-  const [telegramThreadIdInventory, setTelegramThreadIdInventory] = React.useState('');
-  const [telegramThreadIdFinance, setTelegramThreadIdFinance] = React.useState('');
-  const [telegramThreadIdReports, setTelegramThreadIdReports] = React.useState('');
+  const [telegramToken, setTelegramToken] = React.useState("");
+  const [telegramChatId, setTelegramChatId] = React.useState("");
+  const [telegramThreadId, setTelegramThreadId] = React.useState("");
+  const [telegramThreadIdSales, setTelegramThreadIdSales] = React.useState("");
+  const [telegramThreadIdInventory, setTelegramThreadIdInventory] = React.useState("");
+  const [telegramThreadIdFinance, setTelegramThreadIdFinance] = React.useState("");
+  const [telegramThreadIdReports, setTelegramThreadIdReports] = React.useState("");
   const [telegramNotifyOrder, setTelegramNotifyOrder] = React.useState(true);
   const [telegramNotifyStock, setTelegramNotifyStock] = React.useState(true);
   const [telegramNotifyReturn, setTelegramNotifyReturn] = React.useState(true);
@@ -150,14 +154,16 @@ export default function SettingsPage() {
   const [testingTelegram, setTestingTelegram] = React.useState(false);
 
   // App Notification Settings State
-  const [appNotificationSettings, setAppNotificationSettings] = React.useState<AppNotificationSettings>(getDefaultAppNotificationSettings);
+  const [appNotificationSettings, setAppNotificationSettings] = React.useState<AppNotificationSettings>(
+    getDefaultAppNotificationSettings,
+  );
 
   // Branches Config State
   const [branches, setBranches] = React.useState<any[]>([]);
   const [branchDialogOpen, setBranchDialogOpen] = React.useState(false);
   const [editingBranch, setEditingBranch] = React.useState<any>(null);
-  const [branchName, setBranchName] = React.useState('');
-  const [branchAddress, setBranchAddress] = React.useState('');
+  const [branchName, setBranchName] = React.useState("");
+  const [branchAddress, setBranchAddress] = React.useState("");
 
   const loadBranchesList = async () => {
     try {
@@ -170,15 +176,15 @@ export default function SettingsPage() {
 
   const handleOpenAddBranch = () => {
     setEditingBranch(null);
-    setBranchName('');
-    setBranchAddress('');
+    setBranchName("");
+    setBranchAddress("");
     setBranchDialogOpen(true);
   };
 
   const handleOpenEditBranch = (b: any) => {
     setEditingBranch(b);
     setBranchName(b.name);
-    setBranchAddress(b.address || b.addr || '');
+    setBranchAddress(b.address || b.addr || "");
     setBranchDialogOpen(true);
   };
 
@@ -193,14 +199,14 @@ export default function SettingsPage() {
         id: editingBranch?.id || undefined,
         name: branchName,
         address: branchAddress,
-        status: editingBranch?.status || (branches.length === 0 ? "Chính" : "Phụ")
+        status: editingBranch?.status || (branches.length === 0 ? "Chính" : "Phụ"),
       };
       await posService.saveBranch(branchPayload);
       await loadBranchesList();
-      
+
       // Fire local event to notify Sidebar switcher instantly!
       window.dispatchEvent(new Event("zpos_branches_updated"));
-      
+
       toast.success(editingBranch ? "Cập nhật chi nhánh thành công!" : "Thêm chi nhánh mới thành công!");
       setBranchDialogOpen(false);
     } catch (e) {
@@ -216,10 +222,10 @@ export default function SettingsPage() {
       try {
         await posService.deleteBranch(id);
         await loadBranchesList();
-        
+
         // Fire local event to notify Sidebar switcher instantly!
         window.dispatchEvent(new Event("zpos_branches_updated"));
-        
+
         toast.success("Đã xóa chi nhánh thành công!");
       } catch (e) {
         toast.error("Không thể xóa chi nhánh!");
@@ -231,56 +237,86 @@ export default function SettingsPage() {
 
   // Load configs from localStorage
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      const tab = params.get('tab');
-      if (tab && ['business', 'branch', 'payment', 'einvoice', 'printer', 'security', 'telegram', 'app-notifications', 'zalo', 'shipping', 'debt'].includes(tab)) {
+      const tab = params.get("tab");
+      if (
+        tab &&
+        [
+          "business",
+          "branch",
+          "payment",
+          "einvoice",
+          "printer",
+          "security",
+          "telegram",
+          "app-notifications",
+          "zalo",
+          "shipping",
+          "debt",
+        ].includes(tab)
+      ) {
         setActiveTab(tab);
       }
 
-      setBizName(localStorage.getItem('zpos_biz_name') || 'ZPOS Retail Store');
-      setBizTax(localStorage.getItem('zpos_biz_tax') || '');
-      setBizAddr(localStorage.getItem('zpos_biz_addr') || '123 Đường ABC, Quận 1, TP. Hồ Chí Minh');
-      setLogoUrl(localStorage.getItem('zpos_biz_logo') || '');
+      setBizName(localStorage.getItem("zpos_biz_name") || "ZPOS Retail Store");
+      setBizTax(localStorage.getItem("zpos_biz_tax") || "");
+      setBizAddr(localStorage.getItem("zpos_biz_addr") || "123 Đường ABC, Quận 1, TP. Hồ Chí Minh");
+      setLogoUrl(localStorage.getItem("zpos_biz_logo") || "");
 
-      setBankId(localStorage.getItem('zpos_qr_bank_id') || 'vcb');
-      setAccountNo(localStorage.getItem('zpos_qr_account_no') || '0071001234567');
-      setAccountName(localStorage.getItem('zpos_qr_account_name') || 'ZPOS RETAIL');
-      setMemoTemplate(localStorage.getItem('zpos_qr_memo_template') || 'ZPOS_');
+      setBankId(localStorage.getItem("zpos_qr_bank_id") || "vcb");
+      setAccountNo(localStorage.getItem("zpos_qr_account_no") || "0071001234567");
+      setAccountName(localStorage.getItem("zpos_qr_account_name") || "ZPOS RETAIL");
+      setMemoTemplate(localStorage.getItem("zpos_qr_memo_template") || "ZPOS_");
 
-      setAutoPrint(localStorage.getItem('zpos_printer_auto') !== 'false');
-      setPaperSize(localStorage.getItem('zpos_printer_paper') || 'K80 (80mm)');
-      setPrintCopies(parseInt(localStorage.getItem('zpos_printer_copies') || '1'));
-      setFooterText(localStorage.getItem('zpos_printer_footer') || 'Cảm ơn quý khách. Hẹn gặp lại!');
+      setAutoPrint(localStorage.getItem("zpos_printer_auto") !== "false");
+      setPaperSize(localStorage.getItem("zpos_printer_paper") || "K80 (80mm)");
+      setPrintCopies(parseInt(localStorage.getItem("zpos_printer_copies") || "1"));
+      setFooterText(localStorage.getItem("zpos_printer_footer") || "Cảm ơn quý khách. Hẹn gặp lại!");
 
-      setEnable2FA(localStorage.getItem('zpos_security_2fa') === 'true');
-      setRestrictIP(localStorage.getItem('zpos_security_ip') === 'true');
-      setEnableIdleScreen(localStorage.getItem('zpos_pos_idle_screen') !== 'false');
-      setIdleTimeoutMinutes(parseInt(localStorage.getItem('zpos_pos_idle_timeout') || '5'));
+      setEnable2FA(localStorage.getItem("zpos_security_2fa") === "true");
+      setRestrictIP(localStorage.getItem("zpos_security_ip") === "true");
+      setEnableIdleScreen(localStorage.getItem("zpos_pos_idle_screen") !== "false");
+      setIdleTimeoutMinutes(parseInt(localStorage.getItem("zpos_pos_idle_timeout") || "5"));
 
       // Telegram Configurations
-      setTelegramEnabled(localStorage.getItem('zpos_telegram_enabled') === 'true');
-      setTelegramToken(localStorage.getItem('zpos_telegram_token') || '');
-      setTelegramChatId(localStorage.getItem('zpos_telegram_chat_id') || '');
-      setTelegramThreadId(localStorage.getItem('zpos_telegram_thread_id') || '');
-      setTelegramThreadIdSales(localStorage.getItem('zpos_telegram_thread_id_sales') || '');
-      setTelegramThreadIdInventory(localStorage.getItem('zpos_telegram_thread_id_inventory') || '');
-      setTelegramThreadIdFinance(localStorage.getItem('zpos_telegram_thread_id_finance') || '');
-      setTelegramThreadIdReports(localStorage.getItem('zpos_telegram_thread_id_reports') || '');
-      setTelegramNotifyOrder(localStorage.getItem('zpos_telegram_notify_order') !== 'false');
-      setTelegramNotifyStock(localStorage.getItem('zpos_telegram_notify_stock') !== 'false');
-      setTelegramNotifyReturn(localStorage.getItem('zpos_telegram_notify_return') !== 'false');
-      setTelegramNotifyCancel(localStorage.getItem('zpos_telegram_notify_cancel') !== 'false');
-      setTelegramNotifyPurchase(localStorage.getItem('zpos_telegram_notify_purchase') !== 'false');
-      setTelegramNotifyExpense(localStorage.getItem('zpos_telegram_notify_expense') !== 'false');
-      setTelegramNotifySalary(localStorage.getItem('zpos_telegram_notify_salary') !== 'false');
-      setTelegramNotifyShift(localStorage.getItem('zpos_telegram_notify_shift') !== 'false');
-      setTelegramNotifyReports(localStorage.getItem('zpos_telegram_notify_reports') !== 'false');
-      setTelegramNotifyStaleProducts(localStorage.getItem('zpos_telegram_notify_stale_products') !== 'false');
-      setTelegramStaleProductDays(parseInt(localStorage.getItem('zpos_telegram_stale_product_days') || String(DEFAULT_STALE_PRODUCT_DAYS)));
+      setTelegramEnabled(localStorage.getItem("zpos_telegram_enabled") === "true");
+      setTelegramToken(localStorage.getItem("zpos_telegram_token") || "");
+      setTelegramChatId(localStorage.getItem("zpos_telegram_chat_id") || "");
+      setTelegramThreadId(localStorage.getItem("zpos_telegram_thread_id") || "");
+      setTelegramThreadIdSales(localStorage.getItem("zpos_telegram_thread_id_sales") || "");
+      setTelegramThreadIdInventory(localStorage.getItem("zpos_telegram_thread_id_inventory") || "");
+      setTelegramThreadIdFinance(localStorage.getItem("zpos_telegram_thread_id_finance") || "");
+      setTelegramThreadIdReports(localStorage.getItem("zpos_telegram_thread_id_reports") || "");
+      setTelegramNotifyOrder(localStorage.getItem("zpos_telegram_notify_order") !== "false");
+      setTelegramNotifyStock(localStorage.getItem("zpos_telegram_notify_stock") !== "false");
+      setTelegramNotifyReturn(localStorage.getItem("zpos_telegram_notify_return") !== "false");
+      setTelegramNotifyCancel(localStorage.getItem("zpos_telegram_notify_cancel") !== "false");
+      setTelegramNotifyPurchase(localStorage.getItem("zpos_telegram_notify_purchase") !== "false");
+      setTelegramNotifyExpense(localStorage.getItem("zpos_telegram_notify_expense") !== "false");
+      setTelegramNotifySalary(localStorage.getItem("zpos_telegram_notify_salary") !== "false");
+      setTelegramNotifyShift(localStorage.getItem("zpos_telegram_notify_shift") !== "false");
+      setTelegramNotifyReports(localStorage.getItem("zpos_telegram_notify_reports") !== "false");
+      setTelegramNotifyStaleProducts(localStorage.getItem("zpos_telegram_notify_stale_products") !== "false");
+      setTelegramStaleProductDays(
+        parseInt(localStorage.getItem("zpos_telegram_stale_product_days") || String(DEFAULT_STALE_PRODUCT_DAYS)),
+      );
       setAppNotificationSettings(loadAppNotificationSettings());
     }
     loadBranchesList();
+
+    // Fetch Storefront Settings
+    posService
+      .getStorefrontSettings()
+      .then((data) => {
+        if (data) {
+          setStorefrontEnabled(data.storefront_enabled || false);
+          setStorefrontCustomDomain(data.storefront_custom_domain || "");
+          setStorefrontContactInfo(data.contact_info || "");
+          setStorefrontSocialLinks(data.social_links || "");
+        }
+      })
+      .catch(console.warn);
 
     // Fetch live banks list from VietQR dynamic API
     const fetchBanks = async () => {
@@ -290,7 +326,7 @@ export default function SettingsPage() {
         if (json && json.code === "00" && Array.isArray(json.data)) {
           const mapped = json.data.map((b: any) => ({
             id: (b.code || b.bin).toLowerCase(),
-            name: `${b.shortName || b.short_name || b.code} - ${b.name}`
+            name: `${b.shortName || b.short_name || b.code} - ${b.name}`,
           }));
           setBankList(mapped);
         }
@@ -303,74 +339,86 @@ export default function SettingsPage() {
 
   const handleSave = () => {
     setLoading(true);
-    
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('zpos_biz_name', bizName);
-      localStorage.setItem('zpos_biz_tax', bizTax);
-      localStorage.setItem('zpos_biz_addr', bizAddr);
-      localStorage.setItem('zpos_biz_logo', logoUrl);
 
-      localStorage.setItem('zpos_qr_bank_id', bankId);
-      localStorage.setItem('zpos_qr_account_no', accountNo);
-      localStorage.setItem('zpos_qr_account_name', accountName);
-      localStorage.setItem('zpos_qr_memo_template', memoTemplate);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("zpos_biz_name", bizName);
+      localStorage.setItem("zpos_biz_tax", bizTax);
+      localStorage.setItem("zpos_biz_addr", bizAddr);
+      localStorage.setItem("zpos_biz_logo", logoUrl);
 
-      localStorage.setItem('zpos_printer_auto', String(autoPrint));
-      localStorage.setItem('zpos_printer_paper', paperSize);
-      localStorage.setItem('zpos_printer_copies', String(printCopies));
-      localStorage.setItem('zpos_printer_footer', footerText);
+      localStorage.setItem("zpos_qr_bank_id", bankId);
+      localStorage.setItem("zpos_qr_account_no", accountNo);
+      localStorage.setItem("zpos_qr_account_name", accountName);
+      localStorage.setItem("zpos_qr_memo_template", memoTemplate);
 
-      localStorage.setItem('zpos_security_2fa', String(enable2FA));
-      localStorage.setItem('zpos_security_ip', String(restrictIP));
-      localStorage.setItem('zpos_pos_idle_screen', String(enableIdleScreen));
-      localStorage.setItem('zpos_pos_idle_timeout', String(idleTimeoutMinutes));
+      localStorage.setItem("zpos_printer_auto", String(autoPrint));
+      localStorage.setItem("zpos_printer_paper", paperSize);
+      localStorage.setItem("zpos_printer_copies", String(printCopies));
+      localStorage.setItem("zpos_printer_footer", footerText);
+
+      localStorage.setItem("zpos_security_2fa", String(enable2FA));
+      localStorage.setItem("zpos_security_ip", String(restrictIP));
+      localStorage.setItem("zpos_pos_idle_screen", String(enableIdleScreen));
+      localStorage.setItem("zpos_pos_idle_timeout", String(idleTimeoutMinutes));
 
       // Telegram Configurations
-      localStorage.setItem('zpos_telegram_enabled', String(telegramEnabled));
-      localStorage.setItem('zpos_telegram_token', telegramToken);
-      localStorage.setItem('zpos_telegram_chat_id', telegramChatId);
-      localStorage.setItem('zpos_telegram_thread_id', telegramThreadId);
-      localStorage.setItem('zpos_telegram_thread_id_sales', telegramThreadIdSales);
-      localStorage.setItem('zpos_telegram_thread_id_inventory', telegramThreadIdInventory);
-      localStorage.setItem('zpos_telegram_thread_id_finance', telegramThreadIdFinance);
-      localStorage.setItem('zpos_telegram_thread_id_reports', telegramThreadIdReports);
-      localStorage.setItem('zpos_telegram_notify_order', String(telegramNotifyOrder));
-      localStorage.setItem('zpos_telegram_notify_stock', String(telegramNotifyStock));
-      localStorage.setItem('zpos_telegram_notify_return', String(telegramNotifyReturn));
-      localStorage.setItem('zpos_telegram_notify_cancel', String(telegramNotifyCancel));
-      localStorage.setItem('zpos_telegram_notify_purchase', String(telegramNotifyPurchase));
-      localStorage.setItem('zpos_telegram_notify_expense', String(telegramNotifyExpense));
-      localStorage.setItem('zpos_telegram_notify_salary', String(telegramNotifySalary));
-      localStorage.setItem('zpos_telegram_notify_shift', String(telegramNotifyShift));
-      localStorage.setItem('zpos_telegram_notify_reports', String(telegramNotifyReports));
-      localStorage.setItem('zpos_telegram_notify_stale_products', String(telegramNotifyStaleProducts));
-      localStorage.setItem('zpos_telegram_stale_product_days', String(telegramStaleProductDays));
+      localStorage.setItem("zpos_telegram_enabled", String(telegramEnabled));
+      localStorage.setItem("zpos_telegram_token", telegramToken);
+      localStorage.setItem("zpos_telegram_chat_id", telegramChatId);
+      localStorage.setItem("zpos_telegram_thread_id", telegramThreadId);
+      localStorage.setItem("zpos_telegram_thread_id_sales", telegramThreadIdSales);
+      localStorage.setItem("zpos_telegram_thread_id_inventory", telegramThreadIdInventory);
+      localStorage.setItem("zpos_telegram_thread_id_finance", telegramThreadIdFinance);
+      localStorage.setItem("zpos_telegram_thread_id_reports", telegramThreadIdReports);
+      localStorage.setItem("zpos_telegram_notify_order", String(telegramNotifyOrder));
+      localStorage.setItem("zpos_telegram_notify_stock", String(telegramNotifyStock));
+      localStorage.setItem("zpos_telegram_notify_return", String(telegramNotifyReturn));
+      localStorage.setItem("zpos_telegram_notify_cancel", String(telegramNotifyCancel));
+      localStorage.setItem("zpos_telegram_notify_purchase", String(telegramNotifyPurchase));
+      localStorage.setItem("zpos_telegram_notify_expense", String(telegramNotifyExpense));
+      localStorage.setItem("zpos_telegram_notify_salary", String(telegramNotifySalary));
+      localStorage.setItem("zpos_telegram_notify_shift", String(telegramNotifyShift));
+      localStorage.setItem("zpos_telegram_notify_reports", String(telegramNotifyReports));
+      localStorage.setItem("zpos_telegram_notify_stale_products", String(telegramNotifyStaleProducts));
+      localStorage.setItem("zpos_telegram_stale_product_days", String(telegramStaleProductDays));
       saveAppNotificationSettings(appNotificationSettings);
 
       // Save to Supabase database asynchronously
-      posService.saveTelegramSettings({
-        enabled: telegramEnabled,
-        token: telegramToken,
-        chat_id: telegramChatId,
-        thread_id: telegramThreadId,
-        thread_id_sales: telegramThreadIdSales,
-        thread_id_inventory: telegramThreadIdInventory,
-        thread_id_finance: telegramThreadIdFinance,
-        thread_id_reports: telegramThreadIdReports,
-        notify_order: telegramNotifyOrder,
-        notify_stock: telegramNotifyStock,
-        notify_return: telegramNotifyReturn,
-        notify_cancel: telegramNotifyCancel,
-        notify_purchase: telegramNotifyPurchase,
-        notify_expense: telegramNotifyExpense,
-        notify_salary: telegramNotifySalary,
-        notify_shift: telegramNotifyShift,
-        notify_reports: telegramNotifyReports,
-        notify_stale_products: telegramNotifyStaleProducts,
-        stale_product_days: telegramStaleProductDays
-      }).catch(err => {
-        console.warn("Could not save Telegram settings to database:", err);
-      });
+      posService
+        .saveTelegramSettings({
+          enabled: telegramEnabled,
+          token: telegramToken,
+          chat_id: telegramChatId,
+          thread_id: telegramThreadId,
+          thread_id_sales: telegramThreadIdSales,
+          thread_id_inventory: telegramThreadIdInventory,
+          thread_id_finance: telegramThreadIdFinance,
+          thread_id_reports: telegramThreadIdReports,
+          notify_order: telegramNotifyOrder,
+          notify_stock: telegramNotifyStock,
+          notify_return: telegramNotifyReturn,
+          notify_cancel: telegramNotifyCancel,
+          notify_purchase: telegramNotifyPurchase,
+          notify_expense: telegramNotifyExpense,
+          notify_salary: telegramNotifySalary,
+          notify_shift: telegramNotifyShift,
+          notify_reports: telegramNotifyReports,
+          notify_stale_products: telegramNotifyStaleProducts,
+          stale_product_days: telegramStaleProductDays,
+        })
+        .catch((err) => {
+          console.warn("Could not save Telegram settings to database:", err);
+        });
+
+      // Save Storefront Settings
+      posService
+        .updateStorefrontSettings({
+          storefront_enabled: storefrontEnabled,
+          storefront_custom_domain: storefrontCustomDomain || null,
+          contact_info: storefrontContactInfo || null,
+          social_links: storefrontSocialLinks || null,
+        })
+        .catch(console.warn);
 
       window.dispatchEvent(new Event("zpos_settings_updated"));
     }
@@ -386,30 +434,30 @@ export default function SettingsPage() {
       toast.error("Vui lòng điền đủ Bot Token và Chat ID trước khi test!");
       return;
     }
-    
+
     setTestingTelegram(true);
     try {
       const url = `https://api.telegram.org/bot${telegramToken}/sendMessage`;
       const threadId = telegramThreadId.trim();
       const threadPayload = /^\d+$/.test(threadId) ? { message_thread_id: Number(threadId) } : {};
       const res = await fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           chat_id: telegramChatId,
           ...threadPayload,
           text: `🔔 <b>ZPOS TELEGRAM TEST</b>\n\nChúc mừng! Kết nối từ hệ thống ZPOS đến nhóm Telegram của bạn đã thành công rực rỡ! 🎉\n\n⚡️ <i>Hệ thống đã sẵn sàng gửi thông báo!</i>`,
-          parse_mode: 'HTML',
+          parse_mode: "HTML",
         }),
       });
-      
+
       const json = await res.json();
       if (json.ok) {
         toast.success("Gửi tin nhắn test thành công! Hãy kiểm tra Telegram.");
       } else {
-        toast.error(`Telegram báo lỗi: ${json.description || 'Không xác định'}`);
+        toast.error(`Telegram báo lỗi: ${json.description || "Không xác định"}`);
       }
     } catch (e) {
       toast.error("Lỗi mạng khi kết nối tới Telegram API!");
@@ -435,12 +483,14 @@ export default function SettingsPage() {
 
     setLoading(true);
     const toastId = toast.loading("Đang tối ưu hóa ảnh và chuyển sang WebP...");
-    
+
     try {
       // 1. Convert to WebP client-side using built-in HTML5 Canvas
       try {
         const webpFile = await convertToWebP(file, 0.85);
-        console.log(`[WebP Optimizer] Dung lượng gốc: ${(file.size / 1024).toFixed(2)} KB -> WebP tối ưu: ${(webpFile.size / 1024).toFixed(2)} KB (Giảm ${(((file.size - webpFile.size) / file.size) * 100).toFixed(1)}% dung lượng)`);
+        console.log(
+          `[WebP Optimizer] Dung lượng gốc: ${(file.size / 1024).toFixed(2)} KB -> WebP tối ưu: ${(webpFile.size / 1024).toFixed(2)} KB (Giảm ${(((file.size - webpFile.size) / file.size) * 100).toFixed(1)}% dung lượng)`,
+        );
         file = webpFile;
       } catch (convErr) {
         console.warn("Lỗi chuyển đổi WebP, tiếp tục dùng ảnh gốc", convErr);
@@ -480,7 +530,7 @@ export default function SettingsPage() {
   };
 
   const handleLookupTax = async () => {
-    const cleanTax = bizTax.trim().replace(/[^0-9-]/g, '');
+    const cleanTax = bizTax.trim().replace(/[^0-9-]/g, "");
     if (!cleanTax) {
       toast.error("Vui lòng nhập mã số thuế hợp lệ!");
       return;
@@ -494,7 +544,7 @@ export default function SettingsPage() {
         throw new Error("Không thể kết nối đến hệ thống tra cứu.");
       }
       const json = await res.json();
-      
+
       if (json && json.code === "00" && json.data) {
         const { name, address } = json.data;
         if (name) setBizName(name);
@@ -555,6 +605,10 @@ export default function SettingsPage() {
               <Building2 className="w-4 h-4" />
               Thông tin cửa hàng
             </TabsTrigger>
+            <TabsTrigger value="storefront" className="gap-2 shrink-0">
+              <Globe className="w-4 h-4 text-emerald-500" />
+              Storefront (Website)
+            </TabsTrigger>
             <TabsTrigger value="branch" className="gap-2 shrink-0">
               <Store className="w-4 h-4" />
               Chi nhánh
@@ -605,15 +659,9 @@ export default function SettingsPage() {
               <CardDescription>Cập nhật logo và thông tin cơ bản của doanh nghiệp.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <input 
-                type="file" 
-                ref={logoInputRef} 
-                onChange={handleLogoUpload} 
-                className="hidden" 
-                accept="image/*" 
-              />
+              <input type="file" ref={logoInputRef} onChange={handleLogoUpload} className="hidden" accept="image/*" />
               <div className="flex items-center gap-6">
-                <div 
+                <div
                   onClick={handleLogoChange}
                   className="w-24 h-24 rounded-lg bg-muted flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/20 text-muted-foreground hover:bg-muted/80 cursor-pointer transition-colors overflow-hidden relative"
                 >
@@ -628,65 +676,127 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex-1 space-y-1">
                   <h4 className="text-sm font-bold">Logo cửa hàng</h4>
-                  <p className="text-xs text-muted-foreground italic">Khuyên dùng định dạng PNG hoặc SVG, kích thước tối ưu 512x512px.</p>
-                  <Button variant="outline" size="sm" className="mt-2 h-8" onClick={handleLogoChange}>Thay đổi</Button>
+                  <p className="text-xs text-muted-foreground italic">
+                    Khuyên dùng định dạng PNG hoặc SVG, kích thước tối ưu 512x512px.
+                  </p>
+                  <Button variant="outline" size="sm" className="mt-2 h-8" onClick={handleLogoChange}>
+                    Thay đổi
+                  </Button>
                 </div>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="grid gap-2">
                   <Label htmlFor="biz-name">Tên cửa hàng / Doanh nghiệp</Label>
-                  <Input 
-                    id="biz-name" 
-                    value={bizName} 
-                    onChange={(e) => setBizName(e.target.value)}
-                  />
+                  <Input id="biz-name" value={bizName} onChange={(e) => setBizName(e.target.value)} />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="biz-tax" className="font-semibold text-foreground flex items-center gap-1.5">
                     Mã số thuế
                   </Label>
                   <div className="relative flex items-center">
-                    <Input 
-                      id="biz-tax" 
-                      placeholder="Nhập mã số thuế (e.g. 0316794479)..." 
-                      value={bizTax} 
+                    <Input
+                      id="biz-tax"
+                      placeholder="Nhập mã số thuế (e.g. 0316794479)..."
+                      value={bizTax}
                       onChange={(e) => setBizTax(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
+                        if (e.key === "Enter") {
                           e.preventDefault();
                           handleLookupTax();
                         }
                       }}
                       className="pr-24 font-mono font-bold transition-all focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
                     />
-                    <Button 
+                    <Button
                       type="button"
-                      size="sm" 
+                      size="sm"
                       onClick={handleLookupTax}
                       disabled={searchingTax || !bizTax.trim()}
                       className="absolute right-1 h-8 px-3 text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm rounded-md transition-all duration-200 flex items-center gap-1"
                     >
-                      {searchingTax ? (
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                      ) : (
-                        <Search className="w-3 h-3" />
-                      )}
+                      {searchingTax ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
                       <span>Tra cứu</span>
                     </Button>
                   </div>
                   <p className="text-[11px] text-muted-foreground leading-relaxed italic">
-                    💡 Nhập Mã số thuế và bấm <strong>Tra cứu</strong> (hoặc nhấn <strong>Enter</strong>) để tự động lấy tên doanh nghiệp và địa chỉ từ Tổng cục Thuế.
+                    💡 Nhập Mã số thuế và bấm <strong>Tra cứu</strong> (hoặc nhấn <strong>Enter</strong>) để tự động lấy
+                    tên doanh nghiệp và địa chỉ từ Tổng cục Thuế.
                   </p>
                 </div>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="biz-addr">Địa chỉ trụ sở chính</Label>
-                <Textarea 
-                  id="biz-addr" 
-                  value={bizAddr} 
-                  onChange={(e) => setBizAddr(e.target.value)}
-                />
+                <Textarea id="biz-addr" value={bizAddr} onChange={(e) => setBizAddr(e.target.value)} />
               </div>
+            </CardContent>
+            <CardFooter className="border-t bg-muted/20 px-6 py-4 flex justify-end">
+              <Button size="sm" onClick={handleSave} disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Save className="mr-2 h-4 w-4" />
+                Lưu cấu hình
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="storefront" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="w-5 h-5 text-emerald-500" />
+                Cấu hình Cửa hàng Online (Storefront)
+              </CardTitle>
+              <CardDescription>
+                Bật/tắt website bán hàng online và tùy chỉnh thông tin liên hệ, tên miền.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between border-b pb-4">
+                <div className="space-y-0.5">
+                  <Label className="text-base font-bold">Kích hoạt Storefront</Label>
+                  <p className="text-xs text-muted-foreground italic">
+                    Cho phép khách hàng truy cập website bán hàng online của bạn.
+                  </p>
+                </div>
+                <Switch checked={storefrontEnabled} onCheckedChange={setStorefrontEnabled} />
+              </div>
+
+              {storefrontEnabled && (
+                <div className="space-y-4 animate-in slide-in-from-top-4 duration-300">
+                  <div className="grid gap-2">
+                    <Label htmlFor="storefront-domain">Tên miền tùy chỉnh (Tùy chọn)</Label>
+                    <Input
+                      id="storefront-domain"
+                      placeholder="vd: www.myboutique.com"
+                      value={storefrontCustomDomain}
+                      onChange={(e) => setStorefrontCustomDomain(e.target.value)}
+                    />
+                    <p className="text-[10px] text-muted-foreground">
+                      Nếu để trống, hệ thống sẽ sử dụng tên miền phụ mặc định của ZPOS.
+                    </p>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="storefront-contact">Thông tin liên hệ (Hiển thị Footer)</Label>
+                    <Textarea
+                      id="storefront-contact"
+                      placeholder="vd: Hotline: 0909123456 - Email: support@myboutique.com"
+                      value={storefrontContactInfo}
+                      onChange={(e) => setStorefrontContactInfo(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="storefront-social">Mạng xã hội (JSON Format)</Label>
+                    <Input
+                      id="storefront-social"
+                      placeholder='vd: {"facebook": "fb.com/myboutique", "instagram": "@myboutique"}'
+                      value={storefrontSocialLinks}
+                      onChange={(e) => setStorefrontSocialLinks(e.target.value)}
+                      className="font-mono text-xs"
+                    />
+                    <p className="text-[10px] text-muted-foreground">Nhập chuỗi JSON cấu hình liên kết mạng xã hội.</p>
+                  </div>
+                </div>
+              )}
             </CardContent>
             <CardFooter className="border-t bg-muted/20 px-6 py-4 flex justify-end">
               <Button size="sm" onClick={handleSave} disabled={loading}>
@@ -705,23 +815,41 @@ export default function SettingsPage() {
                 <CardTitle>Danh sách chi nhánh</CardTitle>
                 <CardDescription>Quản lý các địa điểm kinh doanh của bạn.</CardDescription>
               </div>
-              <Button size="sm" onClick={handleOpenAddBranch}>Thêm chi nhánh</Button>
+              <Button size="sm" onClick={handleOpenAddBranch}>
+                Thêm chi nhánh
+              </Button>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {branches.map((b, i) => (
-                  <div key={b.id || i} className="flex items-center justify-between p-4 border rounded-xl bg-card hover:bg-muted/10 transition-colors">
+                  <div
+                    key={b.id || i}
+                    className="flex items-center justify-between p-4 border rounded-xl bg-card hover:bg-muted/10 transition-colors"
+                  >
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
                         <span className="font-bold">{b.name}</span>
-                        <Badge variant={b.status === "Chính" ? "default" : "secondary"} className="text-[10px]">{b.status || "Phụ"}</Badge>
+                        <Badge variant={b.status === "Chính" ? "default" : "secondary"} className="text-[10px]">
+                          {b.status || "Phụ"}
+                        </Badge>
                       </div>
-                      <span className="text-xs text-muted-foreground">{b.address || b.addr || "Chưa cập nhật địa chỉ"}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {b.address || b.addr || "Chưa cập nhật địa chỉ"}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={() => handleOpenEditBranch(b)}>Chỉnh sửa</Button>
+                      <Button variant="outline" size="sm" onClick={() => handleOpenEditBranch(b)}>
+                        Chỉnh sửa
+                      </Button>
                       {branches.length > 1 && (
-                        <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10" onClick={() => handleDeleteBranch(b.id)}>Xóa</Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:bg-destructive/10"
+                          onClick={() => handleDeleteBranch(b.id)}
+                        >
+                          Xóa
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -757,7 +885,7 @@ export default function SettingsPage() {
                   <Label>Xác thực 2 lớp (2FA)</Label>
                   <p className="text-xs text-muted-foreground">Tăng cường bảo mật cho tài khoản admin.</p>
                 </div>
-                <Switch 
+                <Switch
                   checked={enable2FA}
                   onCheckedChange={(val) => {
                     setEnable2FA(val);
@@ -772,9 +900,11 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Giới hạn IP truy cập POS</Label>
-                  <p className="text-xs text-muted-foreground italic">Chỉ cho phép bán hàng từ địa chỉ IP của cửa hàng.</p>
+                  <p className="text-xs text-muted-foreground italic">
+                    Chỉ cho phép bán hàng từ địa chỉ IP của cửa hàng.
+                  </p>
                 </div>
-                <Switch 
+                <Switch
                   checked={restrictIP}
                   onCheckedChange={(val) => {
                     setRestrictIP(val);
@@ -789,11 +919,13 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Màn hình chờ POS (Screensaver)</Label>
-                  <p className="text-xs text-muted-foreground italic">Tự động hiển thị màn hình chờ khi POS không được thao tác.</p>
+                  <p className="text-xs text-muted-foreground italic">
+                    Tự động hiển thị màn hình chờ khi POS không được thao tác.
+                  </p>
                 </div>
                 <div className="flex items-center gap-4">
                   {enableIdleScreen && (
-                    <select 
+                    <select
                       className="h-8 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                       value={idleTimeoutMinutes}
                       onChange={(e) => setIdleTimeoutMinutes(Number(e.target.value))}
@@ -805,7 +937,7 @@ export default function SettingsPage() {
                       <option value={30}>Sau 30 phút</option>
                     </select>
                   )}
-                  <Switch 
+                  <Switch
                     checked={enableIdleScreen}
                     onCheckedChange={(val) => {
                       setEnableIdleScreen(val);
@@ -826,10 +958,13 @@ export default function SettingsPage() {
                   </p>
                 </div>
                 {isOwner ? (
-                  <Button variant="outline" size="sm" className="h-9 gap-1.5 border-primary text-primary hover:bg-primary/5 hover:text-primary" asChild>
-                    <Link href="/settings/roles">
-                      Thiết lập vai trò & phân quyền
-                    </Link>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 gap-1.5 border-primary text-primary hover:bg-primary/5 hover:text-primary"
+                    asChild
+                  >
+                    <Link href="/settings/roles">Thiết lập vai trò & phân quyền</Link>
                   </Button>
                 ) : (
                   <Button variant="outline" size="sm" disabled className="h-9 gap-1.5">
@@ -856,26 +991,28 @@ export default function SettingsPage() {
                 Cấu hình Thông báo Telegram
               </CardTitle>
               <CardDescription>
-                Nhận thông báo tự động về nhóm hoặc kênh Telegram khi có đơn hàng mới phát sinh hoặc khi hàng hóa trong kho sắp hết.
+                Nhận thông báo tự động về nhóm hoặc kênh Telegram khi có đơn hàng mới phát sinh hoặc khi hàng hóa trong
+                kho sắp hết.
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6 space-y-6">
               <div className="flex items-center justify-between border-b pb-4">
                 <div className="space-y-0.5">
                   <Label className="text-base font-bold">Kích hoạt thông báo Telegram</Label>
-                  <p className="text-xs text-muted-foreground italic">Bật để hệ thống tự động đẩy tin nhắn về Telegram.</p>
+                  <p className="text-xs text-muted-foreground italic">
+                    Bật để hệ thống tự động đẩy tin nhắn về Telegram.
+                  </p>
                 </div>
-                <Switch 
-                  checked={telegramEnabled} 
-                  onCheckedChange={setTelegramEnabled} 
-                />
+                <Switch checked={telegramEnabled} onCheckedChange={setTelegramEnabled} />
               </div>
 
               {telegramEnabled && (
                 <div className="space-y-6 animate-in slide-in-from-top-4 duration-300">
                   <div className="grid gap-4 md:grid-cols-3">
                     <div className="grid gap-2">
-                      <Label htmlFor="tel-token" className="font-bold">Telegram Bot Token</Label>
+                      <Label htmlFor="tel-token" className="font-bold">
+                        Telegram Bot Token
+                      </Label>
                       <Input
                         id="tel-token"
                         placeholder="Ví dụ: 5678901234:AAFgH-j3K..."
@@ -888,7 +1025,9 @@ export default function SettingsPage() {
                       </p>
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="tel-chat" className="font-bold">Telegram Chat ID (Group/Channel)</Label>
+                      <Label htmlFor="tel-chat" className="font-bold">
+                        Telegram Chat ID (Group/Channel)
+                      </Label>
                       <Input
                         id="tel-chat"
                         placeholder="Ví dụ: -100123456789 hoặc 123456789"
@@ -897,16 +1036,19 @@ export default function SettingsPage() {
                         className="font-mono text-xs border-sky-500/10 focus-visible:ring-sky-500"
                       />
                       <p className="text-[10px] text-muted-foreground leading-normal">
-                        ID của cuộc hội thoại, Nhóm hoặc Kênh nhận thông báo. Bạn có thể lấy bằng cách add bot <b>@chatIDrobot</b> vào nhóm.
+                        ID của cuộc hội thoại, Nhóm hoặc Kênh nhận thông báo. Bạn có thể lấy bằng cách add bot{" "}
+                        <b>@chatIDrobot</b> vào nhóm.
                       </p>
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="tel-thread" className="font-bold">Thread ID (nếu có)</Label>
+                      <Label htmlFor="tel-thread" className="font-bold">
+                        Thread ID (nếu có)
+                      </Label>
                       <Input
                         id="tel-thread"
                         placeholder="Ví dụ: 123"
                         value={telegramThreadId}
-                        onChange={(e) => setTelegramThreadId(e.target.value.replace(/[^\d]/g, ''))}
+                        onChange={(e) => setTelegramThreadId(e.target.value.replace(/[^\d]/g, ""))}
                         className="font-mono text-xs border-sky-500/10 focus-visible:ring-sky-500"
                       />
                       <p className="text-[10px] text-muted-foreground leading-normal">
@@ -922,15 +1064,22 @@ export default function SettingsPage() {
                         <div className="border-b bg-background/60 px-4 py-3 space-y-2">
                           <div>
                             <h5 className="text-sm font-bold text-foreground">Bán hàng</h5>
-                            <p className="text-[10px] text-muted-foreground">Đơn hàng, trả hàng và thao tác ảnh hưởng doanh thu.</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              Đơn hàng, trả hàng và thao tác ảnh hưởng doanh thu.
+                            </p>
                           </div>
                           <div className="grid gap-1">
-                            <Label htmlFor="tel-thread-sales" className="text-[10px] font-semibold text-muted-foreground">Thread ID nhóm Bán hàng</Label>
+                            <Label
+                              htmlFor="tel-thread-sales"
+                              className="text-[10px] font-semibold text-muted-foreground"
+                            >
+                              Thread ID nhóm Bán hàng
+                            </Label>
                             <Input
                               id="tel-thread-sales"
                               placeholder="Để trống = dùng Thread ID chung"
                               value={telegramThreadIdSales}
-                              onChange={(e) => setTelegramThreadIdSales(e.target.value.replace(/[^\d]/g, ''))}
+                              onChange={(e) => setTelegramThreadIdSales(e.target.value.replace(/[^\d]/g, ""))}
                               className="h-8 font-mono text-xs"
                             />
                           </div>
@@ -939,21 +1088,27 @@ export default function SettingsPage() {
                           <div className="flex items-center justify-between gap-4 p-3">
                             <div className="space-y-0.5">
                               <Label className="font-semibold text-sm">Đơn hàng mới hoàn tất</Label>
-                              <p className="text-[10px] text-muted-foreground">Nhận tin chi tiết mã đơn, số tiền, sản phẩm, thanh toán.</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                Nhận tin chi tiết mã đơn, số tiền, sản phẩm, thanh toán.
+                              </p>
                             </div>
                             <Switch checked={telegramNotifyOrder} onCheckedChange={setTelegramNotifyOrder} />
                           </div>
                           <div className="flex items-center justify-between gap-4 p-3">
                             <div className="space-y-0.5">
                               <Label className="font-semibold text-sm">Trả hàng / hoàn tiền</Label>
-                              <p className="text-[10px] text-muted-foreground">Nhận tin khi có phiếu trả hàng hoặc hoàn tiền cho khách.</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                Nhận tin khi có phiếu trả hàng hoặc hoàn tiền cho khách.
+                              </p>
                             </div>
                             <Switch checked={telegramNotifyReturn} onCheckedChange={setTelegramNotifyReturn} />
                           </div>
                           <div className="flex items-center justify-between gap-4 p-3">
                             <div className="space-y-0.5">
                               <Label className="font-semibold text-sm">Hủy / xóa đơn hàng</Label>
-                              <p className="text-[10px] text-muted-foreground">Nhận cảnh báo khi đơn hàng bị hủy hoặc xóa khỏi hệ thống.</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                Nhận cảnh báo khi đơn hàng bị hủy hoặc xóa khỏi hệ thống.
+                              </p>
                             </div>
                             <Switch checked={telegramNotifyCancel} onCheckedChange={setTelegramNotifyCancel} />
                           </div>
@@ -967,12 +1122,17 @@ export default function SettingsPage() {
                             <p className="text-[10px] text-muted-foreground">Tồn kho, nhập hàng và hàng bán chậm.</p>
                           </div>
                           <div className="grid gap-1">
-                            <Label htmlFor="tel-thread-inventory" className="text-[10px] font-semibold text-muted-foreground">Thread ID nhóm Kho hàng</Label>
+                            <Label
+                              htmlFor="tel-thread-inventory"
+                              className="text-[10px] font-semibold text-muted-foreground"
+                            >
+                              Thread ID nhóm Kho hàng
+                            </Label>
                             <Input
                               id="tel-thread-inventory"
                               placeholder="Để trống = dùng Thread ID chung"
                               value={telegramThreadIdInventory}
-                              onChange={(e) => setTelegramThreadIdInventory(e.target.value.replace(/[^\d]/g, ''))}
+                              onChange={(e) => setTelegramThreadIdInventory(e.target.value.replace(/[^\d]/g, ""))}
                               className="h-8 font-mono text-xs"
                             />
                           </div>
@@ -981,37 +1141,51 @@ export default function SettingsPage() {
                           <div className="flex items-center justify-between gap-4 p-3">
                             <div className="space-y-0.5">
                               <Label className="font-semibold text-sm">Cảnh báo tồn kho thấp</Label>
-                              <p className="text-[10px] text-muted-foreground">Nhận tin khi một sản phẩm bán đi khiến lượng tồn dưới 5.</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                Nhận tin khi một sản phẩm bán đi khiến lượng tồn dưới 5.
+                              </p>
                             </div>
                             <Switch checked={telegramNotifyStock} onCheckedChange={setTelegramNotifyStock} />
                           </div>
                           <div className="flex items-center justify-between gap-4 p-3">
                             <div className="space-y-0.5">
                               <Label className="font-semibold text-sm">Nhập hàng hoàn tất</Label>
-                              <p className="text-[10px] text-muted-foreground">Nhận tin khi phiếu nhập hàng được hoàn tất và kho được cập nhật.</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                Nhận tin khi phiếu nhập hàng được hoàn tất và kho được cập nhật.
+                              </p>
                             </div>
                             <Switch checked={telegramNotifyPurchase} onCheckedChange={setTelegramNotifyPurchase} />
                           </div>
                           <div className="flex items-center justify-between gap-4 p-3">
                             <div className="space-y-0.5">
                               <Label className="font-semibold text-sm">Mặt hàng lâu chưa bán</Label>
-                              <p className="text-[10px] text-muted-foreground">Nhận danh sách sản phẩm còn tồn nhưng chưa phát sinh bán hàng trong nhiều ngày.</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                Nhận danh sách sản phẩm còn tồn nhưng chưa phát sinh bán hàng trong nhiều ngày.
+                              </p>
                             </div>
-                            <Switch checked={telegramNotifyStaleProducts} onCheckedChange={setTelegramNotifyStaleProducts} />
+                            <Switch
+                              checked={telegramNotifyStaleProducts}
+                              onCheckedChange={setTelegramNotifyStaleProducts}
+                            />
                           </div>
                           <div className="grid gap-2 p-3">
-                            <Label htmlFor="tel-stale-days" className="font-semibold text-sm">Số ngày chưa bán</Label>
+                            <Label htmlFor="tel-stale-days" className="font-semibold text-sm">
+                              Số ngày chưa bán
+                            </Label>
                             <Input
                               id="tel-stale-days"
                               type="number"
                               min={1}
                               value={telegramStaleProductDays}
                               disabled={!telegramNotifyStaleProducts}
-                              onChange={(e) => setTelegramStaleProductDays(Math.max(1, parseInt(e.target.value || '1')))}
+                              onChange={(e) =>
+                                setTelegramStaleProductDays(Math.max(1, parseInt(e.target.value || "1")))
+                              }
                               className="h-9 max-w-40"
                             />
                             <p className="text-[10px] text-muted-foreground leading-normal">
-                              Mặc định {DEFAULT_STALE_PRODUCT_DAYS} ngày, có thể tăng nếu cửa hàng có chu kỳ bán chậm hơn.
+                              Mặc định {DEFAULT_STALE_PRODUCT_DAYS} ngày, có thể tăng nếu cửa hàng có chu kỳ bán chậm
+                              hơn.
                             </p>
                           </div>
                         </div>
@@ -1024,12 +1198,17 @@ export default function SettingsPage() {
                             <p className="text-[10px] text-muted-foreground">Chi phí, ứng lương và chốt ca.</p>
                           </div>
                           <div className="grid gap-1">
-                            <Label htmlFor="tel-thread-finance" className="text-[10px] font-semibold text-muted-foreground">Thread ID nhóm Tài chính & nhân sự</Label>
+                            <Label
+                              htmlFor="tel-thread-finance"
+                              className="text-[10px] font-semibold text-muted-foreground"
+                            >
+                              Thread ID nhóm Tài chính & nhân sự
+                            </Label>
                             <Input
                               id="tel-thread-finance"
                               placeholder="Để trống = dùng Thread ID chung"
                               value={telegramThreadIdFinance}
-                              onChange={(e) => setTelegramThreadIdFinance(e.target.value.replace(/[^\d]/g, ''))}
+                              onChange={(e) => setTelegramThreadIdFinance(e.target.value.replace(/[^\d]/g, ""))}
                               className="h-8 font-mono text-xs"
                             />
                           </div>
@@ -1038,21 +1217,27 @@ export default function SettingsPage() {
                           <div className="flex items-center justify-between gap-4 p-3">
                             <div className="space-y-0.5">
                               <Label className="font-semibold text-sm">Phiếu chi mới</Label>
-                              <p className="text-[10px] text-muted-foreground">Nhận tin khi ghi nhận khoản chi vận hành hoặc chi phí phát sinh.</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                Nhận tin khi ghi nhận khoản chi vận hành hoặc chi phí phát sinh.
+                              </p>
                             </div>
                             <Switch checked={telegramNotifyExpense} onCheckedChange={setTelegramNotifyExpense} />
                           </div>
                           <div className="flex items-center justify-between gap-4 p-3">
                             <div className="space-y-0.5">
                               <Label className="font-semibold text-sm">Ứng lương nhân viên</Label>
-                              <p className="text-[10px] text-muted-foreground">Nhận tin khi phát sinh yêu cầu hoặc khoản ứng lương.</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                Nhận tin khi phát sinh yêu cầu hoặc khoản ứng lương.
+                              </p>
                             </div>
                             <Switch checked={telegramNotifySalary} onCheckedChange={setTelegramNotifySalary} />
                           </div>
                           <div className="flex items-center justify-between gap-4 p-3">
                             <div className="space-y-0.5">
                               <Label className="font-semibold text-sm">Chốt ca làm việc</Label>
-                              <p className="text-[10px] text-muted-foreground">Nhận tổng kết tiền mặt, thu chi và chênh lệch khi đóng ca.</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                Nhận tổng kết tiền mặt, thu chi và chênh lệch khi đóng ca.
+                              </p>
                             </div>
                             <Switch checked={telegramNotifyShift} onCheckedChange={setTelegramNotifyShift} />
                           </div>
@@ -1063,15 +1248,22 @@ export default function SettingsPage() {
                         <div className="border-b bg-background/60 px-4 py-3 space-y-2">
                           <div>
                             <h5 className="text-sm font-bold text-foreground">Báo cáo</h5>
-                            <p className="text-[10px] text-muted-foreground">Tổng hợp doanh thu định kỳ gửi về Telegram.</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              Tổng hợp doanh thu định kỳ gửi về Telegram.
+                            </p>
                           </div>
                           <div className="grid gap-1">
-                            <Label htmlFor="tel-thread-reports" className="text-[10px] font-semibold text-muted-foreground">Thread ID nhóm Báo cáo</Label>
+                            <Label
+                              htmlFor="tel-thread-reports"
+                              className="text-[10px] font-semibold text-muted-foreground"
+                            >
+                              Thread ID nhóm Báo cáo
+                            </Label>
                             <Input
                               id="tel-thread-reports"
                               placeholder="Để trống = dùng Thread ID chung"
                               value={telegramThreadIdReports}
-                              onChange={(e) => setTelegramThreadIdReports(e.target.value.replace(/[^\d]/g, ''))}
+                              onChange={(e) => setTelegramThreadIdReports(e.target.value.replace(/[^\d]/g, ""))}
                               className="h-8 font-mono text-xs"
                             />
                           </div>
@@ -1079,7 +1271,9 @@ export default function SettingsPage() {
                         <div className="flex items-center justify-between gap-4 p-3">
                           <div className="space-y-0.5">
                             <Label className="font-semibold text-sm">Báo cáo doanh thu tự động</Label>
-                            <p className="text-[10px] text-muted-foreground">Nhận báo cáo cuối ngày, cuối tuần và cuối tháng.</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              Nhận báo cáo cuối ngày, cuối tuần và cuối tháng.
+                            </p>
                           </div>
                           <Switch checked={telegramNotifyReports} onCheckedChange={setTelegramNotifyReports} />
                         </div>
@@ -1088,12 +1282,16 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="bg-sky-500/5 dark:bg-sky-500/10 p-4 rounded-xl border border-sky-500/20 text-xs leading-relaxed text-muted-foreground space-y-1.5 shadow-sm">
-                    <p className="font-bold text-sky-700 dark:text-sky-400">
-                      💡 Hướng dẫn nhanh liên kết Telegram:
+                    <p className="font-bold text-sky-700 dark:text-sky-400">💡 Hướng dẫn nhanh liên kết Telegram:</p>
+                    <p>
+                      1. Chat với <b>@BotFather</b> trên Telegram, gõ lệnh <code>/newbot</code> để tạo Bot riêng, đặt
+                      tên và sao chép **Bot Token** dán vào ô phía trên.
                     </p>
-                    <p>1. Chat với <b>@BotFather</b> trên Telegram, gõ lệnh <code>/newbot</code> để tạo Bot riêng, đặt tên và sao chép **Bot Token** dán vào ô phía trên.</p>
                     <p>2. Tạo Nhóm (Group) của bạn và thêm Bot vừa tạo vào Nhóm.</p>
-                    <p>3. Thêm Bot <b>@chatIDrobot</b> vào Nhóm để lấy **Chat ID** (có dấu trừ phía trước, ví dụ: <code>-100...</code>), sao chép dán vào ô trên.</p>
+                    <p>
+                      3. Thêm Bot <b>@chatIDrobot</b> vào Nhóm để lấy **Chat ID** (có dấu trừ phía trước, ví dụ:{" "}
+                      <code>-100...</code>), sao chép dán vào ô trên.
+                    </p>
                     <p>4. Bấm nút **Gửi tin nhắn thử nghiệm** phía dưới để test kết nối!</p>
                   </div>
                 </div>
@@ -1102,10 +1300,10 @@ export default function SettingsPage() {
             <CardFooter className="border-t bg-muted/20 px-6 py-4 flex justify-between items-center">
               <div>
                 {telegramEnabled && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleTestTelegram} 
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleTestTelegram}
                     disabled={testingTelegram}
                     className="border-sky-500 text-sky-500 hover:bg-sky-500/5 font-bold"
                   >
@@ -1115,7 +1313,12 @@ export default function SettingsPage() {
                 )}
               </div>
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleSave} disabled={loading} className="bg-sky-600 hover:bg-sky-700 text-white font-bold">
+                <Button
+                  size="sm"
+                  onClick={handleSave}
+                  disabled={loading}
+                  className="bg-sky-600 hover:bg-sky-700 text-white font-bold"
+                >
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   <Save className="mr-2 h-4 w-4" />
                   Lưu cấu hình
@@ -1133,7 +1336,8 @@ export default function SettingsPage() {
                 Cấu hình Thông báo App
               </CardTitle>
               <CardDescription>
-                Chọn loại thông báo xuất hiện ở quả chuông góc phải màn hình. Mặc định mặt hàng lâu chưa bán là {DEFAULT_STALE_PRODUCT_DAYS} ngày.
+                Chọn loại thông báo xuất hiện ở quả chuông góc phải màn hình. Mặc định mặt hàng lâu chưa bán là{" "}
+                {DEFAULT_STALE_PRODUCT_DAYS} ngày.
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6 space-y-6">
@@ -1152,7 +1356,9 @@ export default function SettingsPage() {
 
               <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
                 <div className="space-y-1.5">
-                  <Label htmlFor="stale-product-days" className="font-bold">Mặt hàng lâu chưa bán</Label>
+                  <Label htmlFor="stale-product-days" className="font-bold">
+                    Mặt hàng lâu chưa bán
+                  </Label>
                   <p className="text-xs text-muted-foreground">
                     Đưa lên chuông khi sản phẩm còn bán nhưng không phát sinh đơn trong số ngày này.
                   </p>
@@ -1192,9 +1398,14 @@ export default function SettingsPage() {
                               {enabledCount}/{group.items.length}
                             </Badge>
                           </div>
-                          <p className="mt-0.5 text-xs text-muted-foreground">Bật/tắt nhanh cả nhóm hoặc từng loại thông báo.</p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            Bật/tắt nhanh cả nhóm hoặc từng loại thông báo.
+                          </p>
                         </div>
-                        <Switch checked={isGroupEnabled} onCheckedChange={(enabled) => updateAppNotificationCategory(group.category, enabled)} />
+                        <Switch
+                          checked={isGroupEnabled}
+                          onCheckedChange={(enabled) => updateAppNotificationCategory(group.category, enabled)}
+                        />
                       </div>
                       <div className="divide-y">
                         {group.items.map((item) => (
@@ -1203,7 +1414,10 @@ export default function SettingsPage() {
                               <Label className="text-sm font-semibold">{item.label}</Label>
                               <p className="text-[11px] leading-relaxed text-muted-foreground">{item.description}</p>
                             </div>
-                            <Switch checked={appNotificationSettings.types[item.type]} onCheckedChange={(enabled) => updateAppNotificationType(item.type, enabled)} />
+                            <Switch
+                              checked={appNotificationSettings.types[item.type]}
+                              onCheckedChange={(enabled) => updateAppNotificationType(item.type, enabled)}
+                            />
                           </div>
                         ))}
                       </div>
@@ -1247,7 +1461,9 @@ export default function SettingsPage() {
             <CardContent className="pt-6 space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="grid gap-2">
-                  <Label htmlFor="shipping-provider" className="font-bold">Nhà cung cấp</Label>
+                  <Label htmlFor="shipping-provider" className="font-bold">
+                    Nhà cung cấp
+                  </Label>
                   <select
                     id="shipping-provider"
                     value={shippingProvider}
@@ -1262,7 +1478,9 @@ export default function SettingsPage() {
                   </select>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="shipping-token" className="font-bold">API Token / Client ID</Label>
+                  <Label htmlFor="shipping-token" className="font-bold">
+                    API Token / Client ID
+                  </Label>
                   <Input
                     id="shipping-token"
                     placeholder="Nhập API Token..."
@@ -1274,12 +1492,22 @@ export default function SettingsPage() {
               </div>
               <div className="bg-orange-500/5 p-4 rounded-xl border border-orange-500/20 text-xs leading-relaxed text-muted-foreground space-y-1.5 shadow-sm">
                 <p className="font-bold text-orange-700">💡 Hướng dẫn lấy Token:</p>
-                <p>- <b>GHN</b>: Đăng nhập hệ thống 5sao.ghn.vn, vào mục Thông tin tài khoản để lấy API Token.</p>
-                <p>- <b>GHTK</b>: Đăng nhập khachhang.giaohangtietkiem.vn, vào mục Sửa thông tin cửa hàng để lấy API Token.</p>
+                <p>
+                  - <b>GHN</b>: Đăng nhập hệ thống 5sao.ghn.vn, vào mục Thông tin tài khoản để lấy API Token.
+                </p>
+                <p>
+                  - <b>GHTK</b>: Đăng nhập khachhang.giaohangtietkiem.vn, vào mục Sửa thông tin cửa hàng để lấy API
+                  Token.
+                </p>
               </div>
             </CardContent>
             <CardFooter className="border-t bg-muted/20 px-6 py-4 flex justify-end">
-              <Button size="sm" onClick={handleSave} disabled={loading} className="bg-orange-600 hover:bg-orange-700 text-white font-bold">
+              <Button
+                size="sm"
+                onClick={handleSave}
+                disabled={loading}
+                className="bg-orange-600 hover:bg-orange-700 text-white font-bold"
+              >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 <Save className="mr-2 h-4 w-4" />
                 Lưu cấu hình vận chuyển
@@ -1299,13 +1527,13 @@ export default function SettingsPage() {
             <DialogTitle className="text-xl font-bold">
               {editingBranch ? "Chỉnh sửa chi nhánh" : "Thêm chi nhánh mới"}
             </DialogTitle>
-            <DialogDescription>
-              Nhập các thông tin chi tiết cho chi nhánh kinh doanh của bạn.
-            </DialogDescription>
+            <DialogDescription>Nhập các thông tin chi tiết cho chi nhánh kinh doanh của bạn.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="b-name" className="font-bold text-foreground">Tên chi nhánh</Label>
+              <Label htmlFor="b-name" className="font-bold text-foreground">
+                Tên chi nhánh
+              </Label>
               <Input
                 id="b-name"
                 placeholder="Ví dụ: Chi nhánh Quận 1, Zpos Café..."
@@ -1315,7 +1543,9 @@ export default function SettingsPage() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="b-address" className="font-bold text-foreground">Địa chỉ</Label>
+              <Label htmlFor="b-address" className="font-bold text-foreground">
+                Địa chỉ
+              </Label>
               <Textarea
                 id="b-address"
                 placeholder="Nhập địa chỉ đầy đủ..."
@@ -1326,7 +1556,12 @@ export default function SettingsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setBranchDialogOpen(false)} disabled={loading} className="font-bold">
+            <Button
+              variant="outline"
+              onClick={() => setBranchDialogOpen(false)}
+              disabled={loading}
+              className="font-bold"
+            >
               Hủy
             </Button>
             <Button onClick={handleSaveBranch} disabled={loading} className="font-bold">
@@ -1340,9 +1575,19 @@ export default function SettingsPage() {
   );
 }
 
-function Badge({ children, className, variant = "default" }: { children: React.ReactNode, className?: string, variant?: "default" | "secondary" }) {
+function Badge({
+  children,
+  className,
+  variant = "default",
+}: {
+  children: React.ReactNode;
+  className?: string;
+  variant?: "default" | "secondary";
+}) {
   return (
-    <span className={`px-2 py-0.5 rounded-full font-bold uppercase ${variant === 'secondary' ? 'bg-muted text-muted-foreground' : 'bg-primary text-primary-foreground'} ${className}`}>
+    <span
+      className={`px-2 py-0.5 rounded-full font-bold uppercase ${variant === "secondary" ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground"} ${className}`}
+    >
       {children}
     </span>
   );

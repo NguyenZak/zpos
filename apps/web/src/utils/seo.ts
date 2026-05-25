@@ -53,10 +53,10 @@ export function generateSlug(text: string): string {
 
   return slug
     .replace(/[^a-z0-9\s-]/g, "") // Remove all non-alphanumeric characters except spaces and hyphens
-    .replace(/\s+/g, "-")         // Replace spaces with a single hyphen
-    .replace(/-+/g, "-")          // Replace multiple hyphens with a single hyphen
+    .replace(/\s+/g, "-") // Replace spaces with a single hyphen
+    .replace(/-+/g, "-") // Replace multiple hyphens with a single hyphen
     .trim()
-    .replace(/^-+|-+$/g, "");     // Trim leading and trailing hyphens
+    .replace(/^-+|-+$/g, ""); // Trim leading and trailing hyphens
 }
 
 /**
@@ -71,13 +71,15 @@ export function getMetadata(options: SEOOptions = {}): Metadata {
     : `${currentSiteName} — ${APP_CONFIG.description}`;
   const description = options.description || APP_CONFIG.meta.description;
   const siteUrl = APP_CONFIG.url;
-  
+
   // Build dynamic path and canonical URLs
   const cleanPath = options.path ? (options.path.startsWith("/") ? options.path : `/${options.path}`) : "";
   const canonicalUrl = options.alternates?.canonical || `${siteUrl}${cleanPath}`;
-  
+
   // OG Image - using dynamic OG Generator by default or fallback
-  const ogImageUrl = options.image || `${siteUrl}/api/og?title=${encodeURIComponent(options.title || currentSiteName)}&description=${encodeURIComponent(description.slice(0, 100))}&badge=${encodeURIComponent(currentSiteName.toUpperCase())}`;
+  const ogImageUrl =
+    options.image ||
+    `${siteUrl}/api/og?title=${encodeURIComponent(options.title || currentSiteName)}&description=${encodeURIComponent(description.slice(0, 100))}&badge=${encodeURIComponent(currentSiteName.toUpperCase())}`;
 
   // Build standard multi-language alternates
   const defaultLanguages = {
@@ -109,7 +111,7 @@ export function getMetadata(options: SEOOptions = {}): Metadata {
       "quan ly ban le",
       "pos offline sync",
       "saas multi tenant",
-      "retail operating system"
+      "retail operating system",
     ],
     metadataBase: new URL(siteUrl),
     alternates: {
@@ -131,7 +133,7 @@ export function getMetadata(options: SEOOptions = {}): Metadata {
         },
       ],
       locale: options.locale || "vi_VN",
-      type: options.type === "article" ? "article" : (options.type === "profile" ? "profile" : "website"),
+      type: options.type === "article" ? "article" : options.type === "profile" ? "profile" : "website",
     },
     twitter: {
       card: "summary_large_image",
@@ -153,10 +155,10 @@ export function getMetadata(options: SEOOptions = {}): Metadata {
     if (options.authors && options.authors.length > 0) {
       articleFields["article:author"] = options.authors;
     }
-    
+
     metadata.other = {
       ...metadata.other,
-      ...articleFields
+      ...articleFields,
     };
   }
 

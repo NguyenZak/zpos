@@ -1,27 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { 
-  History, 
-  User, 
-  Shield, 
-  Activity, 
-  Search,
-  Filter,
-  Loader2,
-  Clock
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from '@/components/ui/badge';
+import React, { useState, useEffect } from "react";
+import { History, User, Shield, Activity, Search, Filter, Loader2, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 export default function AuditLogsPage() {
   const [loading, setLoading] = useState(true);
@@ -31,10 +15,42 @@ export default function AuditLogsPage() {
     // Mocking audit logs for now
     setTimeout(() => {
       setLogs([
-        { id: '1', user: 'Admin', action: 'CREATE_PRODUCT', resource: 'iPhone 15 Pro', timestamp: new Date().toISOString(), status: 'success', ip: '1.1.1.1' },
-        { id: '2', user: 'Lê Bán Hàng', action: 'CREATE_ORDER', resource: 'Đơn hàng #ORD-123', timestamp: new Date(Date.now() - 3600000).toISOString(), status: 'success', ip: '1.1.1.2' },
-        { id: '3', user: 'Trần Thủ Kho', action: 'UPDATE_STOCK', resource: 'Sản phẩm MacBook M3', timestamp: new Date(Date.now() - 7200000).toISOString(), status: 'success', ip: '1.1.1.3' },
-        { id: '4', user: 'Admin', action: 'DELETE_CUSTOMER', resource: 'Khách hàng Nguyễn Văn X', timestamp: new Date(Date.now() - 86400000).toISOString(), status: 'failed', ip: '1.1.1.1' },
+        {
+          id: "1",
+          user: "Admin",
+          action: "CREATE_PRODUCT",
+          resource: "iPhone 15 Pro",
+          timestamp: new Date().toISOString(),
+          status: "success",
+          ip: "1.1.1.1",
+        },
+        {
+          id: "2",
+          user: "Lê Bán Hàng",
+          action: "CREATE_ORDER",
+          resource: "Đơn hàng #ORD-123",
+          timestamp: new Date(Date.now() - 3600000).toISOString(),
+          status: "success",
+          ip: "1.1.1.2",
+        },
+        {
+          id: "3",
+          user: "Trần Thủ Kho",
+          action: "UPDATE_STOCK",
+          resource: "Sản phẩm MacBook M3",
+          timestamp: new Date(Date.now() - 7200000).toISOString(),
+          status: "success",
+          ip: "1.1.1.3",
+        },
+        {
+          id: "4",
+          user: "Admin",
+          action: "DELETE_CUSTOMER",
+          resource: "Khách hàng Nguyễn Văn X",
+          timestamp: new Date(Date.now() - 86400000).toISOString(),
+          status: "failed",
+          ip: "1.1.1.1",
+        },
       ]);
       setLoading(false);
     }, 1000);
@@ -82,32 +98,42 @@ export default function AuditLogsPage() {
                   </div>
                 </TableCell>
               </TableRow>
-            ) : logs.map(log => (
-              <TableRow key={log.id}>
-                <TableCell className="text-xs whitespace-nowrap">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-3 h-3 text-muted-foreground" />
-                    {new Date(log.timestamp).toLocaleString('vi-VN')}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2 font-medium text-sm">
-                    <User className="w-4 h-4 text-muted-foreground" />
-                    {log.user}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="font-bold text-[10px]">{log.action}</Badge>
-                </TableCell>
-                <TableCell className="text-sm">{log.resource}</TableCell>
-                <TableCell>
-                  <Badge className={log.status === 'success' ? "bg-green-500/10 text-green-600 border-none" : "bg-red-500/10 text-red-600 border-none"}>
-                    {log.status === 'success' ? 'Thành công' : 'Thất bại'}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-xs text-muted-foreground font-mono">{log.ip}</TableCell>
-              </TableRow>
-            ))}
+            ) : (
+              logs.map((log) => (
+                <TableRow key={log.id}>
+                  <TableCell className="text-xs whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-3 h-3 text-muted-foreground" />
+                      {new Date(log.timestamp).toLocaleString("vi-VN")}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2 font-medium text-sm">
+                      <User className="w-4 h-4 text-muted-foreground" />
+                      {log.user}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="font-bold text-[10px]">
+                      {log.action}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm">{log.resource}</TableCell>
+                  <TableCell>
+                    <Badge
+                      className={
+                        log.status === "success"
+                          ? "bg-green-500/10 text-green-600 border-none"
+                          : "bg-red-500/10 text-red-600 border-none"
+                      }
+                    >
+                      {log.status === "success" ? "Thành công" : "Thất bại"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground font-mono">{log.ip}</TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>

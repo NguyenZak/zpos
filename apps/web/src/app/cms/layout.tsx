@@ -23,12 +23,7 @@ export default async function CMSLayout({ children }: Readonly<{ children: React
   ]);
 
   return (
-    <CMSResponsiveLayout
-      defaultOpen={defaultOpen}
-      variant={variant}
-      collapsible={collapsible}
-      users={users}
-    >
+    <CMSResponsiveLayout defaultOpen={defaultOpen} variant={variant} collapsible={collapsible} users={users}>
       {children}
     </CMSResponsiveLayout>
   );

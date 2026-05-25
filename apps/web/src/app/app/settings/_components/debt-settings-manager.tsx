@@ -2,14 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Coins, Loader2, Save } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -94,13 +87,9 @@ export function DebtSettingsManager() {
               type="number"
               inputMode="numeric"
               value={settings.default_credit_limit}
-              onChange={(e) =>
-                setSettings({ ...settings, default_credit_limit: Number(e.target.value) || 0 })
-              }
+              onChange={(e) => setSettings({ ...settings, default_credit_limit: Number(e.target.value) || 0 })}
             />
-            <p className="text-[10px] text-muted-foreground">
-              Áp dụng khi khách mới phát sinh nợ lần đầu.
-            </p>
+            <p className="text-[10px] text-muted-foreground">Áp dụng khi khách mới phát sinh nợ lần đầu.</p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="due-days">Số ngày tới hạn mặc định</Label>
@@ -109,9 +98,7 @@ export function DebtSettingsManager() {
               type="number"
               inputMode="numeric"
               value={settings.default_due_days}
-              onChange={(e) =>
-                setSettings({ ...settings, default_due_days: Number(e.target.value) || 30 })
-              }
+              onChange={(e) => setSettings({ ...settings, default_due_days: Number(e.target.value) || 30 })}
             />
           </div>
           <div className="space-y-1.5">
@@ -122,13 +109,9 @@ export function DebtSettingsManager() {
               inputMode="decimal"
               step="0.1"
               value={settings.late_fee_rate || 0}
-              onChange={(e) =>
-                setSettings({ ...settings, late_fee_rate: Number(e.target.value) || 0 })
-              }
+              onChange={(e) => setSettings({ ...settings, late_fee_rate: Number(e.target.value) || 0 })}
             />
-            <p className="text-[10px] text-muted-foreground">
-              Để 0 nếu không tính phí phạt.
-            </p>
+            <p className="text-[10px] text-muted-foreground">Để 0 nếu không tính phí phạt.</p>
           </div>
         </div>
 
@@ -164,9 +147,7 @@ export function DebtSettingsManager() {
           <div className="flex items-center justify-between">
             <div>
               <Label className="font-semibold">Bật nhắc nợ tự động</Label>
-              <p className="text-[10px] text-muted-foreground">
-                Hệ thống tự gửi nhắc qua Zalo theo lịch dưới đây.
-              </p>
+              <p className="text-[10px] text-muted-foreground">Hệ thống tự gửi nhắc qua Zalo theo lịch dưới đây.</p>
             </div>
             <Switch
               checked={settings.auto_reminders_enabled}

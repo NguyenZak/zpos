@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -42,7 +49,7 @@ export function CloseShiftDialog({ open, onOpenChange, shift, onClosed }: CloseS
 
   const countedFromDenominations = useMemo(
     () => denominations.reduce((sum, d) => sum + d * (counts[d] || 0), 0),
-    [counts, denominations]
+    [counts, denominations],
   );
   const counted = useDenominations ? countedFromDenominations : countedManual;
   const difference = counted - expected;
@@ -63,10 +70,12 @@ export function CloseShiftDialog({ open, onOpenChange, shift, onClosed }: CloseS
         toast.error(res.error || "Không thể đóng ca");
         return;
       }
-      toast.success(`Đã đóng ca · ${difference === 0 ? "khớp tiền" : difference > 0 ? "dư " + fmtVND(difference) : "thiếu " + fmtVND(Math.abs(difference))}`);
-      
+      toast.success(
+        `Đã đóng ca · ${difference === 0 ? "khớp tiền" : difference > 0 ? "dư " + fmtVND(difference) : "thiếu " + fmtVND(Math.abs(difference))}`,
+      );
+
       const wantsToPrint = window.confirm("Ca đã đóng thành công. Bạn có muốn in Phiếu Kết Toán Ca (Z-Report) không?");
-      
+
       onOpenChange(false);
       onClosed?.(wantsToPrint);
     } finally {
@@ -78,7 +87,9 @@ export function CloseShiftDialog({ open, onOpenChange, shift, onClosed }: CloseS
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><Coins className="size-5 text-amber-600" /> Đóng ca làm việc</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Coins className="size-5 text-amber-600" /> Đóng ca làm việc
+          </DialogTitle>
           <DialogDescription>Đếm tiền cuối ca và đối soát với số liệu hệ thống.</DialogDescription>
         </DialogHeader>
 
@@ -119,7 +130,9 @@ export function CloseShiftDialog({ open, onOpenChange, shift, onClosed }: CloseS
             </TabsContent>
           </Tabs>
 
-          <div className={`flex items-center gap-2 rounded-lg border p-3 ${difference === 0 ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-rose-300 bg-rose-50 text-rose-700"}`}>
+          <div
+            className={`flex items-center gap-2 rounded-lg border p-3 ${difference === 0 ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-rose-300 bg-rose-50 text-rose-700"}`}
+          >
             {difference === 0 ? <CheckCircle2 className="size-4" /> : <AlertTriangle className="size-4" />}
             <div className="flex-1 text-sm">
               {difference === 0 && "Khớp tiền — không có chênh lệch."}
@@ -140,8 +153,12 @@ export function CloseShiftDialog({ open, onOpenChange, shift, onClosed }: CloseS
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Huỷ</Button>
-          <Button onClick={submit} disabled={saving || aggregating}>{saving ? "Đang đóng..." : "Đóng ca"}</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+            Huỷ
+          </Button>
+          <Button onClick={submit} disabled={saving || aggregating}>
+            {saving ? "Đang đóng..." : "Đóng ca"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

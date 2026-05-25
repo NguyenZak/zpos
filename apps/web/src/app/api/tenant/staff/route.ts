@@ -36,7 +36,9 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const fullName = String(body.fullName || "").trim();
-    const email = String(body.email || "").trim().toLowerCase();
+    const email = String(body.email || "")
+      .trim()
+      .toLowerCase();
     const password = String(body.password || "");
     const phone = String(body.phone || "").trim();
     const organizationId = String(body.organizationId || "");
@@ -179,9 +181,7 @@ export async function POST(request: NextRequest) {
         .eq("id", existingMember.id);
       if (memberUpdateError) throw memberUpdateError;
     } else {
-      const { error: memberInsertError } = await supabase
-        .from("organization_members")
-        .insert(membershipPayload);
+      const { error: memberInsertError } = await supabase.from("organization_members").insert(membershipPayload);
       if (memberInsertError) throw memberInsertError;
     }
 

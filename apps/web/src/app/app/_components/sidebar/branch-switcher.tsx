@@ -24,7 +24,7 @@ export function BranchSwitcher() {
     try {
       const data = await posService.getBranches();
       setBranches(data);
-      
+
       const stored = localStorage.getItem(getBranchStorageKey());
       if (stored) {
         const found = data.find((b: any) => b.id === stored);
@@ -41,7 +41,7 @@ export function BranchSwitcher() {
 
   React.useEffect(() => {
     loadBranches();
-    
+
     const handleStorageChange = () => {
       loadBranches();
     };
@@ -64,14 +64,20 @@ export function BranchSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-9 px-3 gap-2 hover:bg-muted font-bold text-xs uppercase tracking-wider">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-9 px-3 gap-2 hover:bg-muted font-bold text-xs uppercase tracking-wider"
+        >
           <Building2 className="h-4 w-4 text-primary" />
           <span className="hidden md:inline-block">{selectedBranch.name}</span>
           <ChevronsUpDown className="h-3 w-3 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-[240px]">
-        <DropdownMenuLabel className="text-xs text-muted-foreground font-semibold uppercase">Chọn chi nhánh làm việc</DropdownMenuLabel>
+        <DropdownMenuLabel className="text-xs text-muted-foreground font-semibold uppercase">
+          Chọn chi nhánh làm việc
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {branches.map((branch) => (
           <DropdownMenuItem

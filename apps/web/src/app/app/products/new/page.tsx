@@ -5,7 +5,20 @@ import { useEffect, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
-import { AlertCircle, ArrowLeft, BadgeCheck, Check, Image as ImageIcon, Layers, Loader2, Package, Plus, Sparkles, Tag, X } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  BadgeCheck,
+  Check,
+  Image as ImageIcon,
+  Layers,
+  Loader2,
+  Package,
+  Plus,
+  Sparkles,
+  Tag,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -275,7 +288,7 @@ export default function NewProductPage() {
   const variantPrices = variants.map((v) => parseFloat(v.price) || 0).filter((p) => p > 0);
   const minVariantPrice = variantPrices.length > 0 ? Math.min(...variantPrices) : 0;
   const maxVariantPrice = variantPrices.length > 0 ? Math.max(...variantPrices) : 0;
-  
+
   const variantCostPrices = variants.map((v) => parseFloat(v.cost_price) || 0).filter((p) => p > 0);
   const minVariantCostPrice = variantCostPrices.length > 0 ? Math.min(...variantCostPrices) : 0;
   const maxVariantCostPrice = variantCostPrices.length > 0 ? Math.max(...variantCostPrices) : 0;
@@ -353,9 +366,7 @@ export default function NewProductPage() {
           <section className="overflow-hidden rounded-2xl border bg-background">
             <header className="flex items-center gap-2 border-b bg-muted/30 px-5 py-3">
               <Package className="h-3.5 w-3.5 text-muted-foreground" />
-              <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Thông tin chung
-              </h2>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Thông tin chung</h2>
             </header>
             <div className="grid gap-4 p-5 sm:grid-cols-2">
               <div className="grid gap-1.5 sm:col-span-2">
@@ -403,11 +414,7 @@ export default function NewProductPage() {
                       disabled={savingCategory || !newCategoryName.trim()}
                       title="Lưu danh mục"
                     >
-                      {savingCategory ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Check className="h-4 w-4" />
-                      )}
+                      {savingCategory ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                     </Button>
                     <Button
                       type="button"
@@ -470,7 +477,9 @@ export default function NewProductPage() {
                     <SelectValue placeholder="Chọn nhà cung cấp (Tuỳ chọn)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none" className="text-muted-foreground italic">Không có / Bỏ qua</SelectItem>
+                    <SelectItem value="none" className="text-muted-foreground italic">
+                      Không có / Bỏ qua
+                    </SelectItem>
                     {suppliers.map((sup) => (
                       <SelectItem key={sup.id} value={sup.id}>
                         {sup.name}
@@ -497,12 +506,7 @@ export default function NewProductPage() {
               >
                 <Layers className="h-3.5 w-3.5 text-primary" />
                 <span className="font-semibold">Có biến thể (màu, size...)</span>
-                <Switch
-                  id="has-variants"
-                  checked={hasVariants}
-                  onCheckedChange={setHasVariants}
-                  className="ml-1"
-                />
+                <Switch id="has-variants" checked={hasVariants} onCheckedChange={setHasVariants} className="ml-1" />
               </label>
             </header>
 
@@ -510,90 +514,90 @@ export default function NewProductPage() {
               {!hasVariants ? (
                 <>
                   <div className="grid gap-4 sm:grid-cols-3 items-start">
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="sku" className="text-xs font-semibold">
-                      Mã SKU
-                    </Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="sku"
-                        placeholder="SP0001"
-                        className="h-10 flex-1 rounded-xl uppercase"
-                        value={formData.sku}
-                        onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                    <div className="grid gap-1.5">
+                      <Label htmlFor="sku" className="text-xs font-semibold">
+                        Mã SKU
+                      </Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="sku"
+                          placeholder="SP0001"
+                          className="h-10 flex-1 rounded-xl uppercase"
+                          value={formData.sku}
+                          onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-10 rounded-xl px-3 shrink-0"
+                          onClick={generateSKU}
+                        >
+                          Tự tạo
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-1.5">
+                      <BarcodeTypeSelector
+                        value={formData.barcode_type}
+                        onChange={(val) => setFormData({ ...formData, barcode_type: val })}
+                        labelClassName="text-xs font-semibold"
                       />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-10 rounded-xl px-3 shrink-0"
-                        onClick={generateSKU}
-                      >
-                        Tự tạo
-                      </Button>
+                    </div>
+
+                    <div className="grid gap-1.5">
+                      <ProductBarcodeField
+                        value={formData.barcode}
+                        onChange={(val) => setFormData({ ...formData, barcode: val })}
+                        onValidationChange={setBarcodeValid}
+                        barcodeType={formData.barcode_type}
+                      />
                     </div>
                   </div>
-                  
-                  <div className="grid gap-1.5">
-                    <BarcodeTypeSelector
-                      value={formData.barcode_type}
-                      onChange={(val) => setFormData({ ...formData, barcode_type: val })}
-                      labelClassName="text-xs font-semibold"
-                    />
+                  <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                    <div className="grid gap-1.5">
+                      <Label htmlFor="price" className="text-xs font-semibold">
+                        Giá bán (₫) <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="price"
+                        type="text"
+                        placeholder="25,000,000"
+                        className="h-10 rounded-xl"
+                        value={formatCurrencyValue(formData.price)}
+                        onChange={(e) => setFormData({ ...formData, price: parseCurrencyValue(e.target.value) })}
+                        required={!hasVariants}
+                      />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <Label htmlFor="cost_price" className="text-xs font-semibold">
+                        Giá nhập (₫)
+                      </Label>
+                      <Input
+                        id="cost_price"
+                        type="text"
+                        placeholder="20,000,000"
+                        className="h-10 rounded-xl"
+                        value={formatCurrencyValue(formData.cost_price)}
+                        onChange={(e) => setFormData({ ...formData, cost_price: parseCurrencyValue(e.target.value) })}
+                      />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <Label htmlFor="stock" className="text-xs font-semibold">
+                        Tồn kho ban đầu <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="stock"
+                        type="number"
+                        placeholder="10"
+                        className="h-10 rounded-xl"
+                        value={formData.stock}
+                        onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                        required={!hasVariants}
+                      />
+                    </div>
                   </div>
-
-                  <div className="grid gap-1.5">
-                    <ProductBarcodeField
-                      value={formData.barcode}
-                      onChange={(val) => setFormData({ ...formData, barcode: val })}
-                      onValidationChange={setBarcodeValid}
-                      barcodeType={formData.barcode_type}
-                    />
-                  </div>
-                </div>
-                <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="price" className="text-xs font-semibold">
-                      Giá bán (₫) <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="price"
-                      type="text"
-                      placeholder="25,000,000"
-                      className="h-10 rounded-xl"
-                      value={formatCurrencyValue(formData.price)}
-                      onChange={(e) => setFormData({ ...formData, price: parseCurrencyValue(e.target.value) })}
-                      required={!hasVariants}
-                    />
-                  </div>
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="cost_price" className="text-xs font-semibold">
-                      Giá nhập (₫)
-                    </Label>
-                    <Input
-                      id="cost_price"
-                      type="text"
-                      placeholder="20,000,000"
-                      className="h-10 rounded-xl"
-                      value={formatCurrencyValue(formData.cost_price)}
-                      onChange={(e) => setFormData({ ...formData, cost_price: parseCurrencyValue(e.target.value) })}
-                    />
-                  </div>
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="stock" className="text-xs font-semibold">
-                      Tồn kho ban đầu <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="stock"
-                      type="number"
-                      placeholder="10"
-                      className="h-10 rounded-xl"
-                      value={formData.stock}
-                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                      required={!hasVariants}
-                    />
-                  </div>
-                </div>
                 </>
               ) : (
                 <VariantBuilder
@@ -615,9 +619,7 @@ export default function NewProductPage() {
           <section className="overflow-hidden rounded-2xl border bg-background">
             <header className="flex items-center gap-2 border-b bg-muted/30 px-5 py-3">
               <ImageIcon className="h-3.5 w-3.5 text-muted-foreground" />
-              <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Hình ảnh sản phẩm
-              </h2>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Hình ảnh sản phẩm</h2>
             </header>
             <div className="p-5">
               <input

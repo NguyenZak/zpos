@@ -153,7 +153,9 @@ export const vietQRService = {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       throw new Error("Chưa có phiên đăng nhập Supabase hợp lệ để lưu tài khoản ngân hàng.");
     }
@@ -343,7 +345,7 @@ export const vietQRService = {
       .update({ status })
       .eq("id", id)
       .eq("tenant_id", orgId);
-      
+
     if (error) throw error;
   },
 

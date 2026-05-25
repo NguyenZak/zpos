@@ -34,12 +34,13 @@ async function fetchFreeGoogleTts(text: string, speedVal: number): Promise<Buffe
 
   for (const chunk of chunks) {
     const freeTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=vi&client=tw-ob&q=${encodeURIComponent(chunk)}&ttsspeed=${speedParam}`;
-    
+
     const res = await fetch(freeTtsUrl, {
       cache: "no-store",
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-      }
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
     });
 
     if (!res.ok) {
@@ -82,21 +83,24 @@ export async function POST(req: NextRequest) {
           const mergedBuffer = await fetchFreeGoogleTts(text, speedVal);
           const base64Str = mergedBuffer.toString("base64");
           const dataUrl = `data:audio/mpeg;base64,${base64Str}`;
-          return NextResponse.json({ 
-            audio: dataUrl, 
+          return NextResponse.json({
+            audio: dataUrl,
             audioContent: base64Str,
-            is_fallback: true 
+            is_fallback: true,
           });
         } catch (proxyErr: any) {
           console.error("Free Google Translate Proxy synthesis failed inside fallback:", proxyErr);
-          return NextResponse.json({ 
-            error: `Không thể kết nối máy chủ giọng nói Google: ${proxyErr.message}` 
-          }, { status: 500 });
+          return NextResponse.json(
+            {
+              error: `Không thể kết nối máy chủ giọng nói Google: ${proxyErr.message}`,
+            },
+            { status: 500 },
+          );
         }
       }
 
       console.log(`[Google Cloud TTS] Synthesizing: "${text.substring(0, 30)}..." using ${googleVoiceName}`);
-      
+
       const gcloudUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
       const response = await fetch(gcloudUrl, {
         method: "POST",
@@ -119,9 +123,12 @@ export async function POST(req: NextRequest) {
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Google Cloud TTS API Error:", errorData);
-        return NextResponse.json({ 
-          error: errorData.error?.message || "Lỗi khi gọi cổng dịch vụ Google Cloud TTS" 
-        }, { status: response.status });
+        return NextResponse.json(
+          {
+            error: errorData.error?.message || "Lỗi khi gọi cổng dịch vụ Google Cloud TTS",
+          },
+          { status: response.status },
+        );
       }
 
       const result = await response.json();
@@ -133,9 +140,9 @@ export async function POST(req: NextRequest) {
 
       // Return premium Base64 data URL - instant play, no range/CORS issues!
       const dataUrl = `data:audio/mpeg;base64,${audioContent}`;
-      return NextResponse.json({ 
+      return NextResponse.json({
         audio: dataUrl,
-        audioContent: audioContent
+        audioContent: audioContent,
       });
     }
 
@@ -147,9 +154,9 @@ export async function POST(req: NextRequest) {
       const mergedBuffer = await fetchFreeGoogleTts(text, speedVal);
       const base64Str = mergedBuffer.toString("base64");
       const dataUrl = `data:audio/mpeg;base64,${base64Str}`;
-      return NextResponse.json({ 
+      return NextResponse.json({
         audio: dataUrl,
-        audioContent: base64Str
+        audioContent: base64Str,
       });
     } catch (proxyErr: any) {
       console.error("[Google Proxy Fetch Exception]:", proxyErr);

@@ -10,8 +10,7 @@ import { toast } from "sonner";
 import { debtService, type AgingBucket } from "@/services/debt.service";
 import { AgingBucketTable } from "../_components/aging-bucket-table";
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat("vi-VN").format(Math.round(n || 0)) + " ₫";
+const fmt = (n: number) => new Intl.NumberFormat("vi-VN").format(Math.round(n || 0)) + " ₫";
 
 export default function AgingReportPage() {
   const router = useRouter();
@@ -38,11 +37,7 @@ export default function AgingReportPage() {
   const filteredRows = useMemo(() => {
     if (!search.trim()) return rows;
     const q = search.toLowerCase();
-    return rows.filter(
-      (r) =>
-        r.customer_name?.toLowerCase().includes(q) ||
-        (r.phone || "").toLowerCase().includes(q),
-    );
+    return rows.filter((r) => r.customer_name?.toLowerCase().includes(q) || (r.phone || "").toLowerCase().includes(q));
   }, [rows, search]);
 
   const totals = useMemo(
@@ -109,12 +104,7 @@ export default function AgingReportPage() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-fit -ml-2"
-          onClick={() => router.push("/debt")}
-        >
+        <Button variant="ghost" size="sm" className="w-fit -ml-2" onClick={() => router.push("/debt")}>
           <ChevronLeft className="w-4 h-4" /> Dashboard công nợ
         </Button>
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
@@ -140,9 +130,7 @@ export default function AgingReportPage() {
         {summary.map((s) => (
           <Card key={s.label}>
             <CardContent className="p-4">
-              <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">
-                {s.label}
-              </p>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{s.label}</p>
               <p className={`text-lg font-black mt-1 ${s.tone}`}>{fmt(s.value)}</p>
             </CardContent>
           </Card>
@@ -151,9 +139,7 @@ export default function AgingReportPage() {
 
       <Card>
         <CardHeader className="pb-2 flex flex-row items-center justify-between gap-3">
-          <CardTitle className="text-base">
-            Chi tiết theo khách hàng ({filteredRows.length})
-          </CardTitle>
+          <CardTitle className="text-base">Chi tiết theo khách hàng ({filteredRows.length})</CardTitle>
           <Input
             placeholder="Tìm tên hoặc SĐT..."
             value={search}

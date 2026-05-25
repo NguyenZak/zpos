@@ -167,6 +167,40 @@ export const posService = {
     return getActiveOrganizationId();
   },
 
+  async getStorefrontSettings() {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+
+    const { data, error } = await supabase
+      .from("organizations")
+      .select("storefront_enabled, storefront_custom_domain, contact_info, social_links")
+      .eq("id", orgId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async updateStorefrontSettings(settings: {
+    storefront_enabled: boolean;
+    storefront_custom_domain: string | null;
+    contact_info: string | null;
+    social_links: string | null;
+  }) {
+    const supabase = createClient();
+    const orgId = await getActiveOrganizationId();
+
+    const { data, error } = await supabase
+      .from("organizations")
+      .update(settings)
+      .eq("id", orgId)
+      .select("storefront_enabled, storefront_custom_domain, contact_info, social_links")
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
   async getProducts() {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
@@ -654,7 +688,7 @@ export const posService = {
       .eq("organization_id", orgId)
       .eq("is_active", true)
       .order("min_revenue", { ascending: false });
-      
+
     if (error) throw error;
     return data || [];
   },
@@ -662,23 +696,20 @@ export const posService = {
   async saveCommissionRules(rules: any[]) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     // Clear old rules
-    await supabase
-      .from("commission_rules")
-      .delete()
-      .eq("organization_id", orgId);
-      
+    await supabase.from("commission_rules").delete().eq("organization_id", orgId);
+
     if (rules && rules.length > 0) {
-      const { error } = await supabase
-        .from("commission_rules")
-        .insert(rules.map(r => ({
-          name: r.name || 'Mức thưởng',
+      const { error } = await supabase.from("commission_rules").insert(
+        rules.map((r) => ({
+          name: r.name || "Mức thưởng",
           min_revenue: r.min_revenue,
           commission_percentage: r.commission_percentage,
           organization_id: orgId,
-          is_active: true
-        })));
+          is_active: true,
+        })),
+      );
       if (error) throw error;
     }
   },
@@ -737,27 +768,31 @@ export const posService = {
 
     const { data: advance, error } = await supabase
       .from("salary_advances")
-      .insert([{
-        ...data,
-        organization_id: orgId
-      }])
+      .insert([
+        {
+          ...data,
+          organization_id: orgId,
+        },
+      ])
       .select()
       .single();
 
     if (error) throw error;
 
     // Create cashflow transaction
-    await supabase.from("cashflow_transactions").insert([{
-      organization_id: orgId,
-      branch_id: data.branch_id || null,
-      type: "outflow",
-      category: "payroll",
-      amount: data.amount,
-      payment_method: data.payment_method || 'cash',
-      reference_type: "payroll", // Using payroll category for advances
-      note: `Tạm ứng lương: ${data.note || ''}`,
-      transaction_date: data.advance_date || new Date().toISOString()
-    }]);
+    await supabase.from("cashflow_transactions").insert([
+      {
+        organization_id: orgId,
+        branch_id: data.branch_id || null,
+        type: "outflow",
+        category: "payroll",
+        amount: data.amount,
+        payment_method: data.payment_method || "cash",
+        reference_type: "payroll", // Using payroll category for advances
+        note: `Tạm ứng lương: ${data.note || ""}`,
+        transaction_date: data.advance_date || new Date().toISOString(),
+      },
+    ]);
 
     try {
       const { data: employeeData } = await supabase.from("employees").select("name").eq("id", data.staff_id).single();
@@ -779,7 +814,7 @@ export const posService = {
 
     const { count, error } = await supabase
       .from("shifts")
-      .select("*", { count: 'exact', head: true })
+      .select("*", { count: "exact", head: true })
       .eq("organization_id", orgId)
       .eq("cashier_id", profileId)
       .neq("status", "cancelled")
@@ -1458,9 +1493,9 @@ export const posService = {
         console.warn(`cancelOrder: failed to restore stock for variant ${variantId}:`, e);
       }
     }
-    
+
     // Telegram Notification
-    telegramService.notifyCancelledOrder(id, 'HỦY');
+    telegramService.notifyCancelledOrder(id, "HỦY");
   },
 
   async deleteOrder(id: string) {
@@ -1476,9 +1511,9 @@ export const posService = {
     const { error: orderError } = await supabase.from("orders").delete().eq("id", id).eq("organization_id", orgId);
 
     if (orderError) throw orderError;
-    
+
     // Telegram Notification
-    telegramService.notifyCancelledOrder(id, 'XÓA');
+    telegramService.notifyCancelledOrder(id, "XÓA");
   },
 
   async processReturnOrder(data: {
@@ -1498,10 +1533,10 @@ export const posService = {
   }) {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    
+
     // Generate return_code (e.g., RT-12345)
     const returnCode = `RT-${Date.now().toString().slice(-6)}`;
-    
+
     // Insert into return_orders
     const { data: returnOrder, error: returnErr } = await supabase
       .from("return_orders")
@@ -1513,34 +1548,32 @@ export const posService = {
         total_refund_amount: data.total_refund_amount,
         refund_method: data.refund_method,
         reason: data.reason,
-        status: "completed"
+        status: "completed",
       })
       .select()
       .single();
-      
+
     if (returnErr) throw returnErr;
-    
+
     // Insert into return_order_items
-    const returnItemsData = data.items.map(it => ({
+    const returnItemsData = data.items.map((it) => ({
       return_order_id: returnOrder.id,
       order_item_id: it.order_item_id,
       product_id: it.product_id,
       variant_id: it.variant_id || null,
       quantity: it.quantity,
       refund_price: it.refund_price,
-      is_restocked: it.is_restocked
+      is_restocked: it.is_restocked,
     }));
-    
-    const { error: itemsErr } = await supabase
-      .from("return_order_items")
-      .insert(returnItemsData);
-      
+
+    const { error: itemsErr } = await supabase.from("return_order_items").insert(returnItemsData);
+
     if (itemsErr) throw itemsErr;
-    
+
     // Add shift transaction for refund
     if (data.total_refund_amount > 0) {
       try {
-        const { shiftService } = await import('./shift.service');
+        const { shiftService } = await import("./shift.service");
         const activeShift = await shiftService.getActiveShift();
         if (activeShift?.id) {
           await shiftService.addTransaction({
@@ -1557,10 +1590,10 @@ export const posService = {
         console.error("Failed to add shift transaction for refund", e);
       }
     }
-    
+
     // Telegram Notification
     telegramService.notifyReturnOrder(returnOrder);
-    
+
     return returnOrder;
   },
 
@@ -2074,7 +2107,7 @@ export const posService = {
         .eq("id", purchaseOrderId)
         .eq("organization_id", orgId)
         .single();
-      
+
       if (poDetail) {
         await telegramService.notifyPOCompleted(poDetail);
       }
@@ -2783,11 +2816,7 @@ export const posService = {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
 
-    const { error } = await supabase
-      .from("expense_categories")
-      .delete()
-      .eq("id", id)
-      .eq("organization_id", orgId);
+    const { error } = await supabase.from("expense_categories").delete().eq("id", id).eq("organization_id", orgId);
 
     if (error) throw error;
   },
@@ -2886,17 +2915,12 @@ export const posService = {
 
       const cashflowData = {
         amount: data.amount,
-        transaction_date: data.expense_date
-          ? new Date(data.expense_date).toISOString()
-          : new Date().toISOString(),
+        transaction_date: data.expense_date ? new Date(data.expense_date).toISOString() : new Date().toISOString(),
         note: data.title,
       };
 
       if (existingCashflow) {
-        await supabase
-          .from("cashflow_transactions")
-          .update(cashflowData)
-          .eq("id", existingCashflow.id);
+        await supabase.from("cashflow_transactions").update(cashflowData).eq("id", existingCashflow.id);
       } else {
         await supabase.from("cashflow_transactions").insert([
           {
@@ -2962,7 +2986,12 @@ export const posService = {
       .eq("status", "paid");
     if (expensesError) throw expensesError;
 
-    const raw = { orders: orders || [], debtPayments: debtPayments || [], soldItems: soldItems || [], expenses: expenses || [] };
+    const raw = {
+      orders: orders || [],
+      debtPayments: debtPayments || [],
+      soldItems: soldItems || [],
+      expenses: expenses || [],
+    };
     const computed = this.calculateFinanceStats(raw, startDate, endDate);
     return { ...computed, raw };
   },
@@ -2970,7 +2999,7 @@ export const posService = {
   calculateFinanceStats(
     raw: { orders: any[]; debtPayments: any[]; soldItems: any[]; expenses: any[] },
     startDate?: string,
-    endDate?: string
+    endDate?: string,
   ) {
     const { orders, debtPayments, soldItems, expenses } = raw;
 
@@ -2986,8 +3015,8 @@ export const posService = {
 
     const curEnd = endDate ? new Date(endDate) : new Date();
     const curStart = startDate ? new Date(startDate) : new Date(curEnd.getTime() - 30 * 24 * 60 * 60 * 1000);
-    
-    const rangeMs = curEnd.getTime() - curStart.getTime() || (30 * 24 * 60 * 60 * 1000);
+
+    const rangeMs = curEnd.getTime() - curStart.getTime() || 30 * 24 * 60 * 60 * 1000;
     const prevEnd = curStart;
     const prevStart = new Date(curStart.getTime() - rangeMs);
 
@@ -3019,15 +3048,22 @@ export const posService = {
     const expenseAmt = (e: any) => e.amount;
     const expenseDate = (e: any) => e.expense_date || e.created_at;
 
-    const revCur = sumWindow(orders, orderDate, orderAmt, curStart, curEnd) + sumWindow(debtPayments, debtPaymentDate, debtPaymentAmt, curStart, curEnd);
-    const revPrev = sumWindow(orders, orderDate, orderAmt, prevStart, prevEnd) + sumWindow(debtPayments, debtPaymentDate, debtPaymentAmt, prevStart, prevEnd);
+    const revCur =
+      sumWindow(orders, orderDate, orderAmt, curStart, curEnd) +
+      sumWindow(debtPayments, debtPaymentDate, debtPaymentAmt, curStart, curEnd);
+    const revPrev =
+      sumWindow(orders, orderDate, orderAmt, prevStart, prevEnd) +
+      sumWindow(debtPayments, debtPaymentDate, debtPaymentAmt, prevStart, prevEnd);
     const cogsCur = sumWindow(soldItems, soldItemDate, soldItemAmt, curStart, curEnd);
     const cogsPrev = sumWindow(soldItems, soldItemDate, soldItemAmt, prevStart, prevEnd);
     const expCur = sumWindow(expenses, expenseDate, expenseAmt, curStart, curEnd);
     const expPrev = sumWindow(expenses, expenseDate, expenseAmt, prevStart, prevEnd);
 
     // If filtered, totals are just the current period. If not, they are all-time.
-    const totalRevenue = isFiltered ? revCur : (orders?.reduce((s, o: any) => s + orderAmt(o), 0) || 0) + (debtPayments?.reduce((s, p: any) => s + debtPaymentAmt(p), 0) || 0);
+    const totalRevenue = isFiltered
+      ? revCur
+      : (orders?.reduce((s, o: any) => s + orderAmt(o), 0) || 0) +
+        (debtPayments?.reduce((s, p: any) => s + debtPaymentAmt(p), 0) || 0);
     const totalCOGS = isFiltered ? cogsCur : calculateSoldItemsCOGS(soldItems);
     const totalExpenses = isFiltered ? expCur : expenses?.reduce((s, e: any) => s + Number(e.amount || 0), 0) || 0;
     const netProfit = totalRevenue - totalCOGS - totalExpenses;
@@ -3076,8 +3112,7 @@ export const posService = {
       }
 
       // Sort categories by amount descending
-      const sortedCategories = Object.entries(categoryTotals)
-        .sort((a, b) => b[1] - a[1]);
+      const sortedCategories = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
 
       for (const [name, amount] of sortedCategories) {
         if (amount > 0) {
@@ -3277,11 +3312,8 @@ export const posService = {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
 
-    let query = supabase
-      .from("payroll")
-      .select("*, employee:employees(*)")
-      .eq("organization_id", orgId);
-      
+    let query = supabase.from("payroll").select("*, employee:employees(*)").eq("organization_id", orgId);
+
     if (month && year) {
       const startDate = new Date(year, month - 1, 1).toISOString();
       const endDate = new Date(year, month, 0, 23, 59, 59, 999).toISOString();
@@ -3412,10 +3444,7 @@ export const posService = {
       };
 
       if (existingCashflow) {
-        await supabase
-          .from("cashflow_transactions")
-          .update(cashflowData)
-          .eq("id", existingCashflow.id);
+        await supabase.from("cashflow_transactions").update(cashflowData).eq("id", existingCashflow.id);
       } else {
         await supabase.from("cashflow_transactions").insert([
           {
@@ -3447,11 +3476,7 @@ export const posService = {
 
     if (cashflowError) throw cashflowError;
 
-    const { error } = await supabase
-      .from("payroll")
-      .delete()
-      .eq("id", id)
-      .eq("organization_id", orgId);
+    const { error } = await supabase.from("payroll").delete().eq("id", id).eq("organization_id", orgId);
 
     if (error) throw error;
   },

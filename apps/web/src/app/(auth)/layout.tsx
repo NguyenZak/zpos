@@ -128,9 +128,7 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
     <LanguageProvider>
       <div className="flex min-h-screen flex-col bg-[#F8FAFC]">
         <Header />
-        <main
-          className="relative flex flex-1 flex-col items-center justify-center overflow-hidden bg-[oklch(0.16_0.035_265)] px-4 pt-24 pb-12 md:px-6 md:pt-32 md:pb-20"
-        >
+        <main className="relative flex flex-1 flex-col items-center justify-center overflow-hidden bg-[oklch(0.16_0.035_265)] px-4 pt-24 pb-12 md:px-6 md:pt-32 md:pb-20">
           <div
             className="pointer-events-none absolute inset-0 hidden select-none md:block"
             style={{
@@ -151,11 +149,23 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
             >
               {/* Central vertical track */}
               <line x1="700" y1="0" x2="700" y2="800" strokeDasharray="5 5" className="text-white/10" />
-              
+
               {/* Circuits */}
-              <path d="M 500 150 L 350 150 L 300 200 L 100 200" stroke="#0093ff" strokeWidth="2" strokeDasharray="8 60" className="animate-dash-slow opacity-80" />
-              <path d="M 900 150 L 1050 150 L 1100 200 L 1300 200" stroke="#00f0ff" strokeWidth="2" strokeDasharray="8 60" className="animate-dash-slow-reverse opacity-80" />
-              
+              <path
+                d="M 500 150 L 350 150 L 300 200 L 100 200"
+                stroke="#0093ff"
+                strokeWidth="2"
+                strokeDasharray="8 60"
+                className="animate-dash-slow opacity-80"
+              />
+              <path
+                d="M 900 150 L 1050 150 L 1100 200 L 1300 200"
+                stroke="#00f0ff"
+                strokeWidth="2"
+                strokeDasharray="8 60"
+                className="animate-dash-slow-reverse opacity-80"
+              />
+
               <circle cx="300" cy="200" r="3" fill="#0093ff" />
               <circle cx="1100" cy="200" r="3" fill="#00f0ff" />
             </svg>
@@ -173,13 +183,11 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
             <div className="dark relative overflow-hidden rounded-xl border border-white/10 bg-[#0c0822]/95 p-6 shadow-[0_14px_44px_rgba(0,0,0,0.42),inset_0_1px_1px_rgba(255,255,255,0.12)] md:bg-[#0c0822]/60 md:p-10 md:shadow-[0_24px_80px_rgba(0,0,0,0.5),inset_0_1px_2px_rgba(255,255,255,0.15)] md:backdrop-blur-lg">
               {/* Dynamic Animated border beam */}
               <div className="pointer-events-none absolute -inset-px hidden rounded-xl bg-gradient-to-r from-[#0093ff]/20 via-[#0036ff]/20 to-[#00f0ff]/20 opacity-80 md:block" />
-              
+
               {/* Outer subtle glow */}
               <div className="pointer-events-none absolute -inset-0.5 hidden rounded-xl bg-gradient-to-r from-[#0093ff]/10 via-[#0036ff]/10 to-[#00f0ff]/10 opacity-70 blur md:block" />
 
-              <div className="relative z-10 w-full">
-                {children}
-              </div>
+              <div className="relative z-10 w-full">{children}</div>
             </div>
           </div>
         </main>

@@ -293,13 +293,17 @@ export default function RecurringExpensesPage() {
         </div>
         <div className="flex items-center gap-2">
           <CategoryManagerDialog onCategoriesChange={loadData} />
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="gap-2 border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
             onClick={handleProcessDue}
             disabled={processing === "process"}
           >
-            {processing === "process" ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
+            {processing === "process" ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <PlayCircle className="h-4 w-4" />
+            )}
             Thực thi chi phí đến hạn
           </Button>
           <AddRecurringExpenseDialog onShowSuccess={loadData} />

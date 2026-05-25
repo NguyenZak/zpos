@@ -3,39 +3,18 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import {
-  AlertOctagon,
-  BellRing,
-  ChevronLeft,
-  Loader2,
-  Search,
-  Wallet,
-} from "lucide-react";
+import { AlertOctagon, BellRing, ChevronLeft, Loader2, Search, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { debtService, type CreditAccount } from "@/services/debt.service";
 import { RecordPaymentDialog } from "../_components/record-payment-dialog";
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat("vi-VN").format(Math.round(n || 0)) + " ₫";
+const fmt = (n: number) => new Intl.NumberFormat("vi-VN").format(Math.round(n || 0)) + " ₫";
 
 export default function DebtorsPage() {
   const router = useRouter();
@@ -77,9 +56,7 @@ export default function DebtorsPage() {
     if (!search.trim()) return rows;
     const q = search.toLowerCase();
     return rows.filter(
-      (r) =>
-        (r.customer?.name || "").toLowerCase().includes(q) ||
-        (r.customer?.phone || "").toLowerCase().includes(q),
+      (r) => (r.customer?.name || "").toLowerCase().includes(q) || (r.customer?.phone || "").toLowerCase().includes(q),
     );
   }, [rows, search]);
 
@@ -120,17 +97,10 @@ export default function DebtorsPage() {
             <ChevronLeft className="w-4 h-4" /> Quay lại
           </Button>
           <h1 className="text-3xl leading-none tracking-tight">Khách hàng đang nợ</h1>
-          <p className="text-muted-foreground text-sm">
-            Lọc, tìm kiếm và gửi nhắc nợ hàng loạt.
-          </p>
+          <p className="text-muted-foreground text-sm">Lọc, tìm kiếm và gửi nhắc nợ hàng loạt.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="default"
-            size="sm"
-            onClick={handleBulkRemind}
-            disabled={selected.size === 0 || bulkSending}
-          >
+          <Button variant="default" size="sm" onClick={handleBulkRemind} disabled={selected.size === 0 || bulkSending}>
             {bulkSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <BellRing className="w-4 h-4" />}
             Gửi nhắc nợ ({selected.size})
           </Button>
@@ -199,10 +169,7 @@ export default function DebtorsPage() {
                       />
                     </TableCell>
                     <TableCell>
-                      <Link
-                        href={`/debt/customers/${r.customer_id}`}
-                        className="font-bold hover:underline"
-                      >
+                      <Link href={`/debt/customers/${r.customer_id}`} className="font-bold hover:underline">
                         {r.customer?.name || `Khách #${r.customer_id.slice(0, 8)}`}
                       </Link>
                       <div className="text-[10px] text-muted-foreground flex items-center gap-2">
@@ -226,15 +193,9 @@ export default function DebtorsPage() {
                         <span className="text-muted-foreground text-xs">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right text-sm">
-                      {fmt(Number(r.credit_limit || 0))}
-                    </TableCell>
+                    <TableCell className="text-right text-sm">{fmt(Number(r.credit_limit || 0))}</TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setPaymentFor(r)}
-                      >
+                      <Button size="sm" variant="outline" onClick={() => setPaymentFor(r)}>
                         <Wallet className="w-3.5 h-3.5" /> Thu tiền
                       </Button>
                     </TableCell>

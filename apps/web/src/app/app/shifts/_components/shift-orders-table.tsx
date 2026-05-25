@@ -38,12 +38,19 @@ export function ShiftOrdersTable({ orders }: ShiftOrdersTableProps) {
         </TableHeader>
         <TableBody>
           {orders.map((o) => {
-            const m = methodMeta[o.payment_method] || { label: o.payment_method || "—", className: "bg-slate-100 text-slate-700" };
+            const m = methodMeta[o.payment_method] || {
+              label: o.payment_method || "—",
+              className: "bg-slate-100 text-slate-700",
+            };
             return (
               <TableRow key={o.id}>
                 <TableCell className="font-medium">{o.order_number || o.id.slice(0, 8)}</TableCell>
                 <TableCell>{o.customer?.name || "Khách lẻ"}</TableCell>
-                <TableCell><Badge className={m.className} variant="secondary">{m.label}</Badge></TableCell>
+                <TableCell>
+                  <Badge className={m.className} variant="secondary">
+                    {m.label}
+                  </Badge>
+                </TableCell>
                 <TableCell>
                   <Badge variant={o.status === "cancelled" ? "destructive" : "secondary"}>{o.status}</Badge>
                 </TableCell>

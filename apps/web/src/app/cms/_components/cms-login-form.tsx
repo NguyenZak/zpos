@@ -6,16 +6,7 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { motion } from "framer-motion";
-import { 
-  ShieldAlert, 
-  Mail, 
-  Lock, 
-  Eye, 
-  EyeOff, 
-  Command, 
-  ShieldCheck, 
-  ArrowRight 
-} from "lucide-react";
+import { ShieldAlert, Mail, Lock, Eye, EyeOff, Command, ShieldCheck, ArrowRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -52,7 +43,7 @@ export function CMSLoginForm({ onLoginSuccess }: CMSLoginFormProps) {
     setLoginError(null);
 
     const supabase = createClient();
-    
+
     try {
       const envUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const envKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -69,7 +60,8 @@ export function CMSLoginForm({ onLoginSuccess }: CMSLoginFormProps) {
 
       if (authData.user) {
         const role = authData.user.user_metadata?.role;
-        const isCmsAdmin = role === "super_admin" || role === "cms_admin" || authData.user.email?.endsWith("@zpos.click");
+        const isCmsAdmin =
+          role === "super_admin" || role === "cms_admin" || authData.user.email?.endsWith("@zpos.click");
         if (!isCmsAdmin) {
           await supabase.auth.signOut();
           throw new Error("Tài khoản Supabase này không có quyền truy cập CMS.");
@@ -80,14 +72,15 @@ export function CMSLoginForm({ onLoginSuccess }: CMSLoginFormProps) {
         return;
       }
 
-      throw new Error("Tài khoản hoặc mật khẩu CMS không chính xác. Chỉ tài khoản Quản trị mới được phép truy cập phân hệ CMS.");
-
+      throw new Error(
+        "Tài khoản hoặc mật khẩu CMS không chính xác. Chỉ tài khoản Quản trị mới được phép truy cập phân hệ CMS.",
+      );
     } catch (err: any) {
       console.error("CMS Auth Exception Caught:", err);
       const errMsg = err?.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại.";
       setLoginError(errMsg);
       toast.error("Lỗi đăng nhập", { description: errMsg });
-      
+
       // Track failed login in audit log
       fetch("/api/admin/audit-logs", {
         method: "POST",
@@ -97,10 +90,9 @@ export function CMSLoginForm({ onLoginSuccess }: CMSLoginFormProps) {
           action: "login_failed",
           module: "cms",
           severity: "warning",
-          metadata: { error_message: errMsg }
-        })
+          metadata: { error_message: errMsg },
+        }),
       }).catch(console.error);
-
     } finally {
       setIsLoading(false);
     }
@@ -113,7 +105,7 @@ export function CMSLoginForm({ onLoginSuccess }: CMSLoginFormProps) {
       <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-10 right-10 w-[300px] h-[300px] bg-violet-600/5 rounded-full blur-2xl pointer-events-none" />
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
@@ -125,7 +117,6 @@ export function CMSLoginForm({ onLoginSuccess }: CMSLoginFormProps) {
         {/* main glass card */}
         <div className="relative rounded-lg border border-slate-800/80 bg-slate-900/60 p-8 shadow-2xl backdrop-blur-2xl">
           <div className="space-y-6">
-            
             {/* Header / Brand */}
             <div className="space-y-2 text-center">
               <div className="mb-3 inline-flex rounded-lg border border-indigo-500/20 bg-indigo-500/10 p-3 text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.15)]">
@@ -150,19 +141,21 @@ export function CMSLoginForm({ onLoginSuccess }: CMSLoginFormProps) {
             {/* Form Fields */}
             <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
               {loginError && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-200 text-xs font-mono rounded-xl flex items-start gap-2.5 shadow-md"
                 >
                   <ShieldAlert className="size-4 text-rose-400 shrink-0 mt-0.5" />
                   <div className="space-y-0.5 text-left">
-                    <p className="font-extrabold uppercase tracking-wider text-[9px] text-rose-400">Exception Encountered</p>
+                    <p className="font-extrabold uppercase tracking-wider text-[9px] text-rose-400">
+                      Exception Encountered
+                    </p>
                     <p className="leading-normal">{loginError}</p>
                   </div>
                 </motion.div>
               )}
-              
+
               <FieldGroup className="gap-4">
                 <Controller
                   control={form.control}
@@ -187,18 +180,26 @@ export function CMSLoginForm({ onLoginSuccess }: CMSLoginFormProps) {
                           className="h-11 pl-11 pr-4 rounded-xl border-slate-800/80 bg-slate-950/50 placeholder:text-slate-600 text-slate-200 text-sm transition-all duration-300 focus-visible:border-indigo-500/50 focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:bg-slate-950"
                         />
                       </div>
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} className="text-rose-400 text-[10px] mt-0.5 font-medium" />}
+                      {fieldState.invalid && (
+                        <FieldError
+                          errors={[fieldState.error]}
+                          className="text-rose-400 text-[10px] mt-0.5 font-medium"
+                        />
+                      )}
                     </Field>
                   )}
                 />
-                
+
                 <Controller
                   control={form.control}
                   name="password"
                   render={({ field, fieldState }) => (
                     <Field className="gap-1.5" data-invalid={fieldState.invalid}>
                       <div className="flex items-center justify-between">
-                        <FieldLabel htmlFor="login-password" className="text-slate-400 font-semibold text-xs tracking-wide">
+                        <FieldLabel
+                          htmlFor="login-password"
+                          className="text-slate-400 font-semibold text-xs tracking-wide"
+                        >
                           Mật mã mật
                         </FieldLabel>
                       </div>
@@ -225,16 +226,25 @@ export function CMSLoginForm({ onLoginSuccess }: CMSLoginFormProps) {
                           {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                         </button>
                       </div>
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} className="text-rose-400 text-[10px] mt-0.5 font-medium" />}
+                      {fieldState.invalid && (
+                        <FieldError
+                          errors={[fieldState.error]}
+                          className="text-rose-400 text-[10px] mt-0.5 font-medium"
+                        />
+                      )}
                     </Field>
                   )}
                 />
-                
+
                 <Controller
                   control={form.control}
                   name="remember"
                   render={({ field, fieldState }) => (
-                    <Field orientation="horizontal" data-invalid={fieldState.invalid} className="items-center select-none py-1">
+                    <Field
+                      orientation="horizontal"
+                      data-invalid={fieldState.invalid}
+                      className="items-center select-none py-1"
+                    >
                       <Checkbox
                         id="login-remember"
                         name={field.name}
@@ -245,7 +255,10 @@ export function CMSLoginForm({ onLoginSuccess }: CMSLoginFormProps) {
                         className="size-4 rounded border-slate-800 bg-slate-950/50 text-indigo-500 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500 focus-visible:ring-indigo-500/30"
                       />
                       <FieldContent className="ml-2">
-                        <FieldLabel htmlFor="login-remember" className="font-semibold text-xs text-slate-500 cursor-pointer hover:text-slate-300 transition-colors">
+                        <FieldLabel
+                          htmlFor="login-remember"
+                          className="font-semibold text-xs text-slate-500 cursor-pointer hover:text-slate-300 transition-colors"
+                        >
                           Duy trì đăng nhập trên thiết bị này
                         </FieldLabel>
                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -254,7 +267,7 @@ export function CMSLoginForm({ onLoginSuccess }: CMSLoginFormProps) {
                   )}
                 />
               </FieldGroup>
-              
+
               <Button
                 className="relative group overflow-hidden h-11 w-full text-sm font-bold tracking-wide cursor-pointer rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_4px_15px_rgba(99,102,241,0.2)] hover:shadow-[0_4px_25px_rgba(99,102,241,0.4)] transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 mt-1"
                 type="submit"
@@ -265,7 +278,11 @@ export function CMSLoginForm({ onLoginSuccess }: CMSLoginFormProps) {
                     <>
                       <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
                       </svg>
                       <span>Đang xác thực thông tin...</span>
                     </>
@@ -278,20 +295,18 @@ export function CMSLoginForm({ onLoginSuccess }: CMSLoginFormProps) {
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </Button>
-
             </form>
 
             {/* Back to Core App */}
             <div className="text-center pt-2">
-              <a 
-                href="/login" 
+              <a
+                href="/login"
                 className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 font-medium transition-colors"
               >
                 <ShieldCheck size={13} />
                 Về Cổng Đăng nhập Hệ thống chính (ZPOS Core)
               </a>
             </div>
-
           </div>
         </div>
       </motion.div>

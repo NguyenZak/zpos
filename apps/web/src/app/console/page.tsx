@@ -311,7 +311,9 @@ export default function ConsoleDashboard() {
   const [telegramThreadIdTickets, setTelegramThreadIdTickets] = useState("");
   const [telegramThreadIdLogbugs, setTelegramThreadIdLogbugs] = useState("");
   const [telegramLogEnabled, setTelegramLogEnabled] = useState(true);
-  const [telegramLogMinSeverity, setTelegramLogMinSeverity] = useState<"info" | "warning" | "error" | "critical">("warning");
+  const [telegramLogMinSeverity, setTelegramLogMinSeverity] = useState<"info" | "warning" | "error" | "critical">(
+    "warning",
+  );
   const [isSavingTelegram, setIsSavingTelegram] = useState(false);
 
   // Inline forms state
@@ -1020,6 +1022,20 @@ export default function ConsoleDashboard() {
 
       if (data && data[0]) {
         const orgId = data[0].id;
+
+        // Tạo chi nhánh mặc định
+        const { error: branchError } = await supabase.from("branches").insert([
+          {
+            organization_id: orgId,
+            name: "Chi nhánh trung tâm",
+            is_main_branch: true,
+          },
+        ]);
+
+        if (branchError) {
+          console.warn("Lỗi khi tạo chi nhánh mặc định:", branchError);
+        }
+
         const ownerResponse = await fetch("/api/admin/users", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1381,7 +1397,7 @@ export default function ConsoleDashboard() {
       localStorage.setItem("zpos_telegram_log_min_severity", telegramLogMinSeverity);
 
       toast.success("Đã lưu cấu hình Telegram thành công!");
-      
+
       const newLog: LogItem = {
         id: "log-" + Date.now(),
         timestamp: new Date().toLocaleTimeString("vi-VN"),
@@ -1397,7 +1413,10 @@ export default function ConsoleDashboard() {
     }
   };
 
-  const handleTestTelegramConnection = async (threadIdParam?: string | any, threadLabel: string = "chính/forum topic") => {
+  const handleTestTelegramConnection = async (
+    threadIdParam?: string | any,
+    threadLabel: string = "chính/forum topic",
+  ) => {
     if (!telegramBotToken.trim() || !telegramChatId.trim()) {
       toast.error("Vui lòng điền đầy đủ Bot Token và Chat ID!");
       return;
@@ -1435,8 +1454,8 @@ export default function ConsoleDashboard() {
         throw new Error(result.description || "Lỗi khi gửi tin nhắn");
       }
     } catch (e: any) {
-      toast.error(`Lỗi kết nối Telegram (thread ${label})`, { 
-        description: e?.message || "Kiểm tra lại Bot Token, Chat ID hoặc Thread ID" 
+      toast.error(`Lỗi kết nối Telegram (thread ${label})`, {
+        description: e?.message || "Kiểm tra lại Bot Token, Chat ID hoặc Thread ID",
       });
       const newLog: LogItem = {
         id: "log-" + Date.now(),
@@ -1478,7 +1497,11 @@ export default function ConsoleDashboard() {
     const savedThreadTickets = localStorage.getItem("zpos_telegram_thread_id_tickets") || "";
     const savedThreadLogbugs = localStorage.getItem("zpos_telegram_thread_id_logbugs") || "";
     const savedEnabled = localStorage.getItem("zpos_telegram_log_enabled") !== "false";
-    const savedSeverity = (localStorage.getItem("zpos_telegram_log_min_severity") || "warning") as "info" | "warning" | "error" | "critical";
+    const savedSeverity = (localStorage.getItem("zpos_telegram_log_min_severity") || "warning") as
+      | "info"
+      | "warning"
+      | "error"
+      | "critical";
 
     setTelegramBotToken(savedToken);
     setTelegramChatId(savedChatId);
@@ -1513,20 +1536,27 @@ export default function ConsoleDashboard() {
         timeZone: "Asia/Ho_Chi_Minh",
       }).format(new Date(ticket.createdAt));
 
-      const priorityEmoji = (({
-        "Cao": "🔴",
-        "Trung bình": "🟡",
-        "Thấp": "🟢",
-      } as Record<string, string>)[ticket.priority]) || "⚪";
+      const priorityEmoji =
+        (
+          {
+            Cao: "🔴",
+            "Trung bình": "🟡",
+            Thấp: "🟢",
+          } as Record<string, string>
+        )[ticket.priority] || "⚪";
 
-      const categoryEmoji = (({
-        "Lỗi phần mềm": "🐞",
-        "Yêu cầu tính năng": "✨",
-        "Hỏi đáp/Tư vấn": "💬",
-        "Hóa đơn/Thanh toán": "💳",
-      } as Record<string, string>)[ticket.category]) || "📝";
+      const categoryEmoji =
+        (
+          {
+            "Lỗi phần mềm": "🐞",
+            "Yêu cầu tính năng": "✨",
+            "Hỏi đáp/Tư vấn": "💬",
+            "Hóa đơn/Thanh toán": "💳",
+          } as Record<string, string>
+        )[ticket.category] || "📝";
 
-      const text = `${categoryEmoji} <b>Ticket Hỗ Trợ Mới</b>\n\n` +
+      const text =
+        `${categoryEmoji} <b>Ticket Hỗ Trợ Mới</b>\n\n` +
         `<b>ID:</b> <code>${ticket.id}</code>\n` +
         `<b>Tenant:</b> ${ticket.tenantName} (@${ticket.tenantSlug})\n` +
         `<b>Loại:</b> ${ticket.category}\n` +
@@ -3359,10 +3389,17 @@ export default function ConsoleDashboard() {
                       <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-200 text-xs space-y-1">
                         <p className="font-bold">📱 Hướng dẫn thiết lập:</p>
                         <ol className="list-decimal list-inside space-y-0.5 text-[11px]">
-                          <li>Chat với <strong>@BotFather</strong> trên Telegram</li>
-                          <li>Gửi lệnh <code className="bg-black/30 px-1 rounded">/newbot</code> để tạo bot mới</li>
+                          <li>
+                            Chat với <strong>@BotFather</strong> trên Telegram
+                          </li>
+                          <li>
+                            Gửi lệnh <code className="bg-black/30 px-1 rounded">/newbot</code> để tạo bot mới
+                          </li>
                           <li>Sao chép Bot Token vào ô bên dưới</li>
-                          <li>Thêm bot vào group hoặc chat riêng, lấy Chat ID từ <code className="bg-black/30 px-1 rounded">api.telegram.org/botTOKEN/getUpdates</code></li>
+                          <li>
+                            Thêm bot vào group hoặc chat riêng, lấy Chat ID từ{" "}
+                            <code className="bg-black/30 px-1 rounded">api.telegram.org/botTOKEN/getUpdates</code>
+                          </li>
                         </ol>
                       </div>
 
@@ -3412,15 +3449,15 @@ export default function ConsoleDashboard() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleTestTelegramConnection(telegramMessageThreadId, "chính")}
-                            disabled={isSavingTelegram || !telegramBotToken || !telegramChatId || !telegramMessageThreadId}
+                            disabled={
+                              isSavingTelegram || !telegramBotToken || !telegramChatId || !telegramMessageThreadId
+                            }
                             className="border-border bg-background text-foreground hover:bg-secondary text-xs h-9 shrink-0 px-3 font-semibold"
                           >
                             🧪 Test
                           </Button>
                         </div>
-                        <p className="text-[9px] text-muted-foreground">
-                          Để trống nếu không dùng Telegram Forum.
-                        </p>
+                        <p className="text-[9px] text-muted-foreground">Để trống nếu không dùng Telegram Forum.</p>
                       </div>
 
                       {/* Divider */}
@@ -3444,7 +3481,10 @@ export default function ConsoleDashboard() {
                       {/* Min Severity Level */}
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-foreground">Mức độ Log tối thiểu (Min Severity)</label>
-                        <Select value={telegramLogMinSeverity} onValueChange={(val: any) => setTelegramLogMinSeverity(val)}>
+                        <Select
+                          value={telegramLogMinSeverity}
+                          onValueChange={(val: any) => setTelegramLogMinSeverity(val)}
+                        >
                           <SelectTrigger className="bg-background border-border text-foreground">
                             <SelectValue />
                           </SelectTrigger>
@@ -3484,13 +3524,17 @@ export default function ConsoleDashboard() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleTestTelegramConnection(telegramThreadIdAudit, "Audit & Bảo mật")}
-                                disabled={isSavingTelegram || !telegramBotToken || !telegramChatId || !telegramThreadIdAudit}
+                                disabled={
+                                  isSavingTelegram || !telegramBotToken || !telegramChatId || !telegramThreadIdAudit
+                                }
                                 className="border-border bg-background text-foreground hover:bg-secondary text-xs h-9 shrink-0 px-3 font-semibold"
                               >
                                 🧪 Test
                               </Button>
                             </div>
-                            <p className="text-[9px] text-muted-foreground">Logs về hành động người dùng, đăng nhập, lỗi bảo mật</p>
+                            <p className="text-[9px] text-muted-foreground">
+                              Logs về hành động người dùng, đăng nhập, lỗi bảo mật
+                            </p>
                           </div>
 
                           {/* Tickets Thread ID */}
@@ -3508,7 +3552,9 @@ export default function ConsoleDashboard() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleTestTelegramConnection(telegramThreadIdTickets, "Tickets Hỗ Trợ")}
-                                disabled={isSavingTelegram || !telegramBotToken || !telegramChatId || !telegramThreadIdTickets}
+                                disabled={
+                                  isSavingTelegram || !telegramBotToken || !telegramChatId || !telegramThreadIdTickets
+                                }
                                 className="border-border bg-background text-foreground hover:bg-secondary text-xs h-9 shrink-0 px-3 font-semibold"
                               >
                                 🧪 Test
@@ -3531,8 +3577,12 @@ export default function ConsoleDashboard() {
                                 type="button"
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handleTestTelegramConnection(telegramThreadIdLogbugs, "Logbugs Báo Cáo Lỗi")}
-                                disabled={isSavingTelegram || !telegramBotToken || !telegramChatId || !telegramThreadIdLogbugs}
+                                onClick={() =>
+                                  handleTestTelegramConnection(telegramThreadIdLogbugs, "Logbugs Báo Cáo Lỗi")
+                                }
+                                disabled={
+                                  isSavingTelegram || !telegramBotToken || !telegramChatId || !telegramThreadIdLogbugs
+                                }
                                 className="border-border bg-background text-foreground hover:bg-secondary text-xs h-9 shrink-0 px-3 font-semibold"
                               >
                                 🧪 Test

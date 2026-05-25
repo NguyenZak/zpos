@@ -1,16 +1,20 @@
 (function () {
   try {
     var root = document.documentElement;
-    
+
     function readCookie(name) {
-      var match = document.cookie.split("; ").find(function(c) {
+      var match = document.cookie.split("; ").find(function (c) {
         return c.startsWith(name + "=");
       });
       return match ? decodeURIComponent(match.split("=")[1]) : null;
     }
 
     function readLocal(name) {
-      try { return window.localStorage.getItem(name); } catch (e) { return null; }
+      try {
+        return window.localStorage.getItem(name);
+      } catch (e) {
+        return null;
+      }
     }
 
     function readPreference(key, fallback) {
@@ -22,17 +26,16 @@
         content_layout: "wide",
         navbar_style: "sticky",
         sidebar_variant: "inset",
-        sidebar_collapsible: "icon"
+        sidebar_collapsible: "icon",
       };
-      
+
       var value = readLocal(key) || readCookie(key) || defaults[key];
       return value;
     }
 
     var mode = readPreference("theme_mode", "light");
-    var resolvedMode = mode === "system" 
-      ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
-      : mode;
+    var resolvedMode =
+      mode === "system" ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : mode;
 
     root.classList.toggle("dark", resolvedMode === "dark");
     root.setAttribute("data-theme-mode", mode);

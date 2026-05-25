@@ -1,0 +1,71 @@
+[
+  {
+    "type": "hero",
+    "props": {
+      "headline": "SS26 COLLECTION",
+      "subheadline": "Mùa hè, sống bản năng",
+      "video": "https://cdn.fashionx.zshop.click/runway-ss26.mp4",
+      "cta": { "label": "Khám phá", "href": "/collections/ss26" },
+      "align": "center"
+    }
+  },
+  {
+    "type": "banner-split",
+    "props": {
+      "left": {
+        "image": "https://cdn.fashionx.zshop.click/women.jpg",
+        "headline": "WOMEN",
+        "href": "/categories/women"
+      },
+      "right": {
+        "image": "https://cdn.fashionx.zshop.click/men.jpg",
+        "headline": "MEN",
+        "href": "/categories/men"
+      }
+    }
+  },
+  {
+    "type": "product-grid",
+    "props": {
+      "title": "New arrivals",
+      "source": "new-arrival",
+      "limit": 12,
+      "columns": 4,
+      "layout": "masonry"
+    }
+  },
+  {
+    "type": "rich-text",
+    "props": {
+      "html": "<h2>Câu chuyện thương hiệu</h2><p>FashionX khởi nguồn từ năm 2018...</p>",
+      "maxWidth": "medium"
+    }
+  },
+  {
+    "type": "footer",
+    "props": {
+      "columns": [
+        {
+          "title": "Shop",
+          "links": [
+            { "label": "Women", "href": "/categories/women" },
+            { "label": "Men", "href": "/categories/men" },
+            { "label": "Accessories", "href": "/categories/accessories" }
+          ]
+        },
+        {
+          "title": "Company",
+          "links": [
+            { "label": "About", "href": "/pages/about" },
+            { "label": "Stores", "href": "/pages/stores" }
+          ]
+        }
+      ],
+      "social": [
+        { "platform": "instagram", "href": "https://instagram.com/fashionx" },
+        { "platform": "tiktok", "href": "https://tiktok.com/@fashionx" }
+      ],
+      "copyright": "© 2026 FashionX"
+    }
+  }
+]

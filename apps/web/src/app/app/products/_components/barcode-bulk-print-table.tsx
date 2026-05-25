@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, Trash2 } from "lucide-react";
@@ -10,7 +10,6 @@ interface BarcodeBulkPrintTableProps {
 }
 
 export function BarcodeBulkPrintTable({ products, quantities, onChangeQuantity }: BarcodeBulkPrintTableProps) {
-  
   const updateQty = (id: string, delta: number) => {
     const current = quantities[id] || 0;
     const next = Math.max(0, current + delta);
@@ -51,22 +50,37 @@ export function BarcodeBulkPrintTable({ products, quantities, onChangeQuantity }
                 <td className="p-3 text-center">
                   <div className="flex items-center justify-center gap-1">
                     {qty === 0 ? (
-                      <Button variant="ghost" size="icon-sm" className="text-destructive w-8 h-8" onClick={() => updateQty(product.id, 1)}>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-destructive w-8 h-8"
+                        onClick={() => updateQty(product.id, 1)}
+                      >
                         <Trash2 className="w-3 h-3" />
                       </Button>
                     ) : (
-                      <Button variant="outline" size="icon-sm" className="w-8 h-8" onClick={() => updateQty(product.id, -1)}>
+                      <Button
+                        variant="outline"
+                        size="icon-sm"
+                        className="w-8 h-8"
+                        onClick={() => updateQty(product.id, -1)}
+                      >
                         <Minus className="w-3 h-3" />
                       </Button>
                     )}
-                    
-                    <Input 
-                      className="w-16 h-8 text-center" 
+
+                    <Input
+                      className="w-16 h-8 text-center"
                       value={qty.toString()}
                       onChange={(e) => handleInputChange(product.id, e.target.value)}
                     />
-                    
-                    <Button variant="outline" size="icon-sm" className="w-8 h-8" onClick={() => updateQty(product.id, 1)}>
+
+                    <Button
+                      variant="outline"
+                      size="icon-sm"
+                      className="w-8 h-8"
+                      onClick={() => updateQty(product.id, 1)}
+                    >
                       <Plus className="w-3 h-3" />
                     </Button>
                   </div>

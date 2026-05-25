@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import { Plus, Loader2, List, Trash2, Edit2 } from "lucide-react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ export function CategoryManagerDialog({ onCategoriesChange }: { onCategoriesChan
   const [open, setOpen] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: "", description: "" });
 
@@ -108,16 +108,12 @@ export function CategoryManagerDialog({ onCategoriesChange }: { onCategoriesChan
             <List className="w-5 h-5 text-primary" />
             Quản lý danh mục chi phí
           </DialogTitle>
-          <DialogDescription>
-            Thêm, sửa, xóa các danh mục để phân loại các khoản chi.
-          </DialogDescription>
+          <DialogDescription>Thêm, sửa, xóa các danh mục để phân loại các khoản chi.</DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4 mt-2">
           <form onSubmit={handleSubmit} className="flex flex-col gap-3 p-4 bg-muted/30 rounded-lg border">
-            <h4 className="font-medium text-sm">
-              {editingId ? "Sửa danh mục" : "Thêm danh mục mới"}
-            </h4>
+            <h4 className="font-medium text-sm">{editingId ? "Sửa danh mục" : "Thêm danh mục mới"}</h4>
             <div className="flex gap-2">
               <Input
                 placeholder="Tên danh mục..."
@@ -135,7 +131,7 @@ export function CategoryManagerDialog({ onCategoriesChange }: { onCategoriesChan
                 className="flex-1"
               />
               <Button type="submit" disabled={loading || !formData.name.trim()}>
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : (editingId ? "Lưu" : "Thêm")}
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : editingId ? "Lưu" : "Thêm"}
               </Button>
               {editingId && (
                 <Button type="button" variant="ghost" onClick={resetForm} disabled={loading}>
@@ -157,26 +153,27 @@ export function CategoryManagerDialog({ onCategoriesChange }: { onCategoriesChan
             ) : (
               <div className="divide-y">
                 {categories.map((cat) => (
-                  <div key={cat.id} className="flex items-center justify-between p-3 hover:bg-muted/50 transition-colors">
+                  <div
+                    key={cat.id}
+                    className="flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                  >
                     <div>
                       <p className="font-medium text-sm">{cat.name}</p>
-                      {cat.description && (
-                        <p className="text-xs text-muted-foreground">{cat.description}</p>
-                      )}
+                      {cat.description && <p className="text-xs text-muted-foreground">{cat.description}</p>}
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="h-8 w-8 text-primary"
                         onClick={() => handleEditClick(cat)}
                         disabled={loading}
                       >
                         <Edit2 className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="h-8 w-8 text-destructive"
                         onClick={() => handleDelete(cat.id)}
                         disabled={loading}

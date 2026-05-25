@@ -24,15 +24,7 @@ export type ShiftTransactionType =
   | "closing_cash"
   | "adjustment";
 
-export type PaymentMethod =
-  | "cash"
-  | "bank_transfer"
-  | "vietqr"
-  | "card"
-  | "momo"
-  | "zalopay"
-  | "debt"
-  | "other";
+export type PaymentMethod = "cash" | "bank_transfer" | "vietqr" | "card" | "momo" | "zalopay" | "debt" | "other";
 
 export interface CashRegister {
   id: string;
@@ -188,7 +180,9 @@ function readLocal<T>(key: string, fallback: T): T {
 
 function writeLocal(key: string, value: any) {
   if (typeof window === "undefined") return;
-  try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {}
 }
 
 function activeShiftCacheKey(orgId: string, userId: string) {
@@ -238,13 +232,15 @@ export const shiftService = {
 
     const { data: created, error: createError } = await supabase
       .from("branches")
-      .insert([{
-        organization_id: orgId,
-        name: "Chi nhánh chính",
-        address: "",
-        phone: "",
-        is_main_branch: true,
-      }])
+      .insert([
+        {
+          organization_id: orgId,
+          name: "Chi nhánh chính",
+          address: "",
+          phone: "",
+          is_main_branch: true,
+        },
+      ])
       .select("id")
       .single();
 
@@ -287,13 +283,13 @@ export const shiftService = {
     // when the table was missing) so the user still sees them after refresh.
     const local = readLocal<CashRegister[]>(REG_KEY(orgId), []);
     const dbIds = new Set(dbRows.map((r) => r.id));
-    const localOnly = local.filter(
-      (r) => !dbIds.has(r.id) && (!branchId || r.branch_id === branchId)
-    );
+    const localOnly = local.filter((r) => !dbIds.has(r.id) && (!branchId || r.branch_id === branchId));
     return tableMissing ? local.filter((r) => !branchId || r.branch_id === branchId) : [...dbRows, ...localOnly];
   },
 
-  async createRegister(payload: Omit<CashRegister, "id" | "organization_id" | "created_at" | "updated_at" | "branch">): Promise<CashRegister> {
+  async createRegister(
+    payload: Omit<CashRegister, "id" | "organization_id" | "created_at" | "updated_at" | "branch">,
+  ): Promise<CashRegister> {
     const supabase = createClient();
     const orgId = await permissionService.getActiveOrgId();
     const userId = await permissionService.getActiveUserId();
@@ -326,7 +322,8 @@ export const shiftService = {
       // Only fall back to local for connectivity issues — keep validation
       // errors loud so the user fixes the root cause.
       const msg = String(e?.message || "").toLowerCase();
-      const isNetwork = msg.includes("fetch") || msg.includes("network") || msg.includes("timeout") || msg.includes("failed to fetch");
+      const isNetwork =
+        msg.includes("fetch") || msg.includes("network") || msg.includes("timeout") || msg.includes("failed to fetch");
       if (isNetwork) {
         console.warn("Network error, saving register to localStorage:", e?.message);
         return this.createLocalRegister(orgId, row as any);
@@ -381,7 +378,10 @@ export const shiftService = {
       return true;
     } catch {
       const list = readLocal<CashRegister[]>(REG_KEY(orgId), []);
-      writeLocal(REG_KEY(orgId), list.filter((r) => r.id !== id));
+      writeLocal(
+        REG_KEY(orgId),
+        list.filter((r) => r.id !== id),
+      );
       return true;
     }
   },
@@ -389,7 +389,9 @@ export const shiftService = {
   // --------------------------------------------------------------------------
   // Shifts
   // --------------------------------------------------------------------------
-  async listShifts(filters: { status?: ShiftStatus; branchId?: string; from?: string; to?: string; limit?: number } = {}): Promise<Shift[]> {
+  async listShifts(
+    filters: { status?: ShiftStatus; branchId?: string; from?: string; to?: string; limit?: number } = {},
+  ): Promise<Shift[]> {
     const supabase = createClient();
     const orgId = await permissionService.getActiveOrgId();
     try {
@@ -493,7 +495,11 @@ export const shiftService = {
       if (safeRegisterId) q = q.eq("cash_register_id", safeRegisterId);
       const { data, error } = await q.maybeSingle();
       if (error) {
-        if (this.isTableMissing(error)) return this.getLocalActiveShift(orgId, userId, cashRegisterId) || this.getCachedActiveShift(orgId, userId, cashRegisterId);
+        if (this.isTableMissing(error))
+          return (
+            this.getLocalActiveShift(orgId, userId, cashRegisterId) ||
+            this.getCachedActiveShift(orgId, userId, cashRegisterId)
+          );
         throw error;
       }
       if (data) {
@@ -503,7 +509,10 @@ export const shiftService = {
       this.clearCachedActiveShift(orgId, userId);
       return null;
     } catch {
-      return this.getLocalActiveShift(orgId, userId, cashRegisterId) || this.getCachedActiveShift(orgId, userId, cashRegisterId);
+      return (
+        this.getLocalActiveShift(orgId, userId, cashRegisterId) ||
+        this.getCachedActiveShift(orgId, userId, cashRegisterId)
+      );
     }
   },
 
@@ -512,9 +521,7 @@ export const shiftService = {
     return (
       list.find(
         (s) =>
-          s.status === "open" &&
-          s.cashier_id === userId &&
-          (!cashRegisterId || s.cash_register_id === cashRegisterId)
+          s.status === "open" && s.cashier_id === userId && (!cashRegisterId || s.cash_register_id === cashRegisterId),
       ) || null
     );
   },
@@ -553,11 +560,11 @@ export const shiftService = {
       .neq("note", "")
       .order("opened_at", { ascending: false })
       .limit(1);
-    
+
     if (cashRegisterId) {
       q = q.eq("cash_register_id", cashRegisterId);
     }
-    
+
     const { data } = await q.maybeSingle();
     return data?.note || null;
   },
@@ -587,8 +594,7 @@ export const shiftService = {
       if (data && !data.ok) {
         if (data.error === "shift_already_open" && data.shift_id) {
           const existingShift =
-            (await this.getShift(data.shift_id)) ||
-            (await this.getActiveShift(safePayload.cash_register_id));
+            (await this.getShift(data.shift_id)) || (await this.getActiveShift(safePayload.cash_register_id));
           if (existingShift) {
             this.cacheActiveShift(existingShift);
             return { ok: true, shift: existingShift };
@@ -598,9 +604,8 @@ export const shiftService = {
       }
 
       const shift = data?.shift_id ? await this.getShift(data.shift_id) : null;
-      const openedShift = shift || (data?.shift_id
-        ? this.buildOpenShiftSnapshot(data.shift_id, orgId, userId, safePayload)
-        : null);
+      const openedShift =
+        shift || (data?.shift_id ? this.buildOpenShiftSnapshot(data.shift_id, orgId, userId, safePayload) : null);
       await permissionService.createAuditLog(orgId, userId, "shifts.open", {
         shift_id: data?.shift_id,
         opening_cash: safePayload.opening_cash_amount,
@@ -624,7 +629,12 @@ export const shiftService = {
 
   createLocalShift(orgId: string, userId: string, payload: OpenShiftPayload): Shift {
     const list = readLocal<Shift[]>(SHIFT_KEY(orgId), []);
-    const shift = this.buildOpenShiftSnapshot("shift-" + Math.random().toString(36).slice(2, 10), orgId, userId, payload);
+    const shift = this.buildOpenShiftSnapshot(
+      "shift-" + Math.random().toString(36).slice(2, 10),
+      orgId,
+      userId,
+      payload,
+    );
     list.push(shift);
     writeLocal(SHIFT_KEY(orgId), list);
 
@@ -684,7 +694,9 @@ export const shiftService = {
     }
   },
 
-  async closeShift(payload: CloseShiftPayload): Promise<{ ok: boolean; shift?: Shift; expected?: number; counted?: number; difference?: number; error?: string }> {
+  async closeShift(
+    payload: CloseShiftPayload,
+  ): Promise<{ ok: boolean; shift?: Shift; expected?: number; counted?: number; difference?: number; error?: string }> {
     const supabase = createClient();
     const orgId = await permissionService.getActiveOrgId();
     const userId = await permissionService.getActiveUserId();
@@ -716,15 +728,17 @@ export const shiftService = {
       notifyShiftClosed(payload.shift_id);
 
       if (shift) {
-        telegramService.notifyShiftClosed({
-          employeeName: (shift as any).cashier?.full_name || "Nhân viên",
-          opening: shift.opening_cash_amount || 0,
-          sales: shift.cash_sales_amount || 0,
-          refund: shift.refund_amount || 0,
-          expense: shift.expense_amount || 0,
-          actualCash: payload.counted_cash_amount,
-          difference: data?.difference || 0
-        }).catch(e => console.warn("Telegram notify failed:", e));
+        telegramService
+          .notifyShiftClosed({
+            employeeName: (shift as any).cashier?.full_name || "Nhân viên",
+            opening: shift.opening_cash_amount || 0,
+            sales: shift.cash_sales_amount || 0,
+            refund: shift.refund_amount || 0,
+            expense: shift.expense_amount || 0,
+            actualCash: payload.counted_cash_amount,
+            difference: data?.difference || 0,
+          })
+          .catch((e) => console.warn("Telegram notify failed:", e));
       }
 
       return {
@@ -773,15 +787,17 @@ export const shiftService = {
       notifyShiftClosed(payload.shift_id);
 
       if (list[idx]) {
-        telegramService.notifyShiftClosed({
-          employeeName: "Nhân viên (Local)",
-          opening: list[idx].opening_cash_amount || 0,
-          sales: list[idx].cash_sales_amount || 0,
-          refund: list[idx].refund_amount || 0,
-          expense: list[idx].expense_amount || 0,
-          actualCash: payload.counted_cash_amount,
-          difference: diff || 0
-        }).catch(e => console.warn("Telegram notify failed:", e));
+        telegramService
+          .notifyShiftClosed({
+            employeeName: "Nhân viên (Local)",
+            opening: list[idx].opening_cash_amount || 0,
+            sales: list[idx].cash_sales_amount || 0,
+            refund: list[idx].refund_amount || 0,
+            expense: list[idx].expense_amount || 0,
+            actualCash: payload.counted_cash_amount,
+            difference: diff || 0,
+          })
+          .catch((e) => console.warn("Telegram notify failed:", e));
       }
 
       return { ok: true, shift: list[idx], expected, counted: payload.counted_cash_amount, difference: diff };
@@ -823,7 +839,13 @@ export const shiftService = {
       const list = readLocal<Shift[]>(SHIFT_KEY(orgId), []);
       const idx = list.findIndex((s) => s.id === shiftId);
       if (idx < 0) return { ok: false, error: "shift_not_found" };
-      list[idx] = { ...list[idx], status: "reviewed", reviewed_by: userId, reviewed_at: new Date().toISOString(), note: note ?? list[idx].note };
+      list[idx] = {
+        ...list[idx],
+        status: "reviewed",
+        reviewed_by: userId,
+        reviewed_at: new Date().toISOString(),
+        note: note ?? list[idx].note,
+      };
       writeLocal(SHIFT_KEY(orgId), list);
       await permissionService.createAuditLog(orgId, userId, "shifts.review", { shift_id: shiftId, local: true });
       return { ok: true };
@@ -877,7 +899,11 @@ export const shiftService = {
         payment_method: "cash",
         note: `Điều chỉnh chênh lệch — ${reason}`,
       });
-      await permissionService.createAuditLog(orgId, userId, "shifts.adjust", { shift_id: shiftId, new_difference: newDifference, reason });
+      await permissionService.createAuditLog(orgId, userId, "shifts.adjust", {
+        shift_id: shiftId,
+        new_difference: newDifference,
+        reason,
+      });
       return { ok: true };
     } catch {
       return { ok: false } as any;
@@ -897,7 +923,8 @@ export const shiftService = {
         .eq("shift_id", shiftId)
         .order("created_at", { ascending: true });
       if (error) {
-        if (this.isTableMissing(error)) return readLocal<ShiftTransaction[]>(TX_KEY(orgId), []).filter((t) => t.shift_id === shiftId);
+        if (this.isTableMissing(error))
+          return readLocal<ShiftTransaction[]>(TX_KEY(orgId), []).filter((t) => t.shift_id === shiftId);
         throw error;
       }
       return data || [];
@@ -963,12 +990,22 @@ export const shiftService = {
   // --------------------------------------------------------------------------
   // Cash counts
   // --------------------------------------------------------------------------
-  async saveCashCounts(shiftId: string, countType: "opening" | "closing", counts: Array<{ denomination: number; quantity: number }>): Promise<void> {
+  async saveCashCounts(
+    shiftId: string,
+    countType: "opening" | "closing",
+    counts: Array<{ denomination: number; quantity: number }>,
+  ): Promise<void> {
     const supabase = createClient();
     const orgId = await permissionService.getActiveOrgId();
     const rows = counts
       .filter((c) => c.quantity > 0)
-      .map((c) => ({ organization_id: orgId, shift_id: shiftId, count_type: countType, denomination: c.denomination, quantity: c.quantity }));
+      .map((c) => ({
+        organization_id: orgId,
+        shift_id: shiftId,
+        count_type: countType,
+        denomination: c.denomination,
+        quantity: c.quantity,
+      }));
     if (rows.length === 0) return;
     try {
       const { error } = await supabase.from("cash_counts").insert(rows);
@@ -976,7 +1013,12 @@ export const shiftService = {
     } catch {
       const list = readLocal<any[]>(COUNT_KEY(orgId), []);
       for (const r of rows) {
-        list.push({ id: "cc-" + Math.random().toString(36).slice(2, 10), ...r, total_amount: r.denomination * r.quantity, created_at: new Date().toISOString() });
+        list.push({
+          id: "cc-" + Math.random().toString(36).slice(2, 10),
+          ...r,
+          total_amount: r.denomination * r.quantity,
+          created_at: new Date().toISOString(),
+        });
       }
       writeLocal(COUNT_KEY(orgId), list);
     }
@@ -1008,7 +1050,12 @@ export const shiftService = {
   // --------------------------------------------------------------------------
   // Shift assignments / staff roster
   // --------------------------------------------------------------------------
-  async listShiftAssignments(filters?: { from?: string; to?: string; branchId?: string; employeeId?: string }): Promise<ShiftAssignment[]> {
+  async listShiftAssignments(filters?: {
+    from?: string;
+    to?: string;
+    branchId?: string;
+    employeeId?: string;
+  }): Promise<ShiftAssignment[]> {
     const supabase = createClient();
     const orgId = await permissionService.getActiveOrgId();
     try {
@@ -1037,7 +1084,9 @@ export const shiftService = {
     const supabase = createClient();
     const orgId = await permissionService.getActiveOrgId();
     const userId = await permissionService.getActiveUserId();
-    const canManage = await permissionService.hasPermission("shifts.adjust") || await permissionService.hasPermission("staff.update");
+    const canManage =
+      (await permissionService.hasPermission("shifts.adjust")) ||
+      (await permissionService.hasPermission("staff.update"));
     if (!canManage) throw new Error("Bạn không có quyền phân ca làm việc.");
 
     const row = {
@@ -1101,7 +1150,10 @@ export const shiftService = {
     await permissionService.createAuditLog(orgId, userId, "shifts.assignment_status", { assignment_id: id, status });
   },
 
-  listLocalAssignments(orgId: string, filters?: { from?: string; to?: string; branchId?: string; employeeId?: string }): ShiftAssignment[] {
+  listLocalAssignments(
+    orgId: string,
+    filters?: { from?: string; to?: string; branchId?: string; employeeId?: string },
+  ): ShiftAssignment[] {
     let list = readLocal<ShiftAssignment[]>(ASSIGNMENT_KEY(orgId), []);
     if (filters?.from) list = list.filter((item) => item.work_date >= filters.from!);
     if (filters?.to) list = list.filter((item) => item.work_date <= filters.to!);
@@ -1127,7 +1179,7 @@ export const shiftService = {
     const list = readLocal<ShiftAssignment[]>(ASSIGNMENT_KEY(orgId), []);
     writeLocal(
       ASSIGNMENT_KEY(orgId),
-      list.map((item) => item.id === id ? { ...item, status, updated_at: new Date().toISOString() } : item)
+      list.map((item) => (item.id === id ? { ...item, status, updated_at: new Date().toISOString() } : item)),
     );
   },
 
@@ -1139,7 +1191,9 @@ export const shiftService = {
     try {
       const { data, error } = await supabase
         .from("orders")
-        .select("id, order_number, total_amount, payment_method, status, created_at, customer:customers(id, name, phone)")
+        .select(
+          "id, order_number, total_amount, payment_method, status, created_at, customer:customers(id, name, phone)",
+        )
         .eq("shift_id", shiftId)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -1152,7 +1206,11 @@ export const shiftService = {
   // --------------------------------------------------------------------------
   // Reports
   // --------------------------------------------------------------------------
-  async getReportSummary(from: string, to: string, branchId?: string): Promise<{
+  async getReportSummary(
+    from: string,
+    to: string,
+    branchId?: string,
+  ): Promise<{
     totals: {
       shifts: number;
       cash: number;
@@ -1174,10 +1232,24 @@ export const shiftService = {
     const shifts = await this.listShifts({ from, to, branchId });
     const totals = {
       shifts: shifts.length,
-      cash: 0, transfer: 0, vietqr: 0, card: 0, momo: 0, zalopay: 0, debt: 0,
-      refund: 0, expense: 0, sales: 0, orders: 0, cancelled: 0, cash_difference: 0,
+      cash: 0,
+      transfer: 0,
+      vietqr: 0,
+      card: 0,
+      momo: 0,
+      zalopay: 0,
+      debt: 0,
+      refund: 0,
+      expense: 0,
+      sales: 0,
+      orders: 0,
+      cancelled: 0,
+      cash_difference: 0,
     };
-    const byCashierMap = new Map<string, { cashier_id: string; cashier_name: string; shifts: number; sales: number; difference: number }>();
+    const byCashierMap = new Map<
+      string,
+      { cashier_id: string; cashier_name: string; shifts: number; sales: number; difference: number }
+    >();
 
     for (const s of shifts) {
       totals.cash += Number(s.cash_sales_amount || 0);
@@ -1196,7 +1268,13 @@ export const shiftService = {
 
       const key = s.cashier_id;
       const name = s.cashier?.full_name || s.cashier?.email || "—";
-      const entry = byCashierMap.get(key) || { cashier_id: key, cashier_name: name, shifts: 0, sales: 0, difference: 0 };
+      const entry = byCashierMap.get(key) || {
+        cashier_id: key,
+        cashier_name: name,
+        shifts: 0,
+        sales: 0,
+        difference: 0,
+      };
       entry.shifts += 1;
       entry.sales += Number(s.total_sales_amount || 0);
       entry.difference += Number(s.cash_difference || 0);

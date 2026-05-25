@@ -72,18 +72,16 @@ function cartesianProduct(attrs: AttributeDef[]): Record<string, string>[] {
 
 function getInitials(name: string): string {
   if (!name) return "";
-  const cleaned = name
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/đ/g, "d")
-    .replace(/Đ/g, "D")
-    .trim();
-  
+  const cleaned = name.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").trim();
+
   const words = cleaned.split(/[^a-zA-Z0-9]+/).filter(Boolean);
   if (words.length === 1) {
     return words[0].toUpperCase();
   }
-  return words.map(w => w[0]).join('').toUpperCase();
+  return words
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
 }
 
 function slugifySku(value: string): string {
@@ -108,9 +106,9 @@ function buildVariantSku(productName: string, attrs: Record<string, string>): st
   for (const [key, val] of Object.entries(attrs)) {
     const lowerKey = key.toLowerCase();
     if (lowerKey.includes("màu") || lowerKey.includes("color")) {
-      colorValue = val.replace(/^màu\s+/i, '').replace(/^color\s+/i, '');
+      colorValue = val.replace(/^màu\s+/i, "").replace(/^color\s+/i, "");
     } else if (lowerKey.includes("size") || lowerKey.includes("kích") || lowerKey.includes("cỡ")) {
-      sizeValue = val.replace(/^size\s+/i, '');
+      sizeValue = val.replace(/^size\s+/i, "");
     } else {
       otherValues.push(val);
     }
@@ -119,8 +117,8 @@ function buildVariantSku(productName: string, attrs: Record<string, string>): st
   const parts = [productPart];
   if (colorValue) parts.push(slugifySku(colorValue));
   if (sizeValue) parts.push(slugifySku(sizeValue));
-  
-  otherValues.forEach(val => {
+
+  otherValues.forEach((val) => {
     if (val) parts.push(slugifySku(val));
   });
 
@@ -164,12 +162,12 @@ export function VariantBuilder({
 
       if (prev) {
         // Only update sku if it's empty, otherwise keep user edits
-        return { 
-          ...prev, 
-          attributes: combo, 
-          key, 
+        return {
+          ...prev,
+          attributes: combo,
+          key,
           name: variantName || prev.name,
-          sku: prev.sku || expectedSku
+          sku: prev.sku || expectedSku,
         };
       }
       return {
@@ -191,7 +189,10 @@ export function VariantBuilder({
     if (!sameKeys) emit(next);
   }, [attributes, defaultPrice, defaultCostPrice, defaultStock, skuPrefix, parentName]);
 
-  const attributeNamesUsed = useMemo(() => attributes.map((a) => a?.name?.trim?.() || "").filter(Boolean), [attributes]);
+  const attributeNamesUsed = useMemo(
+    () => attributes.map((a) => a?.name?.trim?.() || "").filter(Boolean),
+    [attributes],
+  );
 
   const addAttribute = (specificName?: string | any) => {
     if (attributes.length >= 3) {
@@ -382,7 +383,11 @@ export function VariantBuilder({
           </div>
 
           {/* Bulk apply row */}
-          <BulkApplyRow onApplyPrice={applyBulkPrice} onApplyCostPrice={applyBulkCostPrice} onApplyStock={applyBulkStock} />
+          <BulkApplyRow
+            onApplyPrice={applyBulkPrice}
+            onApplyCostPrice={applyBulkCostPrice}
+            onApplyStock={applyBulkStock}
+          />
 
           {/* Matrix table */}
           <div className="overflow-x-auto -mx-1">

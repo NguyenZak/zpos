@@ -13,18 +13,10 @@ const VERSION = "v1";
 const CORE_CACHE = `zpos-core-${VERSION}`;
 const RUNTIME_CACHE = `zpos-runtime-${VERSION}`;
 
-const CORE_ASSETS = [
-  "/app/pos",
-  "/manifest.json",
-  "/theme-boot.js",
-];
+const CORE_ASSETS = ["/app/pos", "/manifest.json", "/theme-boot.js"];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches
-      .open(CORE_CACHE)
-      .then((cache) => cache.addAll(CORE_ASSETS).catch(() => {})),
-  );
+  event.waitUntil(caches.open(CORE_CACHE).then((cache) => cache.addAll(CORE_ASSETS).catch(() => {})));
   self.skipWaiting();
 });
 
@@ -32,11 +24,7 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
       const keys = await caches.keys();
-      await Promise.all(
-        keys
-          .filter((k) => k !== CORE_CACHE && k !== RUNTIME_CACHE)
-          .map((k) => caches.delete(k)),
-      );
+      await Promise.all(keys.filter((k) => k !== CORE_CACHE && k !== RUNTIME_CACHE).map((k) => caches.delete(k)));
       await self.clients.claim();
     })(),
   );

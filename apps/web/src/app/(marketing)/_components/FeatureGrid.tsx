@@ -97,9 +97,13 @@ export function FeatureGrid() {
             style={{ fontFamily: "var(--font-aeonik-pro, sans-serif)", fontFeatureSettings: "'ss02', 'ss05', 'ss10'" }}
           >
             {language === "vi" ? (
-              <>Mọi thứ bạn cần để <span className="text-[#0093ff]">bứt phá</span></>
+              <>
+                Mọi thứ bạn cần để <span className="text-[#0093ff]">bứt phá</span>
+              </>
             ) : (
-              <>Everything you need to <span className="text-[#0093ff]">scale</span></>
+              <>
+                Everything you need to <span className="text-[#0093ff]">scale</span>
+              </>
             )}
           </motion.h2>
 
@@ -146,7 +150,7 @@ export function FeatureGrid() {
               >
                 {feature.title}
               </h3>
-              
+
               <p
                 className="text-sm text-white/60 leading-relaxed font-light"
                 style={{ fontFamily: "var(--font-aeonik-pro, sans-serif)" }}

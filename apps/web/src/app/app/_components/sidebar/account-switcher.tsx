@@ -63,7 +63,15 @@ type UserProfile = {
   avatar_url: string | null;
 };
 
-const NOTIFICATION_CATEGORY_ORDER: AppNotificationCategory[] = ["order", "payment", "inventory", "shift", "staff", "system", "report"];
+const NOTIFICATION_CATEGORY_ORDER: AppNotificationCategory[] = [
+  "order",
+  "payment",
+  "inventory",
+  "shift",
+  "staff",
+  "system",
+  "report",
+];
 
 export function AccountSwitcher({
   users: _users,
@@ -197,7 +205,9 @@ export function AccountSwitcher({
       try {
         const [orders, products] = await Promise.all([posService.getOrders(), posService.getProducts()]);
         if (!cancelled) {
-          setRawNotifications(buildRealNotifications(orders || [], products || [], notificationSettings.staleProductDays));
+          setRawNotifications(
+            buildRealNotifications(orders || [], products || [], notificationSettings.staleProductDays),
+          );
         }
       } catch (error) {
         console.error("Failed to load app notifications:", error);
@@ -427,7 +437,12 @@ function NotificationGroup({
     <section className="space-y-2">
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
-          <span className={cn("inline-flex size-6 items-center justify-center rounded-md border", getNotificationTone(category))}>
+          <span
+            className={cn(
+              "inline-flex size-6 items-center justify-center rounded-md border",
+              getNotificationTone(category),
+            )}
+          >
             <Icon className="size-3.5" />
           </span>
           <h4 className="text-sm font-bold">{APP_NOTIFICATION_CATEGORY_LABELS[category]}</h4>
@@ -473,7 +488,11 @@ function NotificationRow({
         </div>
         <p className="text-xs leading-normal text-muted-foreground">{notification.description}</p>
         {notification.actionLabel && notification.actionHref && (
-          <button type="button" className="text-xs font-bold text-primary hover:underline" onClick={() => onAction(notification.actionHref!)}>
+          <button
+            type="button"
+            className="text-xs font-bold text-primary hover:underline"
+            onClick={() => onAction(notification.actionHref!)}
+          >
             {notification.actionLabel}
           </button>
         )}
@@ -567,7 +586,10 @@ function buildRealNotifications(orders: any[], products: any[], staleProductDays
     .filter((order) => Array.isArray(order.return_orders) && order.return_orders.length > 0)
     .slice(0, 5)
     .forEach((order) => {
-      const refundAmount = order.return_orders.reduce((sum: number, item: any) => sum + Number(item.total_refund_amount || 0), 0);
+      const refundAmount = order.return_orders.reduce(
+        (sum: number, item: any) => sum + Number(item.total_refund_amount || 0),
+        0,
+      );
       notifications.push({
         id: `refund-requested-${order.id}`,
         type: "refund_requested",
@@ -616,7 +638,9 @@ function buildRealNotifications(orders: any[], products: any[], staleProductDays
       });
     });
 
-  buildStaleProductNotifications(inventoryItems, sortedOrders, staleProductDays).forEach((notification) => notifications.push(notification));
+  buildStaleProductNotifications(inventoryItems, sortedOrders, staleProductDays).forEach((notification) =>
+    notifications.push(notification),
+  );
 
   const openShift = readJsonArray("zpos_shifts_active_shift_cache");
   if (openShift.length > 0) {
@@ -716,10 +740,15 @@ function buildStaleProductNotifications(
     .filter((item) => item.stock > 0)
     .map((item) => {
       const lastSold = lastSoldById.get(item.id) || lastSoldById.get(item.productId);
-      const daysWithoutSale = lastSold ? Math.floor((now - lastSold.getTime()) / (24 * 60 * 60 * 1000)) : staleProductDays;
+      const daysWithoutSale = lastSold
+        ? Math.floor((now - lastSold.getTime()) / (24 * 60 * 60 * 1000))
+        : staleProductDays;
       return { item, lastSold, daysWithoutSale };
     })
-    .filter(({ lastSold, daysWithoutSale }) => !lastSold || daysWithoutSale >= staleProductDays || now - lastSold.getTime() >= thresholdMs)
+    .filter(
+      ({ lastSold, daysWithoutSale }) =>
+        !lastSold || daysWithoutSale >= staleProductDays || now - lastSold.getTime() >= thresholdMs,
+    )
     .sort((a, b) => b.daysWithoutSale - a.daysWithoutSale || b.item.stock - a.item.stock)
     .slice(0, 8)
     .map(({ item, lastSold, daysWithoutSale }) => ({

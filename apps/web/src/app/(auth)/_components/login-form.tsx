@@ -33,11 +33,11 @@ const getSubdomain = () => {
   if (typeof window === "undefined") return null;
   const hostname = window.location.hostname;
   const mainDomain = getMainDomain();
-  
+
   if (hostname === mainDomain || hostname === "localhost" || hostname === "127.0.0.1") {
     return null;
   }
-  
+
   let sub = null;
   if (hostname.endsWith(`.${mainDomain}`)) {
     sub = hostname.replace(`.${mainDomain}`, "");
@@ -47,11 +47,11 @@ const getSubdomain = () => {
       sub = parts[0];
     }
   }
-  
+
   if (sub && !["www", "app", "console", "cms"].includes(sub)) {
     return sub;
   }
-  
+
   return null;
 };
 
@@ -103,16 +103,10 @@ const getAuthErrorMessage = (err: any) => {
 
 const isExpectedAuthFailure = (err: any) => {
   const rawMessage =
-    err?.message ||
-    err?.error_description ||
-    (typeof err === "object" ? JSON.stringify(err) : String(err)) ||
-    "";
+    err?.message || err?.error_description || (typeof err === "object" ? JSON.stringify(err) : String(err)) || "";
   const normalized = rawMessage.toLowerCase();
 
-  return (
-    normalized.includes("invalid login credentials") ||
-    normalized.includes("email not confirmed")
-  );
+  return normalized.includes("invalid login credentials") || normalized.includes("email not confirmed");
 };
 
 export function LoginForm() {
@@ -146,7 +140,6 @@ export function LoginForm() {
     },
   });
 
-
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     setLoginError(null);
@@ -154,7 +147,8 @@ export function LoginForm() {
     const envUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const envKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
     if (!envUrl || !envKey) {
-      const missingErr = "Cấu hình Supabase bị thiếu trên Trình duyệt. Hãy khởi động lại Dev Server (npm run dev) để Next.js nhận file .env.local!";
+      const missingErr =
+        "Cấu hình Supabase bị thiếu trên Trình duyệt. Hãy khởi động lại Dev Server (npm run dev) để Next.js nhận file .env.local!";
       setLoginError(missingErr);
       toast.error("Thiếu cấu hình hệ thống!", { description: missingErr });
       setIsLoading(false);
@@ -162,7 +156,7 @@ export function LoginForm() {
     }
 
     const supabase = createClient();
-    
+
     try {
       clearClientMockSession();
 
@@ -185,19 +179,19 @@ export function LoginForm() {
           action: "login_success",
           module: "auth",
           severity: "info",
-          metadata: { mode: "live" }
-        })
+          metadata: { mode: "live" },
+        }),
       }).catch(console.error);
 
       // 3. Live Success Redirection
       toast.success("Đăng nhập thành công!");
-      
-      const isLocal = 
-        window.location.hostname.includes("localhost") || 
-        window.location.hostname.includes("127.0.0.1") || 
+
+      const isLocal =
+        window.location.hostname.includes("localhost") ||
+        window.location.hostname.includes("127.0.0.1") ||
         window.location.port !== "";
       const port = window.location.port ? `:${window.location.port}` : "";
-      
+
       const params = new URLSearchParams(window.location.search);
       const redirectToParam = params.get("redirectTo");
 
@@ -219,13 +213,10 @@ export function LoginForm() {
       }
 
       const isConsoleSubdomain =
-        window.location.hostname.startsWith("console.") ||
-        window.location.hostname === "console.localhost";
+        window.location.hostname.startsWith("console.") || window.location.hostname === "console.localhost";
 
       if (isConsoleSubdomain) {
-        const consoleUrl = isLocal
-          ? "/console"
-          : `https://console.${getMainDomain()}/dashboard`;
+        const consoleUrl = isLocal ? "/console" : `https://console.${getMainDomain()}/dashboard`;
         window.location.href = consoleUrl;
         return;
       }
@@ -242,9 +233,7 @@ export function LoginForm() {
 
       // 2. If user is associated with a tenant, redirect them to their subdomain immediately!
       if (tenantSlug) {
-        const redirectUrl = isLocal
-          ? "/app"
-          : `https://${tenantSlug}.${getMainDomain()}/app`;
+        const redirectUrl = isLocal ? "/app" : `https://${tenantSlug}.${getMainDomain()}/app`;
         window.location.href = redirectUrl;
         return;
       }
@@ -253,23 +242,20 @@ export function LoginForm() {
       const isSuperAdmin = isSuperAdminUser(authData.user);
 
       if (isSuperAdmin) {
-        const consoleUrl = isLocal 
-          ? "/console" 
-          : `https://console.${getMainDomain()}/dashboard`;
+        const consoleUrl = isLocal ? "/console" : `https://console.${getMainDomain()}/dashboard`;
         window.location.href = consoleUrl;
         return;
       }
 
       // 4. Default Fallback
       window.location.href = "/app";
-
     } catch (err: any) {
       const errMsg = getAuthErrorMessage(err);
 
       if (!isExpectedAuthFailure(err)) {
         console.error("Auth Exception Caught:", err);
       }
-      
+
       // Track failed login
       fetch("/api/admin/audit-logs", {
         method: "POST",
@@ -279,8 +265,8 @@ export function LoginForm() {
           action: "login_failed",
           module: "auth",
           severity: "warning",
-          metadata: { error_message: errMsg, password_attempted_length: data.password.length }
-        })
+          metadata: { error_message: errMsg, password_attempted_length: data.password.length },
+        }),
       }).catch(console.error);
 
       setLoginError(errMsg);
@@ -303,7 +289,7 @@ export function LoginForm() {
           </div>
         </div>
       )}
-      
+
       <FieldGroup className="gap-4">
         <Controller
           control={form.control}
@@ -328,11 +314,13 @@ export function LoginForm() {
                   className="h-12 pl-11 pr-4 rounded-xl border-white/10 bg-white/5 placeholder:text-white/20 text-white transition-colors duration-150 focus-visible:border-blue-500/60 focus-visible:ring-4 focus-visible:ring-blue-500/10 focus-visible:bg-[#0c0822]/40"
                 />
               </div>
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} className="text-rose-400 text-[11px] mt-0.5" />}
+              {fieldState.invalid && (
+                <FieldError errors={[fieldState.error]} className="text-rose-400 text-[11px] mt-0.5" />
+              )}
             </Field>
           )}
         />
-        
+
         <Controller
           control={form.control}
           name="password"
@@ -376,11 +364,13 @@ export function LoginForm() {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} className="text-rose-400 text-[11px] mt-0.5" />}
+              {fieldState.invalid && (
+                <FieldError errors={[fieldState.error]} className="text-rose-400 text-[11px] mt-0.5" />
+              )}
             </Field>
           )}
         />
-        
+
         <Controller
           control={form.control}
           name="remember"
@@ -396,7 +386,10 @@ export function LoginForm() {
                 className="size-4 rounded border-white/20 bg-white/5 text-blue-500 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 focus-visible:ring-blue-500/30"
               />
               <FieldContent className="ml-2">
-                <FieldLabel htmlFor="login-remember" className="font-medium text-xs text-white/60 cursor-pointer hover:text-white/80 transition-colors">
+                <FieldLabel
+                  htmlFor="login-remember"
+                  className="font-medium text-xs text-white/60 cursor-pointer hover:text-white/80 transition-colors"
+                >
                   Ghi nhớ đăng nhập trong 30 ngày
                 </FieldLabel>
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -405,7 +398,7 @@ export function LoginForm() {
           )}
         />
       </FieldGroup>
-      
+
       <Button
         className="relative group overflow-hidden h-12 w-full py-6 text-sm font-semibold tracking-wide cursor-pointer rounded-xl bg-[#0036ff] text-white shadow-[0_4px_18px_rgba(0,54,255,0.24)] transition-colors duration-150 hover:bg-[#0056ff] active:scale-[0.99] disabled:opacity-50 mt-1 md:bg-gradient-to-r md:from-[#0093ff] md:to-[#0036ff] md:hover:shadow-[0_4px_30px_rgba(0,147,255,0.35)]"
         type="submit"
@@ -416,14 +409,23 @@ export function LoginForm() {
             <>
               <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
               </svg>
               <span>Đang kết nối bảo mật...</span>
             </>
           ) : (
             <>
               <span>Đăng nhập</span>
-              <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
               </svg>
             </>
@@ -431,7 +433,6 @@ export function LoginForm() {
         </span>
         <div className="absolute inset-0 hidden bg-gradient-to-r from-[#00b0ff] to-[#0056ff] opacity-0 transition-opacity duration-300 group-hover:opacity-100 md:block" />
       </Button>
-
     </form>
   );
 }

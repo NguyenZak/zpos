@@ -14,11 +14,7 @@ export default function OpenShiftRoute() {
 
   return (
     <div className="flex h-full flex-col items-center justify-center p-6">
-      <OpenShiftDialog
-        open={open}
-        onOpenChange={setOpen}
-        onOpened={(shift) => router.push(`/shifts/${shift.id}`)}
-      />
+      <OpenShiftDialog open={open} onOpenChange={setOpen} onOpened={(shift) => router.push(`/shifts/${shift.id}`)} />
     </div>
   );
 }

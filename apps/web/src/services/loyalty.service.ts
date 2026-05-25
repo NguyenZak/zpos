@@ -27,7 +27,7 @@ export interface LoyaltyRule {
   id: string;
   organization_id: string;
   name: string;
-  rule_type: 'earning_spend' | 'earning_order' | 'earning_product' | 'redemption_discount';
+  rule_type: "earning_spend" | "earning_order" | "earning_product" | "redemption_discount";
   product_id?: string | null;
   category_id?: string | null;
   spend_amount?: number | null;
@@ -46,7 +46,7 @@ export interface LoyaltyCampaign {
   id: string;
   organization_id: string;
   name: string;
-  campaign_type: 'double_points' | 'first_purchase' | 'birthday_bonus' | 'custom';
+  campaign_type: "double_points" | "first_purchase" | "birthday_bonus" | "custom";
   points_multiplier: number;
   bonus_points: number;
   start_date?: string | null;
@@ -61,7 +61,7 @@ export interface LoyaltyTransaction {
   organization_id: string;
   customer_id: string;
   order_id?: string | null;
-  transaction_type: 'earn' | 'redeem' | 'adjust_add' | 'adjust_sub' | 'expire';
+  transaction_type: "earn" | "redeem" | "adjust_add" | "adjust_sub" | "expire";
   points: number;
   amount_spent: number;
   notes?: string | null;
@@ -186,7 +186,9 @@ export const loyaltyService = {
     }
   },
 
-  async createTier(payload: Omit<LoyaltyTier, "id" | "organization_id" | "created_at" | "updated_at">): Promise<LoyaltyTier> {
+  async createTier(
+    payload: Omit<LoyaltyTier, "id" | "organization_id" | "created_at" | "updated_at">,
+  ): Promise<LoyaltyTier> {
     const supabase = createClient();
     const orgId = await permissionService.getActiveOrgId();
     const userId = await permissionService.getActiveUserId();
@@ -200,11 +202,7 @@ export const loyaltyService = {
     };
 
     try {
-      const { data, error } = await supabase
-        .from("loyalty_tiers")
-        .insert([row])
-        .select()
-        .single();
+      const { data, error } = await supabase.from("loyalty_tiers").insert([row]).select().single();
 
       if (error) {
         if (this.isTableMissing(error)) return this.createLocalTier(orgId, row);
@@ -284,10 +282,7 @@ export const loyaltyService = {
     const orgId = await permissionService.getActiveOrgId();
 
     try {
-      const { data, error } = await supabase
-        .from("loyalty_rules")
-        .select("*")
-        .eq("organization_id", orgId);
+      const { data, error } = await supabase.from("loyalty_rules").select("*").eq("organization_id", orgId);
 
       if (error) {
         if (this.isTableMissing(error)) return this.getLocalRules(orgId);
@@ -304,7 +299,9 @@ export const loyaltyService = {
     }
   },
 
-  async createRule(payload: Omit<LoyaltyRule, "id" | "organization_id" | "created_at" | "updated_at">): Promise<LoyaltyRule> {
+  async createRule(
+    payload: Omit<LoyaltyRule, "id" | "organization_id" | "created_at" | "updated_at">,
+  ): Promise<LoyaltyRule> {
     const supabase = createClient();
     const orgId = await permissionService.getActiveOrgId();
     const userId = await permissionService.getActiveUserId();
@@ -318,11 +315,7 @@ export const loyaltyService = {
     };
 
     try {
-      const { data, error } = await supabase
-        .from("loyalty_rules")
-        .insert([row])
-        .select()
-        .single();
+      const { data, error } = await supabase.from("loyalty_rules").insert([row]).select().single();
 
       if (error) {
         if (this.isTableMissing(error)) return this.createLocalRule(orgId, row);
@@ -402,10 +395,7 @@ export const loyaltyService = {
     const orgId = await permissionService.getActiveOrgId();
 
     try {
-      const { data, error } = await supabase
-        .from("loyalty_campaigns")
-        .select("*")
-        .eq("organization_id", orgId);
+      const { data, error } = await supabase.from("loyalty_campaigns").select("*").eq("organization_id", orgId);
 
       if (error) {
         if (this.isTableMissing(error)) return this.getLocalCampaigns(orgId);
@@ -418,7 +408,9 @@ export const loyaltyService = {
     }
   },
 
-  async createCampaign(payload: Omit<LoyaltyCampaign, "id" | "organization_id" | "created_at" | "updated_at">): Promise<LoyaltyCampaign> {
+  async createCampaign(
+    payload: Omit<LoyaltyCampaign, "id" | "organization_id" | "created_at" | "updated_at">,
+  ): Promise<LoyaltyCampaign> {
     const supabase = createClient();
     const orgId = await permissionService.getActiveOrgId();
     const userId = await permissionService.getActiveUserId();
@@ -432,11 +424,7 @@ export const loyaltyService = {
     };
 
     try {
-      const { data, error } = await supabase
-        .from("loyalty_campaigns")
-        .insert([row])
-        .select()
-        .single();
+      const { data, error } = await supabase.from("loyalty_campaigns").insert([row]).select().single();
 
       if (error) {
         if (this.isTableMissing(error)) return this.createLocalCampaign(orgId, row);
@@ -588,22 +576,26 @@ export const loyaltyService = {
     };
 
     try {
-      const { data, error } = await supabase
-        .from("loyalty_transactions")
-        .insert([row])
-        .select()
-        .single();
+      const { data, error } = await supabase.from("loyalty_transactions").insert([row]).select().single();
 
       if (error) {
         if (this.isTableMissing(error)) return this.createLocalTransaction(orgId, row);
         throw error;
       }
 
-      await permissionService.createAuditLog(orgId, userId, "loyalty.adjust_points", { customer_id: customerId, points, notes });
+      await permissionService.createAuditLog(orgId, userId, "loyalty.adjust_points", {
+        customer_id: customerId,
+        points,
+        notes,
+      });
       return data;
     } catch (e) {
       const tx = this.createLocalTransaction(orgId, row);
-      await permissionService.createAuditLog(orgId, userId, "loyalty.adjust_points", { customer_id: customerId, points, notes });
+      await permissionService.createAuditLog(orgId, userId, "loyalty.adjust_points", {
+        customer_id: customerId,
+        points,
+        notes,
+      });
       return tx;
     }
   },
@@ -611,7 +603,11 @@ export const loyaltyService = {
   // ----------------------------------------------------
   // POS INTEGRATIONS AND CALCULATIONS
   // ----------------------------------------------------
-  async calculateEarnedPoints(customerId: string | null, amountSpent: number, items: any[]): Promise<{ points: number; breakDown: string }> {
+  async calculateEarnedPoints(
+    customerId: string | null,
+    amountSpent: number,
+    items: any[],
+  ): Promise<{ points: number; breakDown: string }> {
     const program = await this.getProgram();
     if (!program || !program.is_enabled) {
       return { points: 0, breakDown: "Chương trình tích điểm chưa kích hoạt" };
@@ -621,7 +617,10 @@ export const loyaltyService = {
     const activeRules = rules.filter((r) => r.is_active);
     const campaigns = await this.getCampaigns();
     const activeCampaigns = campaigns.filter(
-      (c) => c.is_active && (!c.start_date || new Date(c.start_date) <= new Date()) && (!c.end_date || new Date(c.end_date) >= new Date())
+      (c) =>
+        c.is_active &&
+        (!c.start_date || new Date(c.start_date) <= new Date()) &&
+        (!c.end_date || new Date(c.end_date) >= new Date()),
     );
 
     let earned = 0;
@@ -680,7 +679,7 @@ export const loyaltyService = {
     if (customerId) {
       const balance = await this.getCustomerBalance(customerId);
       const isFirstPurchase = balance.lifetime_points === 0;
-      
+
       const firstPurchaseCamp = activeCampaigns.find((c) => c.campaign_type === "first_purchase");
       if (isFirstPurchase && firstPurchaseCamp) {
         finalPoints += firstPurchaseCamp.bonus_points;
@@ -700,7 +699,7 @@ export const loyaltyService = {
   async calculateRedeemablePoints(
     customerId: string,
     orderAmount: number,
-    isDiscountedOrder: boolean
+    isDiscountedOrder: boolean,
   ): Promise<{ maxRedeemablePoints: number; discountAmount: number; minPointsToRedeem: number }> {
     const program = await this.getProgram();
     if (!program || !program.is_enabled) {
@@ -746,7 +745,12 @@ export const loyaltyService = {
     };
   },
 
-  async applyRedemption(customerId: string, orderId: string, pointsRedeemed: number, discountApplied: number): Promise<void> {
+  async applyRedemption(
+    customerId: string,
+    orderId: string,
+    pointsRedeemed: number,
+    discountApplied: number,
+  ): Promise<void> {
     const supabase = createClient();
     const orgId = await permissionService.getActiveOrgId();
 
@@ -771,20 +775,32 @@ export const loyaltyService = {
     try {
       const { data, error: txErr } = await supabase.from("loyalty_transactions").insert([rowTx]).select().single();
       if (txErr) {
-        console.error('[Loyalty] applyRedemption INSERT failed:', JSON.stringify(txErr, Object.getOwnPropertyNames(txErr)));
+        console.error(
+          "[Loyalty] applyRedemption INSERT failed:",
+          JSON.stringify(txErr, Object.getOwnPropertyNames(txErr)),
+        );
         if (this.isTableMissing(txErr)) {
           this.applyLocalRedemption(orgId, customerId, orderId, pointsRedeemed, discountApplied);
           return;
         }
-        if (txErr.code === '42501') {
-          console.warn('[Loyalty] RLS blocked applyRedemption — run loyalty_fix_v2.sql in Supabase Dashboard. Falling back to localStorage.');
+        if (txErr.code === "42501") {
+          console.warn(
+            "[Loyalty] RLS blocked applyRedemption — run loyalty_fix_v2.sql in Supabase Dashboard. Falling back to localStorage.",
+          );
           this.applyLocalRedemption(orgId, customerId, orderId, pointsRedeemed, discountApplied);
           return;
         }
         throw txErr;
       }
       await supabase.from("loyalty_redemptions").insert([rowRedeem]);
-      console.info('[Loyalty] ✅ Redeemed', pointsRedeemed, 'points for customer', customerId, 'order', orderId.slice(0, 8));
+      console.info(
+        "[Loyalty] ✅ Redeemed",
+        pointsRedeemed,
+        "points for customer",
+        customerId,
+        "order",
+        orderId.slice(0, 8),
+      );
     } catch (e) {
       console.error("[Loyalty] applyRedemption exception:", e);
       this.applyLocalRedemption(orgId, customerId, orderId, pointsRedeemed, discountApplied);
@@ -810,19 +826,33 @@ export const loyaltyService = {
     try {
       const { data, error: txErr } = await supabase.from("loyalty_transactions").insert([rowTx]).select().single();
       if (txErr) {
-        console.error('[Loyalty] applyEarning INSERT failed. Error:', JSON.stringify(txErr, Object.getOwnPropertyNames(txErr)), 'Payload:', JSON.stringify(rowTx));
+        console.error(
+          "[Loyalty] applyEarning INSERT failed. Error:",
+          JSON.stringify(txErr, Object.getOwnPropertyNames(txErr)),
+          "Payload:",
+          JSON.stringify(rowTx),
+        );
         if (this.isTableMissing(txErr)) {
           this.applyLocalEarning(orgId, customerId, orderId, pointsEarned, amountSpent);
           return;
         }
-        if (txErr.code === '42501') {
-          console.warn('[Loyalty] RLS blocked applyEarning — run loyalty_fix_v2.sql in Supabase Dashboard. Falling back to localStorage.');
+        if (txErr.code === "42501") {
+          console.warn(
+            "[Loyalty] RLS blocked applyEarning — run loyalty_fix_v2.sql in Supabase Dashboard. Falling back to localStorage.",
+          );
           this.applyLocalEarning(orgId, customerId, orderId, pointsEarned, amountSpent);
           return;
         }
         throw txErr;
       }
-      console.info('[Loyalty] ✅ Earned', pointsEarned, 'points for customer', customerId, 'order', orderId.slice(0, 8));
+      console.info(
+        "[Loyalty] ✅ Earned",
+        pointsEarned,
+        "points for customer",
+        customerId,
+        "order",
+        orderId.slice(0, 8),
+      );
     } catch (e) {
       console.error("[Loyalty] applyEarning exception:", e);
       this.applyLocalEarning(orgId, customerId, orderId, pointsEarned, amountSpent);
@@ -863,11 +893,7 @@ export const loyaltyService = {
     const row = this.getHardcodedProgram(orgId);
     const { id: _omitId, ...rowWithoutId } = row;
     try {
-      const { data, error } = await supabase
-        .from("loyalty_programs")
-        .insert([rowWithoutId])
-        .select()
-        .single();
+      const { data, error } = await supabase.from("loyalty_programs").insert([rowWithoutId]).select().single();
       if (error) throw error;
       return data || row;
     } catch {
@@ -900,7 +926,13 @@ export const loyaltyService = {
       { id: "t-bronze", organization_id: orgId, name: "Đồng (Bronze)", min_points: 0, points_multiplier: 1.0 },
       { id: "t-silver", organization_id: orgId, name: "Bạc (Silver)", min_points: 100, points_multiplier: 1.2 },
       { id: "t-gold", organization_id: orgId, name: "Vàng (Gold)", min_points: 500, points_multiplier: 1.5 },
-      { id: "t-platinum", organization_id: orgId, name: "Bạch Kim (Platinum)", min_points: 1500, points_multiplier: 2.0 },
+      {
+        id: "t-platinum",
+        organization_id: orgId,
+        name: "Bạch Kim (Platinum)",
+        min_points: 1500,
+        points_multiplier: 2.0,
+      },
     ];
   },
 
@@ -919,14 +951,20 @@ export const loyaltyService = {
   createLocalTier(orgId: string, row: any): LoyaltyTier {
     if (typeof window === "undefined") return row;
     const tiers = this.getLocalTiers(orgId);
-    const newTier = { ...row, id: "tier-" + Math.random().toString(36).substr(2, 9), created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+    const newTier = {
+      ...row,
+      id: "tier-" + Math.random().toString(36).substr(2, 9),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
     tiers.push(newTier);
     localStorage.setItem(STORAGE_PREFIX + "tiers_" + orgId, JSON.stringify(tiers));
     return newTier;
   },
 
   updateLocalTier(orgId: string, id: string, payload: Partial<LoyaltyTier>): LoyaltyTier {
-    if (typeof window === "undefined") return { id, organization_id: orgId, name: "", min_points: 0, points_multiplier: 1.0 };
+    if (typeof window === "undefined")
+      return { id, organization_id: orgId, name: "", min_points: 0, points_multiplier: 1.0 };
     const tiers = this.getLocalTiers(orgId);
     const idx = tiers.findIndex((t) => t.id === id);
     if (idx === -1) throw new Error("Không tìm thấy hạng thành viên");
@@ -996,14 +1034,20 @@ export const loyaltyService = {
   createLocalRule(orgId: string, row: any): LoyaltyRule {
     if (typeof window === "undefined") return row;
     const rules = this.getLocalRules(orgId);
-    const newRule = { ...row, id: "rule-" + Math.random().toString(36).substr(2, 9), created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+    const newRule = {
+      ...row,
+      id: "rule-" + Math.random().toString(36).substr(2, 9),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
     rules.push(newRule);
     localStorage.setItem(STORAGE_PREFIX + "rules_" + orgId, JSON.stringify(rules));
     return newRule;
   },
 
   updateLocalRule(orgId: string, id: string, payload: Partial<LoyaltyRule>): LoyaltyRule {
-    if (typeof window === "undefined") return { id, organization_id: orgId, name: "", rule_type: "earning_spend", is_active: true };
+    if (typeof window === "undefined")
+      return { id, organization_id: orgId, name: "", rule_type: "earning_spend", is_active: true };
     const rules = this.getLocalRules(orgId);
     const idx = rules.findIndex((r) => r.id === id);
     if (idx === -1) throw new Error("Không tìm thấy quy tắc");
@@ -1030,14 +1074,28 @@ export const loyaltyService = {
   createLocalCampaign(orgId: string, row: any): LoyaltyCampaign {
     if (typeof window === "undefined") return row;
     const campaigns = this.getLocalCampaigns(orgId);
-    const newCamp = { ...row, id: "camp-" + Math.random().toString(36).substr(2, 9), created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+    const newCamp = {
+      ...row,
+      id: "camp-" + Math.random().toString(36).substr(2, 9),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
     campaigns.push(newCamp);
     localStorage.setItem(STORAGE_PREFIX + "campaigns_" + orgId, JSON.stringify(campaigns));
     return newCamp;
   },
 
   updateLocalCampaign(orgId: string, id: string, payload: Partial<LoyaltyCampaign>): LoyaltyCampaign {
-    if (typeof window === "undefined") return { id, organization_id: orgId, name: "", campaign_type: "double_points", points_multiplier: 1.0, bonus_points: 0, is_active: true };
+    if (typeof window === "undefined")
+      return {
+        id,
+        organization_id: orgId,
+        name: "",
+        campaign_type: "double_points",
+        points_multiplier: 1.0,
+        bonus_points: 0,
+        is_active: true,
+      };
     const campaigns = this.getLocalCampaigns(orgId);
     const idx = campaigns.findIndex((c) => c.id === id);
     if (idx === -1) throw new Error("Không tìm thấy chiến dịch");
@@ -1069,30 +1127,36 @@ export const loyaltyService = {
           if (cust?.loyalty_points) points = cust.loyalty_points;
         }
       } catch {}
-      
+
       const balance = this.createEmptyCustomerBalance(orgId, customerId);
       balance.current_points = points;
       balance.lifetime_points = points;
-      
+
       // Seed initial tier based on points
       const tiers = this.getLocalTiers(orgId);
-      const tier = tiers.slice().reverse().find((t) => t.min_points <= points);
+      const tier = tiers
+        .slice()
+        .reverse()
+        .find((t) => t.min_points <= points);
       if (tier) {
         balance.tier_id = tier.id;
         balance.tier = tier;
       }
-      
+
       localStorage.setItem(key, JSON.stringify(balance));
       return balance;
     }
-    
+
     const balance: CustomerLoyaltyBalance = JSON.parse(data);
     // Bind tier object in memory
     const tiers = this.getLocalTiers(orgId);
     if (balance.tier_id) {
       balance.tier = tiers.find((t) => t.id === balance.tier_id) || null;
     } else {
-      const tier = tiers.slice().reverse().find((t) => t.min_points <= balance.lifetime_points);
+      const tier = tiers
+        .slice()
+        .reverse()
+        .find((t) => t.min_points <= balance.lifetime_points);
       if (tier) {
         balance.tier_id = tier.id;
         balance.tier = tier;
@@ -1130,7 +1194,7 @@ export const loyaltyService = {
     const key = STORAGE_PREFIX + "transactions_" + orgId;
     const data = localStorage.getItem(key);
     const list: LoyaltyTransaction[] = data ? JSON.parse(data) : [];
-    
+
     // Attempt to resolve customer name from localStorage
     let custName = "Khách hàng";
     let custPhone = "";
@@ -1150,7 +1214,7 @@ export const loyaltyService = {
       ...row,
       id: "tx-" + Math.random().toString(36).substr(2, 9),
       created_at: new Date().toISOString(),
-      customer: { name: custName, phone: custPhone }
+      customer: { name: custName, phone: custPhone },
     };
     list.unshift(newTx);
     localStorage.setItem(key, JSON.stringify(list));
@@ -1166,7 +1230,11 @@ export const loyaltyService = {
     const lifetimePoints = custTx.filter((t) => t.points > 0).reduce((sum, t) => sum + t.points, 0);
 
     const tiers = this.getLocalTiers(orgId);
-    const newTier = tiers.slice().reverse().find((t) => t.min_points <= lifetimePoints) || null;
+    const newTier =
+      tiers
+        .slice()
+        .reverse()
+        .find((t) => t.min_points <= lifetimePoints) || null;
 
     const balance: CustomerLoyaltyBalance = {
       id: "bal-" + customerId.slice(0, 8),
@@ -1195,7 +1263,13 @@ export const loyaltyService = {
     } catch {}
   },
 
-  applyLocalRedemption(orgId: string, customerId: string, orderId: string, pointsRedeemed: number, discountApplied: number): void {
+  applyLocalRedemption(
+    orgId: string,
+    customerId: string,
+    orderId: string,
+    pointsRedeemed: number,
+    discountApplied: number,
+  ): void {
     const rowTx = {
       organization_id: orgId,
       customer_id: customerId,
@@ -1225,7 +1299,13 @@ export const loyaltyService = {
     }
   },
 
-  applyLocalEarning(orgId: string, customerId: string, orderId: string, pointsEarned: number, amountSpent: number): void {
+  applyLocalEarning(
+    orgId: string,
+    customerId: string,
+    orderId: string,
+    pointsEarned: number,
+    amountSpent: number,
+  ): void {
     const rowTx = {
       organization_id: orgId,
       customer_id: customerId,

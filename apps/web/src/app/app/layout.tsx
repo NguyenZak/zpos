@@ -23,14 +23,8 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
   ]);
 
   return (
-    <ResponsiveLayout
-      defaultOpen={defaultOpen}
-      variant={variant}
-      collapsible={collapsible}
-      users={users}
-    >
+    <ResponsiveLayout defaultOpen={defaultOpen} variant={variant} collapsible={collapsible} users={users}>
       {children}
     </ResponsiveLayout>
   );
 }
-

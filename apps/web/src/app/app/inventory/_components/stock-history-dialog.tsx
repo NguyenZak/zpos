@@ -32,13 +32,13 @@ export function StockHistoryDialog({ open, onOpenChange, item }: StockHistoryDia
     setHistory([]);
     try {
       const supabase = createClient();
-      
+
       let query = supabase
         .from("inventory_transactions")
         .select("*, created_by:profiles(full_name, email)")
         .order("created_at", { ascending: false })
         .limit(50);
-        
+
       if (item.is_variant) {
         query = query.eq("variant_id", item.id);
       } else {
@@ -46,7 +46,7 @@ export function StockHistoryDialog({ open, onOpenChange, item }: StockHistoryDia
       }
 
       const { data, error } = await query;
-      
+
       if (error) {
         if (error.code === "42P01") {
           throw new Error("Bảng inventory_transactions chưa được tạo. Vui lòng chạy file migration trong database.");
@@ -64,12 +64,57 @@ export function StockHistoryDialog({ open, onOpenChange, item }: StockHistoryDia
 
   const getTransactionTypeLabel = (type: string) => {
     switch (type) {
-      case "SALE": return <Badge variant="secondary" className="bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border-none font-semibold">Bán hàng</Badge>;
-      case "IMPORT": return <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-none font-semibold">Nhập hàng</Badge>;
-      case "ADJUSTMENT": return <Badge variant="secondary" className="bg-orange-500/10 text-orange-600 hover:bg-orange-500/20 border-none font-semibold">Điều chỉnh</Badge>;
-      case "LOSS": return <Badge variant="secondary" className="bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 border-none font-semibold">Báo hỏng</Badge>;
-      case "RETURN": return <Badge variant="secondary" className="bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-none font-semibold">Khách trả</Badge>;
-      default: return <Badge variant="outline" className="font-semibold">{type}</Badge>;
+      case "SALE":
+        return (
+          <Badge
+            variant="secondary"
+            className="bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border-none font-semibold"
+          >
+            Bán hàng
+          </Badge>
+        );
+      case "IMPORT":
+        return (
+          <Badge
+            variant="secondary"
+            className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-none font-semibold"
+          >
+            Nhập hàng
+          </Badge>
+        );
+      case "ADJUSTMENT":
+        return (
+          <Badge
+            variant="secondary"
+            className="bg-orange-500/10 text-orange-600 hover:bg-orange-500/20 border-none font-semibold"
+          >
+            Điều chỉnh
+          </Badge>
+        );
+      case "LOSS":
+        return (
+          <Badge
+            variant="secondary"
+            className="bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 border-none font-semibold"
+          >
+            Báo hỏng
+          </Badge>
+        );
+      case "RETURN":
+        return (
+          <Badge
+            variant="secondary"
+            className="bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-none font-semibold"
+          >
+            Khách trả
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="outline" className="font-semibold">
+            {type}
+          </Badge>
+        );
     }
   };
 
@@ -91,7 +136,7 @@ export function StockHistoryDialog({ open, onOpenChange, item }: StockHistoryDia
             </DialogTitle>
           </DialogHeader>
         </div>
-        
+
         <div className="p-5 bg-mist/10">
           {errorMsg ? (
             <div className="p-5 bg-rose-50 text-rose-800 rounded-xl border border-rose-100 flex items-start gap-3 shadow-sm">
@@ -109,12 +154,24 @@ export function StockHistoryDialog({ open, onOpenChange, item }: StockHistoryDia
                 <Table className="w-full min-w-[700px]">
                   <TableHeader className="bg-mist/40 backdrop-blur-md sticky top-0 z-10 shadow-sm">
                     <TableRow className="border-b border-pebble/50 hover:bg-transparent">
-                      <TableHead className="font-bold text-obsidian uppercase text-[10px] tracking-widest h-12">Thời gian</TableHead>
-                      <TableHead className="font-bold text-obsidian uppercase text-[10px] tracking-widest h-12">Loại giao dịch</TableHead>
-                      <TableHead className="font-bold text-obsidian uppercase text-[10px] tracking-widest h-12 text-right">Biến động</TableHead>
-                      <TableHead className="font-bold text-obsidian uppercase text-[10px] tracking-widest h-12 text-right">Tồn sau</TableHead>
-                      <TableHead className="font-bold text-obsidian uppercase text-[10px] tracking-widest h-12">Người thực hiện</TableHead>
-                      <TableHead className="font-bold text-obsidian uppercase text-[10px] tracking-widest h-12">Ghi chú</TableHead>
+                      <TableHead className="font-bold text-obsidian uppercase text-[10px] tracking-widest h-12">
+                        Thời gian
+                      </TableHead>
+                      <TableHead className="font-bold text-obsidian uppercase text-[10px] tracking-widest h-12">
+                        Loại giao dịch
+                      </TableHead>
+                      <TableHead className="font-bold text-obsidian uppercase text-[10px] tracking-widest h-12 text-right">
+                        Biến động
+                      </TableHead>
+                      <TableHead className="font-bold text-obsidian uppercase text-[10px] tracking-widest h-12 text-right">
+                        Tồn sau
+                      </TableHead>
+                      <TableHead className="font-bold text-obsidian uppercase text-[10px] tracking-widest h-12">
+                        Người thực hiện
+                      </TableHead>
+                      <TableHead className="font-bold text-obsidian uppercase text-[10px] tracking-widest h-12">
+                        Ghi chú
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -144,13 +201,19 @@ export function StockHistoryDialog({ open, onOpenChange, item }: StockHistoryDia
                           <TableCell className="whitespace-nowrap">
                             <div className="flex items-center gap-2 text-ink font-semibold text-sm">
                               <Clock className="w-3.5 h-3.5 text-ash" />
-                              {new Date(tx.created_at).toLocaleString('vi-VN')}
+                              {new Date(tx.created_at).toLocaleString("vi-VN")}
                             </div>
                           </TableCell>
                           <TableCell>{getTransactionTypeLabel(tx.transaction_type)}</TableCell>
                           <TableCell className="text-right">
-                            <div className={`inline-flex items-center justify-end gap-1 font-bold ${tx.quantity > 0 ? "text-emerald-600" : "text-rose-600"}`}>
-                              {tx.quantity > 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                            <div
+                              className={`inline-flex items-center justify-end gap-1 font-bold ${tx.quantity > 0 ? "text-emerald-600" : "text-rose-600"}`}
+                            >
+                              {tx.quantity > 0 ? (
+                                <ArrowUpRight className="w-4 h-4" />
+                              ) : (
+                                <ArrowDownRight className="w-4 h-4" />
+                              )}
                               {Math.abs(tx.quantity)}
                             </div>
                           </TableCell>
@@ -161,19 +224,18 @@ export function StockHistoryDialog({ open, onOpenChange, item }: StockHistoryDia
                                 <User2 className="w-4 h-4 text-ash" />
                               </div>
                               <div className="flex flex-col">
-                                <span className="font-semibold text-sm">
-                                  {tx.created_by?.full_name || "Hệ thống"}
-                                </span>
+                                <span className="font-semibold text-sm">{tx.created_by?.full_name || "Hệ thống"}</span>
                                 {tx.created_by?.email && (
-                                  <span className="text-[11px] text-ash tracking-wide">
-                                    {tx.created_by.email}
-                                  </span>
+                                  <span className="text-[11px] text-ash tracking-wide">{tx.created_by.email}</span>
                                 )}
                               </div>
                             </div>
                           </TableCell>
                           <TableCell className="max-w-[200px]">
-                            <div className="flex items-center gap-2 text-ash group-hover:text-ink transition-colors" title={tx.notes}>
+                            <div
+                              className="flex items-center gap-2 text-ash group-hover:text-ink transition-colors"
+                              title={tx.notes}
+                            >
                               <FileText className="w-3.5 h-3.5 shrink-0 opacity-50" />
                               <span className="truncate text-sm font-medium">{tx.notes || "-"}</span>
                             </div>

@@ -5,12 +5,7 @@ import { getActiveOrganizationId } from "@/services/pos.service";
 // Types
 // ============================================================================
 
-export type DebtTxKind =
-  | "charge"
-  | "payment"
-  | "adjustment"
-  | "write_off"
-  | "refund";
+export type DebtTxKind = "charge" | "payment" | "adjustment" | "write_off" | "refund";
 
 export type DebtPaymentMethod = "cash" | "transfer" | "card" | "vietqr" | "other";
 
@@ -198,11 +193,7 @@ export const debtService = {
   async getSettings(): Promise<DebtSettings> {
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
-    const { data } = await supabase
-      .from("debt_settings")
-      .select("*")
-      .eq("tenant_id", orgId)
-      .maybeSingle();
+    const { data } = await supabase.from("debt_settings").select("*").eq("tenant_id", orgId).maybeSingle();
     return (data as DebtSettings) || { ...DEFAULT_SETTINGS };
   },
 
@@ -254,11 +245,7 @@ export const debtService = {
     return data as CreditAccount;
   },
 
-  async setCreditLimit(
-    customerId: string,
-    creditLimit: number,
-    dueDays?: number,
-  ): Promise<CreditAccount> {
+  async setCreditLimit(customerId: string, creditLimit: number, dueDays?: number): Promise<CreditAccount> {
     await this.ensureCreditAccount(customerId);
     const supabase = createClient();
     const orgId = await getActiveOrganizationId();
@@ -364,10 +351,7 @@ export const debtService = {
       .select()
       .single();
     if (error) throw error;
-    await supabase
-      .from("customer_credit_accounts")
-      .update({ current_balance: after })
-      .eq("id", account.id);
+    await supabase.from("customer_credit_accounts").update({ current_balance: after }).eq("id", account.id);
     return data as DebtTransaction;
   },
 
@@ -525,10 +509,7 @@ export const debtService = {
       .gt("debt_amount", 0)
       .gte("due_date", today.toISOString().slice(0, 10))
       .lte("due_date", in7.toISOString().slice(0, 10));
-    const dueWithin7Days = (dueOrders || []).reduce(
-      (s: number, o: any) => s + Number(o.debt_amount || 0),
-      0,
-    );
+    const dueWithin7Days = (dueOrders || []).reduce((s: number, o: any) => s + Number(o.debt_amount || 0), 0);
 
     return {
       totalReceivable,
@@ -572,11 +553,21 @@ export const debtService = {
       const amt = Number(o.debt_amount || 0);
       row.total += amt;
       switch (bucket) {
-        case "current": row.current += amt; break;
-        case "0-30": row.d0_30 += amt; break;
-        case "31-60": row.d31_60 += amt; break;
-        case "61-90": row.d61_90 += amt; break;
-        case "90+": row.d90plus += amt; break;
+        case "current":
+          row.current += amt;
+          break;
+        case "0-30":
+          row.d0_30 += amt;
+          break;
+        case "31-60":
+          row.d31_60 += amt;
+          break;
+        case "61-90":
+          row.d61_90 += amt;
+          break;
+        case "90+":
+          row.d90plus += amt;
+          break;
       }
     }
     return Array.from(grouped.values()).sort((a, b) => b.total - a.total);
@@ -612,12 +603,8 @@ export const debtService = {
             templateEvent: "debt_reminder_overdue",
             templateData: {
               customer_name: customer.name || "Quý khách",
-              amount_due: new Intl.NumberFormat("vi-VN").format(
-                Number(account.current_balance || 0),
-              ),
-              overdue_amount: new Intl.NumberFormat("vi-VN").format(
-                Number(account.overdue_amount || 0),
-              ),
+              amount_due: new Intl.NumberFormat("vi-VN").format(Number(account.current_balance || 0)),
+              overdue_amount: new Intl.NumberFormat("vi-VN").format(Number(account.overdue_amount || 0)),
               days_overdue: String(daysOverdue(new Date().toISOString().slice(0, 10))),
             },
             customerId: input.customerId,

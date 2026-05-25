@@ -89,6 +89,8 @@ export type Order = {
   order_items?: any[];
   return_orders?: any[];
   invoice_status?: string | null;
+  source?: string;
+  online_status?: string;
 };
 
 const formatCurrency = (amount: number) => {
@@ -176,6 +178,7 @@ export default function OrdersPage() {
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [branchFilter, setBranchFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
+  const [sourceFilter, setSourceFilter] = useState("all");
   const [branches, setBranches] = useState<any[]>([]);
 
   const handleCancelOrder = async () => {
@@ -235,7 +238,16 @@ export default function OrdersPage() {
     {
       accessorKey: "order_number",
       header: "Mã đơn hàng",
-      cell: ({ row }) => <span className="font-bold">{row.getValue("order_number")}</span>,
+      cell: ({ row }) => (
+        <div className="flex flex-col gap-1 items-start">
+          <span className="font-bold">{row.getValue("order_number")}</span>
+          {row.original.source === "online" && (
+            <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-600 border-blue-200">
+              Online
+            </Badge>
+          )}
+        </div>
+      ),
     },
     {
       accessorKey: "created_at",
@@ -385,11 +397,17 @@ export default function OrdersPage() {
           className = "bg-red-500 hover:bg-red-600 text-white";
         }
 
+        const onlineStatus = row.original.online_status;
         const hasReturns = row.original.return_orders && row.original.return_orders.length > 0;
 
         return (
           <div className="flex flex-col gap-1 items-start">
             <Badge className={className}>{label}</Badge>
+            {row.original.source === "online" && onlineStatus && (
+              <span className="font-semibold text-[10px] text-blue-600 uppercase">
+                {onlineStatus === "pending" ? "Đã tiếp nhận" : onlineStatus}
+              </span>
+            )}
             {hasReturns && (
               <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-600 border-orange-200">
                 Có hoàn trả
@@ -573,9 +591,12 @@ export default function OrdersPage() {
         }
       }
 
+      // 6. Source filter
+      if (sourceFilter !== "all" && o.source !== sourceFilter) return false;
+
       return true;
     });
-  }, [data, searchQuery, statusFilter, paymentFilter, branchFilter, dateFilter]);
+  }, [data, searchQuery, statusFilter, paymentFilter, branchFilter, dateFilter, sourceFilter]);
 
   // Aggregate stats from filteredData
   const stats = React.useMemo(() => {
@@ -730,6 +751,8 @@ export default function OrdersPage() {
         return_orders: o.return_orders || [],
         // invoice_status from DB if present
         invoice_status: o.invoice_status || null,
+        source: o.source || "pos",
+        online_status: o.online_status || null,
       }));
 
       setData(mapped);
@@ -794,16 +817,11 @@ export default function OrdersPage() {
       order_items: o.order_items || [],
       return_orders: o.return_orders || [],
       invoice_status: o.invoice_status || null,
+      source: o.source || "pos",
+      online_status: o.online_status || null,
     }));
 
-    return (
-      <MobileOrders
-        orders={mappedMobileOrders}
-        branches={branches}
-        loading={loading}
-        onRefresh={loadOrders}
-      />
-    );
+    return <MobileOrders orders={mappedMobileOrders} branches={branches} loading={loading} onRefresh={loadOrders} />;
   }
 
   return (
@@ -842,6 +860,18 @@ export default function OrdersPage() {
             <SelectItem value="7days">7 ngày qua</SelectItem>
             <SelectItem value="thisMonth">Tháng này</SelectItem>
             <SelectItem value="lastMonth">Tháng trước</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Source Filter Selector */}
+        <Select value={sourceFilter} onValueChange={setSourceFilter}>
+          <SelectTrigger className="h-9 w-[145px]">
+            <SelectValue placeholder="Nguồn" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tất cả nguồn</SelectItem>
+            <SelectItem value="pos">Tại quầy (POS)</SelectItem>
+            <SelectItem value="online">Website</SelectItem>
           </SelectContent>
         </Select>
 
@@ -894,6 +924,7 @@ export default function OrdersPage() {
           paymentFilter !== "all" ||
           branchFilter !== "all" ||
           dateFilter !== "all" ||
+          sourceFilter !== "all" ||
           searchQuery !== "") && (
           <Button
             variant="ghost"
@@ -903,6 +934,7 @@ export default function OrdersPage() {
               setPaymentFilter("all");
               setBranchFilter("all");
               setDateFilter("all");
+              setSourceFilter("all");
               setSearchQuery("");
             }}
             className="h-9 gap-1 px-3 text-ash hover:text-primary"

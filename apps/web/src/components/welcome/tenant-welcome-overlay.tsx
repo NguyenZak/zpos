@@ -85,9 +85,7 @@ export function TenantWelcomeOverlay({
             exit={reducedMotion ? undefined : { opacity: 0, scale: 1.015, filter: "blur(8px)" }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
           >
-            <motion.div
-              className="mx-auto mb-8 grid h-20 w-20 place-items-center rounded-2xl border border-white/10 bg-white/[0.07] shadow-[0_20px_80px_rgba(0,0,0,0.38),inset_0_1px_0_rgba(255,255,255,0.08)]"
-            >
+            <motion.div className="mx-auto mb-8 grid h-20 w-20 place-items-center rounded-2xl border border-white/10 bg-white/[0.07] shadow-[0_20px_80px_rgba(0,0,0,0.38),inset_0_1px_0_rgba(255,255,255,0.08)]">
               {logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={logoUrl} alt="" className="h-12 w-12 rounded-2xl object-cover" />

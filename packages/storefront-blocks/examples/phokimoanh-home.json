@@ -1,0 +1,59 @@
+[
+  {
+    "type": "hero",
+    "props": {
+      "headline": "Phở Hà Nội chuẩn vị",
+      "subheadline": "Bí quyết gia truyền hơn 30 năm",
+      "image": "https://cdn.phokimoanh.zshop.click/pho-bo-tai.jpg",
+      "cta": { "label": "Đặt bàn", "href": "/reservation" },
+      "align": "center"
+    }
+  },
+  {
+    "type": "rich-text",
+    "props": {
+      "html": "<h2>Giờ mở cửa</h2><p>06:00 – 22:00 tất cả các ngày trong tuần</p><p>Hotline: <strong>0901 234 567</strong></p>",
+      "maxWidth": "narrow"
+    }
+  },
+  {
+    "type": "category-grid",
+    "props": {
+      "title": "Thực đơn",
+      "categorySlugs": ["pho", "bun", "com", "do-uong"],
+      "columns": 4,
+      "showProductCount": false
+    }
+  },
+  {
+    "type": "product-grid",
+    "props": {
+      "title": "Món đặc trưng",
+      "source": "tag",
+      "tag": "signature",
+      "limit": 6,
+      "columns": 3,
+      "layout": "grid"
+    }
+  },
+  {
+    "type": "footer",
+    "props": {
+      "about": "Phở Kim Oanh — 12 Lê Duẩn, Hà Nội",
+      "columns": [
+        {
+          "title": "Liên hệ",
+          "links": [
+            { "label": "Đặt bàn", "href": "/reservation" },
+            { "label": "Giao hàng", "href": "/delivery" }
+          ]
+        }
+      ],
+      "social": [
+        { "platform": "facebook", "href": "https://fb.com/phokimoanh" },
+        { "platform": "zalo", "href": "https://zalo.me/phokimoanh" }
+      ],
+      "copyright": "© 2026 Phở Kim Oanh"
+    }
+  }
+]

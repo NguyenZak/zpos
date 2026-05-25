@@ -3,16 +3,19 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  Command, 
-  LayoutDashboard, 
-  Layout, 
-  FileText, 
-  Globe, 
-  Image as ImageIcon, 
-  MessageSquare, 
+import {
+  Command,
+  LayoutDashboard,
+  Layout,
+  FileText,
+  Globe,
+  Image as ImageIcon,
+  MessageSquare,
   Settings,
-  ExternalLink
+  ExternalLink,
+  Ruler,
+  Package,
+  Palette,
 } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 
@@ -69,19 +72,20 @@ export function CMSSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const loadUser = async () => {
       try {
         const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (user) {
           // Query profile for actual name and details
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", user.id)
-            .maybeSingle();
+          const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
 
           setCurrentUser({
             name: profile?.full_name || user.user_metadata?.full_name || "Chủ doanh nghiệp",
             email: user.email || "",
-            avatar: profile?.avatar_url || user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile?.full_name || user.user_metadata?.full_name || 'User')}`,
+            avatar:
+              profile?.avatar_url ||
+              user.user_metadata?.avatar_url ||
+              `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile?.full_name || user.user_metadata?.full_name || "User")}`,
           });
         }
       } catch (err) {
@@ -94,8 +98,11 @@ export function CMSSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const menuItems = [
     { title: "Tổng quan", icon: LayoutDashboard, hash: "#dashboard" },
+    { title: "Thiết kế UI", icon: Palette, hash: "#ui-design" },
     { title: "Landing Page", icon: Layout, hash: "#landing-page" },
     { title: "Bài viết (Blog)", icon: FileText, hash: "#blog" },
+    { title: "Sản phẩm (Storefront)", icon: Package, hash: "#products" },
+    { title: "Hướng dẫn chọn size", icon: Ruler, hash: "#sizeguide" },
     { title: "SEO toàn trang", icon: Globe, hash: "#seo" },
     { title: "Thư viện Media", icon: ImageIcon, hash: "#media" },
     { title: "Yêu cầu tư vấn", icon: MessageSquare, hash: "#inquiries" },
@@ -121,7 +128,7 @@ export function CMSSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        
+
         {/* Xem Website premium action button */}
         <div className="px-2 pt-1 pb-1">
           <Link
@@ -136,7 +143,7 @@ export function CMSSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </Link>
         </div>
       </SidebarHeader>
-      
+
       {/* Sidebar navigation list identical to app-sidebar */}
       <SidebarContent>
         <SidebarGroup>
@@ -144,7 +151,7 @@ export function CMSSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupContent className="flex flex-col gap-2">
             <SidebarMenu>
               {menuItems.map((item) => {
-                const isActive = activeHash === item.hash;
+                const isActive = pathname === "/cms" && activeHash === item.hash;
                 return (
                   <SidebarMenuItem key={item.hash}>
                     <SidebarMenuButton asChild tooltip={item.title} isActive={isActive}>

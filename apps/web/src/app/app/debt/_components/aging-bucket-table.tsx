@@ -1,18 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { AgingBucket } from "@/services/debt.service";
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat("vi-VN").format(Math.round(n || 0)) + " ₫";
+const fmt = (n: number) => new Intl.NumberFormat("vi-VN").format(Math.round(n || 0)) + " ₫";
 
 const cellClass = (value: number, threshold: "soft" | "warn" | "danger" = "soft") => {
   if (!value) return "text-muted-foreground";
@@ -21,13 +13,7 @@ const cellClass = (value: number, threshold: "soft" | "warn" | "danger" = "soft"
   return "font-medium";
 };
 
-export function AgingBucketTable({
-  rows,
-  loading,
-}: {
-  rows: AgingBucket[];
-  loading?: boolean;
-}) {
+export function AgingBucketTable({ rows, loading }: { rows: AgingBucket[]; loading?: boolean }) {
   if (loading) {
     return <p className="text-sm text-muted-foreground italic">Đang tải báo cáo aging...</p>;
   }
@@ -69,15 +55,10 @@ export function AgingBucketTable({
           {rows.map((r) => (
             <TableRow key={r.customer_id}>
               <TableCell>
-                <Link
-                  href={`/debt/customers/${r.customer_id}`}
-                  className="font-bold hover:underline"
-                >
+                <Link href={`/debt/customers/${r.customer_id}`} className="font-bold hover:underline">
                   {r.customer_name || "Khách lẻ"}
                 </Link>
-                {r.phone && (
-                  <div className="text-[10px] text-muted-foreground">{r.phone}</div>
-                )}
+                {r.phone && <div className="text-[10px] text-muted-foreground">{r.phone}</div>}
               </TableCell>
               <TableCell className={`text-right ${cellClass(r.current, "soft")}`}>
                 {r.current ? fmt(r.current) : "—"}

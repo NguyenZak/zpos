@@ -1,41 +1,29 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { 
-  ArrowLeft, 
-  Building2, 
-  Phone, 
-  Mail, 
-  MapPin, 
-  Truck, 
-  DollarSign, 
+import React, { useState, useEffect } from "react";
+import {
+  ArrowLeft,
+  Building2,
+  Phone,
+  Mail,
+  MapPin,
+  Truck,
+  DollarSign,
   History,
   Loader2,
   Calendar,
-  CreditCard
-} from 'lucide-react';
+  CreditCard,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { posService } from "@/services/pos.service";
 import { toast } from "sonner";
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
-import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 
 export default function SupplierDetailPage() {
   const { id } = useParams();
@@ -48,12 +36,12 @@ export default function SupplierDetailPage() {
     try {
       const [sData, pData] = await Promise.all([
         posService.getSuppliers(""), // Simplified, should have getSupplierById
-        posService.getPurchaseOrders() // Should filter by supplier_id
+        posService.getPurchaseOrders(), // Should filter by supplier_id
       ]);
-      
+
       const foundSupplier = sData.find((s: any) => s.id === id);
       setSupplier(foundSupplier);
-      
+
       // Filter purchases for this supplier
       const supplierPurchases = pData.filter((p: any) => p.supplier_id === id);
       setPurchases(supplierPurchases);
@@ -69,23 +57,27 @@ export default function SupplierDetailPage() {
   }, [id]);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
   };
 
-  if (loading) return (
-    <div className="flex flex-col items-center justify-center h-[400px] gap-4">
-      <Loader2 className="w-10 h-10 animate-spin text-primary" />
-      <p className="text-muted-foreground animate-pulse">Đang tải hồ sơ đối tác...</p>
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="flex flex-col items-center justify-center h-[400px] gap-4">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <p className="text-muted-foreground animate-pulse">Đang tải hồ sơ đối tác...</p>
+      </div>
+    );
 
-  if (!supplier) return (
-    <div className="flex flex-col items-center justify-center h-[400px] gap-4">
-      <Building2 className="w-12 h-12 text-destructive opacity-50" />
-      <p className="text-muted-foreground">Không tìm thấy nhà cung cấp này.</p>
-      <Button asChild><Link href="/app/suppliers">Quay lại danh sách</Link></Button>
-    </div>
-  );
+  if (!supplier)
+    return (
+      <div className="flex flex-col items-center justify-center h-[400px] gap-4">
+        <Building2 className="w-12 h-12 text-destructive opacity-50" />
+        <p className="text-muted-foreground">Không tìm thấy nhà cung cấp này.</p>
+        <Button asChild>
+          <Link href="/app/suppliers">Quay lại danh sách</Link>
+        </Button>
+      </div>
+    );
 
   return (
     <div className="flex flex-col gap-6">
@@ -124,31 +116,41 @@ export default function SupplierDetailPage() {
             </CardHeader>
             <CardContent className="pt-6 grid gap-4">
               <div className="flex items-start gap-3">
-                <div className="p-2 bg-muted rounded-lg"><Phone className="w-4 h-4 text-primary" /></div>
+                <div className="p-2 bg-muted rounded-lg">
+                  <Phone className="w-4 h-4 text-primary" />
+                </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] text-muted-foreground uppercase font-bold">Số điện thoại</span>
                   <span className="text-sm font-medium">{supplier.phone}</span>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="p-2 bg-muted rounded-lg"><Mail className="w-4 h-4 text-primary" /></div>
+                <div className="p-2 bg-muted rounded-lg">
+                  <Mail className="w-4 h-4 text-primary" />
+                </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] text-muted-foreground uppercase font-bold">Email</span>
                   <span className="text-sm font-medium">{supplier.email || "Chưa cập nhật"}</span>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="p-2 bg-muted rounded-lg"><MapPin className="w-4 h-4 text-primary" /></div>
+                <div className="p-2 bg-muted rounded-lg">
+                  <MapPin className="w-4 h-4 text-primary" />
+                </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] text-muted-foreground uppercase font-bold">Địa chỉ</span>
                   <span className="text-sm font-medium">{supplier.address || "Chưa cập nhật"}</span>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="p-2 bg-muted rounded-lg"><CreditCard className="w-4 h-4 text-primary" /></div>
+                <div className="p-2 bg-muted rounded-lg">
+                  <CreditCard className="w-4 h-4 text-primary" />
+                </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] text-muted-foreground uppercase font-bold">Công nợ hiện tại</span>
-                  <span className="text-lg font-black text-destructive">{formatCurrency(supplier.total_debt || 0)}</span>
+                  <span className="text-lg font-black text-destructive">
+                    {formatCurrency(supplier.total_debt || 0)}
+                  </span>
                 </div>
               </div>
             </CardContent>
@@ -176,21 +178,27 @@ export default function SupplierDetailPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {purchases.length > 0 ? purchases.map((item) => (
-                      <TableRow key={item.id} className="cursor-pointer hover:bg-muted/50" onClick={() => window.location.href=`/app/purchases/${item.id}`}>
-                        <TableCell className="font-bold">{item.code}</TableCell>
-                        <TableCell>{format(new Date(item.created_at), "dd/MM/yyyy")}</TableCell>
-                        <TableCell className="text-right font-medium">{formatCurrency(item.total_amount)}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="outline" className="text-[10px]">
-                            {item.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right font-bold text-destructive">
-                          {formatCurrency(item.debt_amount || (item.total_amount - (item.paid_amount || 0)))}
-                        </TableCell>
-                      </TableRow>
-                    )) : (
+                    {purchases.length > 0 ? (
+                      purchases.map((item) => (
+                        <TableRow
+                          key={item.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => (window.location.href = `/app/purchases/${item.id}`)}
+                        >
+                          <TableCell className="font-bold">{item.code}</TableCell>
+                          <TableCell>{format(new Date(item.created_at), "dd/MM/yyyy")}</TableCell>
+                          <TableCell className="text-right font-medium">{formatCurrency(item.total_amount)}</TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="outline" className="text-[10px]">
+                              {item.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right font-bold text-destructive">
+                            {formatCurrency(item.debt_amount || item.total_amount - (item.paid_amount || 0))}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
                       <TableRow>
                         <TableCell colSpan={5} className="h-40 text-center text-muted-foreground">
                           Chưa có lịch sử giao dịch.

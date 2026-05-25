@@ -56,7 +56,15 @@ function describeGroup(group: string) {
 function includesPermission(permission: Permission, group: string, search: string) {
   const q = search.trim().toLowerCase();
   if (!q) return true;
-  return [permission.name, permission.description, permission.id, permission.key, permission.module, permission.action, group]
+  return [
+    permission.name,
+    permission.description,
+    permission.id,
+    permission.key,
+    permission.module,
+    permission.action,
+    group,
+  ]
     .filter(Boolean)
     .some((value) => String(value).toLowerCase().includes(q));
 }
@@ -90,9 +98,7 @@ export function PermissionMatrix({
   const setOne = (permissionId: string, checked: boolean) => {
     if (locked) return;
     onSelectedChange(
-      checked
-        ? Array.from(new Set([...selected, permissionId]))
-        : selected.filter((id) => id !== permissionId)
+      checked ? Array.from(new Set([...selected, permissionId])) : selected.filter((id) => id !== permissionId),
     );
   };
 
@@ -100,9 +106,7 @@ export function PermissionMatrix({
     if (locked) return;
     const groupIds = groupPermissions.map((permission) => permission.id);
     onSelectedChange(
-      checked
-        ? Array.from(new Set([...selected, ...groupIds]))
-        : selected.filter((id) => !groupIds.includes(id))
+      checked ? Array.from(new Set([...selected, ...groupIds])) : selected.filter((id) => !groupIds.includes(id)),
     );
   };
 
@@ -112,14 +116,28 @@ export function PermissionMatrix({
         <div className="grid gap-1">
           <h2 className="text-lg font-semibold tracking-tight">Ma trận phân quyền chi tiết</h2>
           <p className="text-xs text-muted-foreground">
-            Đã chọn <span className="font-semibold text-foreground">{locked ? permissions.length : selected.length}</span> / {permissions.length} quyền.
+            Đã chọn{" "}
+            <span className="font-semibold text-foreground">{locked ? permissions.length : selected.length}</span> /{" "}
+            {permissions.length} quyền.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => onSelectedChange(allIds)} disabled={locked || permissions.length === 0}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onSelectedChange(allIds)}
+            disabled={locked || permissions.length === 0}
+          >
             Chọn tất cả quyền
           </Button>
-          <Button type="button" variant="outline" size="sm" onClick={() => onSelectedChange([])} disabled={locked || selected.length === 0}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onSelectedChange([])}
+            disabled={locked || selected.length === 0}
+          >
             Xóa tất cả
           </Button>
           <Button type="button" variant="outline" size="sm" onClick={onReset} disabled={locked || changedCount === 0}>
@@ -198,7 +216,11 @@ export function PermissionMatrix({
               <AccordionContent>
                 <div className="mb-3 flex items-center justify-between rounded-lg bg-muted/35 px-3 py-2">
                   <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold">
-                    <Checkbox checked={allChecked} disabled={locked} onCheckedChange={(checked) => setGroup(groupPermissions, Boolean(checked))} />
+                    <Checkbox
+                      checked={allChecked}
+                      disabled={locked}
+                      onCheckedChange={(checked) => setGroup(groupPermissions, Boolean(checked))}
+                    />
                     Chọn tất cả trong nhóm
                   </label>
                   <span className="text-[11px] text-muted-foreground">{visible.length} quyền hiển thị</span>
@@ -206,14 +228,21 @@ export function PermissionMatrix({
                 <div className="grid gap-2 md:grid-cols-2">
                   {visible.map((permission) => {
                     const checked = locked || selectedSet.has(permission.id);
-                    const sensitive = /nhạy cảm|delete|approve|payroll|profit|security|manage/i.test(`${permission.id} ${permission.description}`);
+                    const sensitive = /nhạy cảm|delete|approve|payroll|profit|security|manage/i.test(
+                      `${permission.id} ${permission.description}`,
+                    );
 
                     return (
                       <label
                         key={permission.id}
                         className={`flex min-h-24 cursor-pointer gap-3 rounded-lg border p-3 transition-colors ${checked ? "border-primary/25 bg-primary/5" : "border-muted bg-background"} ${locked ? "cursor-not-allowed opacity-80" : "hover:bg-muted/30"}`}
                       >
-                        <Checkbox checked={checked} disabled={locked} onCheckedChange={(value) => setOne(permission.id, Boolean(value))} className="mt-1" />
+                        <Checkbox
+                          checked={checked}
+                          disabled={locked}
+                          onCheckedChange={(value) => setOne(permission.id, Boolean(value))}
+                          className="mt-1"
+                        />
                         <span className="grid gap-1">
                           <span className="flex flex-wrap items-center gap-1.5 text-sm font-semibold">
                             {permission.name}
@@ -223,8 +252,12 @@ export function PermissionMatrix({
                               </Badge>
                             )}
                           </span>
-                          <span className="text-xs leading-relaxed text-muted-foreground">{permission.description}</span>
-                          <span className="font-mono text-[10px] text-muted-foreground/70">{permission.key || permission.id}</span>
+                          <span className="text-xs leading-relaxed text-muted-foreground">
+                            {permission.description}
+                          </span>
+                          <span className="font-mono text-[10px] text-muted-foreground/70">
+                            {permission.key || permission.id}
+                          </span>
                         </span>
                       </label>
                     );

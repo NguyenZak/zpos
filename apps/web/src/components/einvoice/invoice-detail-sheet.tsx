@@ -13,14 +13,14 @@ import type { Invoice, InvoiceLog } from "@/services/einvoice/types";
 import { InvoiceStatusBadge, formatVND, formatTime } from "./invoice-status-badge";
 
 const ACTION_ICONS: Record<string, React.ReactNode> = {
-  issue:           <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
-  issue_failed:    <XCircle className="h-4 w-4 text-red-500" />,
-  cancel:          <Ban className="h-4 w-4 text-zinc-500" />,
-  adjust:          <RefreshCw className="h-4 w-4 text-violet-500" />,
-  replace:         <RefreshCw className="h-4 w-4 text-violet-500" />,
-  sync:            <Zap className="h-4 w-4 text-teal-500" />,
-  webhook_received:<Send className="h-4 w-4 text-blue-500" />,
-  email_sent:      <Send className="h-4 w-4 text-sky-500" />,
+  issue: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
+  issue_failed: <XCircle className="h-4 w-4 text-red-500" />,
+  cancel: <Ban className="h-4 w-4 text-zinc-500" />,
+  adjust: <RefreshCw className="h-4 w-4 text-violet-500" />,
+  replace: <RefreshCw className="h-4 w-4 text-violet-500" />,
+  sync: <Zap className="h-4 w-4 text-teal-500" />,
+  webhook_received: <Send className="h-4 w-4 text-blue-500" />,
+  email_sent: <Send className="h-4 w-4 text-sky-500" />,
 };
 
 interface InvoiceDetailSheetProps {
@@ -34,7 +34,13 @@ interface InvoiceDetailSheetProps {
 }
 
 export function InvoiceDetailSheet({
-  invoice, open, onOpenChange, onCancelRequest, onAdjustRequest, onReplaceRequest, onRefresh,
+  invoice,
+  open,
+  onOpenChange,
+  onCancelRequest,
+  onAdjustRequest,
+  onReplaceRequest,
+  onRefresh,
 }: InvoiceDetailSheetProps) {
   const [logs, setLogs] = React.useState<InvoiceLog[]>([]);
   const [loadingLogs, setLoadingLogs] = React.useState(false);
@@ -55,8 +61,10 @@ export function InvoiceDetailSheet({
     setSyncing(true);
     const res = await einvoiceService.syncInvoiceStatus(invoice.id);
     setSyncing(false);
-    if (res.ok) { toast.success(`Đồng bộ xong — Trạng thái: ${res.status}`); onRefresh(); }
-    else toast.error(res.error || "Đồng bộ thất bại");
+    if (res.ok) {
+      toast.success(`Đồng bộ xong — Trạng thái: ${res.status}`);
+      onRefresh();
+    } else toast.error(res.error || "Đồng bộ thất bại");
   }
 
   if (!invoice) return null;
@@ -82,25 +90,39 @@ export function InvoiceDetailSheet({
                 <p className="font-mono font-black text-lg text-violet-600">
                   {invoice.invoice_series}/{invoice.invoice_no || "——"}
                 </p>
-                <p className="text-xs text-muted-foreground">{formatTime(invoice.invoice_date || invoice.created_at)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatTime(invoice.invoice_date || invoice.created_at)}
+                </p>
               </div>
               <InvoiceStatusBadge status={invoice.status} />
             </div>
 
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div><span className="text-muted-foreground">Provider:</span> <span className="font-bold uppercase">{invoice.provider}</span></div>
-              <div><span className="text-muted-foreground">Loại HĐ:</span> <span className="font-bold">{invoice.invoice_type || "B2C"}</span></div>
+              <div>
+                <span className="text-muted-foreground">Provider:</span>{" "}
+                <span className="font-bold uppercase">{invoice.provider}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Loại HĐ:</span>{" "}
+                <span className="font-bold">{invoice.invoice_type || "B2C"}</span>
+              </div>
               {invoice.tax_authority_code && (
-                <div className="col-span-2"><span className="text-muted-foreground">Mã CQT:</span> <span className="font-mono font-bold text-sky-600">{invoice.tax_authority_code}</span></div>
+                <div className="col-span-2">
+                  <span className="text-muted-foreground">Mã CQT:</span>{" "}
+                  <span className="font-mono font-bold text-sky-600">{invoice.tax_authority_code}</span>
+                </div>
               )}
               {(invoice.lookup_code || invoice.provider_lookup_code) && (
-                <div className="col-span-2"><span className="text-muted-foreground">Mã tra cứu:</span> <span className="font-mono font-bold">{invoice.lookup_code || invoice.provider_lookup_code}</span></div>
+                <div className="col-span-2">
+                  <span className="text-muted-foreground">Mã tra cứu:</span>{" "}
+                  <span className="font-mono font-bold">{invoice.lookup_code || invoice.provider_lookup_code}</span>
+                </div>
               )}
             </div>
 
             {/* Links */}
             <div className="flex gap-2">
-              {(invoice.lookup_url) && (
+              {invoice.lookup_url && (
                 <a href={invoice.lookup_url} target="_blank" rel="noreferrer">
                   <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
                     <ExternalLink className="h-3.5 w-3.5" /> Tra cứu HĐ
@@ -120,7 +142,9 @@ export function InvoiceDetailSheet({
           {/* QR code */}
           {invoice.qr_code_url && (
             <div className="flex flex-col items-center gap-1.5 py-2">
-              <p className="text-xs text-muted-foreground flex items-center gap-1"><QrCode className="w-3.5 h-3.5" /> QR tra cứu</p>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <QrCode className="w-3.5 h-3.5" /> QR tra cứu
+              </p>
               <img src={invoice.qr_code_url} alt="QR" className="w-28 h-28 rounded border" />
             </div>
           )}
@@ -128,26 +152,61 @@ export function InvoiceDetailSheet({
           {/* Buyer */}
           <div className="rounded-xl border bg-muted/20 p-4 space-y-1.5 text-sm">
             <p className="font-bold text-xs uppercase tracking-wide text-muted-foreground mb-2">Thông tin người mua</p>
-            {invoice.buyer_name ? <p><span className="text-muted-foreground">Tên:</span> <b>{invoice.buyer_name}</b></p> : <p className="text-muted-foreground italic">Khách lẻ (B2C)</p>}
-            {invoice.buyer_tax_code && <p><span className="text-muted-foreground">MST:</span> <span className="font-mono font-bold">{invoice.buyer_tax_code}</span></p>}
-            {invoice.buyer_address && <p><span className="text-muted-foreground">Địa chỉ:</span> {invoice.buyer_address}</p>}
-            {invoice.buyer_email && <p><span className="text-muted-foreground">Email:</span> {invoice.buyer_email}</p>}
+            {invoice.buyer_name ? (
+              <p>
+                <span className="text-muted-foreground">Tên:</span> <b>{invoice.buyer_name}</b>
+              </p>
+            ) : (
+              <p className="text-muted-foreground italic">Khách lẻ (B2C)</p>
+            )}
+            {invoice.buyer_tax_code && (
+              <p>
+                <span className="text-muted-foreground">MST:</span>{" "}
+                <span className="font-mono font-bold">{invoice.buyer_tax_code}</span>
+              </p>
+            )}
+            {invoice.buyer_address && (
+              <p>
+                <span className="text-muted-foreground">Địa chỉ:</span> {invoice.buyer_address}
+              </p>
+            )}
+            {invoice.buyer_email && (
+              <p>
+                <span className="text-muted-foreground">Email:</span> {invoice.buyer_email}
+              </p>
+            )}
           </div>
 
           {/* Amounts */}
           <div className="rounded-xl border bg-card p-4 space-y-2 text-sm">
             <p className="font-bold text-xs uppercase tracking-wide text-muted-foreground mb-2">Giá trị hoá đơn</p>
-            <div className="flex justify-between"><span className="text-muted-foreground">Tạm tính</span><span className="font-mono">{formatVND(invoice.subtotal)}</span></div>
-            {invoice.discount_amount > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Giảm giá</span><span className="font-mono text-red-500">-{formatVND(invoice.discount_amount)}</span></div>}
-            <div className="flex justify-between"><span className="text-muted-foreground">VAT ({invoice.vat_rate}%)</span><span className="font-mono text-amber-600">{formatVND(invoice.vat_amount)}</span></div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Tạm tính</span>
+              <span className="font-mono">{formatVND(invoice.subtotal)}</span>
+            </div>
+            {invoice.discount_amount > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Giảm giá</span>
+                <span className="font-mono text-red-500">-{formatVND(invoice.discount_amount)}</span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">VAT ({invoice.vat_rate}%)</span>
+              <span className="font-mono text-amber-600">{formatVND(invoice.vat_amount)}</span>
+            </div>
             <Separator />
-            <div className="flex justify-between font-black text-base"><span>Tổng cộng</span><span className="font-mono text-violet-600">{formatVND(invoice.total_amount)}</span></div>
+            <div className="flex justify-between font-black text-base">
+              <span>Tổng cộng</span>
+              <span className="font-mono text-violet-600">{formatVND(invoice.total_amount)}</span>
+            </div>
           </div>
 
           {/* Error info */}
           {invoice.status === "failed" && invoice.error_message && (
             <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/20 p-4 text-sm">
-              <p className="font-bold text-red-700 flex items-center gap-1.5 mb-1"><AlertTriangle className="h-4 w-4" /> Lỗi phát hành</p>
+              <p className="font-bold text-red-700 flex items-center gap-1.5 mb-1">
+                <AlertTriangle className="h-4 w-4" /> Lỗi phát hành
+              </p>
               <p className="text-red-600 text-xs">{invoice.error_message}</p>
             </div>
           )}
@@ -171,7 +230,12 @@ export function InvoiceDetailSheet({
                 </Button>
               )}
               {canCancel && (
-                <Button variant="outline" size="sm" onClick={() => onCancelRequest(invoice)} className="gap-1.5 text-red-600 hover:text-red-700">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onCancelRequest(invoice)}
+                  className="gap-1.5 text-red-600 hover:text-red-700"
+                >
                   <Ban className="h-3.5 w-3.5" /> Huỷ HĐ
                 </Button>
               )}
@@ -199,7 +263,11 @@ export function InvoiceDetailSheet({
                       <div className="flex items-center gap-2 flex-wrap">
                         {ACTION_ICONS[log.action] || <CheckCircle2 className="h-4 w-4 text-muted-foreground" />}
                         <span className="font-bold text-sm">{log.action}</span>
-                        {log.status_after && <Badge variant="outline" className="text-[10px] h-4">{log.status_after}</Badge>}
+                        {log.status_after && (
+                          <Badge variant="outline" className="text-[10px] h-4">
+                            {log.status_after}
+                          </Badge>
+                        )}
                       </div>
                       {log.message && <p className="text-xs text-muted-foreground mt-0.5">{log.message}</p>}
                       <p className="text-[10px] text-muted-foreground/60 mt-0.5">{formatTime(log.created_at)}</p>

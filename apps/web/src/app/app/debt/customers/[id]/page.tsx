@@ -3,26 +3,11 @@
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  AlertOctagon,
-  BellRing,
-  ChevronLeft,
-  Loader2,
-  Mail,
-  Phone,
-  Receipt,
-  Settings,
-  Wallet,
-} from "lucide-react";
+import { AlertOctagon, BellRing, ChevronLeft, Loader2, Mail, Phone, Receipt, Settings, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   debtService,
@@ -35,11 +20,9 @@ import {
 import { LedgerTimeline } from "../../_components/ledger-timeline";
 import { RecordPaymentDialog } from "../../_components/record-payment-dialog";
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat("vi-VN").format(Math.round(n || 0)) + " ₫";
+const fmt = (n: number) => new Intl.NumberFormat("vi-VN").format(Math.round(n || 0)) + " ₫";
 
-const formatDate = (s?: string | null) =>
-  s ? new Date(s).toLocaleDateString("vi-VN") : "—";
+const formatDate = (s?: string | null) => (s ? new Date(s).toLocaleDateString("vi-VN") : "—");
 
 export default function CustomerDebtPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: customerId } = use(params);
@@ -107,12 +90,7 @@ export default function CustomerDebtPage({ params }: { params: Promise<{ id: str
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-fit -ml-2"
-          onClick={() => router.push("/debt/debtors")}
-        >
+        <Button variant="ghost" size="sm" className="w-fit -ml-2" onClick={() => router.push("/debt/debtors")}>
           <ChevronLeft className="w-4 h-4" /> Danh sách khách nợ
         </Button>
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
@@ -139,17 +117,8 @@ export default function CustomerDebtPage({ params }: { params: Promise<{ id: str
                 <Settings className="w-4 h-4" /> Hồ sơ KH
               </Link>
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSendReminder}
-              disabled={sendingReminder || balance <= 0}
-            >
-              {sendingReminder ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <BellRing className="w-4 h-4" />
-              )}
+            <Button variant="outline" size="sm" onClick={handleSendReminder} disabled={sendingReminder || balance <= 0}>
+              {sendingReminder ? <Loader2 className="w-4 h-4 animate-spin" /> : <BellRing className="w-4 h-4" />}
               Nhắc nợ
             </Button>
             <Button size="sm" onClick={() => setPaymentOpen(true)} disabled={balance <= 0}>
@@ -162,9 +131,7 @@ export default function CustomerDebtPage({ params }: { params: Promise<{ id: str
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <Card className="border-red-500/20 bg-red-500/5">
           <CardContent className="p-4">
-            <p className="text-[10px] uppercase font-bold tracking-widest text-red-600">
-              Dư nợ hiện tại
-            </p>
+            <p className="text-[10px] uppercase font-bold tracking-widest text-red-600">Dư nợ hiện tại</p>
             <p className="text-2xl font-black text-red-600 mt-1">{fmt(balance)}</p>
             {overLimit && (
               <Badge variant="destructive" className="mt-1 text-[9px]">
@@ -175,9 +142,7 @@ export default function CustomerDebtPage({ params }: { params: Promise<{ id: str
         </Card>
         <Card className="border-amber-500/20 bg-amber-500/5">
           <CardContent className="p-4">
-            <p className="text-[10px] uppercase font-bold tracking-widest text-amber-600">
-              Quá hạn
-            </p>
+            <p className="text-[10px] uppercase font-bold tracking-widest text-amber-600">Quá hạn</p>
             <p className="text-2xl font-black text-amber-600 mt-1">{fmt(overdue)}</p>
             {account?.last_charge_at && (
               <p className="text-[10px] text-muted-foreground mt-0.5">
@@ -188,9 +153,7 @@ export default function CustomerDebtPage({ params }: { params: Promise<{ id: str
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">
-              Hạn mức / Sử dụng
-            </p>
+            <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Hạn mức / Sử dụng</p>
             <p className="text-2xl font-black mt-1">{fmt(limit)}</p>
             <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
               <div
@@ -198,9 +161,7 @@ export default function CustomerDebtPage({ params }: { params: Promise<{ id: str
                 style={{ width: `${utilization}%` }}
               />
             </div>
-            <p className="text-[10px] text-muted-foreground mt-1">
-              {Math.round(utilization)}% sử dụng
-            </p>
+            <p className="text-[10px] text-muted-foreground mt-1">{Math.round(utilization)}% sử dụng</p>
           </CardContent>
         </Card>
       </div>
@@ -233,19 +194,14 @@ export default function CustomerDebtPage({ params }: { params: Promise<{ id: str
               {loading ? (
                 <p className="text-sm text-muted-foreground italic">Đang tải...</p>
               ) : orders.length === 0 ? (
-                <p className="text-sm text-muted-foreground italic text-center py-6">
-                  Chưa có đơn nợ.
-                </p>
+                <p className="text-sm text-muted-foreground italic text-center py-6">Chưa có đơn nợ.</p>
               ) : (
                 <div className="space-y-2">
                   {orders.map((o) => {
                     const outstanding = Number(o.debt_amount);
                     const overdueDays = o.days_overdue ?? 0;
                     return (
-                      <div
-                        key={o.id}
-                        className="flex items-center justify-between p-3 rounded-lg border bg-card"
-                      >
+                      <div key={o.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
                         <div>
                           <p className="font-bold text-sm">#{o.order_number}</p>
                           <p className="text-[11px] text-muted-foreground">
@@ -286,16 +242,11 @@ export default function CustomerDebtPage({ params }: { params: Promise<{ id: str
               {loading ? (
                 <p className="text-sm text-muted-foreground italic">Đang tải...</p>
               ) : payments.length === 0 ? (
-                <p className="text-sm text-muted-foreground italic text-center py-6">
-                  Chưa có phiếu thu nào.
-                </p>
+                <p className="text-sm text-muted-foreground italic text-center py-6">Chưa có phiếu thu nào.</p>
               ) : (
                 <div className="space-y-2">
                   {payments.map((p) => (
-                    <div
-                      key={p.id}
-                      className="flex items-center justify-between p-3 rounded-lg border bg-card"
-                    >
+                    <div key={p.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
                       <div>
                         <p className="font-bold text-sm flex items-center gap-2">
                           <Receipt className="w-3.5 h-3.5" />
@@ -307,9 +258,7 @@ export default function CustomerDebtPage({ params }: { params: Promise<{ id: str
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-emerald-600">
-                          {fmt(Number(p.amount))}
-                        </p>
+                        <p className="font-bold text-emerald-600">{fmt(Number(p.amount))}</p>
                         <Badge variant="outline" className="text-[9px]">
                           {p.status}
                         </Badge>
@@ -331,16 +280,11 @@ export default function CustomerDebtPage({ params }: { params: Promise<{ id: str
               {loading ? (
                 <p className="text-sm text-muted-foreground italic">Đang tải...</p>
               ) : reminders.length === 0 ? (
-                <p className="text-sm text-muted-foreground italic text-center py-6">
-                  Chưa gửi nhắc nợ nào.
-                </p>
+                <p className="text-sm text-muted-foreground italic text-center py-6">Chưa gửi nhắc nợ nào.</p>
               ) : (
                 <div className="space-y-2">
                   {reminders.map((r) => (
-                    <div
-                      key={r.id}
-                      className="flex items-center justify-between p-3 rounded-lg border bg-card"
-                    >
+                    <div key={r.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
                       <div>
                         <p className="font-bold text-sm flex items-center gap-2">
                           <BellRing className="w-3.5 h-3.5" /> {r.rule} · {r.channel}
@@ -348,14 +292,9 @@ export default function CustomerDebtPage({ params }: { params: Promise<{ id: str
                         <p className="text-[11px] text-muted-foreground">
                           {r.created_at ? new Date(r.created_at).toLocaleString("vi-VN") : "—"}
                         </p>
-                        {r.error_message && (
-                          <p className="text-[10px] text-red-600 mt-0.5">{r.error_message}</p>
-                        )}
+                        {r.error_message && <p className="text-[10px] text-red-600 mt-0.5">{r.error_message}</p>}
                       </div>
-                      <Badge
-                        variant={r.status === "failed" ? "destructive" : "outline"}
-                        className="text-[10px]"
-                      >
+                      <Badge variant={r.status === "failed" ? "destructive" : "outline"} className="text-[10px]">
                         {r.status}
                       </Badge>
                     </div>

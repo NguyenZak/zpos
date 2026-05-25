@@ -23,12 +23,7 @@ type EditCustomerDialogProps = {
   onUpdated?: () => void;
 };
 
-export function EditCustomerDialog({
-  customer,
-  open,
-  onOpenChange,
-  onUpdated,
-}: EditCustomerDialogProps) {
+export function EditCustomerDialog({ customer, open, onOpenChange, onUpdated }: EditCustomerDialogProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -83,9 +78,7 @@ export function EditCustomerDialog({
               <Pencil className="w-5 h-5" />
               Chỉnh sửa khách hàng
             </DialogTitle>
-            <DialogDescription>
-              Cập nhật thông tin liên hệ và địa chỉ của khách hàng.
-            </DialogDescription>
+            <DialogDescription>Cập nhật thông tin liên hệ và địa chỉ của khách hàng.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
@@ -94,9 +87,7 @@ export function EditCustomerDialog({
                 id="edit-name"
                 placeholder="Ví dụ: Nguyễn Văn A"
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
               />
             </div>
@@ -107,9 +98,7 @@ export function EditCustomerDialog({
                   id="edit-phone"
                   placeholder="09xx xxx xxx"
                   value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 />
               </div>
               <div className="grid gap-2">
@@ -119,9 +108,7 @@ export function EditCustomerDialog({
                   type="email"
                   placeholder="khachhang@email.com"
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
               </div>
             </div>
@@ -131,19 +118,12 @@ export function EditCustomerDialog({
                 id="edit-address"
                 placeholder="Số nhà, đường, quận, thành phố"
                 value={formData.address}
-                onChange={(e) =>
-                  setFormData({ ...formData, address: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               />
             </div>
           </div>
           <DialogFooter className="gap-2 pt-2 sm:pt-0">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
               Hủy
             </Button>
             <Button type="submit" size="sm" disabled={loading}>

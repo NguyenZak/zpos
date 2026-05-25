@@ -184,13 +184,7 @@ export function LayoutControls() {
 
             <div className="space-y-1">
               <Label className="font-medium text-xs">Font Size (Kích thước chữ)</Label>
-              <ToggleGroup
-                size="sm"
-                variant="outline"
-                type="single"
-                value={fontSize}
-                onValueChange={onFontSizeChange}
-              >
+              <ToggleGroup size="sm" variant="outline" type="single" value={fontSize} onValueChange={onFontSizeChange}>
                 <ToggleGroupItem value="sm" aria-label="Small font size" className="text-xs">
                   S (90%)
                 </ToggleGroupItem>

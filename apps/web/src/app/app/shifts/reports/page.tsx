@@ -87,11 +87,15 @@ export default function ShiftReportsPage() {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between print:hidden">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/shifts"><ArrowLeft className="size-4" /></Link>
+            <Link href="/shifts">
+              <ArrowLeft className="size-4" />
+            </Link>
           </Button>
           <div>
             <h1 className="text-2xl tracking-tight">Báo cáo ca làm việc</h1>
-            <p className="text-sm text-muted-foreground">Tổng hợp doanh thu, tiền mặt và chênh lệch theo khoảng thời gian.</p>
+            <p className="text-sm text-muted-foreground">
+              Tổng hợp doanh thu, tiền mặt và chênh lệch theo khoảng thời gian.
+            </p>
           </div>
         </div>
         <div className="flex flex-wrap items-end gap-2">
@@ -108,25 +112,55 @@ export default function ShiftReportsPage() {
           </Button>
           {canExport && (
             <>
-              <Button variant="outline" onClick={exportCSV}><Download className="size-4" /> CSV</Button>
-              <Button variant="outline" onClick={() => window.print()}><Printer className="size-4" /> In</Button>
+              <Button variant="outline" onClick={exportCSV}>
+                <Download className="size-4" /> CSV
+              </Button>
+              <Button variant="outline" onClick={() => window.print()}>
+                <Printer className="size-4" /> In
+              </Button>
             </>
           )}
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Tổng ca</p><p className="mt-1 text-2xl font-semibold">{totals?.shifts ?? "—"}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Tổng đơn</p><p className="mt-1 text-2xl font-semibold">{totals?.orders ?? "—"}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Doanh thu</p><p className="mt-1 text-xl font-semibold">{fmtVND(totals?.sales ?? 0)}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Chênh lệch tổng</p><p className={`mt-1 text-xl font-semibold ${!totals || totals.cash_difference === 0 ? "" : totals.cash_difference > 0 ? "text-emerald-600" : "text-rose-600"}`}>{fmtVND(totals?.cash_difference ?? 0)}</p></CardContent></Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Tổng ca</p>
+            <p className="mt-1 text-2xl font-semibold">{totals?.shifts ?? "—"}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Tổng đơn</p>
+            <p className="mt-1 text-2xl font-semibold">{totals?.orders ?? "—"}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Doanh thu</p>
+            <p className="mt-1 text-xl font-semibold">{fmtVND(totals?.sales ?? 0)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Chênh lệch tổng</p>
+            <p
+              className={`mt-1 text-xl font-semibold ${!totals || totals.cash_difference === 0 ? "" : totals.cash_difference > 0 ? "text-emerald-600" : "text-rose-600"}`}
+            >
+              {fmtVND(totals?.cash_difference ?? 0)}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Doanh thu theo phương thức</CardTitle>
-            <CardDescription>Khoảng thời gian {from} → {to}</CardDescription>
+            <CardDescription>
+              Khoảng thời gian {from} → {to}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <Row label="Tiền mặt" value={totals?.cash ?? 0} />
@@ -159,14 +193,22 @@ export default function ShiftReportsPage() {
               </TableHeader>
               <TableBody>
                 {byCashier.length === 0 && (
-                  <TableRow><TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">Chưa có dữ liệu.</TableCell></TableRow>
+                  <TableRow>
+                    <TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">
+                      Chưa có dữ liệu.
+                    </TableCell>
+                  </TableRow>
                 )}
                 {byCashier.map((c) => (
                   <TableRow key={c.cashier_id}>
                     <TableCell>{c.cashier_name}</TableCell>
                     <TableCell className="text-right">{c.shifts}</TableCell>
                     <TableCell className="text-right font-medium">{fmtVND(c.sales)}</TableCell>
-                    <TableCell className={`text-right font-medium ${c.difference === 0 ? "" : c.difference > 0 ? "text-emerald-600" : "text-rose-600"}`}>{fmtVND(c.difference)}</TableCell>
+                    <TableCell
+                      className={`text-right font-medium ${c.difference === 0 ? "" : c.difference > 0 ? "text-emerald-600" : "text-rose-600"}`}
+                    >
+                      {fmtVND(c.difference)}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

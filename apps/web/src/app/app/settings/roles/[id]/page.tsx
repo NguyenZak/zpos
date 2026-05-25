@@ -3,15 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  Shield,
-  ArrowLeft,
-  Save,
-  Lock,
-  Loader2,
-  ShieldX,
-  ExternalLink
-} from "lucide-react";
+import { Shield, ArrowLeft, Save, Lock, Loader2, ShieldX, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -58,7 +50,7 @@ export default function EditRolePage() {
           router.push("/settings/roles");
           return;
         }
-        
+
         setRole(roleData);
         setRoleName(roleData.name);
         setRoleDesc(roleData.description || "");
@@ -125,7 +117,7 @@ export default function EditRolePage() {
     );
   }
 
-  const isOwner = Boolean(role?.is_owner || role?.name === 'Owner');
+  const isOwner = Boolean(role?.is_owner || role?.name === "Owner");
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-300">
@@ -169,7 +161,9 @@ export default function EditRolePage() {
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
-              <label htmlFor="role-name" className="text-sm font-medium">Tên vai trò <span className="text-destructive">*</span></label>
+              <label htmlFor="role-name" className="text-sm font-medium">
+                Tên vai trò <span className="text-destructive">*</span>
+              </label>
               <Input
                 id="role-name"
                 value={roleName}
@@ -179,11 +173,15 @@ export default function EditRolePage() {
                 placeholder="Tên vai trò..."
               />
               {role?.is_system && (
-                <span className="text-[10px] text-muted-foreground">Không thể đổi tên vai trò mặc định của hệ thống.</span>
+                <span className="text-[10px] text-muted-foreground">
+                  Không thể đổi tên vai trò mặc định của hệ thống.
+                </span>
               )}
             </div>
             <div className="grid gap-2">
-              <label htmlFor="role-desc" className="text-sm font-medium">Mô tả vai trò</label>
+              <label htmlFor="role-desc" className="text-sm font-medium">
+                Mô tả vai trò
+              </label>
               <Input
                 id="role-desc"
                 value={roleDesc}
@@ -218,12 +216,13 @@ export default function EditRolePage() {
               <ExternalLink className="w-4 h-4" />
             </Link>
           </Button>
-          <Button type="button" onClick={handleSave} disabled={saving || isOwner} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/95">
-            {saving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
+          <Button
+            type="button"
+            onClick={handleSave}
+            disabled={saving || isOwner}
+            className="gap-2 bg-primary text-primary-foreground hover:bg-primary/95"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Lưu thay đổi
           </Button>
         </div>

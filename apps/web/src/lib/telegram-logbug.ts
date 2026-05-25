@@ -78,21 +78,27 @@ function formatTicketMessage(ticket: SupportTicket): string {
   }).format(new Date(ticket.createdAt));
 
   const isLogbug = ticket.category === "Lỗi phần mềm";
-  
-  const priorityEmoji = (({
-    "Cao": "🔴",
-    "Trung bình": "🟡",
-    "Thấp": "🟢",
-  } as Record<string, string>)[ticket.priority]) || "⚪";
 
-  const categoryEmoji = (({
-    "Lỗi phần mềm": "🐞",
-    "Yêu cầu tính năng": "✨",
-    "Hỏi đáp/Tư vấn": "💬",
-    "Hóa đơn/Thanh toán": "💳",
-  } as Record<string, string>)[ticket.category]) || "📝";
+  const priorityEmoji =
+    (
+      {
+        Cao: "🔴",
+        "Trung bình": "🟡",
+        Thấp: "🟢",
+      } as Record<string, string>
+    )[ticket.priority] || "⚪";
 
-  const headerTitle = isLogbug 
+  const categoryEmoji =
+    (
+      {
+        "Lỗi phần mềm": "🐞",
+        "Yêu cầu tính năng": "✨",
+        "Hỏi đáp/Tư vấn": "💬",
+        "Hóa đơn/Thanh toán": "💳",
+      } as Record<string, string>
+    )[ticket.category] || "📝";
+
+  const headerTitle = isLogbug
     ? `${categoryEmoji} <b>ZPOS Logbug Mới (Báo Cáo Lỗi)</b>`
     : `${categoryEmoji} <b>ZPOS Ticket Hỗ Trợ Mới</b>`;
 
@@ -159,7 +165,7 @@ async function sendTelegramMessage(
   text: string,
   botToken?: string,
   chatId?: string,
-  threadId?: string
+  threadId?: string,
 ): Promise<TelegramResult> {
   if (!botToken || !chatId) {
     return { ok: true, skipped: true, reason: "missing_config" };
@@ -220,14 +226,17 @@ export async function sendAuditLogToTelegram(log: AuditLogNotification): Promise
   const settings = await getTelegramSettings();
 
   // Check log enabled
-  const logEnabled = settings.logEnabled !== undefined ? settings.logEnabled : (process.env.TELEGRAM_LOG_ENABLED !== "false");
+  const logEnabled =
+    settings.logEnabled !== undefined ? settings.logEnabled : process.env.TELEGRAM_LOG_ENABLED !== "false";
   if (!logEnabled) {
     return { ok: true, skipped: true, reason: "missing_config" };
   }
 
   // Check severity threshold
   if (!log.is_alert) {
-    const minSeverity = (settings.logMinSeverity || process.env.TELEGRAM_LOG_MIN_SEVERITY || "warning") as AuditSeverity;
+    const minSeverity = (settings.logMinSeverity ||
+      process.env.TELEGRAM_LOG_MIN_SEVERITY ||
+      "warning") as AuditSeverity;
     if (getSeverityRank(log.severity) < getSeverityRank(minSeverity)) {
       return { ok: true, skipped: true, reason: "below_threshold" };
     }

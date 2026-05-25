@@ -47,9 +47,8 @@ export function SidebarSupportCard() {
     setLoading(true);
     try {
       const tenantSlug = getTenantSlug();
-      const tenantName = tenantSlug === "app" 
-        ? "Zpos Main System" 
-        : tenantSlug.charAt(0).toUpperCase() + tenantSlug.slice(1) + " Store";
+      const tenantName =
+        tenantSlug === "app" ? "Zpos Main System" : tenantSlug.charAt(0).toUpperCase() + tenantSlug.slice(1) + " Store";
 
       const res = await fetch("/api/support/tickets", {
         method: "POST",
@@ -105,7 +104,7 @@ export function SidebarSupportCard() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </DialogTrigger>
-            
+
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2 text-xl font-bold">
@@ -113,14 +112,17 @@ export function SidebarSupportCard() {
                   Yêu Cầu Hỗ Trợ Kỹ Thuật
                 </DialogTitle>
                 <DialogDescription>
-                  Gửi yêu cầu trực tiếp về hệ thống quản trị. Đội ngũ kỹ thuật viên của ZPOS sẽ xử lý và phản hồi bạn qua số điện thoại sớm nhất có thể.
+                  Gửi yêu cầu trực tiếp về hệ thống quản trị. Đội ngũ kỹ thuật viên của ZPOS sẽ xử lý và phản hồi bạn
+                  qua số điện thoại sớm nhất có thể.
                 </DialogDescription>
               </DialogHeader>
-              
+
               <form onSubmit={handleSubmit} className="space-y-4 py-2">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor="category" className="text-xs font-bold text-muted-foreground uppercase">Loại yêu cầu</Label>
+                    <Label htmlFor="category" className="text-xs font-bold text-muted-foreground uppercase">
+                      Loại yêu cầu
+                    </Label>
                     <NativeSelect
                       id="category"
                       value={category}
@@ -133,9 +135,11 @@ export function SidebarSupportCard() {
                       <option value="Hóa đơn/Thanh toán">💳 Hóa đơn/Thanh toán</option>
                     </NativeSelect>
                   </div>
-                  
+
                   <div className="space-y-1.5">
-                    <Label htmlFor="priority" className="text-xs font-bold text-muted-foreground uppercase">Mức độ ưu tiên</Label>
+                    <Label htmlFor="priority" className="text-xs font-bold text-muted-foreground uppercase">
+                      Mức độ ưu tiên
+                    </Label>
                     <NativeSelect
                       id="priority"
                       value={priority}
@@ -150,7 +154,9 @@ export function SidebarSupportCard() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="phone" className="text-xs font-bold text-muted-foreground uppercase">Số điện thoại liên hệ</Label>
+                  <Label htmlFor="phone" className="text-xs font-bold text-muted-foreground uppercase">
+                    Số điện thoại liên hệ
+                  </Label>
                   <Input
                     id="phone"
                     type="tel"
@@ -162,7 +168,9 @@ export function SidebarSupportCard() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="title" className="text-xs font-bold text-muted-foreground uppercase">Tiêu đề yêu cầu</Label>
+                  <Label htmlFor="title" className="text-xs font-bold text-muted-foreground uppercase">
+                    Tiêu đề yêu cầu
+                  </Label>
                   <Input
                     id="title"
                     type="text"
@@ -175,7 +183,9 @@ export function SidebarSupportCard() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="description" className="text-xs font-bold text-muted-foreground uppercase">Nội dung chi tiết</Label>
+                  <Label htmlFor="description" className="text-xs font-bold text-muted-foreground uppercase">
+                    Nội dung chi tiết
+                  </Label>
                   <Textarea
                     id="description"
                     rows={4}
@@ -188,7 +198,12 @@ export function SidebarSupportCard() {
                 </div>
 
                 <DialogFooter className="pt-2">
-                  <Button type="button" variant="outline" onClick={() => setOpen(false)} className="text-xs cursor-pointer">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setOpen(false)}
+                    className="text-xs cursor-pointer"
+                  >
                     Hủy bỏ
                   </Button>
                   <Button type="submit" disabled={loading} className="text-xs font-bold gap-1.5 cursor-pointer">
@@ -210,4 +225,3 @@ export function SidebarSupportCard() {
     </SidebarGroup>
   );
 }
-

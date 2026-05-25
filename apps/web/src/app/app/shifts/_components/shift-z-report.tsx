@@ -13,9 +13,9 @@ export function ShiftZReport({ shift, transactions }: ShiftZReportProps) {
   const expected = Number(shift.expected_cash_amount || 0);
   const counted = Number(shift.counted_cash_amount || 0);
 
-  const cashInTxs = transactions.filter(t => t.type === 'cash_in');
-  const cashOutTxs = transactions.filter(t => t.type === 'cash_out');
-  const expenseTxs = transactions.filter(t => t.type === 'expense');
+  const cashInTxs = transactions.filter((t) => t.type === "cash_in");
+  const cashOutTxs = transactions.filter((t) => t.type === "cash_out");
+  const expenseTxs = transactions.filter((t) => t.type === "expense");
 
   return (
     <div className="hidden print:block font-mono text-sm leading-tight p-4 mx-auto max-w-sm">
@@ -50,7 +50,14 @@ export function ShiftZReport({ shift, transactions }: ShiftZReportProps) {
         </div>
         <div className="flex justify-between">
           <span>- Quẹt thẻ/MoMo/Khác:</span>
-          <span>{fmtVND(Number(shift.card_amount) + Number(shift.momo_amount) + Number(shift.zalopay_amount) + Number(shift.debt_amount))}</span>
+          <span>
+            {fmtVND(
+              Number(shift.card_amount) +
+                Number(shift.momo_amount) +
+                Number(shift.zalopay_amount) +
+                Number(shift.debt_amount),
+            )}
+          </span>
         </div>
       </div>
 
@@ -103,7 +110,7 @@ export function ShiftZReport({ shift, transactions }: ShiftZReportProps) {
           <p className="text-xs mt-10">(Ký & ghi rõ họ tên)</p>
         </div>
       </div>
-      
+
       {shift.note && (
         <div className="mt-8 border-t border-dashed border-black pt-2">
           <p className="font-bold uppercase">Ghi chú bàn giao:</p>

@@ -11,19 +11,14 @@ interface MobileFloatingCartProps {
   className?: string;
 }
 
-export function MobileFloatingCart({
-  itemCount,
-  totalAmount,
-  onClick,
-  className
-}: MobileFloatingCartProps) {
+export function MobileFloatingCart({ itemCount, totalAmount, onClick, className }: MobileFloatingCartProps) {
   if (itemCount === 0) return null;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(amount);
   };
 
@@ -32,7 +27,7 @@ export function MobileFloatingCart({
       onClick={onClick}
       className={cn(
         "fixed bottom-20 right-4 z-40 flex items-center gap-3 bg-gradient-to-r from-primary to-primary/95 text-primary-foreground pl-4 pr-5 py-3.5 rounded-full shadow-[0_8px_32px_rgba(var(--primary-rgb,0,0,0),0.35)] active:scale-95 hover:scale-102 transition-all animate-bounce-short border border-primary/20",
-        className
+        className,
       )}
       style={{ minHeight: "48px" }} // Large touch target
     >
@@ -44,12 +39,10 @@ export function MobileFloatingCart({
           {itemCount}
         </span>
       </div>
-      
+
       <div className="flex flex-col items-start leading-none gap-0.5 border-l border-primary-foreground/20 pl-2.5">
         <span className="text-[8px] font-black tracking-widest text-primary-foreground/75 uppercase">Thanh toán</span>
-        <span className="text-sm font-black font-mono leading-none">
-          {formatCurrency(totalAmount)}
-        </span>
+        <span className="text-sm font-black font-mono leading-none">{formatCurrency(totalAmount)}</span>
       </div>
 
       {/* Pulse Glowing Effect */}

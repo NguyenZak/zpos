@@ -25,7 +25,7 @@ import {
   AlertCircle,
   ArrowRight,
   HelpCircle,
-  TrendingDown
+  TrendingDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,42 +33,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger
-} from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from "@/components/ui/table";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { loyaltyService } from "@/services/loyalty.service";
 import { posService } from "@/services/pos.service";
@@ -77,7 +53,7 @@ import { usePermissions } from "@/hooks/use-permissions";
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
-    currency: "VND"
+    currency: "VND",
   })
     .format(amount)
     .replace(/\s?Đ$/, "đ");
@@ -156,7 +132,7 @@ export default function LoyaltyDashboard() {
         loyaltyService.getTiers(),
         loyaltyService.getCampaigns(),
         loyaltyService.getTransactions(),
-        posService.getCustomers("")
+        posService.getCustomers(""),
       ]);
 
       setProgram(progData);
@@ -193,11 +169,11 @@ export default function LoyaltyDashboard() {
         is_enabled: programEnabled,
         expiration_months: expMonths,
         birthday_bonus_points: bdayPoints,
-        first_purchase_bonus_points: firstPoints
+        first_purchase_bonus_points: firstPoints,
       };
       await loyaltyService.updateProgram(payload);
       toast.success("Cập nhật thiết lập thành công", {
-        description: "Hệ thống đã lưu cấu hình mới của chương trình tích điểm."
+        description: "Hệ thống đã lưu cấu hình mới của chương trình tích điểm.",
       });
       loadDashboardData();
     } catch (e) {
@@ -243,7 +219,7 @@ export default function LoyaltyDashboard() {
     const payload: any = {
       name: ruleName,
       rule_type: ruleType as any,
-      is_active: ruleIsActive
+      is_active: ruleIsActive,
     };
 
     if (ruleType === "earning_spend") {
@@ -310,7 +286,7 @@ export default function LoyaltyDashboard() {
     const payload = {
       name: tierName,
       min_points: tierMinPoints,
-      points_multiplier: tierMultiplier
+      points_multiplier: tierMultiplier,
     };
 
     try {
@@ -376,7 +352,7 @@ export default function LoyaltyDashboard() {
       bonus_points: campType === "first_purchase" || campType === "birthday" ? campBonusPoints : 0,
       start_date: campStartDate || null,
       end_date: campEndDate || null,
-      is_active: campIsActive
+      is_active: campIsActive,
     };
 
     try {
@@ -430,7 +406,7 @@ export default function LoyaltyDashboard() {
     try {
       await loyaltyService.adjustPoints(selectedCustomer.id, adjustPoints, adjustNote.trim());
       toast.success(`Đã điều chỉnh thành công ${adjustPoints >= 0 ? "+" : ""}${adjustPoints} điểm`, {
-        description: `Ghi nhận thay đổi cho khách hàng ${selectedCustomer.name}.`
+        description: `Ghi nhận thay đổi cho khách hàng ${selectedCustomer.name}.`,
       });
       setAdjustPoints(0);
       setAdjustNote("");
@@ -461,17 +437,13 @@ export default function LoyaltyDashboard() {
   });
 
   // Metrics Calculations (Emulated reports)
-  const totalEarnedPoints = transactions
-    .filter((tx) => tx.points > 0)
-    .reduce((sum, tx) => sum + tx.points, 0);
+  const totalEarnedPoints = transactions.filter((tx) => tx.points > 0).reduce((sum, tx) => sum + tx.points, 0);
 
   const totalRedeemedPoints = Math.abs(
-    transactions.filter((tx) => tx.points < 0).reduce((sum, tx) => sum + tx.points, 0)
+    transactions.filter((tx) => tx.points < 0).reduce((sum, tx) => sum + tx.points, 0),
   );
 
-  const activeLoyaltyUsersCount = customers.filter(
-    (c) => (c.loyalty_points || 0) > 0
-  ).length;
+  const activeLoyaltyUsersCount = customers.filter((c) => (c.loyalty_points || 0) > 0).length;
 
   return (
     <div className="flex flex-col gap-5 p-1 sm:p-2">
@@ -492,12 +464,8 @@ export default function LoyaltyDashboard() {
         {/* Global Toggle */}
         <div className="flex items-center gap-4 bg-muted/40 p-4 rounded-xl border">
           <div className="flex flex-col gap-0.5">
-            <span className="text-xs font-bold text-foreground">
-              Kích hoạt tích điểm
-            </span>
-            <span className="text-[10px] text-muted-foreground">
-              Áp dụng cho toàn bộ cửa hàng
-            </span>
+            <span className="text-xs font-bold text-foreground">Kích hoạt tích điểm</span>
+            <span className="text-[10px] text-muted-foreground">Áp dụng cho toàn bộ cửa hàng</span>
           </div>
           <Switch
             checked={programEnabled}
@@ -526,9 +494,7 @@ export default function LoyaltyDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="px-4 pb-3">
-            <p className="text-[10px] text-muted-foreground font-semibold">
-              Đã ghi nhận qua giao dịch tích lũy
-            </p>
+            <p className="text-[10px] text-muted-foreground font-semibold">Đã ghi nhận qua giao dịch tích lũy</p>
           </CardContent>
         </Card>
 
@@ -543,9 +509,7 @@ export default function LoyaltyDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="px-4 pb-3">
-            <p className="text-[10px] text-muted-foreground font-semibold">
-              Đổi thành giảm trừ hóa đơn POS
-            </p>
+            <p className="text-[10px] text-muted-foreground font-semibold">Đổi thành giảm trừ hóa đơn POS</p>
           </CardContent>
         </Card>
 
@@ -555,15 +519,11 @@ export default function LoyaltyDashboard() {
               Tỷ lệ sử dụng điểm (Burn Rate)
             </CardDescription>
             <CardTitle className="text-2xl font-black mt-0.5 text-zinc-900 dark:text-zinc-50">
-              {totalEarnedPoints > 0
-                ? `${Math.round((totalRedeemedPoints / totalEarnedPoints) * 100)}%`
-                : "0%"}
+              {totalEarnedPoints > 0 ? `${Math.round((totalRedeemedPoints / totalEarnedPoints) * 100)}%` : "0%"}
             </CardTitle>
           </CardHeader>
           <CardContent className="px-4 pb-3">
-            <p className="text-[10px] text-muted-foreground font-semibold">
-              Điểm tiêu dùng trên điểm phát hành
-            </p>
+            <p className="text-[10px] text-muted-foreground font-semibold">Điểm tiêu dùng trên điểm phát hành</p>
           </CardContent>
         </Card>
 
@@ -578,9 +538,7 @@ export default function LoyaltyDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="px-4 pb-3">
-            <p className="text-[10px] text-muted-foreground font-semibold">
-              Khách hàng sở hữu số dư điểm lớn hơn 0
-            </p>
+            <p className="text-[10px] text-muted-foreground font-semibold">Khách hàng sở hữu số dư điểm lớn hơn 0</p>
           </CardContent>
         </Card>
       </div>
@@ -612,18 +570,13 @@ export default function LoyaltyDashboard() {
         <TabsContent value="rules" className="mt-4 space-y-4">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
-                Quy tắc tích lũy & Đổi điểm
-              </h2>
+              <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Quy tắc tích lũy & Đổi điểm</h2>
               <p className="text-xs text-muted-foreground">
                 Tự động cộng điểm khi khách thanh toán và cho phép đổi điểm lấy mã giảm giá.
               </p>
             </div>
             {canUpdate ? (
-              <Button
-                onClick={() => handleOpenRuleDialog()}
-                className="gap-1.5 font-bold text-xs h-9 rounded-lg"
-              >
+              <Button onClick={() => handleOpenRuleDialog()} className="gap-1.5 font-bold text-xs h-9 rounded-lg">
                 <Plus className="w-4 h-4" /> Thêm quy tắc
               </Button>
             ) : (
@@ -640,9 +593,7 @@ export default function LoyaltyDashboard() {
                 <Card
                   key={rule.id}
                   className={`border transition-all duration-300 ${
-                    rule.is_active
-                      ? "bg-card border-border hover:shadow-md"
-                      : "bg-muted/10 opacity-70 border-dashed"
+                    rule.is_active ? "bg-card border-border hover:shadow-md" : "bg-muted/10 opacity-70 border-dashed"
                   }`}
                 >
                   <CardHeader className="p-5 pb-3">
@@ -650,9 +601,7 @@ export default function LoyaltyDashboard() {
                       <div className="flex items-center gap-2">
                         <div
                           className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                            isEarning
-                              ? "bg-emerald-500/10 text-emerald-500"
-                              : "bg-amber-500/10 text-amber-500"
+                            isEarning ? "bg-emerald-500/10 text-emerald-500" : "bg-amber-500/10 text-amber-500"
                           }`}
                         >
                           <Award className="w-5 h-5" />
@@ -666,10 +615,7 @@ export default function LoyaltyDashboard() {
                           </CardDescription>
                         </div>
                       </div>
-                      <Badge
-                        variant={rule.is_active ? "default" : "secondary"}
-                        className="text-[9px] font-bold"
-                      >
+                      <Badge variant={rule.is_active ? "default" : "secondary"} className="text-[9px] font-bold">
                         {rule.is_active ? "Hoạt động" : "Tạm ngưng"}
                       </Badge>
                     </div>
@@ -678,20 +624,22 @@ export default function LoyaltyDashboard() {
                     <div className="bg-muted/30 p-3 rounded-lg text-xs space-y-1.5 font-medium border">
                       {rule.rule_type === "earning_spend" && (
                         <p>
-                          Mỗi <span className="font-bold text-primary">{formatCurrency(rule.spend_amount)}</span> chi tiêu ={" "}
-                          <span className="font-bold text-emerald-600">+{rule.points_awarded} điểm</span>.
+                          Mỗi <span className="font-bold text-primary">{formatCurrency(rule.spend_amount)}</span> chi
+                          tiêu = <span className="font-bold text-emerald-600">+{rule.points_awarded} điểm</span>.
                         </p>
                       )}
                       {rule.rule_type === "earning_order" && (
                         <p>
-                          Cộng cố định <span className="font-bold text-emerald-600">+{rule.points_awarded} điểm</span> cho mỗi đơn hàng.
+                          Cộng cố định <span className="font-bold text-emerald-600">+{rule.points_awarded} điểm</span>{" "}
+                          cho mỗi đơn hàng.
                         </p>
                       )}
                       {rule.rule_type === "redemption_discount" && (
                         <div className="space-y-1">
                           <p>
                             Đổi <span className="font-bold text-amber-500">{rule.points_required} điểm</span> lấy{" "}
-                            <span className="font-bold text-primary">{formatCurrency(rule.discount_amount)}</span> giảm giá.
+                            <span className="font-bold text-primary">{formatCurrency(rule.discount_amount)}</span> giảm
+                            giá.
                           </p>
                           <p className="text-[10px] text-muted-foreground">
                             • Tối thiểu đổi: <b>{rule.min_points_to_redeem} điểm</b>
@@ -753,10 +701,7 @@ export default function LoyaltyDashboard() {
               </p>
             </div>
             {canUpdate ? (
-              <Button
-                onClick={() => handleOpenTierDialog()}
-                className="gap-1.5 font-bold text-xs h-9 rounded-lg"
-              >
+              <Button onClick={() => handleOpenTierDialog()} className="gap-1.5 font-bold text-xs h-9 rounded-lg">
                 <Plus className="w-4 h-4" /> Thêm hạng thành viên
               </Button>
             ) : (
@@ -790,9 +735,7 @@ export default function LoyaltyDashboard() {
                   <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
                   <CardHeader className="p-5 pb-3">
                     <div className="flex justify-between items-start">
-                      <span className="text-[10px] font-black uppercase tracking-wider opacity-75">
-                        BẬC {idx + 1}
-                      </span>
+                      <span className="text-[10px] font-black uppercase tracking-wider opacity-75">BẬC {idx + 1}</span>
                       <Award className={`w-5 h-5 ${textBadge}`} />
                     </div>
                     <CardTitle className="text-base font-black text-zinc-900 dark:text-zinc-50 mt-1">
@@ -809,9 +752,7 @@ export default function LoyaltyDashboard() {
                       </div>
                       <div className="flex justify-between pt-1">
                         <span>Hệ số cộng điểm:</span>
-                        <span className="font-bold text-primary">
-                          {tier.points_multiplier}x điểm
-                        </span>
+                        <span className="font-bold text-primary">{tier.points_multiplier}x điểm</span>
                       </div>
                     </div>
 
@@ -861,10 +802,7 @@ export default function LoyaltyDashboard() {
               </p>
             </div>
             {canUpdate ? (
-              <Button
-                onClick={() => handleOpenCampaignDialog()}
-                className="gap-1.5 font-bold text-xs h-9 rounded-lg"
-              >
+              <Button onClick={() => handleOpenCampaignDialog()} className="gap-1.5 font-bold text-xs h-9 rounded-lg">
                 <Plus className="w-4 h-4" /> Kích hoạt chiến dịch
               </Button>
             ) : (
@@ -915,9 +853,7 @@ export default function LoyaltyDashboard() {
                       </div>
                       <Badge
                         variant={isEventActive ? "default" : "secondary"}
-                        className={`text-[9px] font-bold ${
-                          isEventActive ? "bg-emerald-500 text-white" : ""
-                        }`}
+                        className={`text-[9px] font-bold ${isEventActive ? "bg-emerald-500 text-white" : ""}`}
                       >
                         {isEventActive ? "Đang chạy" : "Tạm ngưng/Kết thúc"}
                       </Badge>
@@ -928,12 +864,14 @@ export default function LoyaltyDashboard() {
                       {camp.campaign_type === "double_points" ? (
                         <p>
                           Hệ số tích điểm:{" "}
-                          <span className="font-bold text-primary text-sm">{camp.points_multiplier}x điểm</span> cho mọi hóa đơn.
+                          <span className="font-bold text-primary text-sm">{camp.points_multiplier}x điểm</span> cho mọi
+                          hóa đơn.
                         </p>
                       ) : (
                         <p>
                           Thưởng cố định:{" "}
-                          <span className="font-bold text-emerald-600 text-sm">+{camp.bonus_points} điểm</span> khi mua hàng.
+                          <span className="font-bold text-emerald-600 text-sm">+{camp.bonus_points} điểm</span> khi mua
+                          hàng.
                         </p>
                       )}
                       <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground pt-1 border-t">
@@ -941,8 +879,8 @@ export default function LoyaltyDashboard() {
                         Thời gian:{" "}
                         {camp.start_date || camp.end_date ? (
                           <span>
-                            {camp.start_date ? new Date(camp.start_date).toLocaleDateString("vi-VN") : "Bắt đầu ngay"}{" "}
-                            → {camp.end_date ? new Date(camp.end_date).toLocaleDateString("vi-VN") : "Vô thời hạn"}
+                            {camp.start_date ? new Date(camp.start_date).toLocaleDateString("vi-VN") : "Bắt đầu ngay"} →{" "}
+                            {camp.end_date ? new Date(camp.end_date).toLocaleDateString("vi-VN") : "Vô thời hạn"}
                           </span>
                         ) : (
                           <span>Vô thời hạn</span>
@@ -979,7 +917,9 @@ export default function LoyaltyDashboard() {
               <div className="col-span-2 text-center py-20 bg-muted/20 border-2 border-dashed rounded-2xl">
                 <Info className="w-10 h-10 text-muted-foreground mx-auto mb-2.5" />
                 <p className="text-sm font-bold text-muted-foreground">Chưa có chiến dịch nào được tạo</p>
-                <p className="text-xs text-muted-foreground">Tích hợp nhân đôi điểm trong dịp lễ tết hoặc x1.5 dịp sinh nhật.</p>
+                <p className="text-xs text-muted-foreground">
+                  Tích hợp nhân đôi điểm trong dịp lễ tết hoặc x1.5 dịp sinh nhật.
+                </p>
               </div>
             )}
           </div>
@@ -1036,9 +976,7 @@ export default function LoyaltyDashboard() {
                     );
                   })}
                   {filteredCustomers.length === 0 && (
-                    <p className="text-center py-6 text-xs text-muted-foreground italic">
-                      Không tìm thấy khách hàng.
-                    </p>
+                    <p className="text-center py-6 text-xs text-muted-foreground italic">Không tìm thấy khách hàng.</p>
                   )}
                 </div>
               </CardContent>
@@ -1096,7 +1034,9 @@ export default function LoyaltyDashboard() {
                         </span>
                       </div>
                       {adjustPoints !== 0 && (
-                        <p className={`text-[10px] font-bold ${adjustPoints > 0 ? "text-emerald-600" : "text-rose-500"}`}>
+                        <p
+                          className={`text-[10px] font-bold ${adjustPoints > 0 ? "text-emerald-600" : "text-rose-500"}`}
+                        >
                           ⚠️ Hành động này sẽ {adjustPoints > 0 ? "cộng thêm" : "khấu trừ"}{" "}
                           <b>{Math.abs(adjustPoints)} điểm</b> của khách hàng. Số dư mới dự kiến:{" "}
                           <b>{(selectedCustomer.points || 0) + adjustPoints} điểm</b>.
@@ -1152,7 +1092,8 @@ export default function LoyaltyDashboard() {
                         <div>
                           <p className="font-bold">Quyền hạn hạn chế</p>
                           <p className="text-[10px] leading-relaxed">
-                            Tài khoản của bạn là Cashier (Thu ngân), không được cấp phép để thay đổi thủ công số dư điểm thành viên. Vui lòng liên hệ Manager/Owner.
+                            Tài khoản của bạn là Cashier (Thu ngân), không được cấp phép để thay đổi thủ công số dư điểm
+                            thành viên. Vui lòng liên hệ Manager/Owner.
                           </p>
                         </div>
                       </div>
@@ -1194,7 +1135,9 @@ export default function LoyaltyDashboard() {
                   <TableHead className="font-bold text-xs uppercase tracking-wider">Mã GD</TableHead>
                   <TableHead className="font-bold text-xs uppercase tracking-wider">Khách hàng</TableHead>
                   <TableHead className="font-bold text-xs uppercase tracking-wider">Loại giao dịch</TableHead>
-                  <TableHead className="font-bold text-xs uppercase tracking-wider text-right">Biến động điểm</TableHead>
+                  <TableHead className="font-bold text-xs uppercase tracking-wider text-right">
+                    Biến động điểm
+                  </TableHead>
                   <TableHead className="font-bold text-xs uppercase tracking-wider">Nội dung</TableHead>
                 </TableRow>
               </TableHeader>
@@ -1222,8 +1165,8 @@ export default function LoyaltyDashboard() {
                             tx.transaction_type === "earn"
                               ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                               : tx.transaction_type === "redeem"
-                              ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                              : "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                                ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                                : "bg-blue-500/10 text-blue-600 border-blue-500/20"
                           }`}
                         >
                           {tx.transaction_type === "earn" && "Tích điểm POS"}
@@ -1233,7 +1176,9 @@ export default function LoyaltyDashboard() {
                           {tx.transaction_type === "expire" && "Điểm hết hạn"}
                         </Badge>
                       </TableCell>
-                      <TableCell className={`text-right font-black text-xs ${isAdd ? "text-emerald-500" : "text-rose-500"}`}>
+                      <TableCell
+                        className={`text-right font-black text-xs ${isAdd ? "text-emerald-500" : "text-rose-500"}`}
+                      >
                         {isAdd ? "+" : ""}
                         {tx.points}
                       </TableCell>
@@ -1269,7 +1214,10 @@ export default function LoyaltyDashboard() {
             <CardContent className="p-5 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="exp-months" className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-1">
+                  <Label
+                    htmlFor="exp-months"
+                    className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-1"
+                  >
                     Thời gian hết hạn điểm
                     <HelpCircle className="w-3.5 h-3.5 text-muted-foreground" />
                   </Label>
@@ -1351,7 +1299,8 @@ export default function LoyaltyDashboard() {
                   <div>
                     <p className="font-bold">Quyền hạn chỉ xem</p>
                     <p className="text-[10px] leading-relaxed">
-                      Bạn không có quyền sửa đổi cài đặt cấu hình Loyalty. Vui lòng liên hệ quản trị viên (Manager/Owner) để được mở khóa.
+                      Bạn không có quyền sửa đổi cài đặt cấu hình Loyalty. Vui lòng liên hệ quản trị viên
+                      (Manager/Owner) để được mở khóa.
                     </p>
                   </div>
                 </div>
@@ -1401,9 +1350,15 @@ export default function LoyaltyDashboard() {
                   <SelectValue placeholder="Chọn loại quy tắc" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="earning_spend" className="text-xs">Tích điểm theo giá trị mua hàng (Earning Spend)</SelectItem>
-                  <SelectItem value="earning_order" className="text-xs">Tặng điểm cố định mỗi đơn (Earning Order)</SelectItem>
-                  <SelectItem value="redemption_discount" className="text-xs">Tiêu điểm lấy chiết khấu (Redemption Discount)</SelectItem>
+                  <SelectItem value="earning_spend" className="text-xs">
+                    Tích điểm theo giá trị mua hàng (Earning Spend)
+                  </SelectItem>
+                  <SelectItem value="earning_order" className="text-xs">
+                    Tặng điểm cố định mỗi đơn (Earning Order)
+                  </SelectItem>
+                  <SelectItem value="redemption_discount" className="text-xs">
+                    Tiêu điểm lấy chiết khấu (Redemption Discount)
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1435,7 +1390,9 @@ export default function LoyaltyDashboard() {
             {/* Earning Order Fields */}
             {ruleType === "earning_order" && (
               <div className="border bg-muted/20 p-3 rounded-lg space-y-2">
-                <Label className="text-[10px] font-bold uppercase text-muted-foreground">Điểm thưởng mỗi đơn hàng</Label>
+                <Label className="text-[10px] font-bold uppercase text-muted-foreground">
+                  Điểm thưởng mỗi đơn hàng
+                </Label>
                 <Input
                   type="number"
                   value={rulePointsAwarded}
@@ -1459,7 +1416,9 @@ export default function LoyaltyDashboard() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">Giá trị giảm tương ứng</Label>
+                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">
+                      Giá trị giảm tương ứng
+                    </Label>
                     <Input
                       type="number"
                       value={ruleDiscountAmount}
@@ -1471,7 +1430,9 @@ export default function LoyaltyDashboard() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">Điểm tối thiểu sử dụng</Label>
+                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">
+                      Điểm tối thiểu sử dụng
+                    </Label>
                     <Input
                       type="number"
                       value={ruleMinPointsToRedeem}
@@ -1480,7 +1441,9 @@ export default function LoyaltyDashboard() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">Giới hạn giảm giá tối đa</Label>
+                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">
+                      Giới hạn giảm giá tối đa
+                    </Label>
                     <div className="relative">
                       <Input
                         type="number"
@@ -1494,21 +1457,17 @@ export default function LoyaltyDashboard() {
                 </div>
 
                 <div className="flex items-center justify-between border-t pt-2">
-                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">Đổi điểm trên đơn có sẵn giảm giá</Label>
-                  <Switch
-                    checked={ruleAllowOnDiscounted}
-                    onCheckedChange={setRuleAllowOnDiscounted}
-                  />
+                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">
+                    Đổi điểm trên đơn có sẵn giảm giá
+                  </Label>
+                  <Switch checked={ruleAllowOnDiscounted} onCheckedChange={setRuleAllowOnDiscounted} />
                 </div>
               </div>
             )}
 
             <div className="flex items-center justify-between border-t pt-3.5">
               <Label className="text-xs font-bold uppercase text-muted-foreground">Trạng thái hoạt động</Label>
-              <Switch
-                checked={ruleIsActive}
-                onCheckedChange={setRuleIsActive}
-              />
+              <Switch checked={ruleIsActive} onCheckedChange={setRuleIsActive} />
             </div>
           </div>
 
@@ -1639,9 +1598,15 @@ export default function LoyaltyDashboard() {
                   <SelectValue placeholder="Chọn loại chiến dịch" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="double_points" className="text-xs">Hệ số nhân điểm (Ví dụ x2, x3...)</SelectItem>
-                  <SelectItem value="first_purchase" className="text-xs">Thưởng mua hàng lần đầu (First Purchase)</SelectItem>
-                  <SelectItem value="birthday" className="text-xs">Thưởng sinh nhật khách hàng</SelectItem>
+                  <SelectItem value="double_points" className="text-xs">
+                    Hệ số nhân điểm (Ví dụ x2, x3...)
+                  </SelectItem>
+                  <SelectItem value="first_purchase" className="text-xs">
+                    Thưởng mua hàng lần đầu (First Purchase)
+                  </SelectItem>
+                  <SelectItem value="birthday" className="text-xs">
+                    Thưởng sinh nhật khách hàng
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1692,10 +1657,7 @@ export default function LoyaltyDashboard() {
 
             <div className="flex items-center justify-between border-t pt-3.5">
               <Label className="text-xs font-bold uppercase text-muted-foreground">Trạng thái kích hoạt</Label>
-              <Switch
-                checked={campIsActive}
-                onCheckedChange={setCampIsActive}
-              />
+              <Switch checked={campIsActive} onCheckedChange={setCampIsActive} />
             </div>
           </div>
 

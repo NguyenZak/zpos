@@ -4,7 +4,8 @@ import { getMetadata } from "@/utils/seo";
 export async function generateMetadata(): Promise<Metadata> {
   return getMetadata({
     title: "Giải pháp POS & Thiết bị bán hàng chuyên nghiệp",
-    description: "Khám phá hệ sinh thái sản phẩm ZPOS: phần mềm quản lý bán hàng đa kênh, máy POS cảm ứng đứng, máy quét mã vạch và máy in hóa đơn nhiệt siêu tốc.",
+    description:
+      "Khám phá hệ sinh thái sản phẩm ZPOS: phần mềm quản lý bán hàng đa kênh, máy POS cảm ứng đứng, máy quét mã vạch và máy in hóa đơn nhiệt siêu tốc.",
     path: "/products",
     keywords: [
       "thiet bi pos",
@@ -13,15 +14,11 @@ export async function generateMetadata(): Promise<Metadata> {
       "may quet ma vach",
       "may in hoa don",
       "zpos retail max",
-      "zpos fnb air"
-    ]
+      "zpos fnb air",
+    ],
   });
 }
 
-export default function ProductsLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function ProductsLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }

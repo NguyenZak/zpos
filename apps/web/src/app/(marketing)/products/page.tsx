@@ -41,7 +41,7 @@ import {
   PhoneCall,
   Clock,
   ExternalLink,
-  ChevronDown
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -55,10 +55,11 @@ const pageDict = {
     heroBadge: "✨ THIẾT BỊ & NỀN TẢNG BÁN HÀNG THẾ HỆ MỚI",
     heroTitle: "Hệ Sinh Thái POS Toàn Diện",
     heroTitleGradient: "Bứt Phá Doanh Thu Cửa Hàng",
-    heroSubtitle: "Giải pháp quản lý bán lẻ, nhà hàng và F&B chuyên nghiệp. Tự động đồng bộ hóa kho, kết nối đa kênh & hoạt động offline-first thông minh.",
+    heroSubtitle:
+      "Giải pháp quản lý bán lẻ, nhà hàng và F&B chuyên nghiệp. Tự động đồng bộ hóa kho, kết nối đa kênh & hoạt động offline-first thông minh.",
     heroCtaFree: "Dùng thử miễn phí",
     heroCtaDemo: "Trải nghiệm Simulator",
-    
+
     // POS Cashier Simulator Section
     simTitle: "Trình Giả Lập Thu Ngân ZPOS Live",
     simSubtitle: "Hãy tự tay trải nghiệm quy trình bán hàng siêu tốc dưới 3 giây của ZPOS ngay bên dưới!",
@@ -87,36 +88,39 @@ const pageDict = {
     simReceiptNo: "HĐ số:",
     simReceiptDate: "Ngày bán:",
     simReceiptStaff: "Thu ngân: ZPOS Admin",
-    
+
     // Modules tabs section
     modTitle: "Phân Hệ Quản Lý Chuyên Sâu",
-    modSubtitle: "ZPOS tích hợp đầy đủ tính năng trong một nền tảng duy nhất, loại bỏ việc kết nối nhiều phần mềm rời rạc.",
+    modSubtitle:
+      "ZPOS tích hợp đầy đủ tính năng trong một nền tảng duy nhất, loại bỏ việc kết nối nhiều phần mềm rời rạc.",
     modSales: "Bán Hàng & Thu Ngân",
     modInventory: "Quản Lý Kho Hàng",
     modCrm: "Chăm Sóc VIP Customer",
     modAnalytics: "Báo Cáo Doanh Số",
     modMultistore: "Đa Chi Nhánh & Cloud",
-    
+
     // Hardware widget
     hwTitle: "Đề Xuất Combo Phần Cứng Tối Ưu",
-    hwSubtitle: "Lựa chọn mô hình kinh doanh của bạn để nhận đề xuất trọn bộ thiết bị bán hàng tương thích 100% với ZPOS.",
+    hwSubtitle:
+      "Lựa chọn mô hình kinh doanh của bạn để nhận đề xuất trọn bộ thiết bị bán hàng tương thích 100% với ZPOS.",
     hwRetail: "Chuỗi Bán Lẻ / Tạp Hóa",
     hwFnB: "Quán Café / Nhà Hàng / F&B",
     hwFashion: "Thời Trang / Boutique / Mỹ Phẩm",
     hwInclude: "Bộ thiết bị bao gồm:",
     hwSpec: "Thông số kỹ thuật chính",
     hwOrderBtn: "Đăng ký nhận báo giá ưu đãi",
-    
+
     // Comparison
     compTitle: "Sự Khác Biệt Giữa ZPOS & POS Truyền Thống",
     compSubtitle: "Đột phá về mặt công nghệ giúp ZPOS vận hành ổn định, bảo mật và tiết kiệm chi phí gấp 3 lần.",
     compFeature: "Tính năng / Công nghệ",
     compZpos: "Hệ sinh thái ZPOS Pro",
     compOld: "Hệ thống POS truyền thống",
-    
+
     // Form
     formTitle: "Đăng Ký Tư Vấn & Dùng Thử 14 Ngày Miễn Phí",
-    formSubtitle: "Hơn 12,000+ chủ cửa hàng đã tin dùng ZPOS để tự động hóa vận hành và bứt phá doanh số. Đăng ký ngay hôm nay!",
+    formSubtitle:
+      "Hơn 12,000+ chủ cửa hàng đã tin dùng ZPOS để tự động hóa vận hành và bứt phá doanh số. Đăng ký ngay hôm nay!",
     formName: "Họ và tên của bạn",
     formPhone: "Số điện thoại liên hệ",
     formStore: "Tên cửa hàng / Doanh nghiệp",
@@ -130,10 +134,11 @@ const pageDict = {
     heroBadge: "✨ NEXT-GEN RETAIL INFRASTRUCTURE & POS",
     heroTitle: "Unified Omnichannel POS",
     heroTitleGradient: "Empower Your Store Sales",
-    heroSubtitle: "Professional solution for retail shops, restaurants, and F&B businesses. Automated stock management, real-time multi-channel sync & offline-first capability.",
+    heroSubtitle:
+      "Professional solution for retail shops, restaurants, and F&B businesses. Automated stock management, real-time multi-channel sync & offline-first capability.",
     heroCtaFree: "Start Free Trial",
     heroCtaDemo: "Try Simulator",
-    
+
     // POS Cashier Simulator Section
     simTitle: "ZPOS Live Cashier Simulator",
     simSubtitle: "Experience our sub-3s checkout speed directly in your browser below!",
@@ -162,36 +167,39 @@ const pageDict = {
     simReceiptNo: "Receipt ID:",
     simReceiptDate: "Date-Time:",
     simReceiptStaff: "Cashier: ZPOS Admin",
-    
+
     // Modules tabs section
     modTitle: "Advanced Business Modules",
-    modSubtitle: "ZPOS bundles all advanced operations into one central platform, avoiding complicated third-party integrations.",
+    modSubtitle:
+      "ZPOS bundles all advanced operations into one central platform, avoiding complicated third-party integrations.",
     modSales: "Cashier & Checkout",
     modInventory: "Inventory & Stock",
     modCrm: "VIP Loyalty & CRM",
     modAnalytics: "Analytics & Reports",
     modMultistore: "Multi-Store & Cloud Sync",
-    
+
     // Hardware widget
     hwTitle: "Optimized Hardware Setup Recommendations",
-    hwSubtitle: "Choose your business type to find perfectly compatible retail hardware bundles certified to work with ZPOS.",
+    hwSubtitle:
+      "Choose your business type to find perfectly compatible retail hardware bundles certified to work with ZPOS.",
     hwRetail: "Retail Chain / Supermarket",
     hwFnB: "Café / Restaurant / F&B Outlets",
     hwFashion: "Fashion / Boutique / Cosmetics",
     hwInclude: "Hardware bundle includes:",
     hwSpec: "Key Technical Specs",
     hwOrderBtn: "Request Custom Pricing Quote",
-    
+
     // Comparison
     compTitle: "Why Choose ZPOS over Traditional Software?",
     compSubtitle: "Technological advancements that keep your data safe, system secure, and operation cost 3x lower.",
     compFeature: "Feature / Capability",
     compZpos: "ZPOS Pro Ecosystem",
     compOld: "Traditional POS Software",
-    
+
     // Form
     formTitle: "Get Started With Your 14-Day Free Trial",
-    formSubtitle: "Over 12,000+ business owners trust ZPOS to automate their sales and growth. Sign up to get custom onboarding support today!",
+    formSubtitle:
+      "Over 12,000+ business owners trust ZPOS to automate their sales and growth. Sign up to get custom onboarding support today!",
     formName: "Full name",
     formPhone: "Mobile number",
     formStore: "Store / Brand name",
@@ -200,43 +208,211 @@ const pageDict = {
     formSubmit: "Activate My Free Account",
     formSuccess: "Registration successful!",
     formSuccessDesc: "Our setup expert will contact you to configure your new POS store dashboard in 15 minutes.",
-  }
+  },
 };
 
 // Mock items for Simulator
 const SIMULATOR_ITEMS = {
   vi: [
-    { id: "item-1", name: "Cà phê Muối Đá", price: 39000, category: "fnb", code: "CF-SALT", color: "bg-amber-100 text-amber-800" },
-    { id: "item-2", name: "Trà Đào Cam Sả", price: 45000, category: "fnb", code: "TR-PEACH", color: "bg-orange-100 text-orange-800" },
-    { id: "item-3", name: "Bánh Mì Kẹp Thịt", price: 35000, category: "fnb", code: "BM-MEAT", color: "bg-yellow-100 text-yellow-800" },
-    { id: "item-4", name: "Sữa Chua Trái Cây", price: 29000, category: "fnb", code: "SC-FRUIT", color: "bg-emerald-100 text-emerald-800" },
-    
-    { id: "item-5", name: "Sữa Tươi Tiệt Trùng 1L", price: 32000, category: "retail", code: "MILK-1L", color: "bg-sky-100 text-sky-800" },
-    { id: "item-6", name: "Mì Gói Hảo Hảo (Thùng)", price: 115000, category: "retail", code: "MI-HAO", color: "bg-red-100 text-red-800" },
-    { id: "item-7", name: "Nước Rửa Chén Sunlight 1.5kg", price: 58000, category: "retail", code: "SUN-15", color: "bg-yellow-100 text-yellow-800" },
-    { id: "item-8", name: "Khăn Giấy Ướt Cao Cấp", price: 22000, category: "retail", code: "PAPER-WET", color: "bg-blue-100 text-blue-800" },
-    
-    { id: "item-9", name: "Áo Thun Unisex Aeonik", price: 250000, category: "fashion", code: "TSHIRT-UN", color: "bg-purple-100 text-purple-800" },
-    { id: "item-10", name: "Quần Jeans Nữ Baggy", price: 380000, category: "fashion", code: "JEAN-BAG", color: "bg-indigo-100 text-indigo-800" },
-    { id: "item-11", name: "Mũ Lưỡi Trai Classic", price: 120000, category: "fashion", code: "CAP-CLASS", color: "bg-zinc-100 text-zinc-800" },
-    { id: "item-12", name: "Son Môi Cao Cấp Z-Pink", price: 450000, category: "fashion", code: "LIP-ZPK", color: "bg-rose-100 text-rose-800" }
+    {
+      id: "item-1",
+      name: "Cà phê Muối Đá",
+      price: 39000,
+      category: "fnb",
+      code: "CF-SALT",
+      color: "bg-amber-100 text-amber-800",
+    },
+    {
+      id: "item-2",
+      name: "Trà Đào Cam Sả",
+      price: 45000,
+      category: "fnb",
+      code: "TR-PEACH",
+      color: "bg-orange-100 text-orange-800",
+    },
+    {
+      id: "item-3",
+      name: "Bánh Mì Kẹp Thịt",
+      price: 35000,
+      category: "fnb",
+      code: "BM-MEAT",
+      color: "bg-yellow-100 text-yellow-800",
+    },
+    {
+      id: "item-4",
+      name: "Sữa Chua Trái Cây",
+      price: 29000,
+      category: "fnb",
+      code: "SC-FRUIT",
+      color: "bg-emerald-100 text-emerald-800",
+    },
+
+    {
+      id: "item-5",
+      name: "Sữa Tươi Tiệt Trùng 1L",
+      price: 32000,
+      category: "retail",
+      code: "MILK-1L",
+      color: "bg-sky-100 text-sky-800",
+    },
+    {
+      id: "item-6",
+      name: "Mì Gói Hảo Hảo (Thùng)",
+      price: 115000,
+      category: "retail",
+      code: "MI-HAO",
+      color: "bg-red-100 text-red-800",
+    },
+    {
+      id: "item-7",
+      name: "Nước Rửa Chén Sunlight 1.5kg",
+      price: 58000,
+      category: "retail",
+      code: "SUN-15",
+      color: "bg-yellow-100 text-yellow-800",
+    },
+    {
+      id: "item-8",
+      name: "Khăn Giấy Ướt Cao Cấp",
+      price: 22000,
+      category: "retail",
+      code: "PAPER-WET",
+      color: "bg-blue-100 text-blue-800",
+    },
+
+    {
+      id: "item-9",
+      name: "Áo Thun Unisex Aeonik",
+      price: 250000,
+      category: "fashion",
+      code: "TSHIRT-UN",
+      color: "bg-purple-100 text-purple-800",
+    },
+    {
+      id: "item-10",
+      name: "Quần Jeans Nữ Baggy",
+      price: 380000,
+      category: "fashion",
+      code: "JEAN-BAG",
+      color: "bg-indigo-100 text-indigo-800",
+    },
+    {
+      id: "item-11",
+      name: "Mũ Lưỡi Trai Classic",
+      price: 120000,
+      category: "fashion",
+      code: "CAP-CLASS",
+      color: "bg-zinc-100 text-zinc-800",
+    },
+    {
+      id: "item-12",
+      name: "Son Môi Cao Cấp Z-Pink",
+      price: 450000,
+      category: "fashion",
+      code: "LIP-ZPK",
+      color: "bg-rose-100 text-rose-800",
+    },
   ],
   en: [
-    { id: "item-1", name: "Salted Iced Coffee", price: 39000, category: "fnb", code: "CF-SALT", color: "bg-amber-100 text-amber-800" },
-    { id: "item-2", name: "Peach Orange Lemongrass Tea", price: 45000, category: "fnb", code: "TR-PEACH", color: "bg-orange-100 text-orange-800" },
-    { id: "item-3", name: "Vietnamese Pork Banh Mi", price: 35000, category: "fnb", code: "BM-MEAT", color: "bg-yellow-100 text-yellow-800" },
-    { id: "item-4", name: "Fruit Yogurt Bowl", price: 29000, category: "fnb", code: "SC-FRUIT", color: "bg-emerald-100 text-emerald-800" },
-    
-    { id: "item-5", name: "Fresh Milk 1L Box", price: 32000, category: "retail", code: "MILK-1L", color: "bg-sky-100 text-sky-800" },
-    { id: "item-6", name: "Hao Hao Instant Noodle (Box)", price: 115000, category: "retail", code: "MI-HAO", color: "bg-red-100 text-red-800" },
-    { id: "item-7", name: "Sunlight Dishwash Liquid 1.5kg", price: 58000, category: "retail", code: "SUN-15", color: "bg-yellow-100 text-yellow-800" },
-    { id: "item-8", name: "Premium Wet Wipes Pack", price: 22000, category: "retail", code: "PAPER-WET", color: "bg-blue-100 text-blue-800" },
-    
-    { id: "item-9", name: "Aeonik Unisex Cotton T-Shirt", price: 250000, category: "fashion", code: "TSHIRT-UN", color: "bg-purple-100 text-purple-800" },
-    { id: "item-10", name: "Baggy Denim Jeans Women", price: 380000, category: "fashion", code: "JEAN-BAG", color: "bg-indigo-100 text-indigo-800" },
-    { id: "item-11", name: "Classic Cotton Cap", price: 120000, category: "fashion", code: "CAP-CLASS", color: "bg-zinc-100 text-zinc-800" },
-    { id: "item-12", name: "Lux Velvet Lipstick Red", price: 450000, category: "fashion", code: "LIP-ZPK", color: "bg-rose-100 text-rose-800" }
-  ]
+    {
+      id: "item-1",
+      name: "Salted Iced Coffee",
+      price: 39000,
+      category: "fnb",
+      code: "CF-SALT",
+      color: "bg-amber-100 text-amber-800",
+    },
+    {
+      id: "item-2",
+      name: "Peach Orange Lemongrass Tea",
+      price: 45000,
+      category: "fnb",
+      code: "TR-PEACH",
+      color: "bg-orange-100 text-orange-800",
+    },
+    {
+      id: "item-3",
+      name: "Vietnamese Pork Banh Mi",
+      price: 35000,
+      category: "fnb",
+      code: "BM-MEAT",
+      color: "bg-yellow-100 text-yellow-800",
+    },
+    {
+      id: "item-4",
+      name: "Fruit Yogurt Bowl",
+      price: 29000,
+      category: "fnb",
+      code: "SC-FRUIT",
+      color: "bg-emerald-100 text-emerald-800",
+    },
+
+    {
+      id: "item-5",
+      name: "Fresh Milk 1L Box",
+      price: 32000,
+      category: "retail",
+      code: "MILK-1L",
+      color: "bg-sky-100 text-sky-800",
+    },
+    {
+      id: "item-6",
+      name: "Hao Hao Instant Noodle (Box)",
+      price: 115000,
+      category: "retail",
+      code: "MI-HAO",
+      color: "bg-red-100 text-red-800",
+    },
+    {
+      id: "item-7",
+      name: "Sunlight Dishwash Liquid 1.5kg",
+      price: 58000,
+      category: "retail",
+      code: "SUN-15",
+      color: "bg-yellow-100 text-yellow-800",
+    },
+    {
+      id: "item-8",
+      name: "Premium Wet Wipes Pack",
+      price: 22000,
+      category: "retail",
+      code: "PAPER-WET",
+      color: "bg-blue-100 text-blue-800",
+    },
+
+    {
+      id: "item-9",
+      name: "Aeonik Unisex Cotton T-Shirt",
+      price: 250000,
+      category: "fashion",
+      code: "TSHIRT-UN",
+      color: "bg-purple-100 text-purple-800",
+    },
+    {
+      id: "item-10",
+      name: "Baggy Denim Jeans Women",
+      price: 380000,
+      category: "fashion",
+      code: "JEAN-BAG",
+      color: "bg-indigo-100 text-indigo-800",
+    },
+    {
+      id: "item-11",
+      name: "Classic Cotton Cap",
+      price: 120000,
+      category: "fashion",
+      code: "CAP-CLASS",
+      color: "bg-zinc-100 text-zinc-800",
+    },
+    {
+      id: "item-12",
+      name: "Lux Velvet Lipstick Red",
+      price: 450000,
+      category: "fashion",
+      code: "LIP-ZPK",
+      color: "bg-rose-100 text-rose-800",
+    },
+  ],
 };
 
 // Hardwares configuration
@@ -250,13 +426,13 @@ const HARDWARE_BUNDLES = {
         { name: "Máy POS cảm ứng đứng Z15G", desc: "Màn hình 15.6 inch HD sắc nét, chip xử lý đa nhiệm cực nhanh." },
         { name: "Máy quét mã vạch Honeywell 2D", desc: "Quét siêu tốc mọi bề mặt barcode, mã QR mờ xước." },
         { name: "Máy in hóa đơn siêu tốc K80", desc: "Tự động cắt giấy, đầu in nhiệt Nhật Bản bền bỉ." },
-        { name: "Két đựng tiền thép đúc M410", desc: "4 ngăn tiền giấy + 5 ngăn tiền xu, tự động mở khi in hóa đơn." }
+        { name: "Két đựng tiền thép đúc M410", desc: "4 ngăn tiền giấy + 5 ngăn tiền xu, tự động mở khi in hóa đơn." },
       ],
       specs: [
         { label: "Kết nối", value: "LAN, Wifi, Bluetooth" },
         { label: "Độ bền đầu in", value: "150 Kilomet hóa đơn" },
-        { label: "Bảo hành", value: "24 tháng 1 đổi 1 tận nơi" }
-      ]
+        { label: "Bảo hành", value: "24 tháng 1 đổi 1 tận nơi" },
+      ],
     },
     fnb: {
       name: "Combo ZPOS F&B Air",
@@ -266,30 +442,36 @@ const HARDWARE_BUNDLES = {
         { name: "Máy POS để bàn tích hợp màn phụ", desc: "Màn hình kép cảm ứng đa điểm, hiển thị số tiền cho khách." },
         { name: "Màn hình order nhà bếp (KDS)", desc: "Nhận đơn tức thì từ bàn, loại bỏ giấy in bill nhầm lẫn." },
         { name: "Máy in bill nhiệt không dây LAN/Wifi", desc: "Hỗ trợ in từ điện thoại, iPad của nhân viên ở xa." },
-        { name: "Két đựng tiền an toàn tự động", desc: "Kích thước gọn gàng, khung thép chắc chắn chống cạy mở." }
+        { name: "Két đựng tiền an toàn tự động", desc: "Kích thước gọn gàng, khung thép chắc chắn chống cạy mở." },
       ],
       specs: [
         { label: "Màn hình khách", value: "LCD 10.1 inch sắc nét hiển thị mã QR" },
         { label: "Khoảng cách Wifi", value: "Phủ sóng bán kính lên đến 50 mét" },
-        { label: "Tính năng nổi bật", value: "Tự nhận tín hiệu từ màn bếp KDS" }
-      ]
+        { label: "Tính năng nổi bật", value: "Tự nhận tín hiệu từ màn bếp KDS" },
+      ],
     },
     fashion: {
       name: "Combo ZPOS Boutique Pro",
       price: "10,500,000đ",
       desc: "Giải pháp quản lý thanh lịch, in tem mác mã vạch sản phẩm phục vụ đắc lực ngành hàng thời trang mỹ phẩm.",
       devices: [
-        { name: "Máy POS Cầm Tay ZPOS Handheld X2", desc: "Tích hợp sẵn máy in hóa đơn trên thân máy, cơ động bán hàng." },
+        {
+          name: "Máy POS Cầm Tay ZPOS Handheld X2",
+          desc: "Tích hợp sẵn máy in hóa đơn trên thân máy, cơ động bán hàng.",
+        },
         { name: "Máy in tem nhãn mã vạch barcode", desc: "In nhãn dán quần áo, giày dép bền mực không phai màu." },
-        { name: "Máy quét mã vạch không dây Bluetooth", desc: "Di chuyển linh hoạt trong kho hàng rộng quét mã từ xa." },
-        { name: "Két tiền mở khóa tự động ZPOS Pro", desc: "Thiết kế kim loại cao cấp sơn tĩnh điện siêu bền." }
+        {
+          name: "Máy quét mã vạch không dây Bluetooth",
+          desc: "Di chuyển linh hoạt trong kho hàng rộng quét mã từ xa.",
+        },
+        { name: "Két tiền mở khóa tự động ZPOS Pro", desc: "Thiết kế kim loại cao cấp sơn tĩnh điện siêu bền." },
       ],
       specs: [
         { label: "Máy cầm tay", value: "Hệ điều hành Android 11, sạc nhanh Type-C" },
         { label: "Máy in tem", value: "Độ phân giải 203 DPI siêu nét" },
-        { label: "Bảo hành", value: "18 tháng toàn quốc" }
-      ]
-    }
+        { label: "Bảo hành", value: "18 tháng toàn quốc" },
+      ],
+    },
   },
   en: {
     retail: {
@@ -298,49 +480,67 @@ const HARDWARE_BUNDLES = {
       desc: "Full comprehensive business setup built specifically for high-traffic grocery, retail store & supermarkets.",
       devices: [
         { name: "Touch POS Terminal Z15G", desc: "15.6-inch HD multi-touch responsive panel, high speed processor." },
-        { name: "Honeywell 2D Barcode Scanner", desc: "Ultra-fast laser scanning of scratched, small or digital barcodes." },
+        {
+          name: "Honeywell 2D Barcode Scanner",
+          desc: "Ultra-fast laser scanning of scratched, small or digital barcodes.",
+        },
         { name: "Heavy Duty Thermal Printer K80", desc: "Auto-cutter mechanism, durable Japanese thermal head." },
-        { name: "Solid Steel Cash Drawer M410", desc: "4 bill + 5 coin compartments, automatically triggers upon printing." }
+        {
+          name: "Solid Steel Cash Drawer M410",
+          desc: "4 bill + 5 coin compartments, automatically triggers upon printing.",
+        },
       ],
       specs: [
         { label: "Connectivity", value: "LAN, Dual-band Wifi, Bluetooth" },
         { label: "Printer Durability", value: "150 Kilometers of receipts" },
-        { label: "Warranty Coverage", value: "24-Month on-site replacement" }
-      ]
+        { label: "Warranty Coverage", value: "24-Month on-site replacement" },
+      ],
     },
     fnb: {
       name: "ZPOS F&B Air Bundle",
       price: "$380",
       desc: "Elegant, low-profile modular design ideal to save counter space for coffee shops & bars.",
       devices: [
-        { name: "Dual-Screen Desktop POS Monitor", desc: "Allows dual view for cashier and customer displaying payment sum." },
-        { name: "Kitchen Display Screen (KDS)", desc: "Receives table orders instantly, eliminating wrong paper orders." },
-        { name: "Wireless Thermal receipt printer LAN/Wifi", desc: "Supports remote printing from waitress tablet/phones." },
-        { name: "Premium Compact Cash Drawer", desc: "Reinforced steel framing, secure lock mechanism." }
+        {
+          name: "Dual-Screen Desktop POS Monitor",
+          desc: "Allows dual view for cashier and customer displaying payment sum.",
+        },
+        {
+          name: "Kitchen Display Screen (KDS)",
+          desc: "Receives table orders instantly, eliminating wrong paper orders.",
+        },
+        {
+          name: "Wireless Thermal receipt printer LAN/Wifi",
+          desc: "Supports remote printing from waitress tablet/phones.",
+        },
+        { name: "Premium Compact Cash Drawer", desc: "Reinforced steel framing, secure lock mechanism." },
       ],
       specs: [
         { label: "Customer Display", value: "10.1-inch LCD showing total and VietQR code" },
         { label: "Wireless Coverage", value: "Radius coverage up to 50 meters wide" },
-        { label: "F&B Key feature", value: "Auto-routed kitchen KDS priority sync" }
-      ]
+        { label: "F&B Key feature", value: "Auto-routed kitchen KDS priority sync" },
+      ],
     },
     fashion: {
       name: "ZPOS Boutique Pro Bundle",
       price: "$430",
       desc: "Chic design with barcode sticker printer optimized for fashion boutiques and cosmetic stores.",
       devices: [
-        { name: "ZPOS Smart Handheld X2 Terminal", desc: "Tích hợp sẵn printer right on-device, roam around to cash out." },
+        {
+          name: "ZPOS Smart Handheld X2 Terminal",
+          desc: "Tích hợp sẵn printer right on-device, roam around to cash out.",
+        },
         { name: "Thermal Barcode Label Sticker Printer", desc: "Print durable price tags, size & wash labels easily." },
         { name: "Wireless Bluetooth Barcode Scanner", desc: "Walk around warehouse to scan barcodes remotely." },
-        { name: "Automated Push Cash Drawer", desc: "Premium matte black coating, heavy steel gears." }
+        { name: "Automated Push Cash Drawer", desc: "Premium matte black coating, heavy steel gears." },
       ],
       specs: [
         { label: "Handheld OS", value: "Android 11 with fast charging Type-C port" },
         { label: "Sticker Resolution", value: "203 DPI sharp font output" },
-        { label: "Warranty Coverage", value: "18-Month comprehensive hardware warranty" }
-      ]
-    }
-  }
+        { label: "Warranty Coverage", value: "18-Month comprehensive hardware warranty" },
+      ],
+    },
+  },
 };
 
 export default function ProductIntroductionPage() {
@@ -404,14 +604,16 @@ function ProductContent() {
   const [discountCode, setDiscountCode] = useState("");
   const [activeDiscountPercentage, setActiveDiscountPercentage] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "qr">("qr");
-  
+
   // Payment step
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentStep, setPaymentStep] = useState<"cart" | "qr_display" | "receipt">("cart");
   const [generatedReceiptId, setGeneratedReceiptId] = useState("");
 
   // Product modules tab state
-  const [activeModuleTab, setActiveModuleTab] = useState<"sales" | "inventory" | "crm" | "analytics" | "multistore">("sales");
+  const [activeModuleTab, setActiveModuleTab] = useState<"sales" | "inventory" | "crm" | "analytics" | "multistore">(
+    "sales",
+  );
 
   // Hardware bundle selected state
   const [activeHardwareTab, setActiveHardwareTab] = useState<"retail" | "fnb" | "fashion">("fnb");
@@ -422,17 +624,17 @@ function ProductContent() {
     phone: "",
     storeName: "",
     businessType: "fnb",
-    scale: "1-5"
+    scale: "1-5",
   });
   const [isSubmittingForm, setIsSubmittingForm] = useState(false);
 
   // Audio printing effect (mock ref)
   const audioContextRef = useRef<AudioContext | null>(null);
 
-  const filteredSimItems = itemsList.filter(item => item.category === selectedSimCategory);
+  const filteredSimItems = itemsList.filter((item) => item.category === selectedSimCategory);
 
   // Simulator Subtotals
-  const subtotal = cart.reduce((acc, curr) => acc + (curr.price * curr.quantity), 0);
+  const subtotal = cart.reduce((acc, curr) => acc + curr.price * curr.quantity, 0);
   const discountAmount = subtotal * (activeDiscountPercentage / 100);
   const vatAmount = Math.max(0, (subtotal - discountAmount) * 0.1);
   const totalAmount = Math.max(0, subtotal - discountAmount + vatAmount);
@@ -444,7 +646,7 @@ function ProductContent() {
         audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       }
       const ctx = audioContextRef.current;
-      
+
       // Beep tone
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -465,10 +667,10 @@ function ProductContent() {
         for (let i = 0; i < bufferSize; i++) {
           data[i] = Math.random() * 2 - 1;
         }
-        
+
         const noise = ctx.createBufferSource();
         noise.buffer = buffer;
-        
+
         // Filter the noise to sound muffled (like a tiny gear)
         const filter = ctx.createBiquadFilter();
         filter.type = "bandpass";
@@ -484,45 +686,44 @@ function ProductContent() {
         noiseGain.connect(ctx.destination);
         noise.start();
       }, 150);
-
     } catch (e) {
       // AudioContext blocked or unsupported, fail silently
     }
   };
 
-  const handleAddToCart = (item: typeof SIMULATOR_ITEMS.vi[0]) => {
-    const existing = cart.find(i => i.id === item.id);
+  const handleAddToCart = (item: (typeof SIMULATOR_ITEMS.vi)[0]) => {
+    const existing = cart.find((i) => i.id === item.id);
     if (existing) {
-      setCart(cart.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i));
+      setCart(cart.map((i) => (i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i)));
     } else {
       setCart([...cart, { ...item, quantity: 1 }]);
     }
     toast.success(`${item.name} +1`, {
       position: "bottom-right",
-      duration: 1000
+      duration: 1000,
     });
   };
 
   const handleUpdateQuantity = (itemId: string, change: number) => {
-    const item = cart.find(i => i.id === itemId);
+    const item = cart.find((i) => i.id === itemId);
     if (!item) return;
-    
+
     const newQty = item.quantity + change;
     if (newQty <= 0) {
-      setCart(cart.filter(i => i.id !== itemId));
+      setCart(cart.filter((i) => i.id !== itemId));
     } else {
-      setCart(cart.map(i => i.id === itemId ? { ...i, quantity: newQty } : i));
+      setCart(cart.map((i) => (i.id === itemId ? { ...i, quantity: newQty } : i)));
     }
   };
 
   const handleRemoveFromCart = (itemId: string) => {
-    setCart(cart.filter(i => i.id !== itemId));
+    setCart(cart.filter((i) => i.id !== itemId));
   };
 
   const handleApplyDiscount = () => {
     const cleanCode = discountCode.trim().toUpperCase();
     const cmsCode = (dynamicConfig?.promoCode || "ZPOS20").trim().toUpperCase();
-    
+
     if (cleanCode === cmsCode) {
       let discountPct = 20;
       const match = (dynamicConfig?.promoDiscount || "20%").match(/(\d+)%/);
@@ -551,21 +752,25 @@ function ProductContent() {
     if (paymentMethod === "qr") {
       setPaymentStep("qr_display");
       setIsProcessingPayment(true);
-      
+
       // Simulate VietQR payment dynamic verification
       setTimeout(() => {
         setIsProcessingPayment(false);
         setGeneratedReceiptId(`ZPOS-${Math.floor(100000 + Math.random() * 900000)}`);
         setPaymentStep("receipt");
         playCheckoutSound();
-        toast.success(language === "vi" ? "Thanh toán thành công qua VietQR!" : "VietQR payment confirmed!", { position: "bottom-right" });
+        toast.success(language === "vi" ? "Thanh toán thành công qua VietQR!" : "VietQR payment confirmed!", {
+          position: "bottom-right",
+        });
       }, 2500);
     } else {
       // Cash/Card instant simulation
       setPaymentStep("receipt");
       setGeneratedReceiptId(`ZPOS-${Math.floor(100000 + Math.random() * 900000)}`);
       playCheckoutSound();
-      toast.success(language === "vi" ? "Giao dịch thanh toán thành công!" : "Payment completed successfully!", { position: "bottom-right" });
+      toast.success(language === "vi" ? "Giao dịch thanh toán thành công!" : "Payment completed successfully!", {
+        position: "bottom-right",
+      });
     }
   };
 
@@ -597,9 +802,13 @@ function ProductContent() {
           scale: formData.scale,
           email: `${formData.name.toLowerCase().replace(/\s+/g, "")}@zpos-store.vn`,
           message: `Khách hàng đăng ký dùng thử 14 ngày. Mô hình kinh doanh: ${
-            formData.businessType === "fnb" ? "Nhà hàng & F&B" : formData.businessType === "retail" ? "Bán lẻ & Siêu thị" : "Thời trang & Boutique"
-          }. Quy mô: ${formData.scale} nhân viên.`
-        })
+            formData.businessType === "fnb"
+              ? "Nhà hàng & F&B"
+              : formData.businessType === "retail"
+                ? "Bán lẻ & Siêu thị"
+                : "Thời trang & Boutique"
+          }. Quy mô: ${formData.scale} nhân viên.`,
+        }),
       });
 
       const json = await res.json();
@@ -607,7 +816,7 @@ function ProductContent() {
         toast.success(dict.formSuccess, {
           description: dict.formSuccessDesc,
           duration: 5000,
-          className: "cn-toast cn-toast-success"
+          className: "cn-toast cn-toast-success",
         });
 
         // Clear input fields
@@ -616,7 +825,7 @@ function ProductContent() {
           phone: "",
           storeName: "",
           businessType: "fnb",
-          scale: "1-5"
+          scale: "1-5",
         });
       } else {
         toast.error("Đã có lỗi xảy ra khi gửi yêu cầu: " + json.error);
@@ -633,17 +842,16 @@ function ProductContent() {
       <Header />
 
       <main className="flex-1">
-        
         {/* ==========================================
             1. HERO SECTION WITH NEON GLOW BACKDROPS
             ========================================== */}
         <section className="relative pt-32 pb-24 md:pt-40 md:pb-36 bg-slate-950 text-white overflow-hidden">
           {/* Radial light grids */}
-          <div 
+          <div
             className="absolute inset-0 opacity-[0.25] pointer-events-none"
             style={{
               backgroundImage: `radial-gradient(rgba(0, 84, 255, 0.15) 1.2px, transparent 1.2px)`,
-              backgroundSize: "30px 30px"
+              backgroundSize: "30px 30px",
             }}
           />
           {/* Floating glowing orbs */}
@@ -652,7 +860,6 @@ function ProductContent() {
 
           <div className="max-w-[1240px] mx-auto px-6 relative z-10">
             <div className="text-center max-w-4xl mx-auto space-y-6">
-              
               {/* Premium DevOps Tag */}
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
@@ -700,13 +907,13 @@ function ProductContent() {
                   style={{
                     backgroundColor: dict.accentColor,
                     borderColor: `${dict.accentColor}50`,
-                    boxShadow: `0 10px 15px -3px ${dict.accentColor}30`
+                    boxShadow: `0 10px 15px -3px ${dict.accentColor}30`,
                   }}
                 >
                   {dict.heroCtaFree}
                   <ArrowRight className="w-4 h-4" />
                 </Link>
-                
+
                 <Link
                   href="#cashier-simulator"
                   className="px-8 py-4 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:border-slate-700 font-bold rounded-lg transition-colors text-sm"
@@ -726,7 +933,7 @@ function ProductContent() {
                   { value: "0.8s", label: "Đồng bộ đa kênh" },
                   { value: "100%", label: "Bán hàng Offline" },
                   { value: "12,000+", label: "Cửa hàng tin dùng" },
-                  { value: "99.99%", label: "Uptime Máy chủ" }
+                  { value: "99.99%", label: "Uptime Máy chủ" },
                 ].map((m, idx) => (
                   <div key={idx} className="space-y-1">
                     <div className="text-2xl md:text-3xl font-black text-white">{m.value}</div>
@@ -734,7 +941,6 @@ function ProductContent() {
                   </div>
                 ))}
               </motion.div>
-
             </div>
           </div>
         </section>
@@ -748,7 +954,6 @@ function ProductContent() {
           <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-[100px] pointer-events-none" />
 
           <div className="max-w-[1240px] mx-auto px-6 relative z-10">
-            
             {/* Header Content */}
             <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-xs font-mono font-bold uppercase tracking-wider">
@@ -758,17 +963,13 @@ function ProductContent() {
               <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight">
                 {dict.simTitle}
               </h2>
-              <p className="text-slate-500 font-semibold text-sm max-w-xl mx-auto">
-                {dict.simSubtitle}
-              </p>
+              <p className="text-slate-500 font-semibold text-sm max-w-xl mx-auto">{dict.simSubtitle}</p>
             </div>
 
             {/* Interactive Grid Container */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              
               {/* Left POS Register Menu (7 Cols) */}
               <div className="lg:col-span-7 bg-slate-50 border border-slate-200/80 rounded-xl p-6 shadow-md">
-                
                 {/* Category Switcher Tabs */}
                 <div className="space-y-2 mb-6">
                   <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">
@@ -777,9 +978,17 @@ function ProductContent() {
                   <div className="flex flex-wrap gap-2">
                     {[
                       { id: "fnb", label: language === "vi" ? "🍺 Ẩm thực & F&B" : "🍺 Food & Beverage", icon: Layers },
-                      { id: "retail", label: language === "vi" ? "🛒 Siêu thị & Bán lẻ" : "🛒 Retail & Mart", icon: ShoppingBag },
-                      { id: "fashion", label: language === "vi" ? "👕 Boutique & Thời trang" : "👕 Fashion & Luxury", icon: Users }
-                    ].map(cate => (
+                      {
+                        id: "retail",
+                        label: language === "vi" ? "🛒 Siêu thị & Bán lẻ" : "🛒 Retail & Mart",
+                        icon: ShoppingBag,
+                      },
+                      {
+                        id: "fashion",
+                        label: language === "vi" ? "👕 Boutique & Thời trang" : "👕 Fashion & Luxury",
+                        icon: Users,
+                      },
+                    ].map((cate) => (
                       <button
                         key={cate.id}
                         onClick={() => setSelectedSimCategory(cate.id as any)}
@@ -798,21 +1007,23 @@ function ProductContent() {
 
                 {/* Items Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-2 gap-4 max-h-[460px] overflow-y-auto pr-2 scrollbar-thin">
-                  {filteredSimItems.map(item => (
+                  {filteredSimItems.map((item) => (
                     <div
                       key={item.id}
                       onClick={() => handleAddToCart(item)}
                       className="bg-white border border-slate-150 rounded-lg p-4 flex flex-col justify-between cursor-pointer hover:border-blue-500 hover:shadow-lg transition-all duration-300 group"
                     >
                       <div className="space-y-2">
-                        <span className={`inline-block text-[9px] font-mono font-bold px-2 py-0.5 rounded-md ${item.color}`}>
+                        <span
+                          className={`inline-block text-[9px] font-mono font-bold px-2 py-0.5 rounded-md ${item.color}`}
+                        >
                           {item.code}
                         </span>
                         <h4 className="font-bold text-sm text-slate-800 group-hover:text-blue-600 transition-colors leading-snug">
                           {item.name}
                         </h4>
                       </div>
-                      
+
                       <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
                         <span className="font-extrabold text-slate-900 text-sm">
                           {item.price.toLocaleString("vi-VN")}đ
@@ -824,20 +1035,17 @@ function ProductContent() {
                     </div>
                   ))}
                 </div>
-
               </div>
 
               {/* Right POS Cart & Receipt (5 Cols) */}
               <div className="lg:col-span-5">
                 <div className="bg-slate-950 text-white rounded-xl p-6 border border-slate-800 shadow-2xl relative min-h-[580px] flex flex-col justify-between overflow-hidden">
-                  
                   {/* Neon screen scanner accent */}
                   <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-blue-500 to-indigo-500" />
 
                   {/* Simulator Screen Rendering */}
                   {paymentStep === "cart" && (
                     <div className="flex-1 flex flex-col justify-between h-full space-y-6">
-                      
                       {/* Cart Header */}
                       <div className="flex items-center justify-between pb-4 border-b border-slate-800">
                         <h3 className="font-extrabold text-sm flex items-center gap-2">
@@ -867,8 +1075,11 @@ function ProductContent() {
                             </p>
                           </div>
                         ) : (
-                          cart.map(item => (
-                            <div key={item.id} className="flex items-center justify-between gap-3 bg-slate-900/60 p-3 rounded-xl border border-slate-800/50">
+                          cart.map((item) => (
+                            <div
+                              key={item.id}
+                              className="flex items-center justify-between gap-3 bg-slate-900/60 p-3 rounded-xl border border-slate-800/50"
+                            >
                               <div className="min-w-0 flex-1">
                                 <h5 className="font-bold text-xs truncate text-slate-100">{item.name}</h5>
                                 <span className="text-[10px] text-slate-400 font-mono">
@@ -906,7 +1117,6 @@ function ProductContent() {
 
                       {/* Financial Math Summary Area */}
                       <div className="space-y-4 pt-4 border-t border-slate-900">
-                        
                         {/* Promo Coupon Inputs */}
                         <div className="space-y-1.5">
                           <span className="text-[11px] text-slate-500 font-bold uppercase tracking-wider block">
@@ -930,7 +1140,13 @@ function ProductContent() {
                           {dynamicConfig?.promoCode && (
                             <div className="flex items-center gap-1 mt-1 text-[10px] text-blue-400 font-mono">
                               <Sparkles className="w-3 h-3 text-yellow-400 animate-pulse flex-shrink-0" />
-                              <span>Mã CMS active: <b className="text-white bg-blue-900/60 border border-blue-700 px-1 py-0.5 rounded">{dynamicConfig.promoCode}</b> ({dynamicConfig.promoDiscount})</span>
+                              <span>
+                                Mã CMS active:{" "}
+                                <b className="text-white bg-blue-900/60 border border-blue-700 px-1 py-0.5 rounded">
+                                  {dynamicConfig.promoCode}
+                                </b>{" "}
+                                ({dynamicConfig.promoDiscount})
+                              </span>
                             </div>
                           )}
                         </div>
@@ -943,7 +1159,9 @@ function ProductContent() {
                           </div>
                           {activeDiscountPercentage > 0 && (
                             <div className="flex justify-between text-emerald-400">
-                              <span>{dict.simDiscount} (-{activeDiscountPercentage}%)</span>
+                              <span>
+                                {dict.simDiscount} (-{activeDiscountPercentage}%)
+                              </span>
                               <span className="font-mono">-{discountAmount.toLocaleString("vi-VN")}đ</span>
                             </div>
                           )}
@@ -951,10 +1169,12 @@ function ProductContent() {
                             <span>{dict.simTax}</span>
                             <span className="text-slate-200 font-mono">{vatAmount.toLocaleString("vi-VN")}đ</span>
                           </div>
-                          
+
                           <div className="flex justify-between pt-3 border-t border-slate-900 text-white text-sm font-black">
                             <span>{dict.simTotal}</span>
-                            <span className="text-blue-400 font-mono text-base">{totalAmount.toLocaleString("vi-VN")}đ</span>
+                            <span className="text-blue-400 font-mono text-base">
+                              {totalAmount.toLocaleString("vi-VN")}đ
+                            </span>
                           </div>
                         </div>
 
@@ -967,8 +1187,8 @@ function ProductContent() {
                             {[
                               { id: "cash", label: dict.simPayCash, icon: DollarSign },
                               { id: "card", label: dict.simPayCard, icon: CreditCard },
-                              { id: "qr", label: dict.simPayQR, icon: QrCode }
-                            ].map(method => (
+                              { id: "qr", label: dict.simPayQR, icon: QrCode },
+                            ].map((method) => (
                               <button
                                 key={method.id}
                                 onClick={() => setPaymentMethod(method.id as any)}
@@ -993,9 +1213,7 @@ function ProductContent() {
                           <CheckCircle2 className="w-4.5 h-4.5" />
                           {dict.simBtnPay}
                         </button>
-
                       </div>
-
                     </div>
                   )}
 
@@ -1011,7 +1229,7 @@ function ProductContent() {
                           </div>
                         </>
                       ) : null}
-                      
+
                       {!isProcessingPayment && (
                         <>
                           <div className="bg-white p-4 rounded-lg border-4 border-emerald-500/30">
@@ -1041,7 +1259,7 @@ function ProductContent() {
                               </div>
                             </div>
                           </div>
-                          
+
                           <div className="space-y-2 max-w-[280px]">
                             <h4 className="font-extrabold text-base text-slate-100 flex items-center justify-center gap-1.5">
                               <QrCode className="w-5 h-5 text-blue-400" />
@@ -1050,9 +1268,7 @@ function ProductContent() {
                             <p className="text-xs text-slate-400 font-bold font-mono">
                               {totalAmount.toLocaleString("vi-VN")}đ
                             </p>
-                            <p className="text-[11px] text-slate-500 leading-normal">
-                              {dict.simQRSub}
-                            </p>
+                            <p className="text-[11px] text-slate-500 leading-normal">{dict.simQRSub}</p>
                           </div>
                         </>
                       )}
@@ -1062,7 +1278,6 @@ function ProductContent() {
                   {/* High Fidelity Slip Thermal Receipt (Step 3) */}
                   {paymentStep === "receipt" && (
                     <div className="flex-1 flex flex-col justify-between h-full animate-fadeIn">
-                      
                       {/* Receipt top print banner */}
                       <div className="text-center space-y-2 py-4">
                         <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-2 animate-bounce">
@@ -1086,7 +1301,10 @@ function ProductContent() {
                           </div>
                           <div className="flex justify-between">
                             <span>{dict.simReceiptDate}</span>
-                            <span>{new Date().toLocaleDateString("vi-VN")} {new Date().toLocaleTimeString("vi-VN").slice(0,5)}</span>
+                            <span>
+                              {new Date().toLocaleDateString("vi-VN")}{" "}
+                              {new Date().toLocaleTimeString("vi-VN").slice(0, 5)}
+                            </span>
                           </div>
                           <div className="flex justify-between">
                             <span>{dict.simReceiptStaff}</span>
@@ -1096,14 +1314,16 @@ function ProductContent() {
 
                         {/* Receipt itemized list */}
                         <div className="py-3 border-b border-dashed border-slate-300 space-y-2">
-                          {cart.map(item => (
+                          {cart.map((item) => (
                             <div key={item.id} className="space-y-0.5">
                               <div className="flex justify-between font-bold text-slate-900">
                                 <span className="truncate max-w-[160px]">{item.name}</span>
                                 <span>{(item.price * item.quantity).toLocaleString("vi-VN")}đ</span>
                               </div>
                               <div className="flex justify-between text-[9px] text-slate-500">
-                                <span>{item.quantity} x {item.price.toLocaleString("vi-VN")}đ</span>
+                                <span>
+                                  {item.quantity} x {item.price.toLocaleString("vi-VN")}đ
+                                </span>
                                 <span>CODE: {item.code}</span>
                               </div>
                             </div>
@@ -1144,15 +1364,11 @@ function ProductContent() {
                       >
                         {dict.simReceiptClose}
                       </button>
-
                     </div>
                   )}
-
                 </div>
               </div>
-
             </div>
-
           </div>
         </section>
 
@@ -1161,7 +1377,6 @@ function ProductContent() {
             ========================================== */}
         <section className="py-24 bg-slate-50 border-y border-slate-200/50 relative">
           <div className="max-w-[1240px] mx-auto px-6">
-            
             {/* Heading */}
             <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-xs font-mono font-bold uppercase tracking-wider">
@@ -1171,9 +1386,7 @@ function ProductContent() {
               <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight">
                 {dict.modTitle}
               </h2>
-              <p className="text-slate-500 font-semibold text-sm max-w-xl mx-auto">
-                {dict.modSubtitle}
-              </p>
+              <p className="text-slate-500 font-semibold text-sm max-w-xl mx-auto">{dict.modSubtitle}</p>
             </div>
 
             {/* Tab switch panel */}
@@ -1183,8 +1396,8 @@ function ProductContent() {
                 { id: "inventory", label: dict.modInventory, icon: Package },
                 { id: "crm", label: dict.modCrm, icon: Users },
                 { id: "analytics", label: dict.modAnalytics, icon: BarChart3 },
-                { id: "multistore", label: dict.modMultistore, icon: Building }
-              ].map(tab => (
+                { id: "multistore", label: dict.modMultistore, icon: Building },
+              ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveModuleTab(tab.id as any)}
@@ -1202,9 +1415,7 @@ function ProductContent() {
 
             {/* Animated Tab Screens */}
             <div className="bg-white border border-slate-200 rounded-xl p-6 md:p-8 shadow-lg min-h-[400px] flex items-center">
-              
               <AnimatePresence mode="wait">
-                
                 {/* 1. SALES SCREEN */}
                 {activeModuleTab === "sales" && (
                   <motion.div
@@ -1223,7 +1434,7 @@ function ProductContent() {
                         {language === "vi" ? "Giao Diện Thu Ngân Siêu Tốc" : "Lightning Fast Cashier Terminal"}
                       </h3>
                       <p className="text-slate-550 text-sm font-medium leading-relaxed">
-                        {language === "vi" 
+                        {language === "vi"
                           ? "Giao diện thanh toán được tối ưu hóa cho thao tác chạm đa điểm trên máy POS, iPad. Giúp thu ngân phục vụ khách chỉ trong dưới 3 giây, hỗ trợ in hóa đơn tự động và mở két tiền an toàn."
                           : "Cashier panel strictly optimized for high-speed multi-touch operations on POS screens and iPads. Check out clients under 3 seconds with automated drawer releases."}
                       </p>
@@ -1234,11 +1445,15 @@ function ProductContent() {
                         </li>
                         <li className="flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          {language === "vi" ? "Tách hóa đơn & Gộp bàn ăn F&B linh hoạt" : "F&B Table splitting and merge integration"}
+                          {language === "vi"
+                            ? "Tách hóa đơn & Gộp bàn ăn F&B linh hoạt"
+                            : "F&B Table splitting and merge integration"}
                         </li>
                         <li className="flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          {language === "vi" ? "Offline-first: Mất mạng vẫn bán hàng bình thường" : "Offline-first database functionality"}
+                          {language === "vi"
+                            ? "Offline-first: Mất mạng vẫn bán hàng bình thường"
+                            : "Offline-first database functionality"}
                         </li>
                       </ul>
                     </div>
@@ -1252,15 +1467,32 @@ function ProductContent() {
                         </div>
                         <span className="text-[10px] text-slate-500">ZPOS Terminal Live Debugger</span>
                       </div>
-                      
+
                       {/* Code snippets mockup */}
                       <div className="space-y-2">
                         <p className="text-slate-500">// Check offline synchronization state on local SQLite db</p>
-                        <p className="text-white"><span className="text-blue-400">const</span> offlineCache = <span className="text-blue-400">await</span> SQLite.query(<span className="text-emerald-400">"SELECT * FROM sales_queue WHERE synced = 0"</span>);</p>
-                        <p className="text-slate-300">Found {`{ pendingTransactions: 0 }`}. Connection state: <span className="text-emerald-400 font-bold flex items-center gap-1.5 inline-flex"><span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />ONLINE</span></p>
-                        <p className="text-slate-500">// Trigger cash drawer lock release signal via Bluetooth ESC/POS</p>
-                        <p className="text-white">Printer.sendBuffer(<span className="text-purple-400">new</span> Uint8Array([<span className="text-amber-400">27, 112, 0, 25, 250</span>]));</p>
-                        <p className="text-emerald-400">✓ Signal [ESC p 0] dispatched successfully to ZPOS-K80-Printer</p>
+                        <p className="text-white">
+                          <span className="text-blue-400">const</span> offlineCache ={" "}
+                          <span className="text-blue-400">await</span> SQLite.query(
+                          <span className="text-emerald-400">"SELECT * FROM sales_queue WHERE synced = 0"</span>);
+                        </p>
+                        <p className="text-slate-300">
+                          Found {`{ pendingTransactions: 0 }`}. Connection state:{" "}
+                          <span className="text-emerald-400 font-bold flex items-center gap-1.5 inline-flex">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
+                            ONLINE
+                          </span>
+                        </p>
+                        <p className="text-slate-500">
+                          // Trigger cash drawer lock release signal via Bluetooth ESC/POS
+                        </p>
+                        <p className="text-white">
+                          Printer.sendBuffer(<span className="text-purple-400">new</span> Uint8Array([
+                          <span className="text-amber-400">27, 112, 0, 25, 250</span>]));
+                        </p>
+                        <p className="text-emerald-400">
+                          ✓ Signal [ESC p 0] dispatched successfully to ZPOS-K80-Printer
+                        </p>
                       </div>
                     </div>
                   </motion.div>
@@ -1291,15 +1523,21 @@ function ProductContent() {
                       <ul className="space-y-2.5 text-xs text-slate-700 font-bold">
                         <li className="flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          {language === "vi" ? "Tự động cảnh báo khi tồn kho xuống mức tối thiểu" : "Automated low-stock threshold triggers"}
+                          {language === "vi"
+                            ? "Tự động cảnh báo khi tồn kho xuống mức tối thiểu"
+                            : "Automated low-stock threshold triggers"}
                         </li>
                         <li className="flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          {language === "vi" ? "Quét mã Barcode luân chuyển kho liên chi nhánh" : "Inter-store barcode transfers system"}
+                          {language === "vi"
+                            ? "Quét mã Barcode luân chuyển kho liên chi nhánh"
+                            : "Inter-store barcode transfers system"}
                         </li>
                         <li className="flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          {language === "vi" ? "Đồng bộ tồn kho tức thì với Shopee, TikTok Shop" : "Instant stock sync with Shopee & TikTok Shops"}
+                          {language === "vi"
+                            ? "Đồng bộ tồn kho tức thì với Shopee, TikTok Shop"
+                            : "Instant stock sync with Shopee & TikTok Shops"}
                         </li>
                       </ul>
                     </div>
@@ -1318,17 +1556,50 @@ function ProductContent() {
 
                       <div className="space-y-2">
                         {[
-                          { name: "Cà phê hạt Robusta Premium", qty: "4.5 kg", min: "5 kg", status: "low", color: "bg-red-500/10 text-red-600 border-red-500/20" },
-                          { name: "Sữa tươi không đường Barista 1L", qty: "24 hộp", min: "12 hộp", status: "safe", color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
-                          { name: "Áo sơ mi lụa tơ tằm (Size L - Trắng)", qty: "2 cái", min: "5 cái", status: "low", color: "bg-red-500/10 text-red-600 border-red-500/20" },
-                          { name: "Nước ngọt lon Coca-Cola 320ml", qty: "185 lon", min: "50 lon", status: "safe", color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" }
+                          {
+                            name: "Cà phê hạt Robusta Premium",
+                            qty: "4.5 kg",
+                            min: "5 kg",
+                            status: "low",
+                            color: "bg-red-500/10 text-red-600 border-red-500/20",
+                          },
+                          {
+                            name: "Sữa tươi không đường Barista 1L",
+                            qty: "24 hộp",
+                            min: "12 hộp",
+                            status: "safe",
+                            color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+                          },
+                          {
+                            name: "Áo sơ mi lụa tơ tằm (Size L - Trắng)",
+                            qty: "2 cái",
+                            min: "5 cái",
+                            status: "low",
+                            color: "bg-red-500/10 text-red-600 border-red-500/20",
+                          },
+                          {
+                            name: "Nước ngọt lon Coca-Cola 320ml",
+                            qty: "185 lon",
+                            min: "50 lon",
+                            status: "safe",
+                            color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+                          },
                         ].map((p, idx) => (
-                          <div key={idx} className="bg-white border border-slate-150 rounded-xl p-3.5 flex items-center justify-between text-xs">
+                          <div
+                            key={idx}
+                            className="bg-white border border-slate-150 rounded-xl p-3.5 flex items-center justify-between text-xs"
+                          >
                             <div className="font-bold text-slate-900">{p.name}</div>
                             <div className="flex items-center gap-3">
                               <span className="font-mono font-bold text-slate-650">Tồn: {p.qty}</span>
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${p.color}`}>
-                                {p.status === "low" ? (language === "vi" ? "Sắp hết hàng" : "Low Stock") : (language === "vi" ? "An toàn" : "In Stock")}
+                                {p.status === "low"
+                                  ? language === "vi"
+                                    ? "Sắp hết hàng"
+                                    : "Low Stock"
+                                  : language === "vi"
+                                    ? "An toàn"
+                                    : "In Stock"}
                               </span>
                             </div>
                           </div>
@@ -1363,15 +1634,21 @@ function ProductContent() {
                       <ul className="space-y-2.5 text-xs text-slate-700 font-bold">
                         <li className="flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          {language === "vi" ? "Tra cứu điểm tích lũy khách hàng bằng số điện thoại" : "Search client history by mobile number"}
+                          {language === "vi"
+                            ? "Tra cứu điểm tích lũy khách hàng bằng số điện thoại"
+                            : "Search client history by mobile number"}
                         </li>
                         <li className="flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          {language === "vi" ? "Tự động gửi tin nhắn SMS/Zalo chăm sóc ngày sinh" : "Auto birthday greetings via Zalo/SMS"}
+                          {language === "vi"
+                            ? "Tự động gửi tin nhắn SMS/Zalo chăm sóc ngày sinh"
+                            : "Auto birthday greetings via Zalo/SMS"}
                         </li>
                         <li className="flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          {language === "vi" ? "Thống kê thói quen mua sắm chi tiết từng khách" : "Shop preference metrics and analytics"}
+                          {language === "vi"
+                            ? "Thống kê thói quen mua sắm chi tiết từng khách"
+                            : "Shop preference metrics and analytics"}
                         </li>
                       </ul>
                     </div>
@@ -1385,11 +1662,32 @@ function ProductContent() {
 
                       <div className="space-y-2">
                         {[
-                          { name: "Nguyễn Hoàng Minh", phone: "0908 *** 456", points: "1,250 pts", badge: "Gold Member", color: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
-                          { name: "Trần Thị Mai Phương", phone: "0977 *** 999", points: "4,800 pts", badge: "Platinum Member", color: "bg-violet-500/10 text-violet-600 border-violet-500/20" },
-                          { name: "Phạm Minh Tuấn", phone: "0912 *** 678", points: "450 pts", badge: "Silver Member", color: "bg-slate-500/10 text-slate-600 border-slate-500/20" }
+                          {
+                            name: "Nguyễn Hoàng Minh",
+                            phone: "0908 *** 456",
+                            points: "1,250 pts",
+                            badge: "Gold Member",
+                            color: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+                          },
+                          {
+                            name: "Trần Thị Mai Phương",
+                            phone: "0977 *** 999",
+                            points: "4,800 pts",
+                            badge: "Platinum Member",
+                            color: "bg-violet-500/10 text-violet-600 border-violet-500/20",
+                          },
+                          {
+                            name: "Phạm Minh Tuấn",
+                            phone: "0912 *** 678",
+                            points: "450 pts",
+                            badge: "Silver Member",
+                            color: "bg-slate-500/10 text-slate-600 border-slate-500/20",
+                          },
                         ].map((c, idx) => (
-                          <div key={idx} className="bg-white border border-slate-150 rounded-xl p-3.5 flex items-center justify-between text-xs">
+                          <div
+                            key={idx}
+                            className="bg-white border border-slate-150 rounded-xl p-3.5 flex items-center justify-between text-xs"
+                          >
                             <div>
                               <div className="font-bold text-slate-900">{c.name}</div>
                               <div className="text-[10px] text-slate-400 mt-0.5">SĐT: {c.phone}</div>
@@ -1432,15 +1730,21 @@ function ProductContent() {
                       <ul className="space-y-2.5 text-xs text-slate-700 font-bold">
                         <li className="flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          {language === "vi" ? "Báo cáo doanh thu tự động gửi về Telegram hàng giờ" : "Telegram auto summaries every hour"}
+                          {language === "vi"
+                            ? "Báo cáo doanh thu tự động gửi về Telegram hàng giờ"
+                            : "Telegram auto summaries every hour"}
                         </li>
                         <li className="flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          {language === "vi" ? "Phân tích biên lợi nhuận gộp theo từng ngành hàng" : "Gross margin breakdowns per categories"}
+                          {language === "vi"
+                            ? "Phân tích biên lợi nhuận gộp theo từng ngành hàng"
+                            : "Gross margin breakdowns per categories"}
                         </li>
                         <li className="flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          {language === "vi" ? "Theo dõi dòng tiền chênh lệch két tiền thực tế" : "Real cash register audit logging tools"}
+                          {language === "vi"
+                            ? "Theo dõi dòng tiền chênh lệch két tiền thực tế"
+                            : "Real cash register audit logging tools"}
                         </li>
                       </ul>
                     </div>
@@ -1464,13 +1768,15 @@ function ProductContent() {
                           { day: "T5", val: "h-28", sales: "16M" },
                           { day: "T6", val: "h-32", sales: "18M" },
                           { day: "T7", val: "h-40", sales: "24M" },
-                          { day: "CN", val: "h-36", sales: "22M" }
+                          { day: "CN", val: "h-36", sales: "22M" },
                         ].map((bar, idx) => (
                           <div key={idx} className="flex flex-col items-center gap-2 flex-1 group">
                             <span className="text-[9px] font-mono font-bold text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity">
                               {bar.sales}
                             </span>
-                            <div className={`${bar.val} w-7 bg-gradient-to-t from-blue-600 to-sky-400 rounded-lg group-hover:from-blue-700 transition-all shadow-sm`} />
+                            <div
+                              className={`${bar.val} w-7 bg-gradient-to-t from-blue-600 to-sky-400 rounded-lg group-hover:from-blue-700 transition-all shadow-sm`}
+                            />
                             <span className="text-[10px] font-bold text-slate-650">{bar.day}</span>
                           </div>
                         ))}
@@ -1504,15 +1810,21 @@ function ProductContent() {
                       <ul className="space-y-2.5 text-xs text-slate-700 font-bold">
                         <li className="flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          {language === "vi" ? "Phân quyền quản lý độc lập từng chi nhánh" : "Separate staff access controls per outlets"}
+                          {language === "vi"
+                            ? "Phân quyền quản lý độc lập từng chi nhánh"
+                            : "Separate staff access controls per outlets"}
                         </li>
                         <li className="flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          {language === "vi" ? "Báo cáo tổng hợp toàn chuỗi tức thì" : "Instant network-wide aggregated insights"}
+                          {language === "vi"
+                            ? "Báo cáo tổng hợp toàn chuỗi tức thì"
+                            : "Instant network-wide aggregated insights"}
                         </li>
                         <li className="flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          {language === "vi" ? "Quản lý tồn kho luân chuyển trung tâm" : "Central warehouse dispatch coordination tools"}
+                          {language === "vi"
+                            ? "Quản lý tồn kho luân chuyển trung tâm"
+                            : "Central warehouse dispatch coordination tools"}
                         </li>
                       </ul>
                     </div>
@@ -1526,24 +1838,31 @@ function ProductContent() {
                         </div>
                         <span className="text-[10px] text-slate-500">Global Cloud Edge Sync Log</span>
                       </div>
-                      
+
                       {/* Cloud terminal simulation */}
                       <div className="space-y-2">
                         <p className="text-slate-500">// Syncing tenant database with global AWS clusters</p>
-                        <p className="text-white"><span className="text-[#0093ff]">~</span> $ npx supabase db push --linked-store</p>
+                        <p className="text-white">
+                          <span className="text-[#0093ff]">~</span> $ npx supabase db push --linked-store
+                        </p>
                         <p className="text-white">▸ Connected to asia-east-1.supabase.co</p>
-                        <p className="text-slate-350">Syncing local store: <span className="text-blue-400">"Quận 1 - Nguyễn Huệ"</span> (ID: st-109)... Done</p>
-                        <p className="text-slate-350">Syncing local store: <span className="text-blue-400">"Quận 3 - Võ Văn Tần"</span> (ID: st-110)... Done</p>
-                        <p className="text-emerald-400 font-bold">✓ Central DB state synchronized successfully. Latitude sync delay: 12ms</p>
+                        <p className="text-slate-350">
+                          Syncing local store: <span className="text-blue-400">"Quận 1 - Nguyễn Huệ"</span> (ID:
+                          st-109)... Done
+                        </p>
+                        <p className="text-slate-350">
+                          Syncing local store: <span className="text-blue-400">"Quận 3 - Võ Văn Tần"</span> (ID:
+                          st-110)... Done
+                        </p>
+                        <p className="text-emerald-400 font-bold">
+                          ✓ Central DB state synchronized successfully. Latitude sync delay: 12ms
+                        </p>
                       </div>
                     </div>
                   </motion.div>
                 )}
-
               </AnimatePresence>
-
             </div>
-
           </div>
         </section>
 
@@ -1552,7 +1871,6 @@ function ProductContent() {
             ========================================== */}
         <section className="py-24 bg-white relative">
           <div className="max-w-[1240px] mx-auto px-6">
-            
             {/* Header */}
             <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-600 text-xs font-mono font-bold uppercase tracking-wider">
@@ -1562,9 +1880,7 @@ function ProductContent() {
               <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight">
                 {dict.hwTitle}
               </h2>
-              <p className="text-slate-550 font-semibold text-sm max-w-xl mx-auto">
-                {dict.hwSubtitle}
-              </p>
+              <p className="text-slate-550 font-semibold text-sm max-w-xl mx-auto">{dict.hwSubtitle}</p>
             </div>
 
             {/* Business type buttons */}
@@ -1572,8 +1888,8 @@ function ProductContent() {
               {[
                 { id: "retail", label: dict.hwRetail },
                 { id: "fnb", label: dict.hwFnB },
-                { id: "fashion", label: dict.hwFashion }
-              ].map(bundle => (
+                { id: "fashion", label: dict.hwFashion },
+              ].map((bundle) => (
                 <button
                   key={bundle.id}
                   onClick={() => setActiveHardwareTab(bundle.id as any)}
@@ -1594,17 +1910,20 @@ function ProductContent() {
               if (!bundle) return null;
               return (
                 <div className="bg-slate-950 text-white rounded-xl p-6 md:p-8 border border-slate-800 shadow-2xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center max-w-5xl mx-auto">
-                  
                   {/* Left Column info (7 cols) */}
                   <div className="lg:col-span-7 space-y-6">
                     <div className="space-y-2">
-                      <span className="text-xs font-black text-blue-400 uppercase tracking-widest block">ZPOS CERTIFIED</span>
+                      <span className="text-xs font-black text-blue-400 uppercase tracking-widest block">
+                        ZPOS CERTIFIED
+                      </span>
                       <h3 className="text-2xl md:text-3xl font-black">{bundle.name}</h3>
                       <p className="text-slate-350 text-xs md:text-sm font-medium">{bundle.desc}</p>
                     </div>
 
                     <div className="space-y-3">
-                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">{dict.hwInclude}</span>
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">
+                        {dict.hwInclude}
+                      </span>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                         {bundle.devices.map((dev, idx) => (
                           <div key={idx} className="bg-slate-900 border border-slate-800/80 rounded-xl p-3.5 space-y-1">
@@ -1621,7 +1940,6 @@ function ProductContent() {
 
                   {/* Right Column Price Specs (5 cols) */}
                   <div className="lg:col-span-5 bg-slate-900 border border-slate-850 rounded-lg p-6 flex flex-col justify-between h-full space-y-6">
-                    
                     <div className="space-y-4">
                       <div className="flex justify-between items-baseline border-b border-slate-800 pb-4">
                         <span className="text-xs font-black text-slate-400 uppercase">Combo trọn gói:</span>
@@ -1629,7 +1947,9 @@ function ProductContent() {
                       </div>
 
                       <div className="space-y-2.5">
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">{dict.hwSpec}</span>
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">
+                          {dict.hwSpec}
+                        </span>
                         {bundle.specs.map((spec, idx) => (
                           <div key={idx} className="flex justify-between text-2xs border-b border-slate-800/40 pb-2">
                             <span className="font-bold text-slate-400">{spec.label}</span>
@@ -1646,13 +1966,10 @@ function ProductContent() {
                       <PhoneCall className="w-4 h-4" />
                       {dict.hwOrderBtn}
                     </Link>
-
                   </div>
-
                 </div>
               );
             })()}
-
           </div>
         </section>
 
@@ -1661,7 +1978,6 @@ function ProductContent() {
             ========================================== */}
         <section className="py-24 bg-slate-50 border-t border-slate-200/50">
           <div className="max-w-[1240px] mx-auto px-6">
-            
             {/* Header */}
             <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-xs font-mono font-bold uppercase tracking-wider">
@@ -1671,16 +1987,13 @@ function ProductContent() {
               <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight">
                 {dict.compTitle}
               </h2>
-              <p className="text-slate-550 font-semibold text-sm max-w-xl mx-auto">
-                {dict.compSubtitle}
-              </p>
+              <p className="text-slate-550 font-semibold text-sm max-w-xl mx-auto">{dict.compSubtitle}</p>
             </div>
 
             {/* Comparison Table */}
             <div className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden max-w-4xl mx-auto">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">
-                  
                   {/* Table Header */}
                   <thead>
                     <tr className="bg-slate-950 text-white font-black uppercase text-[10px] tracking-wider">
@@ -1696,28 +2009,53 @@ function ProductContent() {
                       {
                         f: language === "vi" ? "Đồng bộ hóa dữ liệu" : "Data sync latency",
                         z: language === "vi" ? "Tức thì (Dưới 50ms) qua Cloud Edge" : "Instant (<50ms) via Edge",
-                        o: language === "vi" ? "Chậm, phải bấm tải lại trang hoặc cuối ngày" : "Manual end-of-day loads"
+                        o:
+                          language === "vi" ? "Chậm, phải bấm tải lại trang hoặc cuối ngày" : "Manual end-of-day loads",
                       },
                       {
                         f: language === "vi" ? "Khi mất kết nối Internet" : "When Internet is lost",
-                        z: language === "vi" ? "Mượt mà (Chế độ Offline-first SQLite local)" : "100% active (Offline-first cache)",
-                        o: language === "vi" ? "Ngừng hoạt động, không quét được mã/in bill" : "Freezes completely, cannot print bill"
+                        z:
+                          language === "vi"
+                            ? "Mượt mà (Chế độ Offline-first SQLite local)"
+                            : "100% active (Offline-first cache)",
+                        o:
+                          language === "vi"
+                            ? "Ngừng hoạt động, không quét được mã/in bill"
+                            : "Freezes completely, cannot print bill",
                       },
                       {
                         f: language === "vi" ? "Kết nối phần cứng" : "Hardware compatibility",
-                        z: language === "vi" ? "Tự động phát hiện qua mạng LAN, Wifi, Bluetooth" : "Plug-and-play local discovery",
-                        o: language === "vi" ? "Phức tạp, cần cài driver thủ công từ máy tính" : "Complex drivers setup manually"
+                        z:
+                          language === "vi"
+                            ? "Tự động phát hiện qua mạng LAN, Wifi, Bluetooth"
+                            : "Plug-and-play local discovery",
+                        o:
+                          language === "vi"
+                            ? "Phức tạp, cần cài driver thủ công từ máy tính"
+                            : "Complex drivers setup manually",
                       },
                       {
                         f: language === "vi" ? "Thanh toán QR động" : "Dynamic QR payments",
-                        z: language === "vi" ? "Hỗ trợ VietQR động tự động xác nhận giao dịch" : "Supported VietQR auto-confirm",
-                        o: language === "vi" ? "Không có, hoặc phải chụp bill đối chiếu thủ công" : "Manual photo receipt audit needed"
+                        z:
+                          language === "vi"
+                            ? "Hỗ trợ VietQR động tự động xác nhận giao dịch"
+                            : "Supported VietQR auto-confirm",
+                        o:
+                          language === "vi"
+                            ? "Không có, hoặc phải chụp bill đối chiếu thủ công"
+                            : "Manual photo receipt audit needed",
                       },
                       {
                         f: language === "vi" ? "Mô hình Chuỗi cửa hàng" : "Multi-tenant scalability",
-                        z: language === "vi" ? "Đồng bộ tập trung trên một dashboard duy nhất" : "Unified single central console",
-                        o: language === "vi" ? "Rời rạc, dữ liệu các kho bị lệch pha" : "Mismatched stock levels in branch"
-                      }
+                        z:
+                          language === "vi"
+                            ? "Đồng bộ tập trung trên một dashboard duy nhất"
+                            : "Unified single central console",
+                        o:
+                          language === "vi"
+                            ? "Rời rạc, dữ liệu các kho bị lệch pha"
+                            : "Mismatched stock levels in branch",
+                      },
                     ].map((row, idx) => (
                       <tr key={idx} className="hover:bg-slate-50 transition-colors">
                         <td className="p-4 md:p-5 font-extrabold text-slate-900 border-r border-slate-100">{row.f}</td>
@@ -1729,11 +2067,9 @@ function ProductContent() {
                       </tr>
                     ))}
                   </tbody>
-
                 </table>
               </div>
             </div>
-
           </div>
         </section>
 
@@ -1743,10 +2079,9 @@ function ProductContent() {
         <section className="py-24 bg-slate-950 text-white relative overflow-hidden" id="trial-form">
           {/* Neon light patterns */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
-          
+
           <div className="max-w-[1240px] mx-auto px-6 relative z-10">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-              
               {/* Left Column Form Info (6 Cols) */}
               <div className="lg:col-span-6 space-y-6">
                 <div className="space-y-3">
@@ -1754,19 +2089,24 @@ function ProductContent() {
                     <Clock className="w-3.5 h-3.5" />
                     GET STARTED NOW
                   </span>
-                  <h2 className="text-3xl md:text-4xl font-black tracking-tight leading-tight">
-                    {dict.formTitle}
-                  </h2>
-                  <p className="text-slate-450 text-sm font-semibold max-w-lg leading-relaxed">
-                    {dict.formSubtitle}
-                  </p>
+                  <h2 className="text-3xl md:text-4xl font-black tracking-tight leading-tight">{dict.formTitle}</h2>
+                  <p className="text-slate-450 text-sm font-semibold max-w-lg leading-relaxed">{dict.formSubtitle}</p>
                 </div>
 
                 <div className="space-y-4">
                   {[
-                    { title: "Kích hoạt tức thì", desc: "Không cần nhập thẻ tín dụng, tạo tài khoản và dùng ngay sau 3 phút." },
-                    { title: "Tư vấn thiết bị miễn phí", desc: "Đội ngũ kỹ thuật hỗ trợ khảo sát và tư vấn combo phần cứng phù hợp nhất." },
-                    { title: "Chuyển đổi dữ liệu cũ 0đ", desc: "Hỗ trợ import danh mục mặt hàng từ Excel của các phần mềm khác sang ZPOS." }
+                    {
+                      title: "Kích hoạt tức thì",
+                      desc: "Không cần nhập thẻ tín dụng, tạo tài khoản và dùng ngay sau 3 phút.",
+                    },
+                    {
+                      title: "Tư vấn thiết bị miễn phí",
+                      desc: "Đội ngũ kỹ thuật hỗ trợ khảo sát và tư vấn combo phần cứng phù hợp nhất.",
+                    },
+                    {
+                      title: "Chuyển đổi dữ liệu cũ 0đ",
+                      desc: "Hỗ trợ import danh mục mặt hàng từ Excel của các phần mềm khác sang ZPOS.",
+                    },
                   ].map((feat, idx) => (
                     <div key={idx} className="flex gap-3 bg-slate-900 border border-slate-850 p-4 rounded-lg">
                       <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
@@ -1784,9 +2124,7 @@ function ProductContent() {
               {/* Right Column Actual Form inputs (6 Cols) */}
               <div className="lg:col-span-6">
                 <div className="bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-xl p-6 md:p-8 shadow-2xl relative">
-                  
                   <form onSubmit={handleFormSubmit} className="space-y-4">
-                    
                     {/* Full Name */}
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">
@@ -1845,9 +2183,15 @@ function ProductContent() {
                           onChange={(e) => setFormData({ ...formData, businessType: e.target.value })}
                           className="w-full bg-slate-950 border border-slate-800 text-xs px-4 py-3.5 rounded-lg text-white outline-none focus:border-blue-500 transition-all font-medium"
                         >
-                          <option value="fnb">{language === "vi" ? "Nhà hàng & Café F&B" : "Café & F&B Restaurant"}</option>
-                          <option value="retail">{language === "vi" ? "Cửa hàng bán lẻ, siêu thị" : "Retail Store & Mart"}</option>
-                          <option value="fashion">{language === "vi" ? "Thời trang, giày dép, mỹ phẩm" : "Fashion & Boutique"}</option>
+                          <option value="fnb">
+                            {language === "vi" ? "Nhà hàng & Café F&B" : "Café & F&B Restaurant"}
+                          </option>
+                          <option value="retail">
+                            {language === "vi" ? "Cửa hàng bán lẻ, siêu thị" : "Retail Store & Mart"}
+                          </option>
+                          <option value="fashion">
+                            {language === "vi" ? "Thời trang, giày dép, mỹ phẩm" : "Fashion & Boutique"}
+                          </option>
                         </select>
                       </div>
 
@@ -1882,12 +2226,9 @@ function ProductContent() {
                       )}
                       {dict.formSubmit}
                     </button>
-
                   </form>
-
                 </div>
               </div>
-
             </div>
           </div>
         </section>
@@ -1919,11 +2260,15 @@ function ProductContent() {
                         <h3 className="text-lg font-black text-slate-800">ZPOS Basic</h3>
                         <p className="text-xs text-slate-500 mt-1">Hoàn hảo cho cửa hàng nhỏ & kinh doanh cá thể</p>
                       </div>
-                      <span className="text-[10px] font-bold text-slate-400 bg-white border border-slate-200 px-2.5 py-1 rounded-lg">Cơ bản</span>
+                      <span className="text-[10px] font-bold text-slate-400 bg-white border border-slate-200 px-2.5 py-1 rounded-lg">
+                        Cơ bản
+                      </span>
                     </div>
-                    
+
                     <div className="mb-6">
-                      <span className="text-3xl font-black text-slate-900">{dynamicConfig?.pricingPlanBasic || "350,000đ"}</span>
+                      <span className="text-3xl font-black text-slate-900">
+                        {dynamicConfig?.pricingPlanBasic || "350,000đ"}
+                      </span>
                       <span className="text-slate-500 text-xs font-medium"> / tháng</span>
                     </div>
 
@@ -1969,27 +2314,41 @@ function ProductContent() {
                         <p className="text-xs text-slate-400 mt-1">Giải pháp tối ưu cho chuỗi & doanh nghiệp lớn</p>
                       </div>
                     </div>
-                    
+
                     <div className="mb-6">
-                      <span className="text-3xl font-black text-blue-400" style={{ color: dict.accentColor }}>{dynamicConfig?.pricingPlanPro || "1,250,000đ"}</span>
+                      <span className="text-3xl font-black text-blue-400" style={{ color: dict.accentColor }}>
+                        {dynamicConfig?.pricingPlanPro || "1,250,000đ"}
+                      </span>
                       <span className="text-slate-400 text-xs font-medium"> / tháng</span>
                     </div>
 
                     <div className="space-y-3.5 border-t border-slate-800 pt-6">
                       <div className="flex items-center gap-2.5 text-xs text-slate-300">
-                        <CheckCircle2 className="w-4 h-4 text-blue-450 flex-shrink-0" style={{ color: dict.accentColor }} />
+                        <CheckCircle2
+                          className="w-4 h-4 text-blue-450 flex-shrink-0"
+                          style={{ color: dict.accentColor }}
+                        />
                         <span>Không giới hạn số lượng chi nhánh kho</span>
                       </div>
                       <div className="flex items-center gap-2.5 text-xs text-slate-300">
-                        <CheckCircle2 className="w-4 h-4 text-blue-450 flex-shrink-0" style={{ color: dict.accentColor }} />
+                        <CheckCircle2
+                          className="w-4 h-4 text-blue-450 flex-shrink-0"
+                          style={{ color: dict.accentColor }}
+                        />
                         <span>Đồng bộ đa chi nhánh realtime qua Edge DB</span>
                       </div>
                       <div className="flex items-center gap-2.5 text-xs text-slate-300">
-                        <CheckCircle2 className="w-4 h-4 text-blue-450 flex-shrink-0" style={{ color: dict.accentColor }} />
+                        <CheckCircle2
+                          className="w-4 h-4 text-blue-450 flex-shrink-0"
+                          style={{ color: dict.accentColor }}
+                        />
                         <span>Trợ lý AI phân tích doanh thu & Voice AI order</span>
                       </div>
                       <div className="flex items-center gap-2.5 text-xs text-slate-300">
-                        <CheckCircle2 className="w-4 h-4 text-blue-450 flex-shrink-0" style={{ color: dict.accentColor }} />
+                        <CheckCircle2
+                          className="w-4 h-4 text-blue-450 flex-shrink-0"
+                          style={{ color: dict.accentColor }}
+                        />
                         <span>Hỗ trợ tích hợp ERP & API tùy biến riêng biệt</span>
                       </div>
                     </div>
@@ -2001,7 +2360,7 @@ function ProductContent() {
                       className="w-full py-3.5 px-4 font-bold text-white text-center text-xs rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg"
                       style={{
                         backgroundColor: dict.accentColor,
-                        boxShadow: `0 10px 15px -3px ${dict.accentColor}30`
+                        boxShadow: `0 10px 15px -3px ${dict.accentColor}30`,
                       }}
                     >
                       Liên hệ tư vấn chuyên gia
@@ -2033,23 +2392,27 @@ function ProductContent() {
                   </h2>
                 </div>
                 <p className="text-slate-400 text-xs max-w-sm leading-relaxed">
-                  Cập nhật các bài phân tích chuyên sâu về quản trị kinh doanh, tối ưu chuỗi cung ứng và công nghệ AI bán hàng.
+                  Cập nhật các bài phân tích chuyên sâu về quản trị kinh doanh, tối ưu chuỗi cung ứng và công nghệ AI
+                  bán hàng.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {blogs.slice(0, 3).map((post) => (
-                  <article 
-                    key={post.id} 
+                  <article
+                    key={post.id}
                     className="bg-white/5 border border-white/10 rounded-xl overflow-hidden hover:border-blue-500/35 transition-all group flex flex-col h-full cursor-pointer"
                   >
                     <div className="h-48 overflow-hidden relative">
-                      <img 
-                        src={post.coverImage} 
-                        alt={post.title} 
+                      <img
+                        src={post.coverImage}
+                        alt={post.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      <span className="absolute top-4 left-4 bg-blue-600/90 text-[10px] font-bold tracking-wider uppercase px-3 py-1 rounded-full text-white" style={{ backgroundColor: dict.accentColor }}>
+                      <span
+                        className="absolute top-4 left-4 bg-blue-600/90 text-[10px] font-bold tracking-wider uppercase px-3 py-1 rounded-full text-white"
+                        style={{ backgroundColor: dict.accentColor }}
+                      >
                         {post.category}
                       </span>
                     </div>
@@ -2064,12 +2427,13 @@ function ProductContent() {
                         <h3 className="text-sm font-bold leading-snug group-hover:text-blue-300 transition-colors">
                           {post.title}
                         </h3>
-                        <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">
-                          {post.summary}
-                        </p>
+                        <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">{post.summary}</p>
                       </div>
 
-                      <div className="border-t border-white/10 pt-4 flex items-center justify-between text-[11px] font-bold text-blue-400 group-hover:text-blue-300" style={{ color: dict.accentColor }}>
+                      <div
+                        className="border-t border-white/10 pt-4 flex items-center justify-between text-[11px] font-bold text-blue-400 group-hover:text-blue-300"
+                        style={{ color: dict.accentColor }}
+                      >
                         <span>Đọc toàn bộ bài viết</span>
                         <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
                       </div>
@@ -2084,7 +2448,7 @@ function ProductContent() {
         {/* Sticky support widget float */}
         {dynamicConfig?.supportPhone && (
           <div className="fixed bottom-6 right-6 z-50 animate-bounce">
-            <a 
+            <a
               href={`tel:${dynamicConfig.supportPhone}`}
               className="flex items-center gap-2 bg-blue-650 hover:bg-blue-700 text-white font-bold px-4 py-3 rounded-full shadow-2xl text-xs"
               style={{ backgroundColor: dict.accentColor }}
@@ -2094,7 +2458,6 @@ function ProductContent() {
             </a>
           </div>
         )}
-
       </main>
 
       <Footer />

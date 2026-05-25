@@ -35,7 +35,7 @@ export function AdjustStockDialog({ open, onOpenChange, item, mode = "ADJUST", o
     setLoading(true);
     try {
       const supabase = createClient();
-      
+
       // Update stock based on type
       let orgId = null;
       let previousStock = item.stock;
@@ -63,7 +63,9 @@ export function AdjustStockDialog({ open, onOpenChange, item, mode = "ADJUST", o
       // Log transaction if possible
       if (orgId) {
         try {
-          const { data: { user } } = await supabase.auth.getUser();
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
           await supabase.from("inventory_transactions").insert({
             organization_id: orgId,
             product_id: item.is_variant ? item.product_id : item.id,
@@ -73,7 +75,7 @@ export function AdjustStockDialog({ open, onOpenChange, item, mode = "ADJUST", o
             previous_stock: previousStock,
             new_stock: stock,
             notes: reason || (mode === "LOSS" ? "Báo mất / hỏng hàng hoá" : "Điều chỉnh số dư"),
-            created_by: user?.id || null
+            created_by: user?.id || null,
           });
         } catch (logErr) {
           console.warn("Failed to log inventory transaction (table might not exist yet):", logErr);
@@ -98,7 +100,7 @@ export function AdjustStockDialog({ open, onOpenChange, item, mode = "ADJUST", o
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {mode === "LOSS" ? "Báo mất / hỏng: " : "Cập nhật số dư: "} 
+            {mode === "LOSS" ? "Báo mất / hỏng: " : "Cập nhật số dư: "}
             {item.name}
           </DialogTitle>
         </DialogHeader>
@@ -109,20 +111,11 @@ export function AdjustStockDialog({ open, onOpenChange, item, mode = "ADJUST", o
           </div>
           <div className="grid gap-2">
             <Label>Tồn kho thực tế (mới)</Label>
-            <Input 
-              type="number" 
-              value={stock} 
-              onChange={(e) => setStock(parseInt(e.target.value) || 0)} 
-              autoFocus
-            />
+            <Input type="number" value={stock} onChange={(e) => setStock(parseInt(e.target.value) || 0)} autoFocus />
           </div>
           <div className="grid gap-2">
             <Label>Lý do / Ghi chú</Label>
-            <Input 
-              value={reason} 
-              onChange={(e) => setReason(e.target.value)} 
-              placeholder="VD: Kiểm kho, Báo hỏng..."
-            />
+            <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="VD: Kiểm kho, Báo hỏng..." />
           </div>
         </div>
         <DialogFooter>

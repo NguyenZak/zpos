@@ -58,9 +58,7 @@ export function RealtimeClock() {
       <FlipPair value={minutes} />
       <Separator />
       <FlipPair value={seconds} />
-      <span className="ml-1 text-3xl font-black tracking-wide text-slate-500 sm:ml-3 sm:text-5xl">
-        {period}
-      </span>
+      <span className="ml-1 text-3xl font-black tracking-wide text-slate-500 sm:ml-3 sm:text-5xl">{period}</span>
     </time>
   );
 }

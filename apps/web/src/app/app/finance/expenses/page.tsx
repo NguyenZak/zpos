@@ -15,7 +15,18 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Calendar, Download, Edit2, Filter, Loader2, MoreHorizontal, Receipt, Search, Trash2, Printer } from "lucide-react";
+import {
+  Calendar,
+  Download,
+  Edit2,
+  Filter,
+  Loader2,
+  MoreHorizontal,
+  Receipt,
+  Search,
+  Trash2,
+  Printer,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -96,8 +107,8 @@ function numberToVietnameseWords(n: number): string {
     unitIndex++;
     isFirstGroup = false;
   }
-  
-  result = result.replace(/^không trăm (lẻ )?/, '');
+
+  result = result.replace(/^không trăm (lẻ )?/, "");
   result = result.trim();
   result = result.charAt(0).toUpperCase() + result.slice(1);
   return result + " đồng";
@@ -498,17 +509,21 @@ export default function ExpensesPage() {
       />
 
       {/* Hidden Print Container */}
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         @media print {
           @page {
             size: A5; /* Allows user to choose portrait/landscape in print dialog and it will default to A5 */
             margin: 10mm;
           }
         }
-      `}} />
-      <div 
-        className="hidden print:block absolute top-0 left-0 w-full bg-white" 
-        style={{ fontFamily: '"Times New Roman", Times, serif', color: 'black' }}
+      `,
+        }}
+      />
+      <div
+        className="hidden print:block absolute top-0 left-0 w-full bg-white"
+        style={{ fontFamily: '"Times New Roman", Times, serif', color: "black" }}
       >
         {printExpense && (
           <div className="w-full">
@@ -521,7 +536,7 @@ export default function ExpensesPage() {
               <div className="text-center">
                 <p className="font-bold text-sm">Mẫu số 02 - TT</p>
                 <p className="text-[10px] italic">
-                  (Ban hành theo Thông tư số 200/2014/TT-BTC <br/>
+                  (Ban hành theo Thông tư số 200/2014/TT-BTC <br />
                   Ngày 22/12/2014 của Bộ Tài chính)
                 </p>
               </div>
@@ -530,12 +545,16 @@ export default function ExpensesPage() {
             <div className="text-center mb-6 relative">
               <h2 className="text-2xl font-black uppercase tracking-widest mb-1">Phiếu Chi</h2>
               <p className="italic text-xs">
-                Ngày {format(new Date(printExpense.expense_date), "dd")} tháng {format(new Date(printExpense.expense_date), "MM")} năm {format(new Date(printExpense.expense_date), "yyyy")}
+                Ngày {format(new Date(printExpense.expense_date), "dd")} tháng{" "}
+                {format(new Date(printExpense.expense_date), "MM")} năm{" "}
+                {format(new Date(printExpense.expense_date), "yyyy")}
               </p>
-              
+
               <div className="absolute top-0 right-0 text-right text-xs">
                 <p>Quyển số: ...................</p>
-                <p>Số: <span className="font-semibold">{printExpense.id.slice(0, 8).toUpperCase()}</span></p>
+                <p>
+                  Số: <span className="font-semibold">{printExpense.id.slice(0, 8).toUpperCase()}</span>
+                </p>
                 <p>Nợ: ...........................</p>
                 <p>Có: ...........................</p>
               </div>

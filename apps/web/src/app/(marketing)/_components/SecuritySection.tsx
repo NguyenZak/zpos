@@ -56,14 +56,14 @@ export function SecuritySection() {
   return (
     <section className="py-28 bg-[#05061b] text-white relative overflow-hidden" id="security">
       {/* High-tech Dotted Grid Background */}
-      <div 
+      <div
         className="absolute inset-0 opacity-[0.2] pointer-events-none"
         style={{
           backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.15) 1.2px, transparent 1.2px)`,
-          backgroundSize: "24px 24px"
+          backgroundSize: "24px 24px",
         }}
       />
-      
+
       {/* Dynamic Ambient Blur */}
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 h-[400px] w-[500px] rounded-full bg-gradient-to-tr from-[#0036FF]/10 to-[#0093ff]/5 opacity-30 blur-[120px] pointer-events-none" />
 
@@ -78,19 +78,23 @@ export function SecuritySection() {
             <span className="flex h-1.5 w-1.5 rounded-full bg-[#0093ff] animate-pulse" />
             <ShieldCheck size={12} className="text-[#0093ff]" /> {t("sec.badge")}
           </motion.div>
-          
-          <h2 
+
+          <h2
             className="text-3xl md:text-5xl font-bold mb-6 tracking-tight text-white leading-[1.15]"
             style={{ fontFamily: "var(--font-aeonik-pro, sans-serif)", fontFeatureSettings: "'ss02', 'ss05', 'ss10'" }}
           >
             {language === "vi" ? (
-              <>An toàn tuyệt đối <span className="text-[#0093ff]">mặc định</span></>
+              <>
+                An toàn tuyệt đối <span className="text-[#0093ff]">mặc định</span>
+              </>
             ) : (
-              <>Secure by <span className="text-[#0093ff]">default</span></>
+              <>
+                Secure by <span className="text-[#0093ff]">default</span>
+              </>
             )}
           </h2>
-          
-          <p 
+
+          <p
             className="text-base md:text-lg text-white/60 leading-relaxed font-light"
             style={{ fontFamily: "var(--font-aeonik-pro, sans-serif)" }}
           >
@@ -123,14 +127,14 @@ export function SecuritySection() {
                 </span>
               </div>
 
-              <h3 
+              <h3
                 className="text-lg font-semibold mb-3 text-white tracking-tight group-hover:text-[#0093ff] transition-colors"
                 style={{ fontFamily: "var(--font-aeonik-pro, sans-serif)" }}
               >
                 {item.title}
               </h3>
-              
-              <p 
+
+              <p
                 className="text-sm text-white/60 leading-relaxed font-light"
                 style={{ fontFamily: "var(--font-aeonik-pro, sans-serif)" }}
               >

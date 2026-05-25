@@ -41,7 +41,7 @@ const colors = {
   cyan: "\x1b[36m",
   bgCyan: "\x1b[46m",
   bgGreen: "\x1b[42m",
-  bgRed: "\x1b[41m"
+  bgRed: "\x1b[41m",
 };
 
 function printHeader(title: string) {
@@ -86,18 +86,15 @@ async function runTests() {
   // TEST SUITE 1: Environmental Config Check
   // ------------------------------------------
   printHeader("Test Suite 1: Environmental Configuration");
-  
+
   assert(
     !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-    `NEXT_PUBLIC_SUPABASE_URL is defined (${process.env.NEXT_PUBLIC_SUPABASE_URL})`
+    `NEXT_PUBLIC_SUPABASE_URL is defined (${process.env.NEXT_PUBLIC_SUPABASE_URL})`,
   );
-  assert(
-    !!process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-    `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY is defined`
-  );
+  assert(!!process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY is defined`);
   assert(
     process.env.NEXT_PUBLIC_MAIN_DOMAIN === "localhost:3000",
-    `NEXT_PUBLIC_MAIN_DOMAIN is set correctly for development (${process.env.NEXT_PUBLIC_MAIN_DOMAIN})`
+    `NEXT_PUBLIC_MAIN_DOMAIN is set correctly for development (${process.env.NEXT_PUBLIC_MAIN_DOMAIN})`,
   );
 
   // ------------------------------------------
@@ -113,10 +110,8 @@ async function runTests() {
     } else if (host.includes("zpos.vn")) {
       mainDomain = "zpos.vn";
     }
-    
-    const subdomain = host.endsWith(`.${mainDomain}`)
-      ? host.replace(`.${mainDomain}`, "")
-      : null;
+
+    const subdomain = host.endsWith(`.${mainDomain}`) ? host.replace(`.${mainDomain}`, "") : null;
 
     const isConsole = subdomain === "console";
     const isApp = subdomain === "app";
@@ -129,36 +124,48 @@ async function runTests() {
   // Test Case A: Main domain
   const rootDomain = parseHost("localhost:3000");
   assert(
-    rootDomain.subdomain === null && rootDomain.isConsole === false && rootDomain.isApp === false && rootDomain.tenantSlug === null,
-    "localhost:3000 -> Should resolve to main domain landing (Tenant: null, Console: false, App: false)"
+    rootDomain.subdomain === null &&
+      rootDomain.isConsole === false &&
+      rootDomain.isApp === false &&
+      rootDomain.tenantSlug === null,
+    "localhost:3000 -> Should resolve to main domain landing (Tenant: null, Console: false, App: false)",
   );
 
   // Test Case B: Global App Portal
   const appDomain = parseHost("app.localhost:3000");
   assert(
-    appDomain.subdomain === "app" && appDomain.isConsole === false && appDomain.isApp === true && appDomain.tenantSlug === null,
-    "app.localhost:3000 -> Should resolve to global user portal (Tenant: null, Console: false, App: true) [FIXED 404 LOGIC]"
+    appDomain.subdomain === "app" &&
+      appDomain.isConsole === false &&
+      appDomain.isApp === true &&
+      appDomain.tenantSlug === null,
+    "app.localhost:3000 -> Should resolve to global user portal (Tenant: null, Console: false, App: true) [FIXED 404 LOGIC]",
   );
 
   // Test Case C: Admin Console
   const consoleDomain = parseHost("console.localhost:3000");
   assert(
-    consoleDomain.subdomain === "console" && consoleDomain.isConsole === true && consoleDomain.isApp === false && consoleDomain.tenantSlug === null,
-    "console.localhost:3000 -> Should resolve to central console node (Tenant: null, Console: true, App: false)"
+    consoleDomain.subdomain === "console" &&
+      consoleDomain.isConsole === true &&
+      consoleDomain.isApp === false &&
+      consoleDomain.tenantSlug === null,
+    "console.localhost:3000 -> Should resolve to central console node (Tenant: null, Console: true, App: false)",
   );
 
   // Test Case D: Retail Subdomain (Kphone)
   const kphoneDomain = parseHost("kphone.localhost:3000");
   assert(
-    kphoneDomain.subdomain === "kphone" && kphoneDomain.isConsole === false && kphoneDomain.isApp === false && kphoneDomain.tenantSlug === "kphone",
-    "kphone.localhost:3000 -> Should resolve to retail tenant slug (Tenant: 'kphone', Console: false, App: false)"
+    kphoneDomain.subdomain === "kphone" &&
+      kphoneDomain.isConsole === false &&
+      kphoneDomain.isApp === false &&
+      kphoneDomain.tenantSlug === "kphone",
+    "kphone.localhost:3000 -> Should resolve to retail tenant slug (Tenant: 'kphone', Console: false, App: false)",
   );
 
   // Test Case E: Production Domain with Tenant
   const prodDomain = parseHost("kphone.zpos.click");
   assert(
     prodDomain.subdomain === "kphone" && prodDomain.tenantSlug === "kphone",
-    "kphone.zpos.click -> Should resolve to retail tenant slug in production (Tenant: 'kphone')"
+    "kphone.zpos.click -> Should resolve to retail tenant slug in production (Tenant: 'kphone')",
   );
 
   // ------------------------------------------
@@ -168,11 +175,11 @@ async function runTests() {
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "";
-  
+
   if (supabaseUrl && supabaseKey) {
     try {
       const supabase = createClient(supabaseUrl, supabaseKey);
-      
+
       // Test fetching organizations (checks read access & connection)
       const { data: orgs, error: orgsError } = await supabase
         .from("organizations")
@@ -183,15 +190,11 @@ async function runTests() {
 
       assert(
         Array.isArray(orgs) && orgs.length > 0,
-        `Successfully queried active tenants from DB: [${orgs?.map(o => o.slug).join(", ")}]`
+        `Successfully queried active tenants from DB: [${orgs?.map((o) => o.slug).join(", ")}]`,
       );
 
-      const kphoneOrg = orgs?.find(o => o.slug === "kphone");
-      assert(
-        !!kphoneOrg,
-        `Retrieved details for 'kphone' (ID: ${kphoneOrg?.id || "N/A"})`
-      );
-      
+      const kphoneOrg = orgs?.find((o) => o.slug === "kphone");
+      assert(!!kphoneOrg, `Retrieved details for 'kphone' (ID: ${kphoneOrg?.id || "N/A"})`);
     } catch (dbError: any) {
       assert(false, `Supabase Database query failed: ${dbError.message}`);
     }
@@ -207,7 +210,7 @@ async function runTests() {
   const layoutPath = path.join(__dirname, "../app/layout.tsx");
   if (fs.existsSync(layoutPath)) {
     const layoutContent = fs.readFileSync(layoutPath, "utf8");
-    
+
     // Check 1: <head> exists
     const hasHead = layoutContent.includes("<head>") && layoutContent.includes("</head>");
     assert(hasHead, "RootLayout declares manual static <head> wrapper");
@@ -218,10 +221,13 @@ async function runTests() {
 
     const nextScriptImportRegex = /import\s+Script\s+from\s+['"]next\/script['"]/g;
     const hasNextScriptImportInLayout = nextScriptImportRegex.test(layoutContent);
-    
+
     // Verify it doesn't nest next/script within head
     const inHeadScriptComponent = /<head>[\s\S]*?<Script\s+id=/g.test(layoutContent);
-    assert(!inHeadScriptComponent, "No client rendering <Script> is nested inside `<head>` (Preventing Hydration Console Warnings)");
+    assert(
+      !inHeadScriptComponent,
+      "No client rendering <Script> is nested inside `<head>` (Preventing Hydration Console Warnings)",
+    );
   } else {
     printFail("Could not locate layout.tsx file at " + layoutPath);
   }
@@ -236,11 +242,15 @@ async function runTests() {
     const loginFormContent = fs.readFileSync(loginFormPath, "utf8");
 
     // Check 1: Sandbox panel removed
-    const hasSandboxPanel = loginFormContent.includes("Sandbox Quick Login") || loginFormContent.includes("Tài khoản Demo");
+    const hasSandboxPanel =
+      loginFormContent.includes("Sandbox Quick Login") || loginFormContent.includes("Tài khoản Demo");
     assert(!hasSandboxPanel, "Sandbox Quick Login drawer interface successfully removed fromLoginForm");
 
     // Check 2: Unused imports cleaned up
-    const hasUnusedIcons = loginFormContent.includes("Sparkles") || loginFormContent.includes("ChevronDown") || loginFormContent.includes("ChevronUp");
+    const hasUnusedIcons =
+      loginFormContent.includes("Sparkles") ||
+      loginFormContent.includes("ChevronDown") ||
+      loginFormContent.includes("ChevronUp");
     assert(!hasUnusedIcons, "Unused lucide icons successfully cleaned from login form imports");
   } else {
     printFail("Could not locate login-form.tsx file at " + loginFormPath);
@@ -251,13 +261,21 @@ async function runTests() {
   // ==========================================
   console.log(`\n================================================`);
   const successPercentage = Math.round((passedTests / totalTests) * 100);
-  
+
   if (passedTests === totalTests) {
-    console.log(`${colors.bright}${colors.bgGreen}  🏆 DIAGNOSTIC TEST RESULT: ALL TESTS PASSED (${passedTests}/${totalTests}) 🏆  ${colors.reset}`);
-    console.log(`  ${colors.green}Congratulations! The current architecture is stable, clean, and perfectly React 19 compliant.${colors.reset}`);
+    console.log(
+      `${colors.bright}${colors.bgGreen}  🏆 DIAGNOSTIC TEST RESULT: ALL TESTS PASSED (${passedTests}/${totalTests}) 🏆  ${colors.reset}`,
+    );
+    console.log(
+      `  ${colors.green}Congratulations! The current architecture is stable, clean, and perfectly React 19 compliant.${colors.reset}`,
+    );
   } else {
-    console.log(`${colors.bright}${colors.bgRed}  ⚠️ DIAGNOSTIC TEST RESULT: SOME TESTS FAILED (${passedTests}/${totalTests} - ${successPercentage}%) ⚠️  ${colors.reset}`);
-    console.log(`  ${colors.red}Please review the failures listed above to ensure complete functional stability.${colors.reset}`);
+    console.log(
+      `${colors.bright}${colors.bgRed}  ⚠️ DIAGNOSTIC TEST RESULT: SOME TESTS FAILED (${passedTests}/${totalTests} - ${successPercentage}%) ⚠️  ${colors.reset}`,
+    );
+    console.log(
+      `  ${colors.red}Please review the failures listed above to ensure complete functional stability.${colors.reset}`,
+    );
   }
   console.log(`================================================\n`);
 }

@@ -35,13 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   // 2. Programmatic SEO Solution pages (Industry specific)
-  const solutions = [
-    "retail",
-    "cafe-restaurant",
-    "boutique-fashion",
-    "mini-mart",
-    "chain-store",
-  ];
+  const solutions = ["retail", "cafe-restaurant", "boutique-fashion", "mini-mart", "chain-store"];
   const solutionPages = solutions.map((slug) => ({
     url: `${siteUrl}/solutions/${slug}`,
     lastModified: new Date(),
@@ -80,10 +74,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [
-    ...staticPages,
-    ...solutionPages,
-    ...featurePages,
-    ...blogPages,
-  ];
+  return [...staticPages, ...solutionPages, ...featurePages, ...blogPages];
 }

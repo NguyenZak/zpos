@@ -1,17 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import {
-  UserPlus,
-  Loader2,
-  User,
-  KeyRound,
-  Eye,
-  EyeOff,
-  RefreshCw,
-  Info
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React, { useState, useEffect } from "react";
+import { UserPlus, Loader2, User, KeyRound, Eye, EyeOff, RefreshCw, Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -20,19 +11,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
-import { toast } from 'sonner';
-import { posService } from '@/services/pos.service';
-import { permissionService, Role } from '@/services/permission.service';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
+import { posService } from "@/services/pos.service";
+import { permissionService, Role } from "@/services/permission.service";
 
 function generateInitialPassword(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
@@ -59,13 +44,13 @@ export function AddStaffDialog({ onShowSuccess }: AddStaffDialogProps) {
   const [roles, setRoles] = useState<Role[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    role: '',
-    status: 'active',
-    branch_id: '',
-    password: ''
+    name: "",
+    email: "",
+    phone: "",
+    role: "",
+    status: "active",
+    branch_id: "",
+    password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
 
@@ -75,10 +60,7 @@ export function AddStaffDialog({ onShowSuccess }: AddStaffDialogProps) {
     const fetchMeta = async () => {
       setLoadingMeta(true);
       try {
-        const [roleList, branchList] = await Promise.all([
-          permissionService.getRoles(),
-          posService.getBranches(),
-        ]);
+        const [roleList, branchList] = await Promise.all([permissionService.getRoles(), posService.getBranches()]);
 
         const safeRoles = roleList || [];
         const safeBranches = (branchList || []) as Branch[];
@@ -86,16 +68,15 @@ export function AddStaffDialog({ onShowSuccess }: AddStaffDialogProps) {
         setBranches(safeBranches);
 
         // Default role: prefer "staff" if present, otherwise first role
-        const defaultRole = safeRoles.find(r => r.name.toLowerCase() === 'staff') || safeRoles[0];
+        const defaultRole = safeRoles.find((r) => r.name.toLowerCase() === "staff") || safeRoles[0];
 
         // Default branch: prefer main branch, otherwise first branch
-        const defaultBranch =
-          safeBranches.find(b => b.is_main_branch || b.status === 'Chính') || safeBranches[0];
+        const defaultBranch = safeBranches.find((b) => b.is_main_branch || b.status === "Chính") || safeBranches[0];
 
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          role: defaultRole ? defaultRole.name.toLowerCase() : '',
-          branch_id: defaultBranch ? defaultBranch.id : '',
+          role: defaultRole ? defaultRole.name.toLowerCase() : "",
+          branch_id: defaultBranch ? defaultBranch.id : "",
           password: prev.password || generateInitialPassword(),
         }));
       } catch (e) {
@@ -127,11 +108,13 @@ export function AddStaffDialog({ onShowSuccess }: AddStaffDialogProps) {
 
     setLoading(true);
     try {
-      const selectedRoleObj = roles.find(r => r.name.toLowerCase() === formData.role.toLowerCase());
+      const selectedRoleObj = roles.find((r) => r.name.toLowerCase() === formData.role.toLowerCase());
       const organizationId = await permissionService.getActiveOrgId();
 
       if (!organizationId || organizationId === "00000000-0000-0000-0000-000000000000") {
-        throw new Error("Không xác định được tenant hiện tại. Vui lòng truy cập từ subdomain cửa hàng (vd: shop.zpos.click).");
+        throw new Error(
+          "Không xác định được tenant hiện tại. Vui lòng truy cập từ subdomain cửa hàng (vd: shop.zpos.click).",
+        );
       }
 
       const res = await fetch("/api/tenant/staff", {
@@ -161,13 +144,13 @@ export function AddStaffDialog({ onShowSuccess }: AddStaffDialogProps) {
       setOpen(false);
       onShowSuccess();
       setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        role: '',
-        status: 'active',
-        branch_id: '',
-        password: ''
+        name: "",
+        email: "",
+        phone: "",
+        role: "",
+        status: "active",
+        branch_id: "",
+        password: "",
       });
     } catch (error: any) {
       console.error(error);
@@ -179,7 +162,7 @@ export function AddStaffDialog({ onShowSuccess }: AddStaffDialogProps) {
 
   const handleRegeneratePassword = () => {
     const next = generateInitialPassword();
-    setFormData(prev => ({ ...prev, password: next }));
+    setFormData((prev) => ({ ...prev, password: next }));
   };
 
   const handleCopyPassword = async () => {
@@ -207,16 +190,14 @@ export function AddStaffDialog({ onShowSuccess }: AddStaffDialogProps) {
               <User className="w-5 h-5 text-primary" />
               Thêm nhân viên mới
             </DialogTitle>
-            <DialogDescription>
-              Thiết lập tài khoản và phân quyền cho nhân viên mới.
-            </DialogDescription>
+            <DialogDescription>Thiết lập tài khoản và phân quyền cho nhân viên mới.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="name">Họ và tên</Label>
-              <Input 
-                id="name" 
-                placeholder="Ví dụ: Nguyễn Văn Nhân" 
+              <Input
+                id="name"
+                placeholder="Ví dụ: Nguyễn Văn Nhân"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
@@ -225,10 +206,10 @@ export function AddStaffDialog({ onShowSuccess }: AddStaffDialogProps) {
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="email">Email công việc</Label>
-                <Input 
-                  id="email" 
+                <Input
+                  id="email"
                   type="email"
-                  placeholder="nhanvien@zpos.click" 
+                  placeholder="nhanvien@zpos.click"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
@@ -236,9 +217,9 @@ export function AddStaffDialog({ onShowSuccess }: AddStaffDialogProps) {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="phone">Số điện thoại</Label>
-                <Input 
-                  id="phone" 
-                  placeholder="09xx xxx xxx" 
+                <Input
+                  id="phone"
+                  placeholder="09xx xxx xxx"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 />
@@ -295,7 +276,8 @@ export function AddStaffDialog({ onShowSuccess }: AddStaffDialogProps) {
               <div className="flex items-start gap-1.5 text-[11px] text-muted-foreground bg-primary/5 border border-primary/10 rounded-md p-2">
                 <Info className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
                 <span>
-                  Nhân viên sẽ đăng nhập bằng email và mật khẩu này tại trang đăng nhập của cửa hàng. Hãy gửi thông tin cho nhân viên qua kênh an toàn.
+                  Nhân viên sẽ đăng nhập bằng email và mật khẩu này tại trang đăng nhập của cửa hàng. Hãy gửi thông tin
+                  cho nhân viên qua kênh an toàn.
                 </span>
               </div>
             </div>
@@ -310,18 +292,14 @@ export function AddStaffDialog({ onShowSuccess }: AddStaffDialogProps) {
                   <SelectTrigger id="role">
                     <SelectValue
                       placeholder={
-                        loadingMeta
-                          ? 'Đang tải vai trò...'
-                          : roles.length === 0
-                            ? 'Chưa có vai trò'
-                            : 'Chọn vai trò'
+                        loadingMeta ? "Đang tải vai trò..." : roles.length === 0 ? "Chưa có vai trò" : "Chọn vai trò"
                       }
                     />
                   </SelectTrigger>
                   <SelectContent>
-                    {roles.map(r => (
+                    {roles.map((r) => (
                       <SelectItem key={r.id} value={r.name.toLowerCase()}>
-                        {r.name} {r.is_system ? '(Hệ thống)' : '(Tùy chỉnh)'}
+                        {r.name} {r.is_system ? "(Hệ thống)" : "(Tùy chỉnh)"}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -338,18 +316,18 @@ export function AddStaffDialog({ onShowSuccess }: AddStaffDialogProps) {
                     <SelectValue
                       placeholder={
                         loadingMeta
-                          ? 'Đang tải chi nhánh...'
+                          ? "Đang tải chi nhánh..."
                           : branches.length === 0
-                            ? 'Chưa có chi nhánh'
-                            : 'Chọn chi nhánh'
+                            ? "Chưa có chi nhánh"
+                            : "Chọn chi nhánh"
                       }
                     />
                   </SelectTrigger>
                   <SelectContent>
-                    {branches.map(b => (
+                    {branches.map((b) => (
                       <SelectItem key={b.id} value={b.id}>
                         {b.name}
-                        {(b.is_main_branch || b.status === 'Chính') ? ' (Chính)' : ''}
+                        {b.is_main_branch || b.status === "Chính" ? " (Chính)" : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -361,11 +339,7 @@ export function AddStaffDialog({ onShowSuccess }: AddStaffDialogProps) {
             <Button type="button" variant="outline" size="sm" onClick={() => setOpen(false)}>
               Hủy
             </Button>
-            <Button
-              type="submit"
-              size="sm"
-              disabled={loading || loadingMeta || !formData.role || !formData.branch_id}
-            >
+            <Button type="submit" size="sm" disabled={loading || loadingMeta || !formData.role || !formData.branch_id}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Lưu nhân viên
             </Button>

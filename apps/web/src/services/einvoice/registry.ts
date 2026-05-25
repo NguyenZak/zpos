@@ -127,16 +127,16 @@ export const PROVIDER_META: ProviderMeta[] = [
 
 // ─── Provider factory registry ─────────────────────────────────────────────
 const REGISTRY: Record<EInvoiceProviderName | string, () => InvoiceProvider> = {
-  demo:        () => new DemoProvider(),
-  manual:      () => new ManualProvider(),
-  vnpt:        () => new VNPTProvider() as unknown as InvoiceProvider,
-  viettel:     () => new ViettelProvider() as unknown as InvoiceProvider,
-  misa:        () => new MISAProvider() as unknown as InvoiceProvider,
-  bkav:        () => new BKAVProvider() as unknown as InvoiceProvider,
+  demo: () => new DemoProvider(),
+  manual: () => new ManualProvider(),
+  vnpt: () => new VNPTProvider() as unknown as InvoiceProvider,
+  viettel: () => new ViettelProvider() as unknown as InvoiceProvider,
+  misa: () => new MISAProvider() as unknown as InvoiceProvider,
+  bkav: () => new BKAVProvider() as unknown as InvoiceProvider,
   easyinvoice: () => new EasyInvoiceProvider() as unknown as InvoiceProvider,
-  sinvoice:    () => new SInvoiceProvider() as unknown as InvoiceProvider,
-  cyberbill:   () => new CyberbillProvider() as unknown as InvoiceProvider,
-  mobifone:    () => new MobiFoneProvider() as unknown as InvoiceProvider,
+  sinvoice: () => new SInvoiceProvider() as unknown as InvoiceProvider,
+  cyberbill: () => new CyberbillProvider() as unknown as InvoiceProvider,
+  mobifone: () => new MobiFoneProvider() as unknown as InvoiceProvider,
 };
 
 /**

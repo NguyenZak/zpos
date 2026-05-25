@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { 
+import React, { useState, useEffect } from "react";
+import {
   flexRender,
   getCoreRowModel,
   useReactTable,
   getPaginationRowModel,
   getFilteredRowModel,
-  ColumnDef
+  ColumnDef,
 } from "@tanstack/react-table";
 import {
   Search,
@@ -22,20 +22,13 @@ import {
   ArrowUpDown,
   Pencil,
   Plus,
-  Copy
+  Copy,
 } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,13 +38,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { 
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -71,21 +59,21 @@ import { BarcodePrintDialog } from "./_components/barcode-print-dialog";
 import { posService } from "@/services/pos.service";
 import { RequirePermission } from "@/components/auth/require-permission";
 
-const HighlightText = ({ text, highlight }: { text: string | undefined | null, highlight: string }) => {
+const HighlightText = ({ text, highlight }: { text: string | undefined | null; highlight: string }) => {
   if (!text) return null;
   if (!highlight || !highlight.trim()) return <>{text}</>;
-  
-  const parts = text.toString().split(new RegExp(`(${highlight})`, 'gi'));
+
+  const parts = text.toString().split(new RegExp(`(${highlight})`, "gi"));
   return (
     <>
-      {parts.map((part, index) => 
+      {parts.map((part, index) =>
         part.toLowerCase() === highlight.toLowerCase() ? (
           <mark key={index} className="bg-yellow-200 text-yellow-900 rounded-sm px-0.5 font-bold">
             {part}
           </mark>
         ) : (
           part
-        )
+        ),
       )}
     </>
   );
@@ -127,7 +115,7 @@ export default function ProductsPage() {
   // Dynamically extract active categories from loaded product records
   const categories = React.useMemo(() => {
     const list = new Set<string>();
-    data.forEach(item => {
+    data.forEach((item) => {
       if (item.category?.name) {
         list.add(item.category.name);
       }
@@ -137,20 +125,21 @@ export default function ProductsPage() {
 
   // Real-time filtered data matching active criteria
   const filteredData = React.useMemo(() => {
-    return data.filter(item => {
+    return data.filter((item) => {
       // 0. Search Filter
       if (globalFilter) {
         const search = globalFilter.toLowerCase();
         const matchName = item.name?.toLowerCase().includes(search);
         const matchSku = item.sku?.toLowerCase().includes(search);
         const matchBarcode = item.barcode?.toLowerCase().includes(search);
-        
+
         let matchVariant = false;
         if (item.variants && Array.isArray(item.variants)) {
-          matchVariant = item.variants.some((v: any) => 
-            (v.name && v.name.toLowerCase().includes(search)) ||
-            (v.sku && v.sku.toLowerCase().includes(search)) ||
-            (v.barcode && v.barcode.toLowerCase().includes(search))
+          matchVariant = item.variants.some(
+            (v: any) =>
+              (v.name && v.name.toLowerCase().includes(search)) ||
+              (v.sku && v.sku.toLowerCase().includes(search)) ||
+              (v.barcode && v.barcode.toLowerCase().includes(search)),
           );
         }
 
@@ -201,18 +190,20 @@ export default function ProductsPage() {
   };
 
   const handleBulkDelete = async () => {
-    const selectedIds = Object.keys(rowSelection).map((index) => {
-      // rowSelection keys are the row indices in the filtered/sorted data
-      // actually, by default they are row indices or row IDs if getRowId is provided.
-      // let's fetch the actual row id from the table rows based on the index.
-      return table.getRowModel().rowsById[index]?.original.id;
-    }).filter(Boolean);
+    const selectedIds = Object.keys(rowSelection)
+      .map((index) => {
+        // rowSelection keys are the row indices in the filtered/sorted data
+        // actually, by default they are row indices or row IDs if getRowId is provided.
+        // let's fetch the actual row id from the table rows based on the index.
+        return table.getRowModel().rowsById[index]?.original.id;
+      })
+      .filter(Boolean);
 
     if (selectedIds.length === 0) return;
 
     setIsBulkDeleting(true);
     try {
-      await Promise.all(selectedIds.map(id => posService.deleteProduct(id)));
+      await Promise.all(selectedIds.map((id) => posService.deleteProduct(id)));
       toast.success(`Đã xóa ${selectedIds.length} sản phẩm thành công`);
       loadProducts();
       setRowSelection({});
@@ -227,12 +218,12 @@ export default function ProductsPage() {
     return text
       .toString()
       .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[đĐ]/g, 'd')
-      .replace(/([^a-z0-9\s-]|^-|-$)/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-');
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[đĐ]/g, "d")
+      .replace(/([^a-z0-9\s-]|^-|-$)/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
   };
 
   const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -240,25 +231,25 @@ export default function ProductsPage() {
     if (!file) return;
 
     // We accept CSV files.
-    if (!file.name.endsWith('.csv')) {
-      toast.error('Hệ thống hiện chỉ hỗ trợ định dạng file .CSV (được lưu từ Excel)');
+    if (!file.name.endsWith(".csv")) {
+      toast.error("Hệ thống hiện chỉ hỗ trợ định dạng file .CSV (được lưu từ Excel)");
       return;
     }
 
     const reader = new FileReader();
     reader.onload = async (e) => {
       const text = e.target?.result as string;
-      const rows = text.split('\n');
+      const rows = text.split("\n");
       if (rows.length <= 1) {
-        toast.error('File không hợp lệ hoặc trống!');
+        toast.error("File không hợp lệ hoặc trống!");
         return;
       }
 
       setLoading(true);
       let successCount = 0;
-      
-      const toastId = toast.loading('Đang xử lý dữ liệu import...');
-      
+
+      const toastId = toast.loading("Đang xử lý dữ liệu import...");
+
       // Load categories to map by name
       let catMap = new Map();
       try {
@@ -268,7 +259,7 @@ export default function ProductsPage() {
         console.error("Could not load categories for mapping", e);
       }
 
-      const delimiter = rows[0].includes(';') && !rows[0].includes(',') ? ';' : ',';
+      const delimiter = rows[0].includes(";") && !rows[0].includes(",") ? ";" : ",";
       const splitRegex = new RegExp(`${delimiter}(?=(?:(?:[^"]*"){2})*[^"]*$)`);
 
       // Pre-flight validation: check for missing categories
@@ -276,7 +267,7 @@ export default function ProductsPage() {
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i].trim();
         if (!row) continue;
-        const cols = row.split(splitRegex).map(s => s.replace(/(^"|"$)/g, '').trim());
+        const cols = row.split(splitRegex).map((s) => s.replace(/(^"|"$)/g, "").trim());
         if (cols.length >= 6 && cols[0] && cols[3]) {
           const catName = cols[3].trim();
           if (catName && !catMap.has(catName.toLowerCase())) {
@@ -287,20 +278,20 @@ export default function ProductsPage() {
 
       if (missingCategories.size > 0) {
         toast.dismiss(toastId);
-        const missingList = Array.from(missingCategories).join(', ');
+        const missingList = Array.from(missingCategories).join(", ");
         toast.error(`Vui lòng thêm danh mục sản phẩm "${missingList}" trước khi import!`, { duration: 10000 });
         setLoading(false);
-        if (fileInputRef.current) fileInputRef.current.value = '';
+        if (fileInputRef.current) fileInputRef.current.value = "";
         return;
       }
 
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i].trim();
         if (!row) continue;
-        
+
         // Parse CSV row ignoring delimiter inside quotes
-        const cols = row.split(splitRegex).map(s => s.replace(/(^"|"$)/g, '').trim());
-        
+        const cols = row.split(splitRegex).map((s) => s.replace(/(^"|"$)/g, "").trim());
+
         // Expecting format: Tên SP (0), Mã SKU (1), Mã vạch (2), Danh mục (3), Giá bán (4), Tồn kho ban đầu (5), Link Hình ảnh (6)
         if (cols.length >= 6 && cols[0]) {
           let catId = null;
@@ -315,25 +306,25 @@ export default function ProductsPage() {
           try {
             await posService.createProduct({
               name: cols[0],
-              sku: cols[1] || '',
-              barcode: cols[2] || '',
+              sku: cols[1] || "",
+              barcode: cols[2] || "",
               category_id: catId,
-              price: parseFloat(cols[4].replace(/,/g, '')) || 0,
-              stock: parseInt(cols[5].replace(/,/g, '')) || 0,
-              image: cols[6] || null
+              price: parseFloat(cols[4].replace(/,/g, "")) || 0,
+              stock: parseInt(cols[5].replace(/,/g, "")) || 0,
+              image: cols[6] || null,
             });
             successCount++;
           } catch (err: any) {
-            console.error('Error importing row:', i, err?.message || err);
+            console.error("Error importing row:", i, err?.message || err);
           }
         }
       }
-      
+
       toast.success(`Đã import thành công ${successCount} sản phẩm!`, { id: toastId });
       loadProducts();
-      
+
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
     };
     reader.readAsText(file);
@@ -341,11 +332,19 @@ export default function ProductsPage() {
 
   const handleDownloadTemplate = () => {
     const headers = ["Tên sản phẩm", "Mã SKU", "Mã vạch", "Danh mục", "Giá bán", "Tồn kho ban đầu", "Link Hình ảnh"];
-    const sampleRow1 = ["Cà phê sữa đá", "SP0001", "8931234567890", "Cà phê", "25000", "100", "https://example.com/image1.jpg"];
+    const sampleRow1 = [
+      "Cà phê sữa đá",
+      "SP0001",
+      "8931234567890",
+      "Cà phê",
+      "25000",
+      "100",
+      "https://example.com/image1.jpg",
+    ];
     const sampleRow2 = ["Bạc xỉu", "SP0002", "", "Cà phê", "30000", "50", ""];
     const csvContent = "\uFEFF" + [headers.join(","), sampleRow1.join(","), sampleRow2.join(",")].join("\n");
-    
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
@@ -360,10 +359,7 @@ export default function ProductsPage() {
       id: "select",
       header: ({ table }) => (
         <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
+          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Chọn tất cả"
           className="translate-y-[2px]"
@@ -392,7 +388,7 @@ export default function ProductsPage() {
             Sản phẩm
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
-        )
+        );
       },
       cell: ({ row }) => {
         const variantCount = Array.isArray(row.original.variants) ? row.original.variants.length : 0;
@@ -421,13 +417,21 @@ export default function ProductsPage() {
               </div>
               {variantCount > 0 ? (
                 (() => {
-                  const hasVariantMatch = globalFilter && row.original.variants.some((v: any) => 
-                    (v.name && v.name.toLowerCase().includes(globalFilter.toLowerCase())) ||
-                    (v.sku && v.sku.toLowerCase().includes(globalFilter.toLowerCase())) ||
-                    (v.barcode && v.barcode.toLowerCase().includes(globalFilter.toLowerCase()))
-                  );
+                  const hasVariantMatch =
+                    globalFilter &&
+                    row.original.variants.some(
+                      (v: any) =>
+                        (v.name && v.name.toLowerCase().includes(globalFilter.toLowerCase())) ||
+                        (v.sku && v.sku.toLowerCase().includes(globalFilter.toLowerCase())) ||
+                        (v.barcode && v.barcode.toLowerCase().includes(globalFilter.toLowerCase())),
+                    );
                   return (
-                    <Accordion type="single" collapsible className="w-full mt-1" defaultValue={hasVariantMatch ? "skus" : undefined}>
+                    <Accordion
+                      type="single"
+                      collapsible
+                      className="w-full mt-1"
+                      defaultValue={hasVariantMatch ? "skus" : undefined}
+                    >
                       <AccordionItem value="skus" className="border-none">
                         <AccordionTrigger className="py-0.5 hover:no-underline text-[10px] text-muted-foreground uppercase font-semibold h-auto">
                           <div className="flex items-center gap-2">
@@ -436,39 +440,46 @@ export default function ProductsPage() {
                         </AccordionTrigger>
                         <AccordionContent className="pb-0 pt-1.5">
                           <div className="flex flex-col gap-1.5 border-t border-border/50 pt-2">
-                        {row.original.variants.map((v: any) => (
-                          <div key={v.id} className="flex justify-between items-center text-[10px] bg-muted/40 px-2 py-1.5 rounded-md">
-                            <span className="truncate max-w-[100px] text-foreground font-medium" title={v.name}>
-                              <HighlightText text={v.name} highlight={globalFilter} />
-                            </span>
-                            <div className="flex items-center gap-2 text-right">
-                              {v.sku ? (
-                                <span className="font-mono text-muted-foreground text-[9px] bg-background px-1 rounded border">
-                                  SKU: <HighlightText text={v.sku} highlight={globalFilter} />
+                            {row.original.variants.map((v: any) => (
+                              <div
+                                key={v.id}
+                                className="flex justify-between items-center text-[10px] bg-muted/40 px-2 py-1.5 rounded-md"
+                              >
+                                <span className="truncate max-w-[100px] text-foreground font-medium" title={v.name}>
+                                  <HighlightText text={v.name} highlight={globalFilter} />
                                 </span>
-                              ) : null}
-                              {v.barcode ? (
-                                <span className="font-mono text-muted-foreground text-[9px] bg-background px-1 rounded border">
-                                  BARCODE: <HighlightText text={v.barcode} highlight={globalFilter} />
-                                </span>
-                              ) : null}
-                            </div>
+                                <div className="flex items-center gap-2 text-right">
+                                  {v.sku ? (
+                                    <span className="font-mono text-muted-foreground text-[9px] bg-background px-1 rounded border">
+                                      SKU: <HighlightText text={v.sku} highlight={globalFilter} />
+                                    </span>
+                                  ) : null}
+                                  {v.barcode ? (
+                                    <span className="font-mono text-muted-foreground text-[9px] bg-background px-1 rounded border">
+                                      BARCODE: <HighlightText text={v.barcode} highlight={globalFilter} />
+                                    </span>
+                                  ) : null}
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
                   );
                 })()
               ) : (
                 <div className="flex items-center gap-2 text-[10px] text-muted-foreground uppercase font-semibold mt-1">
                   {row.original.sku && (
-                    <span>SKU: <HighlightText text={row.original.sku} highlight={globalFilter} /></span>
+                    <span>
+                      SKU: <HighlightText text={row.original.sku} highlight={globalFilter} />
+                    </span>
                   )}
                   {row.original.sku && row.original.barcode && <span>•</span>}
                   {row.original.barcode && (
-                    <span>Mã vạch: <HighlightText text={row.original.barcode} highlight={globalFilter} /></span>
+                    <span>
+                      Mã vạch: <HighlightText text={row.original.barcode} highlight={globalFilter} />
+                    </span>
                   )}
                   {!row.original.sku && !row.original.barcode && <span>N/A</span>}
                 </div>
@@ -518,14 +529,14 @@ export default function ProductsPage() {
           variants.length > 0
             ? variants.reduce((sum: number, v: any) => sum + (parseInt(v.stock, 10) || 0), 0)
             : parseInt(row.getValue("stock"));
-            
+
         if (variants.length > 0) {
           return (
             <Accordion type="single" collapsible className="w-full min-w-[160px] max-w-[200px]">
               <AccordionItem value="stock" className="border-none">
                 <AccordionTrigger className="py-1 hover:no-underline [&[data-state=open]>div>span:last-child]:text-primary/70">
                   <div className="flex items-center gap-2 text-left w-full">
-                    <span className={`font-bold text-sm ${stock <= 5 ? 'text-red-500' : 'text-primary'}`}>
+                    <span className={`font-bold text-sm ${stock <= 5 ? "text-red-500" : "text-primary"}`}>
                       {stock} <span className="text-[10px] font-medium text-muted-foreground ml-1">(Tổng)</span>
                     </span>
                     {stock <= 5 && <AlertTriangle className="w-3.5 h-3.5 text-red-500" />}
@@ -534,9 +545,21 @@ export default function ProductsPage() {
                 <AccordionContent className="pb-1 pt-0">
                   <div className="flex flex-col gap-1.5 border-t border-border/50 pt-2">
                     {variants.map((v: any) => (
-                      <div key={v.id} className="flex justify-between items-center text-[11px] leading-none gap-2 group">
-                        <span className="text-muted-foreground truncate max-w-[120px] group-hover:text-foreground transition-colors" title={v.name}>{v.name}</span>
-                        <span className={`font-bold ${parseInt(v.stock, 10) <= 5 ? 'text-red-500' : 'text-emerald-600'}`}>{v.stock || 0}</span>
+                      <div
+                        key={v.id}
+                        className="flex justify-between items-center text-[11px] leading-none gap-2 group"
+                      >
+                        <span
+                          className="text-muted-foreground truncate max-w-[120px] group-hover:text-foreground transition-colors"
+                          title={v.name}
+                        >
+                          {v.name}
+                        </span>
+                        <span
+                          className={`font-bold ${parseInt(v.stock, 10) <= 5 ? "text-red-500" : "text-emerald-600"}`}
+                        >
+                          {v.stock || 0}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -548,9 +571,7 @@ export default function ProductsPage() {
 
         return (
           <div className="flex items-center gap-2 min-w-[160px] py-2">
-            <span className={`font-bold text-sm ${stock <= 5 ? 'text-red-500' : ''}`}>
-              {stock}
-            </span>
+            <span className={`font-bold text-sm ${stock <= 5 ? "text-red-500" : ""}`}>{stock}</span>
             {stock <= 5 && <AlertTriangle className="w-3 h-3 text-red-500" />}
           </div>
         );
@@ -560,17 +581,17 @@ export default function ProductsPage() {
       id: "actions",
       cell: ({ row }) => (
         <div className="flex items-center justify-end gap-1">
-          <Button 
-            variant="ghost" 
-            size="icon-sm" 
+          <Button
+            variant="ghost"
+            size="icon-sm"
             onClick={() => setEditingProduct(row.original)}
             className="hover:bg-muted"
           >
             <Pencil className="w-4 h-4" />
           </Button>
-          <Button 
-            variant="ghost" 
-            size="icon-sm" 
+          <Button
+            variant="ghost"
+            size="icon-sm"
             onClick={() => setCopyingProduct(row.original)}
             className="hover:bg-muted text-muted-foreground"
             title="Sao chép sản phẩm"
@@ -578,7 +599,7 @@ export default function ProductsPage() {
             <Copy className="w-4 h-4" />
           </Button>
           <RequirePermission requiredPermission="products.barcode.print">
-            <BarcodePrintDialog 
+            <BarcodePrintDialog
               productName={row.original.name}
               sku={row.original.sku}
               barcode={row.original.barcode}
@@ -602,7 +623,10 @@ export default function ProductsPage() {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Hủy</AlertDialogCancel>
-                <AlertDialogAction onClick={() => handleDelete(row.original.id)} className="bg-destructive hover:bg-destructive/90">
+                <AlertDialogAction
+                  onClick={() => handleDelete(row.original.id)}
+                  className="bg-destructive hover:bg-destructive/90"
+                >
                   Xác nhận xóa
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -636,14 +660,8 @@ export default function ProductsPage() {
           <p className="text-muted-foreground text-sm">Quản lý danh mục sản phẩm và tồn kho của bạn.</p>
         </div>
         <div className="flex flex-wrap items-end justify-end gap-2 lg:w-fit">
-          <input 
-            type="file" 
-            ref={fileInputRef}
-            className="hidden" 
-            accept=".csv"
-            onChange={handleImport}
-          />
-          
+          <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleImport} />
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
@@ -665,11 +683,7 @@ export default function ProductsPage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => exportToCSV(data, 'danh_sach_san_pham')}
-          >
+          <Button variant="outline" size="sm" onClick={() => exportToCSV(data, "danh_sach_san_pham")}>
             <FileDown className="mr-2 h-4 w-4 text-blue-600" />
             Xuất CSV
           </Button>
@@ -718,15 +732,22 @@ export default function ProductsPage() {
             className="pl-10 h-9"
           />
         </div>
-        <Button 
-          variant={showFilters || selectedCategory !== "all" || selectedStockStatus !== "all" || selectedPriceRange !== "all" ? "default" : "outline"} 
+        <Button
+          variant={
+            showFilters || selectedCategory !== "all" || selectedStockStatus !== "all" || selectedPriceRange !== "all"
+              ? "default"
+              : "outline"
+          }
           size="sm"
           onClick={() => setShowFilters(!showFilters)}
         >
           <Filter className="mr-2 h-4 w-4" />
           Bộ lọc
           {(selectedCategory !== "all" || selectedStockStatus !== "all" || selectedPriceRange !== "all") && (
-            <Badge variant="secondary" className="ml-1.5 px-1 py-0.2 bg-background text-foreground text-[9px] rounded-full font-extrabold border-none">
+            <Badge
+              variant="secondary"
+              className="ml-1.5 px-1 py-0.2 bg-background text-foreground text-[9px] rounded-full font-extrabold border-none"
+            >
               !
             </Badge>
           )}
@@ -746,7 +767,9 @@ export default function ProductsPage() {
             >
               <option value="all">Tất cả danh mục</option>
               {categories.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
               ))}
             </select>
           </div>
@@ -829,9 +852,7 @@ export default function ProductsPage() {
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
+                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                   ))}
                 </TableRow>
               ))
@@ -850,49 +871,39 @@ export default function ProductsPage() {
       </div>
 
       <div className="flex items-center justify-end space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
+        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
           Trước
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
+        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
           Sau
         </Button>
       </div>
 
       {editingProduct && (
-        <EditProductDialog 
-          product={editingProduct} 
-          open={!!editingProduct} 
+        <EditProductDialog
+          product={editingProduct}
+          open={!!editingProduct}
           onOpenChange={(open) => {
             if (!open) setEditingProduct(null);
-          }} 
+          }}
           onSuccess={() => {
             setEditingProduct(null);
             loadProducts();
-          }} 
+          }}
         />
       )}
 
       {copyingProduct && (
-        <EditProductDialog 
-          product={copyingProduct} 
-          open={!!copyingProduct} 
+        <EditProductDialog
+          product={copyingProduct}
+          open={!!copyingProduct}
           onOpenChange={(open) => {
             if (!open) setCopyingProduct(null);
-          }} 
+          }}
           onSuccess={() => {
             setCopyingProduct(null);
             loadProducts();
-          }} 
+          }}
           mode="copy"
         />
       )}

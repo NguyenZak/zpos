@@ -63,7 +63,14 @@ function formatVND(n: number) {
   return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n);
 }
 
-export function VariantPickerDialog({ product, open, onOpenChange, onConfirm, onConfirmAll, allowOutOfStock = false }: VariantPickerDialogProps) {
+export function VariantPickerDialog({
+  product,
+  open,
+  onOpenChange,
+  onConfirm,
+  onConfirmAll,
+  allowOutOfStock = false,
+}: VariantPickerDialogProps) {
   const rawVariants: any[] = useMemo(
     () => (product && Array.isArray(product.variants) ? product.variants : []),
     [product],
@@ -118,8 +125,8 @@ export function VariantPickerDialog({ product, open, onOpenChange, onConfirm, on
   const handleConfirmAll = () => {
     if (!product || !onConfirmAll) return;
     const variantsToReturn: PickedVariant[] = rawVariants
-      .filter(v => allowOutOfStock || Number(v.stock ?? 0) > 0)
-      .map(v => ({
+      .filter((v) => allowOutOfStock || Number(v.stock ?? 0) > 0)
+      .map((v) => ({
         id: v.id,
         name: v.name || "",
         sku: v.sku || null,
@@ -204,7 +211,9 @@ export function VariantPickerDialog({ product, open, onOpenChange, onConfirm, on
                   )}
                   <div>
                     <p className="text-xs font-bold uppercase text-muted-foreground/80">Phiên bản</p>
-                    <p className="mt-0.5 font-bold text-foreground">{matchedVariant.name || Object.values(selection).join(" / ")}</p>
+                    <p className="mt-0.5 font-bold text-foreground">
+                      {matchedVariant.name || Object.values(selection).join(" / ")}
+                    </p>
                     {matchedVariant.sku && (
                       <p className="mt-0.5 font-mono text-xs text-muted-foreground">SKU: {matchedVariant.sku}</p>
                     )}
@@ -214,11 +223,7 @@ export function VariantPickerDialog({ product, open, onOpenChange, onConfirm, on
                   <p className="text-lg font-bold text-primary">{formatVND(matchedPrice)}</p>
                   <p
                     className={`mt-0.5 text-xs font-semibold ${
-                      matchedStock <= 0
-                        ? "text-red-500"
-                        : matchedStock <= 5
-                          ? "text-amber-500"
-                          : "text-green-600"
+                      matchedStock <= 0 ? "text-red-500" : matchedStock <= 5 ? "text-amber-500" : "text-green-600"
                     }`}
                   >
                     {matchedStock > 0 ? `Còn ${matchedStock} SP` : "Hết hàng"}

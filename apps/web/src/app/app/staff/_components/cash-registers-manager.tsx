@@ -9,11 +9,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -159,18 +170,30 @@ export function CashRegistersManager() {
         <CardHeader>
           <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2"><MonitorCog className="size-5 text-primary" /> Máy thu ngân</CardTitle>
-              <CardDescription>Quản lý quầy thu ngân theo chi nhánh. Mỗi máy có thể mở ca riêng để theo dõi tiền.</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <MonitorCog className="size-5 text-primary" /> Máy thu ngân
+              </CardTitle>
+              <CardDescription>
+                Quản lý quầy thu ngân theo chi nhánh. Mỗi máy có thể mở ca riêng để theo dõi tiền.
+              </CardDescription>
             </div>
             <div className="flex flex-wrap items-end gap-2">
               <div className="space-y-1">
                 <Label className="text-xs">Chi nhánh</Label>
                 <Select value={filterBranchId} onValueChange={setFilterBranchId}>
-                  <SelectTrigger className="w-56"><SelectValue placeholder="Chọn chi nhánh" /></SelectTrigger>
+                  <SelectTrigger className="w-56">
+                    <SelectValue placeholder="Chọn chi nhánh" />
+                  </SelectTrigger>
                   <SelectContent>
-                    {branches.length === 0 && <SelectItem value="__none__" disabled>Chưa có chi nhánh</SelectItem>}
+                    {branches.length === 0 && (
+                      <SelectItem value="__none__" disabled>
+                        Chưa có chi nhánh
+                      </SelectItem>
+                    )}
                     {branches.map((b) => (
-                      <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                      <SelectItem key={b.id} value={b.id}>
+                        {b.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -218,11 +241,21 @@ export function CashRegistersManager() {
                     <TableRow key={r.id}>
                       <TableCell className="font-medium">{r.name}</TableCell>
                       <TableCell className="font-mono text-xs">{r.code || "—"}</TableCell>
-                      <TableCell className="text-sm">{r.branch?.name || branches.find((b) => b.id === r.branch_id)?.name || "—"}</TableCell>
-                      <TableCell><Badge className={meta.className} variant="secondary">{meta.label}</Badge></TableCell>
+                      <TableCell className="text-sm">
+                        {r.branch?.name || branches.find((b) => b.id === r.branch_id)?.name || "—"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={meta.className} variant="secondary">
+                          {meta.label}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(r)}><Edit2 className="size-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => setDeleteId(r.id)}><Trash2 className="size-4 text-rose-600" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(r)}>
+                          <Edit2 className="size-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => setDeleteId(r.id)}>
+                          <Trash2 className="size-4 text-rose-600" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   );
@@ -237,32 +270,51 @@ export function CashRegistersManager() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editing ? "Sửa máy thu ngân" : "Thêm máy thu ngân"}</DialogTitle>
-            <DialogDescription>Máy thu ngân thuộc về 1 chi nhánh và là điểm mở ca cho thu ngân đứng quầy.</DialogDescription>
+            <DialogDescription>
+              Máy thu ngân thuộc về 1 chi nhánh và là điểm mở ca cho thu ngân đứng quầy.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-1">
               <Label>Chi nhánh</Label>
               <Select value={form.branch_id} onValueChange={(v) => setForm({ ...form, branch_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Chọn chi nhánh" /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn chi nhánh" />
+                </SelectTrigger>
                 <SelectContent>
                   {branches.map((b) => (
-                    <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                    <SelectItem key={b.id} value={b.id}>
+                      {b.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
               <Label>Tên máy</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="VD: Quầy 1" />
+              <Input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="VD: Quầy 1"
+              />
             </div>
             <div className="space-y-1">
               <Label>Mã (tuỳ chọn)</Label>
-              <Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="CR-01" />
+              <Input
+                value={form.code}
+                onChange={(e) => setForm({ ...form, code: e.target.value })}
+                placeholder="CR-01"
+              />
             </div>
             <div className="space-y-1">
               <Label>Trạng thái</Label>
-              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as CashRegister["status"] })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={form.status}
+                onValueChange={(v) => setForm({ ...form, status: v as CashRegister["status"] })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="active">Hoạt động</SelectItem>
                   <SelectItem value="inactive">Tạm tắt</SelectItem>
@@ -272,8 +324,12 @@ export function CashRegistersManager() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>Huỷ</Button>
-            <Button onClick={submit} disabled={saving}>{saving ? "Đang lưu..." : "Lưu"}</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>
+              Huỷ
+            </Button>
+            <Button onClick={submit} disabled={saving}>
+              {saving ? "Đang lưu..." : "Lưu"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -283,12 +339,15 @@ export function CashRegistersManager() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xoá máy thu ngân?</AlertDialogTitle>
             <AlertDialogDescription>
-              Hành động này không thể hoàn tác. Các ca đã đóng vẫn được giữ trong lịch sử nhưng tham chiếu máy sẽ bị xoá.
+              Hành động này không thể hoàn tác. Các ca đã đóng vẫn được giữ trong lịch sử nhưng tham chiếu máy sẽ bị
+              xoá.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Huỷ</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-rose-600 hover:bg-rose-700">Xoá</AlertDialogAction>
+            <AlertDialogAction onClick={confirmDelete} className="bg-rose-600 hover:bg-rose-700">
+              Xoá
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

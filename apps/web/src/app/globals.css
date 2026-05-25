@@ -3,96 +3,96 @@
 @import "shadcn/tailwind.css";
 
 @font-face {
-  font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-Regular.otf') format('opentype');
+  font-family: "Aeonik Pro";
+  src: url("/fonts/aeonik-pro/Aeonik/Aeonik-Regular.otf") format("opentype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-RegularItalic.otf') format('opentype');
+  font-family: "Aeonik Pro";
+  src: url("/fonts/aeonik-pro/Aeonik/Aeonik-RegularItalic.otf") format("opentype");
   font-weight: 400;
   font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-Medium.otf') format('opentype');
+  font-family: "Aeonik Pro";
+  src: url("/fonts/aeonik-pro/Aeonik/Aeonik-Medium.otf") format("opentype");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-MediumItalic.otf') format('opentype');
+  font-family: "Aeonik Pro";
+  src: url("/fonts/aeonik-pro/Aeonik/Aeonik-MediumItalic.otf") format("opentype");
   font-weight: 500;
   font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-Bold.otf') format('opentype');
+  font-family: "Aeonik Pro";
+  src: url("/fonts/aeonik-pro/Aeonik/Aeonik-Bold.otf") format("opentype");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-BoldItalic.otf') format('opentype');
+  font-family: "Aeonik Pro";
+  src: url("/fonts/aeonik-pro/Aeonik/Aeonik-BoldItalic.otf") format("opentype");
   font-weight: 700;
   font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-Light.otf') format('opentype');
+  font-family: "Aeonik Pro";
+  src: url("/fonts/aeonik-pro/Aeonik/Aeonik-Light.otf") format("opentype");
   font-weight: 300;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-LightItalic.otf') format('opentype');
+  font-family: "Aeonik Pro";
+  src: url("/fonts/aeonik-pro/Aeonik/Aeonik-LightItalic.otf") format("opentype");
   font-weight: 300;
   font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-Thin.otf') format('opentype');
+  font-family: "Aeonik Pro";
+  src: url("/fonts/aeonik-pro/Aeonik/Aeonik-Thin.otf") format("opentype");
   font-weight: 200;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-ThinItalic.otf') format('opentype');
+  font-family: "Aeonik Pro";
+  src: url("/fonts/aeonik-pro/Aeonik/Aeonik-ThinItalic.otf") format("opentype");
   font-weight: 200;
   font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-Black.otf') format('opentype');
+  font-family: "Aeonik Pro";
+  src: url("/fonts/aeonik-pro/Aeonik/Aeonik-Black.otf") format("opentype");
   font-weight: 900;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Aeonik Pro';
-  src: url('/fonts/aeonik-pro/Aeonik/Aeonik-BlackItalic.otf') format('opentype');
+  font-family: "Aeonik Pro";
+  src: url("/fonts/aeonik-pro/Aeonik/Aeonik-BlackItalic.otf") format("opentype");
   font-weight: 900;
   font-style: italic;
   font-display: swap;
@@ -164,7 +164,7 @@
   --color-ash-code: var(--color-ash-code);
   --color-clean-white-gradient: var(--color-clean-white-gradient);
   --color-deep-blue-gradient: var(--color-deep-blue-gradient);
-  
+
   --font-inter: var(--font-inter);
   --font-aeonik-pro: var(--font-aeonik-pro);
   --font-geist-mono: var(--font-geist-mono);
@@ -189,12 +189,32 @@ These serve as the fallback; there is no separate default.css file. */
   --color-clean-white-gradient: #f7f7f7;
   --gradient-clean-white-gradient: linear-gradient(155deg, rgb(247, 247, 247) 26.97%, rgb(214, 214, 214) 69.83%);
   --color-deep-blue-gradient: #0f071d;
-  --gradient-deep-blue-gradient: linear-gradient(0deg, rgb(255, 255, 255), rgb(230, 244, 247) 6.29%, rgb(128, 191, 239) 15.02%, rgb(68, 164, 233) 19.39%, rgb(48, 157, 231), rgb(16, 150, 229) 21.57%, color(xyz-d65 0.241 0.261 0.773), color(xyz-d65 0.23 0.248 0.764) 22.66%, color(xyz-d65 0.21 0.222 0.745) 23.75%, color(xyz-d65 0.188 0.157 0.764) 33.2%, color(xyz-d65 0.178 0.128 0.772), rgb(16, 70, 233) 42.64%, rgb(6, 29, 182) 53.09%, rgb(7, 11, 107) 66.19%, rgb(19, 2, 58) 75.33%, rgb(15, 7, 29) 86.09%, rgb(15, 7, 29));
+  --gradient-deep-blue-gradient: linear-gradient(
+    0deg,
+    rgb(255, 255, 255),
+    rgb(230, 244, 247) 6.29%,
+    rgb(128, 191, 239) 15.02%,
+    rgb(68, 164, 233) 19.39%,
+    rgb(48, 157, 231),
+    rgb(16, 150, 229) 21.57%,
+    color(xyz-d65 0.241 0.261 0.773),
+    color(xyz-d65 0.23 0.248 0.764) 22.66%,
+    color(xyz-d65 0.21 0.222 0.745) 23.75%,
+    color(xyz-d65 0.188 0.157 0.764) 33.2%,
+    color(xyz-d65 0.178 0.128 0.772),
+    rgb(16, 70, 233) 42.64%,
+    rgb(6, 29, 182) 53.09%,
+    rgb(7, 11, 107) 66.19%,
+    rgb(19, 2, 58) 75.33%,
+    rgb(15, 7, 29) 86.09%,
+    rgb(15, 7, 29)
+  );
 
   /* Typography — Font Families */
-  --font-inter: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-aeonik-pro: 'Aeonik Pro', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-geist-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-inter: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-aeonik-pro:
+    "Aeonik Pro", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-geist-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   --radius: 0.375rem;
   --card: oklch(1 0 0);
@@ -277,6 +297,7 @@ These serve as the fallback; there is no separate default.css file. */
     @apply bg-background text-foreground;
     font-family: var(--font-sans), system-ui, sans-serif;
   }
+
   html {
     @apply font-sans;
   }
@@ -318,57 +339,75 @@ These serve as the fallback; there is no separate default.css file. */
   html[data-font="inter"] body {
     --font-sans: var(--font-inter);
   }
+
   html[data-font="notoSans"] body {
     --font-sans: var(--font-noto-sans);
   }
+
   html[data-font="nunitoSans"] body {
     --font-sans: var(--font-nunito-sans);
   }
+
   html[data-font="figtree"] body {
     --font-sans: var(--font-figtree);
   }
+
   html[data-font="roboto"] body {
     --font-sans: var(--font-roboto);
   }
+
   html[data-font="geist"] body {
     --font-sans: var(--font-geist);
   }
+
   html[data-font="raleway"] body {
     --font-sans: var(--font-raleway);
   }
+
   html[data-font="dmSans"] body {
     --font-sans: var(--font-dm-sans);
   }
+
   html[data-font="plusJakartaSans"] body {
     --font-sans: var(--font-plus-jakarta-sans);
   }
+
   html[data-font="publicSans"] body {
     --font-sans: var(--font-public-sans);
   }
+
   html[data-font="outfit"] body {
     --font-sans: var(--font-outfit);
   }
+
   html[data-font="geistMono"] body {
     --font-sans: var(--font-geist-mono);
   }
+
   html[data-font="geistPixelSquare"] body {
     --font-sans: var(--font-geist-pixel-square);
   }
+
   html[data-font="jetBrainsMono"] body {
     --font-sans: var(--font-jetbrains-mono);
   }
+
   html[data-font="notoSerif"] body {
     --font-sans: var(--font-noto-serif);
   }
+
   html[data-font="robotoSlab"] body {
     --font-sans: var(--font-roboto-slab);
   }
+
   html[data-font="merriweather"] body {
     --font-sans: var(--font-merriweather);
   }
+
   html[data-font="lora"] body {
     --font-sans: var(--font-lora);
   }
+
   html[data-font="playfairDisplay"] body {
     --font-sans: var(--font-playfair-display);
   }
@@ -462,16 +501,16 @@ html {
   color: #ffffff !important;
   font-weight: 600;
   border-radius: 9999px;
-  box-shadow: 
-    0 1px 2px -.5px rgba(255, 255, 255, 0.12) inset,
-    0 .5px .5px rgba(255, 255, 255, 0.16) inset,
+  box-shadow:
+    0 1px 2px -0.5px rgba(255, 255, 255, 0.12) inset,
+    0 0.5px 0.5px rgba(255, 255, 255, 0.16) inset,
     0 8px 24px -4px rgba(255, 255, 255, 0.16) inset,
     0 8px 8px -3px rgba(9, 1, 20, 0.03),
     0 5px 5px -2.5px rgba(9, 1, 20, 0.03),
     0 3px 3px -1.5px rgba(8, 1, 20, 0.03),
     0 2px 2px -1px rgba(8, 1, 20, 0.03),
-    0 1px 1px -.5px rgba(8, 1, 20, 0.03),
-    0 .5px .5px rgba(8, 1, 20, 0.03);
+    0 1px 1px -0.5px rgba(8, 1, 20, 0.03),
+    0 0.5px 0.5px rgba(8, 1, 20, 0.03);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
 }
@@ -479,26 +518,29 @@ html {
 .button-primary::before {
   content: "";
   background: linear-gradient(to bottom, #fff, rgba(255, 255, 255, 0.5));
-  opacity: .12;
+  opacity: 0.12;
   pointer-events: none;
   transition-property: all;
-  transition-timing-function: cubic-bezier(.6, .6, 0, 1);
-  transition-duration: .45s;
+  transition-timing-function: cubic-bezier(0.6, 0.6, 0, 1);
+  transition-duration: 0.45s;
   position: absolute;
-  top: 0; right: 0; bottom: 0; left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   border-radius: inherit;
   z-index: 1;
 }
 
 .button-primary:hover::before {
-  opacity: .24;
+  opacity: 0.24;
 }
 
 .button-primary:active {
   transform: scale(0.98);
-  box-shadow: 
-    0 1px 2px -.5px rgba(0, 27, 135, 0.16) inset,
-    0 .5px .5px rgba(0, 28, 136, 0.16) inset,
+  box-shadow:
+    0 1px 2px -0.5px rgba(0, 27, 135, 0.16) inset,
+    0 0.5px 0.5px rgba(0, 28, 136, 0.16) inset,
     0 8px 24px -4px rgba(0, 28, 136, 0.16) inset,
     0 8px 8px -3px rgba(9, 1, 20, 0.03),
     0 5px 5px -2.5px rgba(9, 1, 20, 0.03),
@@ -507,7 +549,7 @@ html {
 }
 
 .button-primary:active::before {
-  opacity: .06;
+  opacity: 0.06;
 }
 
 .button-light {
@@ -519,35 +561,35 @@ html {
   color: #141414 !important;
   font-weight: 600;
   border-radius: 9999px;
-  box-shadow: 
+  box-shadow:
     0 8px 8px -3px rgba(0, 0, 0, 0.04),
     0 3px 3px -1.5px rgba(0, 0, 0, 0.04),
     0 2px 2px -1px rgba(0, 0, 0, 0.03),
-    0 1px 1px -.5px rgba(0, 0, 0, 0.03),
-    0 .5px .5px rgba(0, 0, 0, 0.03),
+    0 1px 1px -0.5px rgba(0, 0, 0, 0.03),
+    0 0.5px 0.5px rgba(0, 0, 0, 0.03),
     0 0 0 1px rgba(0, 0, 0, 0.04);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .button-light:hover {
-  box-shadow: 
+  box-shadow:
     0 16px 16px -8px rgba(0, 0, 0, 0.08),
     0 3px 3px -1.5px rgba(0, 0, 0, 0.04),
     0 2px 2px -1px rgba(0, 0, 0, 0.03),
-    0 1px 1px -.5px rgba(0, 0, 0, 0.03),
-    0 .5px .5px rgba(0, 0, 0, 0.03),
+    0 1px 1px -0.5px rgba(0, 0, 0, 0.03),
+    0 0.5px 0.5px rgba(0, 0, 0, 0.03),
     0 0 0 1px rgba(0, 0, 0, 0.04);
   transform: translateY(-1px);
 }
 
 .button-light:active {
   transform: translateY(1px) scale(0.99);
-  box-shadow: 
+  box-shadow:
     0 8px 8px -3px rgba(0, 0, 0, 0.02),
     0 3px 3px -1.5px rgba(0, 0, 0, 0.02),
     0 2px 2px -1px rgba(0, 0, 0, 0.02),
-    0 1px 1px -.5px rgba(0, 0, 0, 0.02),
-    0 .5px .5px rgba(0, 0, 0, 0.03),
+    0 1px 1px -0.5px rgba(0, 0, 0, 0.02),
+    0 0.5px 0.5px rgba(0, 0, 0, 0.03),
     0 0 0 1px rgba(0, 0, 0, 0.03);
 }
 
@@ -560,15 +602,15 @@ html {
   color: #ffffff !important;
   font-weight: 600;
   border-radius: 9999px;
-  box-shadow: 
+  box-shadow:
     0 -4px 12px -4px rgba(255, 255, 255, 0.08) inset,
     0 1px 3px rgba(255, 255, 255, 0.06) inset,
-    0 .5px .5px rgba(255, 255, 255, 0.12) inset,
+    0 0.5px 0.5px rgba(255, 255, 255, 0.12) inset,
     0 8px 8px -3px rgba(9, 1, 20, 0.06),
     0 3px 3px -1.5px rgba(9, 1, 20, 0.06),
     0 2px 2px -1px rgba(8, 1, 20, 0.04),
-    0 1px 1px -.5px rgba(8, 1, 20, 0.03),
-    0 .5px .5px rgba(8, 1, 20, 0.03);
+    0 1px 1px -0.5px rgba(8, 1, 20, 0.03),
+    0 0.5px 0.5px rgba(8, 1, 20, 0.03);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -576,10 +618,13 @@ html {
 .button-dark::after {
   content: "";
   transition-property: all;
-  transition-timing-function: cubic-bezier(.6, .6, 0, 1);
-  transition-duration: .2s;
+  transition-timing-function: cubic-bezier(0.6, 0.6, 0, 1);
+  transition-duration: 0.2s;
   position: absolute;
-  top: 0; right: 0; bottom: 0; left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   border-radius: inherit;
   pointer-events: none;
 }
@@ -603,10 +648,10 @@ html {
 .button-dark:active {
   background-color: rgba(255, 255, 255, 0.02);
   transform: translateY(1px) scale(0.99);
-  box-shadow: 
+  box-shadow:
     0 4px 8px rgba(18, 7, 43, 0.16) inset,
     0 3px 6px rgba(18, 7, 43, 0.06) inset,
-    0 .5px .5px rgba(18, 7, 43, 0.12) inset,
+    0 0.5px 0.5px rgba(18, 7, 43, 0.12) inset,
     0 8px 8px -3px rgba(9, 1, 20, 0.06),
     0 3px 3px -1.5px rgba(9, 1, 20, 0.06),
     0 2px 2px -1px rgba(8, 1, 20, 0.04);
@@ -625,6 +670,7 @@ html {
   from {
     transform: translateX(0);
   }
+
   to {
     transform: translateX(-50%);
   }
@@ -647,6 +693,7 @@ html {
   0% {
     stroke-dashoffset: 0;
   }
+
   100% {
     stroke-dashoffset: -100;
   }
@@ -685,6 +732,7 @@ html {
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -702,9 +750,11 @@ html {
   0% {
     top: 5%;
   }
+
   50% {
     top: 95%;
   }
+
   100% {
     top: 5%;
   }
@@ -714,5 +764,3 @@ html {
   position: absolute;
   animation: scanner-laser 2.4s ease-in-out infinite;
 }
-
-

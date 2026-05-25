@@ -10,7 +10,9 @@ interface JsonLdProps {
  */
 export function JsonLd({ data }: JsonLdProps) {
   // Generate a deterministic ID based on content to prevent hydration mismatches
-  const contentHash = JSON.stringify(data).slice(0, 30).replace(/[^a-zA-Z0-9]/g, "");
+  const contentHash = JSON.stringify(data)
+    .slice(0, 30)
+    .replace(/[^a-zA-Z0-9]/g, "");
   const scriptId = `jsonld-${contentHash}`;
 
   return (
@@ -60,10 +62,10 @@ export function OrganizationJsonLd({ name, url, logo, sameAs, contactPoint }: Or
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: `${url}/search?q={search_term_string}`
+        urlTemplate: `${url}/search?q={search_term_string}`,
       },
-      "query-input": "required name=search_term_string"
-    }
+      "query-input": "required name=search_term_string",
+    },
   };
 
   return <JsonLd data={schema} />;
@@ -113,7 +115,7 @@ export function SoftwareApplicationJsonLd({
       ratingValue: ratingValue.toString(),
       ratingCount: ratingCount.toString(),
       bestRating: "5",
-      worstRating: "1"
+      worstRating: "1",
     },
   };
 

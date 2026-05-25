@@ -1,42 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { 
-  ArrowLeft, 
-  Plus, 
-  Trash2, 
-  Search, 
-  Truck, 
-  Package, 
-  Loader2,
-  Save,
-  CheckCircle
-} from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { ArrowLeft, Plus, Trash2, Search, Truck, Package, Loader2, Save, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle,
-  CardFooter
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { posService } from "@/services/pos.service";
@@ -44,7 +15,7 @@ import { toast } from "sonner";
 import { AddProductDialog } from "../../products/_components/add-product-dialog";
 import { VariantPickerDialog, PickedVariant } from "../../pos/_components/variant-picker-dialog";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from 'next/link';
+import Link from "next/link";
 
 export default function NewPurchasePage() {
   const router = useRouter();
@@ -74,7 +45,7 @@ export default function NewPurchasePage() {
   };
 
   // Summary
-  const subtotal = items.reduce((acc, item) => acc + (item.unit_cost * item.quantity), 0);
+  const subtotal = items.reduce((acc, item) => acc + item.unit_cost * item.quantity, 0);
   const [discount, setDiscount] = useState(0);
   const [shippingFee, setShippingFee] = useState(0);
   const totalAmount = subtotal - discount + shippingFee;
@@ -82,10 +53,7 @@ export default function NewPurchasePage() {
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        const [suppliersData, productsData] = await Promise.all([
-          posService.getSuppliers(),
-          posService.getProducts()
-        ]);
+        const [suppliersData, productsData] = await Promise.all([posService.getSuppliers(), posService.getProducts()]);
         // Only show active suppliers
         setSuppliers(suppliersData.filter((s: any) => s.is_active !== false));
         setProducts(productsData);
@@ -108,11 +76,11 @@ export default function NewPurchasePage() {
   const addItem = (product: any, variant?: PickedVariant) => {
     const variantId = variant?.id || null;
     const itemKey = variantId || product.id;
-    
-    setItems(prev => {
-      const existing = prev.find(i => i.item_key === itemKey);
+
+    setItems((prev) => {
+      const existing = prev.find((i) => i.item_key === itemKey);
       if (existing) {
-        return prev.map(item => {
+        return prev.map((item) => {
           if (item.item_key === itemKey) {
             const updated = { ...item, quantity: item.quantity + 1 };
             updated.total_amount = updated.unit_cost * updated.quantity;
@@ -121,29 +89,34 @@ export default function NewPurchasePage() {
           return item;
         });
       } else {
-        const unitCost = variant ? (variant.cost_price ?? variant.price * 0.7) : (product.cost_price ?? product.price * 0.7);
-        const qty = variant ? (variant.stock || 1) : (product.stock || 1);
-        return [...prev, {
-          item_key: itemKey,
-          product_id: product.id,
-          variant_id: variantId,
-          name: variant ? `${product.name} - ${variant.name}` : product.name,
-          sku: variant?.sku || product.sku || product.barcode,
-          quantity: qty,
-          unit_cost: unitCost,
-          total_amount: unitCost * qty
-        }];
+        const unitCost = variant
+          ? (variant.cost_price ?? variant.price * 0.7)
+          : (product.cost_price ?? product.price * 0.7);
+        const qty = variant ? variant.stock || 1 : product.stock || 1;
+        return [
+          ...prev,
+          {
+            item_key: itemKey,
+            product_id: product.id,
+            variant_id: variantId,
+            name: variant ? `${product.name} - ${variant.name}` : product.name,
+            sku: variant?.sku || product.sku || product.barcode,
+            quantity: qty,
+            unit_cost: unitCost,
+            total_amount: unitCost * qty,
+          },
+        ];
       }
     });
   };
 
   const addAllItems = (variants: PickedVariant[], product: any) => {
-    setItems(prev => {
+    setItems((prev) => {
       let newItems = [...prev];
-      variants.forEach(variant => {
+      variants.forEach((variant) => {
         const itemKey = variant.id;
-        const existingIndex = newItems.findIndex(i => i.item_key === itemKey);
-        
+        const existingIndex = newItems.findIndex((i) => i.item_key === itemKey);
+
         if (existingIndex >= 0) {
           const item = newItems[existingIndex];
           const updated = { ...item, quantity: item.quantity + 1 };
@@ -160,7 +133,7 @@ export default function NewPurchasePage() {
             sku: variant.sku || product.sku || product.barcode,
             quantity: qty,
             unit_cost: unitCost,
-            total_amount: unitCost * qty
+            total_amount: unitCost * qty,
           });
         }
       });
@@ -169,18 +142,20 @@ export default function NewPurchasePage() {
   };
 
   const updateItem = (itemKey: string, field: string, value: any) => {
-    setItems(items.map(item => {
-      if (item.item_key === itemKey) {
-        const updated = { ...item, [field]: value };
-        updated.total_amount = updated.unit_cost * updated.quantity;
-        return updated;
-      }
-      return item;
-    }));
+    setItems(
+      items.map((item) => {
+        if (item.item_key === itemKey) {
+          const updated = { ...item, [field]: value };
+          updated.total_amount = updated.unit_cost * updated.quantity;
+          return updated;
+        }
+        return item;
+      }),
+    );
   };
 
   const removeItem = (itemKey: string) => {
-    setItems(items.filter(i => i.item_key !== itemKey));
+    setItems(items.filter((i) => i.item_key !== itemKey));
   };
 
   const handleSubmit = async () => {
@@ -190,8 +165,8 @@ export default function NewPurchasePage() {
     setLoading(true);
     try {
       const orderData = {
-        organization_id: '00000000-0000-0000-0000-000000000000', // Mock for now
-        branch_id: '00000000-0000-0000-0000-000000000000',
+        organization_id: "00000000-0000-0000-0000-000000000000", // Mock for now
+        branch_id: "00000000-0000-0000-0000-000000000000",
         supplier_id: selectedSupplierId,
         code,
         status,
@@ -199,11 +174,11 @@ export default function NewPurchasePage() {
         discount_amount: discount,
         shipping_fee: shippingFee,
         total_amount: totalAmount,
-        note
+        note,
       };
 
       const purchase = await posService.createPurchaseOrder(orderData, items);
-      
+
       // If payment is made directly
       if (paidAmount > 0) {
         await posService.recordSupplierPayment(
@@ -211,12 +186,12 @@ export default function NewPurchasePage() {
           paidAmount,
           paymentMethod,
           [{ purchase_order_id: purchase.id, amount: paidAmount }],
-          { notes: paymentNote }
+          { notes: paymentNote },
         );
       }
 
       toast.success("Đã tạo đơn nhập hàng", {
-        description: `Mã đơn ${code} đã được lưu thành công.`
+        description: `Mã đơn ${code} đã được lưu thành công.`,
       });
       router.push("/app/purchases");
     } catch (error: any) {
@@ -236,7 +211,7 @@ export default function NewPurchasePage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
   };
 
   return (
@@ -267,9 +242,9 @@ export default function NewPurchasePage() {
               <div className="flex items-center gap-2 mb-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                  <Input 
-                    placeholder="Tìm sản phẩm để thêm vào đơn..." 
-                    className="pl-10 h-9" 
+                  <Input
+                    placeholder="Tìm sản phẩm để thêm vào đơn..."
+                    className="pl-10 h-9"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -280,13 +255,18 @@ export default function NewPurchasePage() {
               {/* Temporary product list for demo selection */}
               <div className="flex flex-wrap gap-2 mb-4">
                 {products
-                  .filter(p => p.name?.toLowerCase().includes(searchTerm.toLowerCase()) || p.sku?.toLowerCase().includes(searchTerm.toLowerCase()) || p.barcode?.toLowerCase().includes(searchTerm.toLowerCase()))
+                  .filter(
+                    (p) =>
+                      p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      p.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      p.barcode?.toLowerCase().includes(searchTerm.toLowerCase()),
+                  )
                   .slice(0, 8)
-                  .map(p => (
-                  <Button key={p.id} variant="secondary" size="sm" onClick={() => handleProductSelect(p)}>
-                    + {p.name}
-                  </Button>
-                ))}
+                  .map((p) => (
+                    <Button key={p.id} variant="secondary" size="sm" onClick={() => handleProductSelect(p)}>
+                      + {p.name}
+                    </Button>
+                  ))}
               </div>
 
               <div className="rounded-xl border overflow-hidden">
@@ -301,40 +281,47 @@ export default function NewPurchasePage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {items.length > 0 ? items.map((item) => (
-                      <TableRow key={item.item_key}>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-medium text-sm">{item.name}</span>
-                            <span className="text-[10px] text-muted-foreground">{item.sku}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Input 
-                            type="number" 
-                            className="h-8 w-20" 
-                            value={item.quantity}
-                            onChange={(e) => updateItem(item.item_key, 'quantity', parseInt(e.target.value) || 0)}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input 
-                            type="text" 
-                            className="h-8" 
-                            value={formatCurrencyValue(item.unit_cost)}
-                            onChange={(e) => updateItem(item.item_key, 'unit_cost', parseCurrencyValue(e.target.value))}
-                          />
-                        </TableCell>
-                        <TableCell className="text-right font-bold">
-                          {formatCurrency(item.total_amount)}
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeItem(item.item_key)}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    )) : (
+                    {items.length > 0 ? (
+                      items.map((item) => (
+                        <TableRow key={item.item_key}>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-medium text-sm">{item.name}</span>
+                              <span className="text-[10px] text-muted-foreground">{item.sku}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              className="h-8 w-20"
+                              value={item.quantity}
+                              onChange={(e) => updateItem(item.item_key, "quantity", parseInt(e.target.value) || 0)}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="text"
+                              className="h-8"
+                              value={formatCurrencyValue(item.unit_cost)}
+                              onChange={(e) =>
+                                updateItem(item.item_key, "unit_cost", parseCurrencyValue(e.target.value))
+                              }
+                            />
+                          </TableCell>
+                          <TableCell className="text-right font-bold">{formatCurrency(item.total_amount)}</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive"
+                              onClick={() => removeItem(item.item_key)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
                       <TableRow>
                         <TableCell colSpan={5} className="h-24 text-center text-muted-foreground text-sm italic">
                           Chưa có sản phẩm nào được chọn.
@@ -352,8 +339,8 @@ export default function NewPurchasePage() {
               <CardTitle className="text-lg">Ghi chú & Thông tin thêm</CardTitle>
             </CardHeader>
             <CardContent>
-              <Textarea 
-                placeholder="Nhập ghi chú cho đơn hàng này (VD: Thời gian giao hàng, ghi chú về chất lượng...)" 
+              <Textarea
+                placeholder="Nhập ghi chú cho đơn hàng này (VD: Thời gian giao hàng, ghi chú về chất lượng...)"
                 className="min-h-[100px] resize-none"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
@@ -382,8 +369,10 @@ export default function NewPurchasePage() {
                     <SelectValue placeholder="Chọn nhà cung cấp" />
                   </SelectTrigger>
                   <SelectContent>
-                    {suppliers.map(s => (
-                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    {suppliers.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -416,20 +405,20 @@ export default function NewPurchasePage() {
               </div>
               <div className="flex justify-between text-sm items-center">
                 <span className="text-muted-foreground">Chiết khấu</span>
-                <Input 
-                  type="text" 
-                  className="h-7 w-24 text-right font-bold text-red-500" 
-                  value={formatCurrencyValue(discount)} 
-                  onChange={(e) => setDiscount(parseCurrencyValue(e.target.value))} 
+                <Input
+                  type="text"
+                  className="h-7 w-24 text-right font-bold text-red-500"
+                  value={formatCurrencyValue(discount)}
+                  onChange={(e) => setDiscount(parseCurrencyValue(e.target.value))}
                 />
               </div>
               <div className="flex justify-between text-sm items-center">
                 <span className="text-muted-foreground">Phí vận chuyển</span>
-                <Input 
-                  type="text" 
-                  className="h-7 w-24 text-right font-bold" 
-                  value={formatCurrencyValue(shippingFee)} 
-                  onChange={(e) => setShippingFee(parseCurrencyValue(e.target.value))} 
+                <Input
+                  type="text"
+                  className="h-7 w-24 text-right font-bold"
+                  value={formatCurrencyValue(shippingFee)}
+                  onChange={(e) => setShippingFee(parseCurrencyValue(e.target.value))}
                 />
               </div>
               <div className="h-px bg-primary/20 my-2" />
@@ -440,11 +429,11 @@ export default function NewPurchasePage() {
               <div className="h-px bg-primary/20 my-2" />
               <div className="flex justify-between text-sm items-center">
                 <span className="text-muted-foreground">Thanh toán NCC</span>
-                <Input 
-                  type="text" 
-                  className="h-7 w-28 text-right font-bold text-green-600" 
-                  value={formatCurrencyValue(paidAmount)} 
-                  onChange={(e) => setPaidAmount(parseCurrencyValue(e.target.value))} 
+                <Input
+                  type="text"
+                  className="h-7 w-28 text-right font-bold text-green-600"
+                  value={formatCurrencyValue(paidAmount)}
+                  onChange={(e) => setPaidAmount(parseCurrencyValue(e.target.value))}
                 />
               </div>
               {paidAmount > 0 && (
@@ -460,15 +449,17 @@ export default function NewPurchasePage() {
                       <SelectItem value="other">Khác</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Input 
-                    placeholder="Ghi chú thanh toán..." 
+                  <Input
+                    placeholder="Ghi chú thanh toán..."
                     className="h-8 text-xs"
                     value={paymentNote}
                     onChange={(e) => setPaymentNote(e.target.value)}
                   />
                   <div className="flex justify-between text-sm mt-1">
                     <span className="text-muted-foreground">Còn nợ</span>
-                    <span className="text-destructive font-bold">{formatCurrency(Math.max(totalAmount - paidAmount, 0))}</span>
+                    <span className="text-destructive font-bold">
+                      {formatCurrency(Math.max(totalAmount - paidAmount, 0))}
+                    </span>
                   </div>
                 </div>
               )}
@@ -478,7 +469,12 @@ export default function NewPurchasePage() {
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 Lưu đơn hàng
               </Button>
-              <Button variant="outline" className="w-full" disabled={loading} onClick={() => router.push("/app/purchases")}>
+              <Button
+                variant="outline"
+                className="w-full"
+                disabled={loading}
+                onClick={() => router.push("/app/purchases")}
+              >
                 Hủy bỏ
               </Button>
             </CardFooter>
@@ -486,10 +482,10 @@ export default function NewPurchasePage() {
         </div>
       </div>
 
-      <VariantPickerDialog 
-        product={selectedProduct} 
-        open={isVariantPickerOpen} 
-        onOpenChange={setIsVariantPickerOpen} 
+      <VariantPickerDialog
+        product={selectedProduct}
+        open={isVariantPickerOpen}
+        onOpenChange={setIsVariantPickerOpen}
         onConfirm={(variant) => addItem(selectedProduct, variant)}
         onConfirmAll={(variants) => addAllItems(variants, selectedProduct)}
         allowOutOfStock={true}

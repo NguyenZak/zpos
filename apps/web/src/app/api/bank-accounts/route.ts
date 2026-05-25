@@ -46,11 +46,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const tenantId = String(body.tenant_id || "");
     const accountNo = String(body.account_no || "").replace(/\s+/g, "");
-    const accountName = String(body.account_name || "").toUpperCase().trim();
+    const accountName = String(body.account_name || "")
+      .toUpperCase()
+      .trim();
 
     if (!tenantId || tenantId === EMPTY_UUID) {
       return NextResponse.json(
-        { success: false, error: "Không xác định được tenant hiện tại. Hãy đăng nhập lại hoặc vào đúng subdomain cửa hàng." },
+        {
+          success: false,
+          error: "Không xác định được tenant hiện tại. Hãy đăng nhập lại hoặc vào đúng subdomain cửa hàng.",
+        },
         { status: 400 },
       );
     }
@@ -67,8 +72,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     const role = String(membership?.role || "").toLowerCase();
-    const canManageBankAccount =
-      isSuperAdminEmail(user.email) || ["owner", "admin", "manager"].includes(role);
+    const canManageBankAccount = isSuperAdminEmail(user.email) || ["owner", "admin", "manager"].includes(role);
 
     if (membershipError || !canManageBankAccount) {
       return NextResponse.json(

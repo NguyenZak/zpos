@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { posService } from "@/services/pos.service";
 import { Loader2, Printer, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,22 +8,17 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { BarcodePrintDialog } from "../_components/barcode-print-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import Link from 'next/link';
+import Link from "next/link";
 import { BarcodeBulkPrintTable } from "../_components/barcode-bulk-print-table";
 import { RequirePermission } from "@/components/auth/require-permission";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export default function BarcodesPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProducts, setSelectedProducts] = useState<Record<string, number>>({});
-  
+
   useEffect(() => {
     loadProducts();
   }, []);
@@ -40,25 +35,26 @@ export default function BarcodesPage() {
     }
   };
 
-  const filteredProducts = products.filter(product => {
+  const filteredProducts = products.filter((product) => {
     const search = searchTerm.toLowerCase();
     if (product.name.toLowerCase().includes(search)) return true;
     if (product.barcode && product.barcode.toLowerCase().includes(search)) return true;
     if (product.sku && product.sku.toLowerCase().includes(search)) return true;
-    
+
     // Check if any variant matches
     if (product.variants && Array.isArray(product.variants)) {
-      return product.variants.some((v: any) => 
-        (v.name && v.name.toLowerCase().includes(search)) ||
-        (v.barcode && v.barcode.toLowerCase().includes(search)) ||
-        (v.sku && v.sku.toLowerCase().includes(search))
+      return product.variants.some(
+        (v: any) =>
+          (v.name && v.name.toLowerCase().includes(search)) ||
+          (v.barcode && v.barcode.toLowerCase().includes(search)) ||
+          (v.sku && v.sku.toLowerCase().includes(search)),
       );
     }
     return false;
   });
 
   const toggleSelect = (product: any) => {
-    setSelectedProducts(prev => {
+    setSelectedProducts((prev) => {
       const next = { ...prev };
       if (next[product.id]) {
         delete next[product.id];
@@ -80,10 +76,10 @@ export default function BarcodesPage() {
         </div>
         <div className="flex flex-wrap items-end justify-end gap-2 lg:w-fit">
           <Button asChild disabled={selectedCount === 0}>
-             <Link href={`/app/products/barcodes/print?ids=${Object.keys(selectedProducts).join(',')}`}>
-               <Printer className="w-4 h-4 mr-2" />
-               In tem hàng loạt ({selectedCount})
-             </Link>
+            <Link href={`/app/products/barcodes/print?ids=${Object.keys(selectedProducts).join(",")}`}>
+              <Printer className="w-4 h-4 mr-2" />
+              In tem hàng loạt ({selectedCount})
+            </Link>
           </Button>
         </div>
       </div>
@@ -106,24 +102,26 @@ export default function BarcodesPage() {
             <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
               <tr>
                 <th className="p-3 w-12 text-center">
-                   <Checkbox 
-                      checked={selectedCount > 0 && selectedCount >= filteredProducts.length} // Simplified logic for UI state
-                      onCheckedChange={(c) => {
-                        if (c) {
-                          const all: Record<string, number> = {};
-                          filteredProducts.forEach(p => {
-                            if (p.variants && p.variants.length > 0) {
-                              p.variants.forEach((v: any) => { all[v.id] = 1; });
-                            } else {
-                              all[p.id] = 1;
-                            }
-                          });
-                          setSelectedProducts(all);
-                        } else {
-                          setSelectedProducts({});
-                        }
-                      }}
-                   />
+                  <Checkbox
+                    checked={selectedCount > 0 && selectedCount >= filteredProducts.length} // Simplified logic for UI state
+                    onCheckedChange={(c) => {
+                      if (c) {
+                        const all: Record<string, number> = {};
+                        filteredProducts.forEach((p) => {
+                          if (p.variants && p.variants.length > 0) {
+                            p.variants.forEach((v: any) => {
+                              all[v.id] = 1;
+                            });
+                          } else {
+                            all[p.id] = 1;
+                          }
+                        });
+                        setSelectedProducts(all);
+                      } else {
+                        setSelectedProducts({});
+                      }
+                    }}
+                  />
                 </th>
                 <th className="p-3 w-[40%]">Sản phẩm</th>
                 <th className="p-3 w-[20%]">Mã SKU</th>
@@ -146,9 +144,9 @@ export default function BarcodesPage() {
                   </td>
                 </tr>
               ) : (
-                filteredProducts.map(product => {
+                filteredProducts.map((product) => {
                   const variants = Array.isArray(product.variants) ? product.variants : [];
-                  
+
                   if (variants.length > 0) {
                     return (
                       <tr key={product.id} className="border-b">
@@ -158,16 +156,21 @@ export default function BarcodesPage() {
                               <AccordionTrigger className="px-3 py-3 hover:no-underline hover:bg-muted/30">
                                 <div className="flex items-center gap-3">
                                   <span className="font-bold text-base text-primary">{product.name}</span>
-                                  <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-semibold">{variants.length} biến thể</span>
+                                  <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-semibold">
+                                    {variants.length} biến thể
+                                  </span>
                                 </div>
                               </AccordionTrigger>
                               <AccordionContent className="pb-0 pt-0">
                                 <table className="w-full text-sm text-left bg-muted/10">
                                   <tbody>
                                     {variants.map((v: any) => (
-                                      <tr key={v.id} className="border-t border-dashed hover:bg-muted/40 transition-colors">
+                                      <tr
+                                        key={v.id}
+                                        className="border-t border-dashed hover:bg-muted/40 transition-colors"
+                                      >
                                         <td className="p-3 w-12 text-center pl-6">
-                                          <Checkbox 
+                                          <Checkbox
                                             checked={!!selectedProducts[v.id]}
                                             onCheckedChange={() => toggleSelect(v)}
                                           />
@@ -176,10 +179,14 @@ export default function BarcodesPage() {
                                           <div className="w-1.5 h-1.5 rounded-full bg-primary/40"></div>
                                           {v.name}
                                         </td>
-                                        <td className="p-3 w-[20%] text-muted-foreground font-mono text-xs">{v.sku || '-'}</td>
+                                        <td className="p-3 w-[20%] text-muted-foreground font-mono text-xs">
+                                          {v.sku || "-"}
+                                        </td>
                                         <td className="p-3 w-[20%]">
                                           {v.barcode ? (
-                                            <span className="font-mono bg-white px-2 py-1 rounded border shadow-sm text-xs">{v.barcode}</span>
+                                            <span className="font-mono bg-white px-2 py-1 rounded border shadow-sm text-xs">
+                                              {v.barcode}
+                                            </span>
                                           ) : (
                                             <span className="text-rose-500 italic text-[11px]">Chưa có mã vạch</span>
                                           )}
@@ -187,11 +194,11 @@ export default function BarcodesPage() {
                                         <td className="p-3 w-[20%] text-right">
                                           {v.barcode && (
                                             <RequirePermission requiredPermission="products.barcode.print">
-                                              <BarcodePrintDialog 
+                                              <BarcodePrintDialog
                                                 productName={`${product.name} - ${v.name}`}
                                                 sku={v.sku}
                                                 barcode={v.barcode}
-                                                barcodeType={v.barcode_type || 'CODE128'}
+                                                barcodeType={v.barcode_type || "CODE128"}
                                                 price={v.price || product.price}
                                               />
                                             </RequirePermission>
@@ -212,13 +219,13 @@ export default function BarcodesPage() {
                   return (
                     <tr key={product.id} className="border-b hover:bg-muted/30">
                       <td className="p-3 text-center w-12">
-                        <Checkbox 
-                           checked={!!selectedProducts[product.id]}
-                           onCheckedChange={() => toggleSelect(product)}
+                        <Checkbox
+                          checked={!!selectedProducts[product.id]}
+                          onCheckedChange={() => toggleSelect(product)}
                         />
                       </td>
                       <td className="p-3 font-medium w-[40%]">{product.name}</td>
-                      <td className="p-3 text-muted-foreground font-mono text-xs w-[20%]">{product.sku || '-'}</td>
+                      <td className="p-3 text-muted-foreground font-mono text-xs w-[20%]">{product.sku || "-"}</td>
                       <td className="p-3 w-[20%]">
                         {product.barcode ? (
                           <span className="font-mono bg-muted px-2 py-1 rounded text-xs">{product.barcode}</span>
@@ -229,11 +236,11 @@ export default function BarcodesPage() {
                       <td className="p-3 text-right w-[20%]">
                         {product.barcode && (
                           <RequirePermission requiredPermission="products.barcode.print">
-                            <BarcodePrintDialog 
+                            <BarcodePrintDialog
                               productName={product.name}
                               sku={product.sku}
                               barcode={product.barcode}
-                              barcodeType={product.barcode_type || 'CODE128'}
+                              barcodeType={product.barcode_type || "CODE128"}
                               price={product.price}
                             />
                           </RequirePermission>

@@ -1,15 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const name = searchParams.get('name');
+    const name = searchParams.get("name");
 
     if (!name) {
-      return NextResponse.json(
-        { error: 'Thiếu tham số tên sản phẩm!' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Thiếu tham số tên sản phẩm!" }, { status: 400 });
     }
 
     // Search Unsplash public napi search engine
@@ -17,15 +14,15 @@ export async function GET(req: Request) {
       `https://unsplash.com/napi/search/photos?query=${encodeURIComponent(name)}&per_page=3`,
       {
         headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          Accept: 'application/json',
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          Accept: "application/json",
         },
-      }
+      },
     );
 
     if (!response.ok) {
-      throw new Error('Lỗi truy cập dữ liệu Unsplash');
+      throw new Error("Lỗi truy cập dữ liệu Unsplash");
     }
 
     const data = await response.json();
@@ -34,7 +31,7 @@ export async function GET(req: Request) {
     if (!photo) {
       // Fallback: A premium, minimalist generic Apple-like product placeholder image
       return NextResponse.json({
-        url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800&auto=format&fit=crop',
+        url: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800&auto=format&fit=crop",
       });
     }
 
@@ -48,11 +45,11 @@ export async function GET(req: Request) {
       description: photo.alt_description || photo.description,
     });
   } catch (error: any) {
-    console.error('AI Product image dynamic search error:', error);
+    console.error("AI Product image dynamic search error:", error);
     // Bulletproof fallback so POS operations are never interrupted
     return NextResponse.json({
       success: false,
-      url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800&auto=format&fit=crop',
+      url: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800&auto=format&fit=crop",
     });
   }
 }

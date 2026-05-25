@@ -26,7 +26,7 @@ export function Breadcrumbs({ customLabels = {}, className = "" }: BreadcrumbsPr
   // Generate breadcrumb items
   const breadcrumbItems = pathSegments.map((segment, index) => {
     const url = `/${pathSegments.slice(0, index + 1).join("/")}`;
-    
+
     // Determine the user-friendly label
     let label = segment;
     if (customLabels[segment]) {
@@ -35,9 +35,7 @@ export function Breadcrumbs({ customLabels = {}, className = "" }: BreadcrumbsPr
       label = customLabels[url];
     } else {
       // Auto-format segment text (replace hyphens with spaces, capitalize)
-      label = segment
-        .replace(/-/g, " ")
-        .replace(/\b\w/g, (char) => char.toUpperCase());
+      label = segment.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
     }
 
     return {
@@ -58,8 +56,8 @@ export function Breadcrumbs({ customLabels = {}, className = "" }: BreadcrumbsPr
   ];
 
   return (
-    <nav 
-      aria-label="Breadcrumb" 
+    <nav
+      aria-label="Breadcrumb"
       className={`flex flex-col gap-2 py-3 px-4 rounded-lg bg-white/40 dark:bg-slate-900/40 border border-slate-200/50 dark:border-slate-800/50 backdrop-blur-md shadow-sm transition-all duration-300 ${className}`}
     >
       {/* Dynamic JSON-LD Schema Auto Injection */}
@@ -71,9 +69,7 @@ export function Breadcrumbs({ customLabels = {}, className = "" }: BreadcrumbsPr
 
           return (
             <li key={item.path} className="flex items-center gap-1.5">
-              {index > 0 && (
-                <ChevronRight className="w-3.5 h-3.5 text-slate-350 dark:text-slate-650 shrink-0" />
-              )}
+              {index > 0 && <ChevronRight className="w-3.5 h-3.5 text-slate-350 dark:text-slate-650 shrink-0" />}
 
               {isLast ? (
                 <span className="text-slate-800 dark:text-slate-200 font-extrabold max-w-[200px] sm:max-w-none truncate animate-slideIn">

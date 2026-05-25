@@ -23,8 +23,8 @@ export default async function LandingPage() {
     primaryButtonText: "",
     secondaryButtonText: "",
     accentColor: "#0036FF",
-    pricingPlanBasic: "350,000đ",
-    pricingPlanPro: "1,250,000đ",
+    pricingPlanBasic: "99k/tháng",
+    pricingPlanPro: "199k/tháng",
     showPricing: true,
     showBlog: true,
   };
@@ -43,14 +43,10 @@ export default async function LandingPage() {
     try {
       const supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
       );
-      const { data, error } = await supabase
-        .from("organizations")
-        .select("branding")
-        .eq("slug", "app")
-        .maybeSingle();
-        
+      const { data, error } = await supabase.from("organizations").select("branding").eq("slug", "app").maybeSingle();
+
       if (!error && data && data.branding && (data.branding as any).landing_page) {
         dynamicConfig = { ...dynamicConfig, ...(data.branding as any).landing_page };
       }
@@ -78,9 +74,10 @@ export default async function LandingPage() {
         <Header initialLogoText={dynamicConfig.logoText} />
         <main className="flex-1">
           {/* Deep Blue/Space Gradient wrapper stretching down near half the page */}
-          <div 
+          <div
             style={{
-              background: "linear-gradient(0deg, rgb(255, 255, 255), rgb(230, 244, 247) 6.29%, rgb(128, 191, 239) 15.02%, rgb(68, 164, 233) 19.39%, rgb(48, 157, 231), rgb(16, 150, 229) 21.57%, color(xyz-d65 0.241 0.261 0.773), color(xyz-d65 0.23 0.248 0.764) 22.66%, color(xyz-d65 0.21 0.222 0.745) 23.75%, color(xyz-d65 0.188 0.157 0.764) 33.2%, color(xyz-d65 0.178 0.128 0.772), rgb(16, 70, 233) 42.64%, rgb(6, 29, 182) 53.09%, rgb(7, 11, 107) 66.19%, rgb(19, 2, 58) 75.33%, rgb(15, 7, 29) 86.09%, rgb(15, 7, 29))"
+              background:
+                "linear-gradient(0deg, rgb(255, 255, 255), rgb(230, 244, 247) 6.29%, rgb(128, 191, 239) 15.02%, rgb(68, 164, 233) 19.39%, rgb(48, 157, 231), rgb(16, 150, 229) 21.57%, color(xyz-d65 0.241 0.261 0.773), color(xyz-d65 0.23 0.248 0.764) 22.66%, color(xyz-d65 0.21 0.222 0.745) 23.75%, color(xyz-d65 0.188 0.157 0.764) 33.2%, color(xyz-d65 0.178 0.128 0.772), rgb(16, 70, 233) 42.64%, rgb(6, 29, 182) 53.09%, rgb(7, 11, 107) 66.19%, rgb(19, 2, 58) 75.33%, rgb(15, 7, 29) 86.09%, rgb(15, 7, 29))",
             }}
           >
             <Hero dynamicConfig={dynamicConfig} />
@@ -91,7 +88,7 @@ export default async function LandingPage() {
           <FeatureDeepDive />
           <SecuritySection />
           <Pricing dynamicConfig={dynamicConfig} />
-          
+
           {/* Dynamic Blog Section */}
           {dynamicConfig.showBlog && blogs.length > 0 && (
             <section id="blog" className="py-24 bg-slate-950 text-white relative border-t border-slate-900">
@@ -109,23 +106,27 @@ export default async function LandingPage() {
                     </h2>
                   </div>
                   <p className="text-slate-400 text-xs max-w-sm leading-relaxed">
-                    Cập nhật các bài phân tích chuyên sâu về quản trị kinh doanh, tối ưu chuỗi cung ứng và công nghệ AI bán hàng.
+                    Cập nhật các bài phân tích chuyên sâu về quản trị kinh doanh, tối ưu chuỗi cung ứng và công nghệ AI
+                    bán hàng.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                   {blogs.slice(0, 3).map((post) => (
-                    <article 
-                      key={post.id} 
+                    <article
+                      key={post.id}
                       className="bg-white/5 border border-white/10 rounded-xl overflow-hidden hover:border-blue-500/35 transition-all group flex flex-col h-full cursor-pointer"
                     >
                       <div className="h-48 overflow-hidden relative">
-                        <img 
-                          src={post.coverImage} 
-                          alt={post.title} 
+                        <img
+                          src={post.coverImage}
+                          alt={post.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
-                        <span className="absolute top-4 left-4 bg-blue-600/90 text-[10px] font-bold tracking-wider uppercase px-3 py-1 rounded-full text-white" style={{ backgroundColor: dynamicConfig.accentColor }}>
+                        <span
+                          className="absolute top-4 left-4 bg-blue-600/90 text-[10px] font-bold tracking-wider uppercase px-3 py-1 rounded-full text-white"
+                          style={{ backgroundColor: dynamicConfig.accentColor }}
+                        >
                           {post.category}
                         </span>
                       </div>
@@ -140,12 +141,13 @@ export default async function LandingPage() {
                           <h3 className="text-sm font-bold leading-snug group-hover:text-blue-300 transition-colors">
                             {post.title}
                           </h3>
-                          <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">
-                            {post.summary}
-                          </p>
+                          <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">{post.summary}</p>
                         </div>
 
-                        <div className="border-t border-white/10 pt-4 flex items-center justify-between text-[11px] font-bold text-blue-400 group-hover:text-blue-300" style={{ color: dynamicConfig.accentColor }}>
+                        <div
+                          className="border-t border-white/10 pt-4 flex items-center justify-between text-[11px] font-bold text-blue-400 group-hover:text-blue-300"
+                          style={{ color: dynamicConfig.accentColor }}
+                        >
                           <span>Đọc toàn bộ bài viết</span>
                           <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
                         </div>

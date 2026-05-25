@@ -2,7 +2,25 @@
 
 import React from "react";
 
-import { Check, Copy, Loader2, Pencil, Plus, QrCode, ShieldCheck, Star, Trash2, Webhook, Building2, CreditCard, User, Key, Landmark, Sparkles, ChevronDown } from "lucide-react";
+import {
+  Check,
+  Copy,
+  Loader2,
+  Pencil,
+  Plus,
+  QrCode,
+  ShieldCheck,
+  Star,
+  Trash2,
+  Webhook,
+  Building2,
+  CreditCard,
+  User,
+  Key,
+  Landmark,
+  Sparkles,
+  ChevronDown,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -519,15 +537,22 @@ export function BankAccountsManager() {
                 <div className="flex items-center justify-between gap-3 p-4 rounded-2xl border border-zinc-150 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 hover:border-violet-500/30 hover:bg-violet-500/[0.01] transition-all cursor-pointer">
                   <div className="space-y-0.5">
                     <p className="font-bold text-sm text-zinc-800 dark:text-zinc-200">Tài khoản mặc định</p>
-                    <p className="text-[10px] text-muted-foreground leading-normal">Chọn tài khoản này đầu tiên khi mở POS.</p>
+                    <p className="text-[10px] text-muted-foreground leading-normal">
+                      Chọn tài khoản này đầu tiên khi mở POS.
+                    </p>
                   </div>
-                  <Switch checked={form.is_default} onCheckedChange={(v) => setForm((f) => ({ ...f, is_default: v }))} />
+                  <Switch
+                    checked={form.is_default}
+                    onCheckedChange={(v) => setForm((f) => ({ ...f, is_default: v }))}
+                  />
                 </div>
 
                 <div className="flex items-center justify-between gap-3 p-4 rounded-2xl border border-zinc-150 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 hover:border-violet-500/30 hover:bg-violet-500/[0.01] transition-all cursor-pointer">
                   <div className="space-y-0.5">
                     <p className="font-bold text-sm text-zinc-800 dark:text-zinc-200">Kích hoạt tài khoản</p>
-                    <p className="text-[10px] text-muted-foreground leading-normal">Cho phép POS hiển thị và nhận tiền qua VietQR.</p>
+                    <p className="text-[10px] text-muted-foreground leading-normal">
+                      Cho phép POS hiển thị và nhận tiền qua VietQR.
+                    </p>
                   </div>
                   <Switch checked={form.is_active} onCheckedChange={(v) => setForm((f) => ({ ...f, is_active: v }))} />
                 </div>
@@ -536,17 +561,17 @@ export function BankAccountsManager() {
 
             {/* Footer Actions */}
             <DialogFooter className="border-t border-zinc-100 dark:border-zinc-800 pt-4 flex gap-2 sm:gap-0 mt-5">
-              <Button 
-                type="button" 
-                variant="ghost" 
+              <Button
+                type="button"
+                variant="ghost"
                 className="h-11 px-5 rounded-xl font-bold text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 transition-all active:scale-[0.98]"
                 onClick={() => setDialogOpen(false)}
               >
                 Huỷ
               </Button>
-              <Button 
-                type="submit" 
-                disabled={saving} 
+              <Button
+                type="submit"
+                disabled={saving}
                 className="h-11 px-5 rounded-xl font-bold bg-violet-600 hover:bg-violet-700 text-white shadow-md shadow-violet-500/10 transition-all active:scale-[0.98]"
               >
                 {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin text-white" />}

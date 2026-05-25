@@ -22,9 +22,7 @@ function parseList(raw: string | undefined): string[] {
 
 const ENV_LIST = parseList(process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAILS);
 
-export const SUPER_ADMIN_EMAILS: readonly string[] = Array.from(
-  new Set([HARD_CODED_DEFAULT, ...ENV_LIST]),
-);
+export const SUPER_ADMIN_EMAILS: readonly string[] = Array.from(new Set([HARD_CODED_DEFAULT, ...ENV_LIST]));
 
 export function isSuperAdminEmail(email?: string | null): boolean {
   if (!email) return false;
@@ -32,11 +30,13 @@ export function isSuperAdminEmail(email?: string | null): boolean {
   return SUPER_ADMIN_EMAILS.includes(normalized) || normalized.endsWith("@zpos.click");
 }
 
-export function isSuperAdminUser(user?: {
-  email?: string | null;
-  user_metadata?: Record<string, unknown> | null;
-  app_metadata?: Record<string, unknown> | null;
-} | null): boolean {
+export function isSuperAdminUser(
+  user?: {
+    email?: string | null;
+    user_metadata?: Record<string, unknown> | null;
+    app_metadata?: Record<string, unknown> | null;
+  } | null,
+): boolean {
   if (!user) return false;
   if (isSuperAdminEmail(user.email)) return true;
 

@@ -2,25 +2,19 @@
 
 import React, { useState, useEffect } from "react";
 import { HandCoins, Loader2 } from "lucide-react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { posService } from "@/services/pos.service";
 
@@ -28,12 +22,12 @@ export function SalaryAdvanceDialog() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState<any[]>([]);
-  
+
   const [formData, setFormData] = useState({
     staff_id: "",
     amount: "",
-    advance_date: new Date().toISOString().split('T')[0],
-    note: ""
+    advance_date: new Date().toISOString().split("T")[0],
+    note: "",
   });
 
   useEffect(() => {
@@ -42,7 +36,7 @@ export function SalaryAdvanceDialog() {
         const data = await posService.getEmployees();
         setEmployees(data || []);
         if (data && data.length > 0) {
-          setFormData(prev => ({ ...prev, staff_id: data[0].id }));
+          setFormData((prev) => ({ ...prev, staff_id: data[0].id }));
         }
       } catch (error) {
         console.error(error);
@@ -63,22 +57,22 @@ export function SalaryAdvanceDialog() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       await posService.createSalaryAdvance({
         staff_id: formData.staff_id,
         amount: parseFloat(parseCurrencyValue(formData.amount)) || 0,
         advance_date: formData.advance_date,
-        note: formData.note
+        note: formData.note,
       });
-      
+
       toast.success("Đã ghi nhận tạm ứng thành công!");
       setOpen(false);
       setFormData({
         staff_id: employees[0]?.id || "",
         amount: "",
-        advance_date: new Date().toISOString().split('T')[0],
-        note: ""
+        advance_date: new Date().toISOString().split("T")[0],
+        note: "",
       });
     } catch (error: any) {
       console.error(error);
@@ -110,27 +104,26 @@ export function SalaryAdvanceDialog() {
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="staff">Nhân viên</Label>
-              <Select 
-                value={formData.staff_id} 
-                onValueChange={(val) => setFormData({ ...formData, staff_id: val })}
-              >
+              <Select value={formData.staff_id} onValueChange={(val) => setFormData({ ...formData, staff_id: val })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn nhân viên" />
                 </SelectTrigger>
                 <SelectContent>
-                  {employees.map(emp => (
-                    <SelectItem key={emp.id} value={emp.id}>{emp.name} ({emp.role})</SelectItem>
+                  {employees.map((emp) => (
+                    <SelectItem key={emp.id} value={emp.id}>
+                      {emp.name} ({emp.role})
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="grid gap-2">
               <Label htmlFor="amount">Số tiền tạm ứng (₫)</Label>
-              <Input 
-                id="amount" 
-                type="text" 
-                placeholder="1,000,000" 
+              <Input
+                id="amount"
+                type="text"
+                placeholder="1,000,000"
                 value={formatCurrencyValue(formData.amount)}
                 onChange={(e) => setFormData({ ...formData, amount: parseCurrencyValue(e.target.value) })}
                 required
@@ -139,20 +132,20 @@ export function SalaryAdvanceDialog() {
 
             <div className="grid gap-2">
               <Label htmlFor="advance_date">Ngày tạm ứng</Label>
-              <Input 
-                id="advance_date" 
-                type="date" 
+              <Input
+                id="advance_date"
+                type="date"
                 value={formData.advance_date}
                 onChange={(e) => setFormData({ ...formData, advance_date: e.target.value })}
                 required
               />
             </div>
-            
+
             <div className="grid gap-2">
               <Label htmlFor="note">Ghi chú (Tùy chọn)</Label>
-              <Input 
-                id="note" 
-                placeholder="Lý do tạm ứng..." 
+              <Input
+                id="note"
+                placeholder="Lý do tạm ứng..."
                 value={formData.note}
                 onChange={(e) => setFormData({ ...formData, note: e.target.value })}
               />

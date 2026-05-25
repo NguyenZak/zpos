@@ -1,0 +1,142 @@
+name: Daily Supabase Backup
+
+on:
+  schedule:
+    # Chạy mỗi ngày lúc 19:00 UTC = 02:00 sáng VN
+    - cron: '0 19 * * *'
+  workflow_dispatch: # Cho phép trigger thủ công từ GitHub UI
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Install Postgres client + AWS CLI (cho R2)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client gnupg
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip -q awscliv2.zip
+          sudo ./aws/install --update
+
+      - name: Tạo backup file
+        id: dump
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
+          FILENAME="zpos-backup-${TIMESTAMP}.sql.gz"
+
+          echo "Bắt đầu pg_dump..."
+          pg_dump "$DATABASE_URL" \
+            --no-owner \
+            --no-acl \
+            --clean \
+            --if-exists \
+            --format=plain \
+            | gzip -9 > "$FILENAME"
+
+          SIZE=$(du -h "$FILENAME" | cut -f1)
+          echo "✅ Dump xong: $FILENAME ($SIZE)"
+          echo "filename=$FILENAME" >> $GITHUB_OUTPUT
+          echo "size=$SIZE" >> $GITHUB_OUTPUT
+
+      - name: Encrypt backup (GPG symmetric)
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          echo "$BACKUP_PASSPHRASE" | gpg --batch --yes --passphrase-fd 0 \
+            --symmetric --cipher-algo AES256 \
+            "${{ steps.dump.outputs.filename }}"
+          rm "${{ steps.dump.outputs.filename }}"
+          echo "✅ Đã encrypt: ${{ steps.dump.outputs.filename }}.gpg"
+
+      - name: Upload lên Cloudflare R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+        run: |
+          aws s3 cp \
+            "${{ steps.dump.outputs.filename }}.gpg" \
+            "s3://${R2_BUCKET}/daily/${{ steps.dump.outputs.filename }}.gpg" \
+            --endpoint-url "$R2_ENDPOINT"
+          echo "✅ Đã upload R2"
+
+      - name: Cleanup backup cũ (giữ 30 bản daily)
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+        run: |
+          # Lấy danh sách file daily, sort theo tên (timestamp), xóa file cũ hơn vị trí 30
+          aws s3 ls "s3://${R2_BUCKET}/daily/" --endpoint-url "$R2_ENDPOINT" \
+            | sort -r \
+            | tail -n +31 \
+            | awk '{print $4}' \
+            | while read OLD; do
+                if [ -n "$OLD" ]; then
+                  aws s3 rm "s3://${R2_BUCKET}/daily/${OLD}" --endpoint-url "$R2_ENDPOINT"
+                  echo "🗑  Xóa $OLD"
+                fi
+              done
+
+      - name: Notify Telegram (success)
+        if: success()
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          MSG="✅ ZPOS backup thành công%0A📦 File: ${{ steps.dump.outputs.filename }}.gpg%0A📏 Size: ${{ steps.dump.outputs.size }}%0A🕐 $(date -u +'%Y-%m-%d %H:%M UTC')"
+          curl -s "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${CHAT_ID}" \
+            -d "text=${MSG}" \
+            -d "parse_mode=HTML"
+
+      - name: Notify Telegram (failure)
+        if: failure()
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          MSG="🚨 ZPOS BACKUP THẤT BẠI!%0A🕐 $(date -u +'%Y-%m-%d %H:%M UTC')%0A🔗 ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          curl -s "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${CHAT_ID}" \
+            -d "text=${MSG}"
+
+# ────────────────────────────────────────────────────────────
+# HƯỚNG DẪN SETUP — chạy 1 lần:
+#
+# 1. Tạo Cloudflare R2 bucket "zpos-backups"
+#    Cloudflare Dashboard → R2 → Create bucket
+#    Lấy: Account ID, Access Key ID, Secret Access Key
+#
+# 2. Tạo Telegram Bot
+#    Chat với @BotFather → /newbot → lấy BOT_TOKEN
+#    Chat với bot → @userinfobot để lấy CHAT_ID của anh
+#
+# 3. Add 6 secrets vào GitHub repo
+#    Settings → Secrets and variables → Actions → New repository secret:
+#    - SUPABASE_DB_URL = postgresql://postgres.[ref]:[pwd]@aws-0-[region].pooler.supabase.com:5432/postgres
+#      (Lấy ở Supabase → Project Settings → Database → Connection string → URI mode)
+#    - BACKUP_PASSPHRASE = chuỗi ngẫu nhiên dài (vd: openssl rand -base64 32)
+#      ⚠️ LƯU PASSPHRASE NÀY Ở NƠI AN TOÀN — mất là không restore được!
+#    - R2_ACCESS_KEY_ID = từ bước 1
+#    - R2_SECRET_ACCESS_KEY = từ bước 1
+#    - R2_ENDPOINT = https://[account_id].r2.cloudflarestorage.com
+#    - R2_BUCKET = zpos-backups
+#    - TELEGRAM_BOT_TOKEN = từ bước 2
+#    - TELEGRAM_CHAT_ID = từ bước 2
+#
+# 4. Trigger thử lần đầu
+#    GitHub repo → Actions → "Daily Supabase Backup" → Run workflow
+#    Đợi ~2-5 phút, check Telegram
+#
+# 5. Restore khi cần (lệnh manual):
+#    aws s3 cp s3://zpos-backups/daily/<file>.sql.gz.gpg . --endpoint-url $R2_ENDPOINT
+#    gpg --decrypt <file>.sql.gz.gpg | gunzip > restore.sql
+#    psql $TARGET_DB_URL < restore.sql
+# ────────────────────────────────────────────────────────────

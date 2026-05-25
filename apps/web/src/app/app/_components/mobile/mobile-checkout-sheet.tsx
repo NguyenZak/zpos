@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  Banknote, 
-  QrCode, 
-  CreditCard, 
+import {
+  Banknote,
+  QrCode,
+  CreditCard,
   Coins,
   Sparkles,
   ArrowRight,
@@ -15,7 +15,7 @@ import {
   X,
   Download,
   SearchIcon,
-  User
+  User,
 } from "lucide-react";
 import {
   Drawer,
@@ -61,7 +61,7 @@ export function MobileCheckoutSheet({
   onSelectCustomer,
   onRemoveItem,
   onCheckoutSuccess,
-  orderId
+  orderId,
 }: MobileCheckoutSheetProps) {
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "transfer" | "debt">("cash");
   const [receivedAmount, setReceivedAmount] = useState<number>(total);
@@ -76,13 +76,13 @@ export function MobileCheckoutSheet({
     bankId: "vcb",
     accountNo: "0071001234567",
     accountName: "ZPOS RETAIL",
-    memoTemplate: "ZPOS_"
+    memoTemplate: "ZPOS_",
   });
 
   useEffect(() => {
     if (open) {
       setReceivedAmount(total);
-      
+
       let cancelled = false;
       (async () => {
         try {
@@ -93,12 +93,12 @@ export function MobileCheckoutSheet({
               bankId: bank.bank_id,
               accountNo: bank.account_no,
               accountName: bank.account_name,
-              memoTemplate: (bank.memo_prefix || "ZPOS") + " "
+              memoTemplate: (bank.memo_prefix || "ZPOS") + " ",
             });
             return;
           }
         } catch (e) {
-          console.warn('Could not load default bank account:', e);
+          console.warn("Could not load default bank account:", e);
         }
 
         // Load bank settings from system configuration
@@ -107,13 +107,13 @@ export function MobileCheckoutSheet({
           const savedAccountNo = localStorage.getItem("zpos_qr_account_no") || "0071001234567";
           const savedAccountName = localStorage.getItem("zpos_qr_account_name") || "ZPOS RETAIL";
           const savedMemoTemplate = localStorage.getItem("zpos_qr_memo_template") || "ZPOS_";
-          
+
           if (!cancelled) {
             setQrSettings({
               bankId: savedBankId,
               accountNo: savedAccountNo,
               accountName: savedAccountName,
-              memoTemplate: savedMemoTemplate
+              memoTemplate: savedMemoTemplate,
             });
           }
         }
@@ -139,11 +139,11 @@ export function MobileCheckoutSheet({
     setIsSavingQR(true);
     try {
       const qrUrl = `https://img.vietqr.io/image/${qrSettings.bankId}-${qrSettings.accountNo}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(qrSettings.memoTemplate + orderNumber)}&accountName=${encodeURIComponent(qrSettings.accountName)}`;
-      
+
       const response = await fetch(qrUrl);
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
-      
+
       const link = document.createElement("a");
       link.href = blobUrl;
       link.download = `zpos-qr-${orderNumber}.png`;
@@ -201,14 +201,14 @@ export function MobileCheckoutSheet({
         payment_status: isDebt ? "debt" : "paid",
         payment_confirmed_at: isDebt ? null : new Date().toISOString(),
         payment_amount_received: isDebt ? 0 : total,
-        status: "completed"
+        status: "completed",
       };
 
       const createdOrder = await posService.createOrder(orderData, cart);
       if (isDebt && createdOrder?.id) {
         await debtService.chargeOrderAsDebt(createdOrder.id, 30);
       }
-      
+
       onOpenChange(false);
       setSuccessOpen(true);
       toast.success(isDebt ? "Đã ghi nợ đơn hàng thành công!" : "Thanh toán đơn hàng thành công!");
@@ -234,7 +234,7 @@ export function MobileCheckoutSheet({
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(amount);
   };
 
@@ -242,7 +242,7 @@ export function MobileCheckoutSheet({
     { label: "Đủ", val: total },
     { label: "100k", val: 100000 },
     { label: "200k", val: 200000 },
-    { label: "500k", val: 500000 }
+    { label: "500k", val: 500000 },
   ];
 
   const filteredCustomers = customers.filter((c) => {
@@ -259,7 +259,9 @@ export function MobileCheckoutSheet({
             <div className="flex justify-between items-center mt-2">
               <div>
                 <DrawerTitle className="text-base font-black tracking-tight">Thanh toán đơn hàng</DrawerTitle>
-                <DrawerDescription className="text-xs text-muted-foreground">Mã hóa đơn: {orderNumber}</DrawerDescription>
+                <DrawerDescription className="text-xs text-muted-foreground">
+                  Mã hóa đơn: {orderNumber}
+                </DrawerDescription>
               </div>
               <DrawerClose asChild>
                 <button className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
@@ -319,13 +321,15 @@ export function MobileCheckoutSheet({
 
             {/* PAYMENT METHOD CHIPS */}
             <div className="space-y-2">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Phương thức thanh toán</span>
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
+                Phương thức thanh toán
+              </span>
               <div className="grid grid-cols-4 gap-2">
                 {[
                   { id: "cash", label: "Tiền mặt", icon: Banknote },
                   { id: "transfer", label: "C.Khoản QR", icon: QrCode },
                   { id: "card", label: "Chạm thẻ", icon: CreditCard },
-                  { id: "debt", label: "Ghi nợ", icon: Coins }
+                  { id: "debt", label: "Ghi nợ", icon: Coins },
                 ].map((item) => {
                   const Icon = item.icon;
                   const isActive = paymentMethod === item.id;
@@ -339,10 +343,16 @@ export function MobileCheckoutSheet({
                           ? item.id === "debt"
                             ? "bg-amber-500/10 border-amber-500 text-amber-700 dark:text-amber-400 font-bold shadow-xs"
                             : "bg-primary/5 border-primary text-primary font-bold shadow-xs"
-                          : "bg-muted/30 border-transparent text-muted-foreground hover:bg-muted"
+                          : "bg-muted/30 border-transparent text-muted-foreground hover:bg-muted",
                       )}
                     >
-                      <Icon className={cn("w-5 h-5", isActive && "scale-110 transition-transform", isActive && item.id !== "debt" && "text-primary")} />
+                      <Icon
+                        className={cn(
+                          "w-5 h-5",
+                          isActive && "scale-110 transition-transform",
+                          isActive && item.id !== "debt" && "text-primary",
+                        )}
+                      />
                       <span className="text-[10px] font-semibold">{item.label}</span>
                     </button>
                   );
@@ -362,7 +372,7 @@ export function MobileCheckoutSheet({
                     "w-full flex items-center justify-between rounded-xl border p-3.5 text-left active:scale-[0.98] transition-all",
                     selectedCustomer
                       ? "bg-amber-500/10 border-amber-500/30"
-                      : "bg-muted/30 border-dashed border-muted-foreground/30"
+                      : "bg-muted/30 border-dashed border-muted-foreground/30",
                   )}
                 >
                   <div className="flex items-center gap-3 min-w-0">
@@ -388,8 +398,13 @@ export function MobileCheckoutSheet({
               <div className="space-y-4 animate-in fade-in duration-200">
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <Label htmlFor="rec-amount" className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Số tiền khách đưa</Label>
-                    <button 
+                    <Label
+                      htmlFor="rec-amount"
+                      className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none"
+                    >
+                      Số tiền khách đưa
+                    </Label>
+                    <button
                       onClick={() => setReceivedAmount(total)}
                       className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1 leading-none"
                     >
@@ -405,7 +420,9 @@ export function MobileCheckoutSheet({
                       onChange={(e) => setReceivedAmount(Number(e.target.value))}
                       className="h-12 pl-4 pr-12 text-lg font-black font-mono text-foreground bg-muted/20 border-muted"
                     />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">VND</span>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">
+                      VND
+                    </span>
                   </div>
                 </div>
 
@@ -424,12 +441,14 @@ export function MobileCheckoutSheet({
                 </div>
 
                 {/* Change return output */}
-                <div className={cn(
-                  "p-4 rounded-xl border transition-all text-center space-y-1 shadow-inner",
-                  receivedAmount >= total
-                    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400"
-                    : "bg-destructive/10 border-destructive/20 text-destructive"
-                )}>
+                <div
+                  className={cn(
+                    "p-4 rounded-xl border transition-all text-center space-y-1 shadow-inner",
+                    receivedAmount >= total
+                      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400"
+                      : "bg-destructive/10 border-destructive/20 text-destructive",
+                  )}
+                >
                   <span className="text-[8px] font-black tracking-widest uppercase leading-none">
                     {receivedAmount >= total ? "Tiền thừa trả khách" : "Còn thiếu"}
                   </span>
@@ -442,19 +461,21 @@ export function MobileCheckoutSheet({
 
             {paymentMethod === "transfer" && (
               <div className="space-y-4 text-center animate-in fade-in duration-200">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none block text-left">Mã VietQR động tự sinh</span>
-                
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none block text-left">
+                  Mã VietQR động tự sinh
+                </span>
+
                 <div className="relative w-full max-w-[396px] aspect-square bg-white mx-auto flex items-center justify-center overflow-hidden">
-                  <img 
-                    src={`https://img.vietqr.io/image/${qrSettings.bankId}-${qrSettings.accountNo}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(qrSettings.memoTemplate + orderNumber)}&accountName=${encodeURIComponent(qrSettings.accountName)}`} 
+                  <img
+                    src={`https://img.vietqr.io/image/${qrSettings.bankId}-${qrSettings.accountNo}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(qrSettings.memoTemplate + orderNumber)}&accountName=${encodeURIComponent(qrSettings.accountName)}`}
                     alt="VietQR"
                     className="w-full h-full object-contain"
                   />
                 </div>
 
-                <Button 
+                <Button
                   type="button"
-                  variant="outline" 
+                  variant="outline"
                   className="w-full rounded-xl border-primary/20 hover:bg-primary/5 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-xs font-bold h-10 shadow-xs"
                   onClick={handleSaveQR}
                   disabled={isSavingQR}
@@ -471,22 +492,31 @@ export function MobileCheckoutSheet({
                 <div className="bg-muted/40 rounded-xl border border-muted p-3 text-left space-y-2 text-[10px] font-semibold">
                   <div className="flex justify-between items-center border-b pb-1.5">
                     <span className="text-muted-foreground">Số tài khoản ({qrSettings.bankId.toUpperCase()})</span>
-                    <button 
+                    <button
                       onClick={() => handleCopy(qrSettings.accountNo, "Số tài khoản")}
                       className="flex items-center gap-1 font-mono font-black text-foreground hover:underline"
                     >
                       {qrSettings.accountNo}
-                      {copiedField === "Số tài khoản" ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
+                      {copiedField === "Số tài khoản" ? (
+                        <Check className="w-3 h-3 text-emerald-500" />
+                      ) : (
+                        <Copy className="w-3 h-3 text-muted-foreground" />
+                      )}
                     </button>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Nội dung chuyển khoản</span>
-                    <button 
+                    <button
                       onClick={() => handleCopy(`${qrSettings.memoTemplate}${orderNumber}`, "Nội dung")}
                       className="flex items-center gap-1 font-mono font-black text-foreground hover:underline"
                     >
-                      {qrSettings.memoTemplate}{orderNumber}
-                      {copiedField === "Nội dung" ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
+                      {qrSettings.memoTemplate}
+                      {orderNumber}
+                      {copiedField === "Nội dung" ? (
+                        <Check className="w-3 h-3 text-emerald-500" />
+                      ) : (
+                        <Copy className="w-3 h-3 text-muted-foreground" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -495,15 +525,19 @@ export function MobileCheckoutSheet({
 
             {paymentMethod === "card" && (
               <div className="space-y-5 text-center py-4 animate-in fade-in duration-200">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none block text-left">Kết nối đầu đọc thẻ</span>
-                
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none block text-left">
+                  Kết nối đầu đọc thẻ
+                </span>
+
                 <div className="relative w-28 h-28 bg-primary/5 rounded-full mx-auto flex items-center justify-center border-2 border-primary/10">
                   <div className="absolute inset-0 bg-primary/5 rounded-full animate-ping opacity-75" />
                   <CreditCard className="w-10 h-10 text-primary relative z-10 animate-bounce" />
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs font-bold text-foreground">Đang đợi chạm thẻ chip...</p>
-                  <p className="text-[10px] text-muted-foreground max-w-[200px] mx-auto leading-relaxed">Vui lòng đưa thẻ gần thiết bị đọc mPOS tại quầy.</p>
+                  <p className="text-[10px] text-muted-foreground max-w-[200px] mx-auto leading-relaxed">
+                    Vui lòng đưa thẻ gần thiết bị đọc mPOS tại quầy.
+                  </p>
                 </div>
               </div>
             )}
@@ -511,7 +545,7 @@ export function MobileCheckoutSheet({
             {/* BILL SUMMARY */}
             <div className="border-t pt-4 space-y-2">
               <div className="flex justify-between items-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                <span>Tổng tiền hàng ({cart.reduce((s,i)=>s+i.quantity,0)} món)</span>
+                <span>Tổng tiền hàng ({cart.reduce((s, i) => s + i.quantity, 0)} món)</span>
                 <span className="font-mono">{formatCurrency(total)}</span>
               </div>
               {selectedCustomer && (
@@ -531,7 +565,7 @@ export function MobileCheckoutSheet({
 
           {/* STICKY CHECKOUT BUTTON IN DRAWER FOOTER */}
           <DrawerFooter className="px-6 gap-2 border-t pt-3">
-            <Button 
+            <Button
               onClick={handleCheckoutSubmit}
               disabled={cart.length === 0 || isProcessing || (paymentMethod === "cash" && receivedAmount < total)}
               className="h-12 text-sm font-bold w-full rounded-xl bg-primary text-primary-foreground shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all"
@@ -607,16 +641,26 @@ export function MobileCheckoutSheet({
       </Drawer>
 
       {/* TRANSACTION SUCCESS DIALOG */}
-      <Drawer open={successOpen} onOpenChange={(open) => { setSuccessOpen(open); if(!open) onCheckoutSuccess(); }}>
+      <Drawer
+        open={successOpen}
+        onOpenChange={(open) => {
+          setSuccessOpen(open);
+          if (!open) onCheckoutSuccess();
+        }}
+      >
         <DrawerContent className="pb-8 bg-background max-h-[85vh]">
           <div className="px-6 py-6 flex flex-col items-center gap-4 text-center">
             <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-600">
               <CheckCircle2 className="w-8 h-8" />
             </div>
-            
+
             <div className="space-y-1">
-              <DrawerTitle className="text-lg font-black tracking-tight text-foreground text-center">Giao dịch thành công!</DrawerTitle>
-              <DrawerDescription className="text-xs text-muted-foreground leading-relaxed text-center">Hóa đơn {orderNumber} đã được xử lý thành công.</DrawerDescription>
+              <DrawerTitle className="text-lg font-black tracking-tight text-foreground text-center">
+                Giao dịch thành công!
+              </DrawerTitle>
+              <DrawerDescription className="text-xs text-muted-foreground leading-relaxed text-center">
+                Hóa đơn {orderNumber} đã được xử lý thành công.
+              </DrawerDescription>
             </div>
 
             {/* Mini Bill Preview */}
@@ -628,7 +672,9 @@ export function MobileCheckoutSheet({
               <div className="space-y-1">
                 {cart.map((item) => (
                   <div key={item.cartKey || item.id} className="flex justify-between">
-                    <span className="truncate w-[180px]">{item.name} x{item.quantity}</span>
+                    <span className="truncate w-[180px]">
+                      {item.name} x{item.quantity}
+                    </span>
                     <span>{formatCurrency(item.price * item.quantity)}</span>
                   </div>
                 ))}
@@ -640,12 +686,23 @@ export function MobileCheckoutSheet({
               </div>
               <div className="flex justify-between text-muted-foreground">
                 <span>Hình thức</span>
-                <span className="uppercase">{paymentMethod === "transfer" ? "QR" : paymentMethod === "card" ? "MPOS" : paymentMethod === "debt" ? "Ghi nợ" : "Tiền mặt"}</span>
+                <span className="uppercase">
+                  {paymentMethod === "transfer"
+                    ? "QR"
+                    : paymentMethod === "card"
+                      ? "MPOS"
+                      : paymentMethod === "debt"
+                        ? "Ghi nợ"
+                        : "Tiền mặt"}
+                </span>
               </div>
             </div>
 
-            <Button 
-              onClick={() => { setSuccessOpen(false); onCheckoutSuccess(); }}
+            <Button
+              onClick={() => {
+                setSuccessOpen(false);
+                onCheckoutSuccess();
+              }}
               className="h-11 text-xs font-bold w-full rounded-xl bg-primary text-primary-foreground mt-2 active:scale-95 transition-all"
             >
               Tiếp tục bán hàng

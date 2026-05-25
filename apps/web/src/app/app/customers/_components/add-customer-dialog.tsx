@@ -2,14 +2,14 @@
 
 import React, { useState } from "react";
 import { Plus, Loader2, UserPlus, User } from "lucide-react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,24 +20,24 @@ import { posService } from "@/services/pos.service";
 export function AddCustomerDialog({ onShowSuccess }: { onShowSuccess?: () => void }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
     email: "",
-    address: ""
+    address: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       await posService.createCustomer({
         organization_id: "00000000-0000-0000-0000-000000000000", // Placeholder
-        ...formData
+        ...formData,
       });
-      
+
       toast.success("Đã thêm khách hàng thành công!");
       setOpen(false);
       setFormData({ name: "", phone: "", email: "", address: "" });
@@ -65,16 +65,14 @@ export function AddCustomerDialog({ onShowSuccess }: { onShowSuccess?: () => voi
               <User className="w-5 h-5" />
               Thêm khách hàng mới
             </DialogTitle>
-            <DialogDescription>
-              Nhập thông tin cơ bản để quản lý khách hàng.
-            </DialogDescription>
+            <DialogDescription>Nhập thông tin cơ bản để quản lý khách hàng.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="name">Họ và tên</Label>
-              <Input 
-                id="name" 
-                placeholder="Ví dụ: Nguyễn Văn A" 
+              <Input
+                id="name"
+                placeholder="Ví dụ: Nguyễn Văn A"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
@@ -83,9 +81,9 @@ export function AddCustomerDialog({ onShowSuccess }: { onShowSuccess?: () => voi
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="phone">Số điện thoại</Label>
-                <Input 
-                  id="phone" 
-                  placeholder="09xx xxx xxx" 
+                <Input
+                  id="phone"
+                  placeholder="09xx xxx xxx"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   required
@@ -93,10 +91,10 @@ export function AddCustomerDialog({ onShowSuccess }: { onShowSuccess?: () => voi
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
+                <Input
+                  id="email"
                   type="email"
-                  placeholder="khachhang@email.com" 
+                  placeholder="khachhang@email.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
@@ -104,9 +102,9 @@ export function AddCustomerDialog({ onShowSuccess }: { onShowSuccess?: () => voi
             </div>
             <div className="grid gap-2">
               <Label htmlFor="address">Địa chỉ</Label>
-              <Input 
-                id="address" 
-                placeholder="Số nhà, đường, quận, thành phố" 
+              <Input
+                id="address"
+                placeholder="Số nhà, đường, quận, thành phố"
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               />

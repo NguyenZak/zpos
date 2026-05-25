@@ -277,13 +277,9 @@ export default function PaymentsPage() {
                     <TableRow key={t.id}>
                       <TableCell className="font-mono text-xs">{formatTime(t.received_at)}</TableCell>
                       <TableCell className="font-mono text-xs">
-                        <div className="font-bold text-violet-700 dark:text-violet-400">
-                          {t.external_id || "—"}
-                        </div>
+                        <div className="font-bold text-violet-700 dark:text-violet-400">{t.external_id || "—"}</div>
                         {t.reference_code && (
-                          <div className="text-[10px] text-muted-foreground mt-0.5">
-                            Ref: {t.reference_code}
-                          </div>
+                          <div className="text-[10px] text-muted-foreground mt-0.5">Ref: {t.reference_code}</div>
                         )}
                       </TableCell>
                       <TableCell className="text-right font-bold">

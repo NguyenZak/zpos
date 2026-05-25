@@ -36,7 +36,9 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const fullName = String(body.fullName || "").trim();
-    const email = String(body.email || "").trim().toLowerCase();
+    const email = String(body.email || "")
+      .trim()
+      .toLowerCase();
     const password = String(body.password || "");
     const organizationId = body.organizationId ? String(body.organizationId) : null;
     const role = String(body.role || "staff");
@@ -78,7 +80,10 @@ export async function POST(request: NextRequest) {
 
         if (belongsToOtherOrg && !belongsToCurrentOrg) {
           return NextResponse.json(
-            { success: false, error: "Email này đã thuộc tenant khác. Dùng email khác để tránh lẫn tài khoản giữa tenant." },
+            {
+              success: false,
+              error: "Email này đã thuộc tenant khác. Dùng email khác để tránh lẫn tài khoản giữa tenant.",
+            },
             { status: 409 },
           );
         }

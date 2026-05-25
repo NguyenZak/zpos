@@ -12,10 +12,7 @@ interface CashCountFormProps {
 }
 
 export function CashCountForm({ denominations, value, onChange }: CashCountFormProps) {
-  const total = useMemo(
-    () => denominations.reduce((sum, d) => sum + d * (value[d] || 0), 0),
-    [denominations, value]
-  );
+  const total = useMemo(() => denominations.reduce((sum, d) => sum + d * (value[d] || 0), 0), [denominations, value]);
 
   return (
     <div className="space-y-3">

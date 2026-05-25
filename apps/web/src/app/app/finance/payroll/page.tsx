@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { 
-  UserCheck, 
-  MoreHorizontal, 
+import React, { useState, useEffect } from "react";
+import {
+  UserCheck,
+  MoreHorizontal,
   Loader2,
   Calendar,
   DollarSign,
@@ -11,23 +11,12 @@ import {
   AlertCircle,
   ClipboardCheck,
   Printer,
-  Trash2
-} from 'lucide-react';
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
+  Trash2,
+} from "lucide-react";
+import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,22 +25,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { posService } from '@/services/pos.service';
-import { AddPayrollDialog } from './_components/add-payroll-dialog';
-import { EditPayrollDialog } from './_components/edit-payroll-dialog';
-import { ConfigBonusDialog } from './_components/config-bonus-dialog';
-import { SalaryAdvanceDialog } from './_components/salary-advance-dialog';
-import { format } from 'date-fns';
+import { posService } from "@/services/pos.service";
+import { AddPayrollDialog } from "./_components/add-payroll-dialog";
+import { EditPayrollDialog } from "./_components/edit-payroll-dialog";
+import { ConfigBonusDialog } from "./_components/config-bonus-dialog";
+import { SalaryAdvanceDialog } from "./_components/salary-advance-dialog";
+import { format } from "date-fns";
 
 export default function PayrollPage() {
   const [data, setData] = useState<any[]>([]);
@@ -77,8 +59,8 @@ export default function PayrollPage() {
 
   const handleApprove = async (item: any) => {
     try {
-      await posService.updatePayrollStatus(item.id, 'approved');
-      toast.success(`Đã duyệt bảng lương cho ${item.employee?.name || 'nhân viên'}!`);
+      await posService.updatePayrollStatus(item.id, "approved");
+      toast.success(`Đã duyệt bảng lương cho ${item.employee?.name || "nhân viên"}!`);
       loadData();
     } catch (error) {
       toast.error("Lỗi khi duyệt lương");
@@ -87,8 +69,8 @@ export default function PayrollPage() {
 
   const handlePay = async (item: any) => {
     try {
-      await posService.updatePayrollStatus(item.id, 'paid');
-      toast.success(`Đã chi trả lương thành công cho ${item.employee?.name || 'nhân viên'}!`);
+      await posService.updatePayrollStatus(item.id, "paid");
+      toast.success(`Đã chi trả lương thành công cho ${item.employee?.name || "nhân viên"}!`);
       loadData();
     } catch (error) {
       toast.error("Lỗi khi thanh toán lương");
@@ -96,7 +78,7 @@ export default function PayrollPage() {
   };
 
   const handleDelete = async (item: any) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa phiếu lương của ${item.employee?.name || 'nhân viên'} không?`)) return;
+    if (!confirm(`Bạn có chắc chắn muốn xóa phiếu lương của ${item.employee?.name || "nhân viên"} không?`)) return;
     try {
       await posService.deletePayroll(item.id);
       toast.success("Đã xóa phiếu lương thành công!");
@@ -116,7 +98,7 @@ export default function PayrollPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
   };
 
   const columns: ColumnDef<any>[] = [
@@ -174,24 +156,31 @@ export default function PayrollPage() {
       header: "Trạng thái",
       cell: ({ row }) => {
         const status = row.getValue("payment_status");
-        const isPaid = status === 'paid';
-        const isApproved = status === 'approved';
+        const isPaid = status === "paid";
+        const isApproved = status === "approved";
         return (
-          <Badge 
-            variant="secondary" 
-            className={isPaid 
-              ? "gap-1 text-[10px] px-1.5 h-5 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-none font-bold" 
-              : isApproved
-              ? "gap-1 text-[10px] px-1.5 h-5 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border-none font-bold"
-              : "gap-1 text-[10px] px-1.5 h-5 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border-none font-bold"
+          <Badge
+            variant="secondary"
+            className={
+              isPaid
+                ? "gap-1 text-[10px] px-1.5 h-5 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-none font-bold"
+                : isApproved
+                  ? "gap-1 text-[10px] px-1.5 h-5 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border-none font-bold"
+                  : "gap-1 text-[10px] px-1.5 h-5 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border-none font-bold"
             }
           >
             {isPaid ? (
-              <><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Đã chi</>
+              <>
+                <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Đã chi
+              </>
             ) : isApproved ? (
-              <><ClipboardCheck className="w-3 h-3 text-blue-500" /> Đã duyệt</>
+              <>
+                <ClipboardCheck className="w-3 h-3 text-blue-500" /> Đã duyệt
+              </>
             ) : (
-              <><AlertCircle className="w-3 h-3 text-amber-500" /> Chờ duyệt</>
+              <>
+                <AlertCircle className="w-3 h-3 text-amber-500" /> Chờ duyệt
+              </>
             )}
           </Badge>
         );
@@ -209,8 +198,8 @@ export default function PayrollPage() {
       id: "actions",
       cell: ({ row }) => {
         const status = row.original.payment_status;
-        const isPaid = status === 'paid';
-        const isApproved = status === 'approved';
+        const isPaid = status === "paid";
+        const isApproved = status === "approved";
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -220,7 +209,7 @@ export default function PayrollPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-              {status === 'pending' && (
+              {status === "pending" && (
                 <DropdownMenuItem className="gap-2 text-blue-600 font-bold" onClick={() => handleApprove(row.original)}>
                   <ClipboardCheck className="w-4 h-4" /> Duyệt bảng lương
                 </DropdownMenuItem>
@@ -235,8 +224,8 @@ export default function PayrollPage() {
               </DropdownMenuItem>
               <EditPayrollDialog payroll={row.original} onShowSuccess={loadData} />
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="text-destructive gap-2 font-medium" 
+              <DropdownMenuItem
+                className="text-destructive gap-2 font-medium"
                 onClick={(e) => {
                   e.preventDefault();
                   handleDelete(row.original);
@@ -262,7 +251,9 @@ export default function PayrollPage() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-black tracking-tight text-emerald-600">Bảng tính lương</h1>
-          <p className="text-muted-foreground text-sm">Tính toán và quản lý chi phí tiền lương, thưởng phạt cho nhân sự.</p>
+          <p className="text-muted-foreground text-sm">
+            Tính toán và quản lý chi phí tiền lương, thưởng phạt cho nhân sự.
+          </p>
         </div>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-lg border">
@@ -271,8 +262,10 @@ export default function PayrollPage() {
                 <SelectValue placeholder="Tháng" />
               </SelectTrigger>
               <SelectContent>
-                {Array.from({length: 12}).map((_, i) => (
-                  <SelectItem key={i+1} value={(i+1).toString()}>Tháng {i+1}</SelectItem>
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <SelectItem key={i + 1} value={(i + 1).toString()}>
+                    Tháng {i + 1}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -282,9 +275,13 @@ export default function PayrollPage() {
                 <SelectValue placeholder="Năm" />
               </SelectTrigger>
               <SelectContent>
-                {[0, 1, 2].map(offset => {
+                {[0, 1, 2].map((offset) => {
                   const y = new Date().getFullYear() - offset;
-                  return <SelectItem key={y} value={y.toString()}>{y}</SelectItem>;
+                  return (
+                    <SelectItem key={y} value={y.toString()}>
+                      {y}
+                    </SelectItem>
+                  );
                 })}
               </SelectContent>
             </Select>
@@ -303,7 +300,10 @@ export default function PayrollPage() {
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                  <TableHead
+                    key={header.id}
+                    className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
+                  >
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
@@ -350,16 +350,18 @@ export default function PayrollPage() {
           <div className="max-w-2xl mx-auto border-2 border-black p-8 rounded-lg">
             <div className="text-center mb-8 border-b-2 border-black pb-4">
               <h2 className="text-2xl font-black uppercase tracking-widest">Phiếu Lương Nhân Viên</h2>
-              <p className="text-gray-600 mt-2 font-medium">Tháng {selectedMonth} / Năm {selectedYear}</p>
+              <p className="text-gray-600 mt-2 font-medium">
+                Tháng {selectedMonth} / Năm {selectedYear}
+              </p>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-y-4 text-sm font-medium mb-8">
               <div className="text-gray-500">Họ và tên:</div>
               <div className="font-bold text-right text-base uppercase">{printData.employee?.name}</div>
-              
+
               <div className="text-gray-500">Chức vụ:</div>
               <div className="font-bold text-right">{printData.employee?.role || "Nhân viên"}</div>
-              
+
               <div className="text-gray-500">Ngày in phiếu:</div>
               <div className="font-bold text-right">{format(new Date(), "dd/MM/yyyy HH:mm")}</div>
             </div>

@@ -4,7 +4,9 @@ import { getProvider } from "@/services/einvoice/registry";
 import type { EInvoiceConfig, TaxSettings, Invoice, InvoiceItem, IssueInvoiceInput } from "@/services/einvoice/types";
 
 async function getOrgId(supabase: any): Promise<string | null> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return null;
   const { data } = await supabase
     .from("organization_members")
@@ -25,7 +27,9 @@ export async function POST(req: NextRequest) {
     // @ts-ignore — createClient() signature may vary; the server helper handles cookies internally
     const supabase = createClient ? await createClient() : null;
     if (!supabase) return NextResponse.json({ ok: false, error: "Supabase init failed" }, { status: 500 });
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
 
     const orgId = await getOrgId(supabase);
@@ -38,8 +42,14 @@ export async function POST(req: NextRequest) {
       supabase.from("tax_settings").select("*").eq("tenant_id", orgId).maybeSingle(),
       input.configId
         ? supabase.from("einvoice_configs").select("*").eq("id", input.configId).eq("tenant_id", orgId).maybeSingle()
-        : supabase.from("einvoice_configs").select("*").eq("tenant_id", orgId).eq("is_active", true)
-            .order("is_default", { ascending: false }).limit(1).maybeSingle(),
+        : supabase
+            .from("einvoice_configs")
+            .select("*")
+            .eq("tenant_id", orgId)
+            .eq("is_active", true)
+            .order("is_default", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
     ]);
 
     const tax = taxRow.data as TaxSettings;
@@ -62,27 +72,37 @@ export async function POST(req: NextRequest) {
     // Create pending invoice
     const { data: created, error: createErr } = await supabase
       .from("invoices")
-      .insert([{
-        tenant_id: orgId,
-        branch_id: input.branchId || null,
-        order_id: input.orderId || null,
-        customer_id: input.customerId || null,
-        config_id: config.id,
-        invoice_type: input.invoiceType || (input.buyer.tax_code ? "B2B" : "B2C"),
-        buyer_name: input.buyer.name || null,
-        buyer_tax_code: input.buyer.tax_code || null,
-        buyer_address: input.buyer.address || null,
-        buyer_email: input.buyer.email || null,
-        buyer_phone: input.buyer.phone || null,
-        invoice_series: config.invoice_series || null,
-        invoice_template_code: config.invoice_template_code || null,
-        subtotal, discount_amount: discount, vat_rate: vatRate, vat_amount: vatAmount,
-        total_amount: total, currency: tax.default_currency || "VND",
-        payment_method: input.paymentMethod || null,
-        items, status: "pending", provider: config.provider, notes: input.notes || null,
-        issued_by: user.id,
-      }])
-      .select().single();
+      .insert([
+        {
+          tenant_id: orgId,
+          branch_id: input.branchId || null,
+          order_id: input.orderId || null,
+          customer_id: input.customerId || null,
+          config_id: config.id,
+          invoice_type: input.invoiceType || (input.buyer.tax_code ? "B2B" : "B2C"),
+          buyer_name: input.buyer.name || null,
+          buyer_tax_code: input.buyer.tax_code || null,
+          buyer_address: input.buyer.address || null,
+          buyer_email: input.buyer.email || null,
+          buyer_phone: input.buyer.phone || null,
+          invoice_series: config.invoice_series || null,
+          invoice_template_code: config.invoice_template_code || null,
+          subtotal,
+          discount_amount: discount,
+          vat_rate: vatRate,
+          vat_amount: vatAmount,
+          total_amount: total,
+          currency: tax.default_currency || "VND",
+          payment_method: input.paymentMethod || null,
+          items,
+          status: "pending",
+          provider: config.provider,
+          notes: input.notes || null,
+          issued_by: user.id,
+        },
+      ])
+      .select()
+      .single();
 
     if (createErr || !created) {
       return NextResponse.json({ ok: false, error: createErr?.message }, { status: 500 });
@@ -115,24 +135,40 @@ export async function POST(req: NextRequest) {
       const { data: updated } = await supabase.from("invoices").update(update).eq("id", created.id).select().single();
 
       if (input.orderId) {
-        await supabase.from("orders").update({ invoice_id: created.id, invoice_status: "issued" }).eq("id", input.orderId);
+        await supabase
+          .from("orders")
+          .update({ invoice_id: created.id, invoice_status: "issued" })
+          .eq("id", input.orderId);
       }
 
-      await supabase.from("invoice_logs").insert([{
-        tenant_id: orgId, invoice_id: created.id, action: "issue",
-        status_before: "pending", status_after: "issued",
-        message: `Phát hành qua ${config.provider} (server)`,
-        response_payload: res.raw_response, created_by: user.id,
-      }]);
+      await supabase.from("invoice_logs").insert([
+        {
+          tenant_id: orgId,
+          invoice_id: created.id,
+          action: "issue",
+          status_before: "pending",
+          status_after: "issued",
+          message: `Phát hành qua ${config.provider} (server)`,
+          response_payload: res.raw_response,
+          created_by: user.id,
+        },
+      ]);
 
       return NextResponse.json({ ok: true, invoice: updated });
     } catch (e: any) {
       const msg = e?.message || String(e);
       await supabase.from("invoices").update({ status: "failed", error_message: msg }).eq("id", created.id);
-      await supabase.from("invoice_logs").insert([{
-        tenant_id: orgId, invoice_id: created.id, action: "issue_failed",
-        status_before: "pending", status_after: "failed", message: msg, created_by: user.id,
-      }]);
+      await supabase.from("invoice_logs").insert([
+        {
+          tenant_id: orgId,
+          invoice_id: created.id,
+          action: "issue_failed",
+          status_before: "pending",
+          status_after: "failed",
+          message: msg,
+          created_by: user.id,
+        },
+      ]);
       return NextResponse.json({ ok: false, error: msg, invoice: created }, { status: 422 });
     }
   } catch (e: any) {

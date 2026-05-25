@@ -1,15 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { 
-  Sparkles, 
-  Send, 
-  Loader2, 
-  Bot, 
-  User, 
-  TrendingUp, 
-  Package, 
-  DollarSign, 
+import {
+  Sparkles,
+  Send,
+  Loader2,
+  Bot,
+  User,
+  TrendingUp,
+  Package,
+  DollarSign,
   ArrowRight,
   TrendingDown,
   RefreshCw,
@@ -23,7 +23,7 @@ import {
   Building,
   CreditCard,
   CheckCircle,
-  HelpCircle
+  HelpCircle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -115,7 +115,7 @@ function ActionsList({ actions }: { actions?: any[] }) {
       </div>
       {actions.map((act, i) => {
         const isSuccess = act.success;
-        
+
         let actionTitle = "Thao tác cơ sở dữ liệu";
         let colorTheme = "bg-primary/5 border-primary/15 text-primary";
         let ActionIcon = FileText;
@@ -123,15 +123,32 @@ function ActionsList({ actions }: { actions?: any[] }) {
 
         if (act.name === "create_product") {
           actionTitle = "Đã Thêm Sản Phẩm Mới";
-          colorTheme = "bg-emerald-500/10 dark:bg-emerald-500/5 border-emerald-500/20 text-emerald-600 dark:text-emerald-400";
+          colorTheme =
+            "bg-emerald-500/10 dark:bg-emerald-500/5 border-emerald-500/20 text-emerald-600 dark:text-emerald-400";
           ActionIcon = Package;
           details = (
             <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-2 text-[11px] font-semibold text-muted-foreground/80 bg-background/50 rounded-lg p-3 border border-border/10">
-              <div className="col-span-2 text-foreground font-black text-xs pb-1 border-b border-border/20 mb-1">{act.args.name}</div>
-              <div>Giá bán: <span className="text-foreground font-bold">{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(act.args.price)}</span></div>
-              <div>Tồn kho: <span className="text-foreground font-bold">{act.args.stock} chiếc</span></div>
-              <div>Mã SKU: <span className="text-primary font-mono font-bold uppercase">{act.result?.data?.barcode || "SP-AUTO"}</span></div>
-              <div>Nhóm: <span className="text-foreground font-bold">{act.args.category_name || "Mặc định"}</span></div>
+              <div className="col-span-2 text-foreground font-black text-xs pb-1 border-b border-border/20 mb-1">
+                {act.args.name}
+              </div>
+              <div>
+                Giá bán:{" "}
+                <span className="text-foreground font-bold">
+                  {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(act.args.price)}
+                </span>
+              </div>
+              <div>
+                Tồn kho: <span className="text-foreground font-bold">{act.args.stock} chiếc</span>
+              </div>
+              <div>
+                Mã SKU:{" "}
+                <span className="text-primary font-mono font-bold uppercase">
+                  {act.result?.data?.barcode || "SP-AUTO"}
+                </span>
+              </div>
+              <div>
+                Nhóm: <span className="text-foreground font-bold">{act.args.category_name || "Mặc định"}</span>
+              </div>
             </div>
           );
         } else if (act.name === "update_product") {
@@ -144,10 +161,17 @@ function ActionsList({ actions }: { actions?: any[] }) {
                 {act.result?.data?.name || act.args.product_name_or_id}
               </div>
               {act.args.price !== undefined && (
-                <div>Giá mới: <span className="text-foreground font-bold">{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(act.args.price)}</span></div>
+                <div>
+                  Giá mới:{" "}
+                  <span className="text-foreground font-bold">
+                    {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(act.args.price)}
+                  </span>
+                </div>
               )}
               {act.args.stock !== undefined && (
-                <div>Tồn mới: <span className="text-foreground font-bold">{act.args.stock} chiếc</span></div>
+                <div>
+                  Tồn mới: <span className="text-foreground font-bold">{act.args.stock} chiếc</span>
+                </div>
               )}
             </div>
           );
@@ -157,18 +181,29 @@ function ActionsList({ actions }: { actions?: any[] }) {
           ActionIcon = Trash2;
           details = (
             <div className="mt-2 text-[11px] text-muted-foreground bg-background/50 rounded-lg p-2.5 border border-border/10">
-              Đã xoá hoàn toàn sản phẩm <span className="text-foreground font-bold">"{act.args.product_name_or_id}"</span> khỏi hệ thống.
+              Đã xoá hoàn toàn sản phẩm{" "}
+              <span className="text-foreground font-bold">"{act.args.product_name_or_id}"</span> khỏi hệ thống.
             </div>
           );
         } else if (act.name === "create_customer") {
           actionTitle = "Đã Đăng Ký Khách Hàng Mới";
-          colorTheme = "bg-violet-500/10 dark:bg-violet-500/5 border-violet-500/20 text-violet-600 dark:text-violet-400";
+          colorTheme =
+            "bg-violet-500/10 dark:bg-violet-500/5 border-violet-500/20 text-violet-600 dark:text-violet-400";
           ActionIcon = UserCheck;
           details = (
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-[11px] font-semibold text-muted-foreground/80 bg-background/50 rounded-lg p-3 border border-border/10">
-              <div className="col-span-2 text-foreground font-black text-xs pb-0.5 border-b border-border/20 mb-1">{act.args.name}</div>
-              <div>Điện thoại: <span className="text-foreground font-bold">{act.args.phone || "Chưa có"}</span></div>
-              <div>Mã KH: <span className="text-primary font-mono font-bold">KH-{act.result?.data?.id?.slice(0, 5) || "AUTO"}</span></div>
+              <div className="col-span-2 text-foreground font-black text-xs pb-0.5 border-b border-border/20 mb-1">
+                {act.args.name}
+              </div>
+              <div>
+                Điện thoại: <span className="text-foreground font-bold">{act.args.phone || "Chưa có"}</span>
+              </div>
+              <div>
+                Mã KH:{" "}
+                <span className="text-primary font-mono font-bold">
+                  KH-{act.result?.data?.id?.slice(0, 5) || "AUTO"}
+                </span>
+              </div>
             </div>
           );
         } else if (act.name === "create_supplier") {
@@ -177,9 +212,15 @@ function ActionsList({ actions }: { actions?: any[] }) {
           ActionIcon = Building;
           details = (
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-[11px] font-semibold text-muted-foreground/80 bg-background/50 rounded-lg p-3 border border-border/10">
-              <div className="col-span-2 text-foreground font-black text-xs pb-0.5 border-b border-border/20 mb-1">{act.args.name}</div>
-              <div>Người liên hệ: <span className="text-foreground font-bold">{act.args.contact_name || "Chưa có"}</span></div>
-              <div>Điện thoại: <span className="text-foreground font-bold">{act.args.phone || "Chưa có"}</span></div>
+              <div className="col-span-2 text-foreground font-black text-xs pb-0.5 border-b border-border/20 mb-1">
+                {act.args.name}
+              </div>
+              <div>
+                Người liên hệ: <span className="text-foreground font-bold">{act.args.contact_name || "Chưa có"}</span>
+              </div>
+              <div>
+                Điện thoại: <span className="text-foreground font-bold">{act.args.phone || "Chưa có"}</span>
+              </div>
             </div>
           );
         } else if (act.name === "create_expense") {
@@ -188,9 +229,18 @@ function ActionsList({ actions }: { actions?: any[] }) {
           ActionIcon = CreditCard;
           details = (
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-[11px] font-semibold text-muted-foreground/80 bg-background/50 rounded-lg p-3 border border-border/10">
-              <div className="col-span-2 text-foreground font-black text-xs pb-0.5 border-b border-border/20 mb-1">{act.args.description}</div>
-              <div>Số tiền: <span className="text-rose-500 font-bold">{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(act.args.amount)}</span></div>
-              <div>Danh mục: <span className="text-foreground font-bold">{act.args.category || "Hành chính"}</span></div>
+              <div className="col-span-2 text-foreground font-black text-xs pb-0.5 border-b border-border/20 mb-1">
+                {act.args.description}
+              </div>
+              <div>
+                Số tiền:{" "}
+                <span className="text-rose-500 font-bold">
+                  {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(act.args.amount)}
+                </span>
+              </div>
+              <div>
+                Danh mục: <span className="text-foreground font-bold">{act.args.category || "Hành chính"}</span>
+              </div>
             </div>
           );
         }
@@ -205,9 +255,16 @@ function ActionsList({ actions }: { actions?: any[] }) {
                 <p className="font-bold truncate text-[11px]">{actionTitle}</p>
               </div>
               {isSuccess ? (
-                <Badge variant="outline" className="bg-emerald-500/20 text-emerald-600 border-none text-[10px] h-5 py-0 px-2 rounded-full font-bold">Thành công</Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-emerald-500/20 text-emerald-600 border-none text-[10px] h-5 py-0 px-2 rounded-full font-bold"
+                >
+                  Thành công
+                </Badge>
               ) : (
-                <Badge variant="destructive" className="text-[10px] h-5 py-0 px-2 rounded-full font-bold">Thất bại</Badge>
+                <Badge variant="destructive" className="text-[10px] h-5 py-0 px-2 rounded-full font-bold">
+                  Thất bại
+                </Badge>
               )}
             </div>
             {details}
@@ -222,8 +279,9 @@ export default function AIChatPage() {
   const [messages, setMessages] = useState<any[]>([
     {
       role: "assistant",
-      content: "👋 Xin chào! Tôi là Trợ lý Thông minh **ZPOS AI**.\n\nTôi có thể hỗ trợ bạn kiểm tra tình hình tài chính của quán, kiểm tra tồn kho, hoặc nhập liệu tự động cực nhanh bằng **Giọng nói** 🎙️.\n\n**Bạn có thể ra lệnh cho tôi như:**\n- `\"Thêm sản phẩm Trà Đào Cam Sả giá 35000 tồn kho 90\"`\n- `\"Thêm chi phí tiền điện nước tháng này 1500000\"`\n- `\"Thêm khách hàng Nguyễn Văn A số điện thoại 0912345678\"`\n- `\"Xóa sản phẩm có tên Trà Dâu\"`"
-    }
+      content:
+        '👋 Xin chào! Tôi là Trợ lý Thông minh **ZPOS AI**.\n\nTôi có thể hỗ trợ bạn kiểm tra tình hình tài chính của quán, kiểm tra tồn kho, hoặc nhập liệu tự động cực nhanh bằng **Giọng nói** 🎙️.\n\n**Bạn có thể ra lệnh cho tôi như:**\n- `"Thêm sản phẩm Trà Đào Cam Sả giá 35000 tồn kho 90"`\n- `"Thêm chi phí tiền điện nước tháng này 1500000"`\n- `"Thêm khách hàng Nguyễn Văn A số điện thoại 0912345678"`\n- `"Xóa sản phẩm có tên Trà Dâu"`',
+    },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -242,18 +300,17 @@ export default function AIChatPage() {
     if (typeof window !== "undefined") {
       const loadVoices = () => {
         let vi: any[] = [];
-        
+
         if (window.speechSynthesis) {
           const voices = window.speechSynthesis.getVoices();
-          vi = voices.filter(v => 
-            v.lang.toLowerCase().includes("vi") || 
-            v.lang.toLowerCase().includes("vn")
-          ).map(v => ({
-            name: v.name,
-            id: v.name,
-            lang: v.lang,
-            nativeVoice: v
-          }));
+          vi = voices
+            .filter((v) => v.lang.toLowerCase().includes("vi") || v.lang.toLowerCase().includes("vn"))
+            .map((v) => ({
+              name: v.name,
+              id: v.name,
+              lang: v.lang,
+              nativeVoice: v,
+            }));
         }
 
         // Add premium virtual online voices
@@ -262,7 +319,7 @@ export default function AIChatPage() {
           { name: "Google Premium Neural2 (Nữ)", id: "gcloud-vi-VN-Neural2-A", lang: "vi-VN" },
           { name: "Google Premium Neural2 (Nam)", id: "gcloud-vi-VN-Neural2-D", lang: "vi-VN" },
           { name: "Google Premium WaveNet (Nữ)", id: "gcloud-vi-VN-Wavenet-A", lang: "vi-VN" },
-          { name: "Google Premium WaveNet (Nam)", id: "gcloud-vi-VN-Wavenet-D", lang: "vi-VN" }
+          { name: "Google Premium WaveNet (Nam)", id: "gcloud-vi-VN-Wavenet-D", lang: "vi-VN" },
         ];
 
         const merged = [...vi, ...onlineVoices];
@@ -287,7 +344,7 @@ export default function AIChatPage() {
       if (SpeechRecognition) {
         const rec = new SpeechRecognition();
         rec.continuous = false;
-        rec.lang = "vi-VN"; 
+        rec.lang = "vi-VN";
         rec.interimResults = false;
         rec.maxAlternatives = 1;
 
@@ -301,7 +358,7 @@ export default function AIChatPage() {
 
         rec.onresult = (event: any) => {
           const speechToText = event.results[0][0].transcript;
-          setInput(prev => (prev ? prev + " " + speechToText : speechToText));
+          setInput((prev) => (prev ? prev + " " + speechToText : speechToText));
           toast.success("Đã ghi nhận giọng nói của bạn!");
         };
 
@@ -346,7 +403,7 @@ export default function AIChatPage() {
       audioRef.current.pause();
       audioRef.current = null;
     }
-    
+
     // Clean markdown characters for pleasant speech reading
     const cleanText = text
       .replace(/###/g, "")
@@ -368,11 +425,10 @@ export default function AIChatPage() {
       try {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(textToSpeak);
-        
-        const viVoice = window.speechSynthesis.getVoices().find(v => 
-          v.lang.toLowerCase().includes("vi") || 
-          v.lang.toLowerCase().includes("vn")
-        );
+
+        const viVoice = window.speechSynthesis
+          .getVoices()
+          .find((v) => v.lang.toLowerCase().includes("vi") || v.lang.toLowerCase().includes("vn"));
         if (viVoice) {
           utterance.voice = viVoice;
         }
@@ -413,50 +469,49 @@ export default function AIChatPage() {
     // If utilizing one of the Google API voices (Free Google Translate Proxy or Cloud API)
     if (selectedVoiceName.startsWith("gcloud-") || selectedVoiceName === "free-google-default") {
       setSpeakingIdx(idx);
-      
+
       const payload = {
         text: cleanText,
-        voiceName: selectedVoiceName
+        voiceName: selectedVoiceName,
       };
 
       fetch("/api/ai/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       })
-      .then(async (res) => {
-        if (!res.ok) {
-          const textErr = await res.text();
-          throw new Error(textErr || "Lỗi máy chủ TTS");
-        }
-        const data = await res.json();
-        const audioSrc = data.audio || (data.audioContent ? "data:audio/mp3;base64," + data.audioContent : null);
-        
-        if (audioSrc) {
-          const snd = new Audio(audioSrc);
-          audioRef.current = snd;
-          snd.play();
-          snd.onended = () => {
-            setSpeakingIdx(null);
-          };
-          snd.onerror = () => {
-            console.error("Audio playback error, falling back...");
-            playNativeFallback(cleanText, idx);
-          };
-        } else {
-          throw new Error("Không có dữ liệu âm thanh trả về");
-        }
-      })
-      .catch((err) => {
-        console.error("Google TTS failed:", err);
-        toast.error("Không kết nối được cổng giọng nói Google Premium. Chuyển sang giọng đọc mặc định...");
-        playNativeFallback(cleanText, idx);
-      });
+        .then(async (res) => {
+          if (!res.ok) {
+            const textErr = await res.text();
+            throw new Error(textErr || "Lỗi máy chủ TTS");
+          }
+          const data = await res.json();
+          const audioSrc = data.audio || (data.audioContent ? "data:audio/mp3;base64," + data.audioContent : null);
 
+          if (audioSrc) {
+            const snd = new Audio(audioSrc);
+            audioRef.current = snd;
+            snd.play();
+            snd.onended = () => {
+              setSpeakingIdx(null);
+            };
+            snd.onerror = () => {
+              console.error("Audio playback error, falling back...");
+              playNativeFallback(cleanText, idx);
+            };
+          } else {
+            throw new Error("Không có dữ liệu âm thanh trả về");
+          }
+        })
+        .catch((err) => {
+          console.error("Google TTS failed:", err);
+          toast.error("Không kết nối được cổng giọng nói Google Premium. Chuyển sang giọng đọc mặc định...");
+          playNativeFallback(cleanText, idx);
+        });
     } else {
       // Local SpeechSynthesis (System voice)
       try {
-        const found = availableVoices.find(v => v.id === selectedVoiceName);
+        const found = availableVoices.find((v) => v.id === selectedVoiceName);
         if (found && found.nativeVoice) {
           const utterance = new SpeechSynthesisUtterance(cleanText);
           utterance.voice = found.nativeVoice;
@@ -481,9 +536,10 @@ export default function AIChatPage() {
 
   // Fetch quick stats initially
   useEffect(() => {
-    posService.getFinanceOverview()
-      .then(data => setQuickStats(data))
-      .catch(err => console.error("Failed to load initial quick stats", err));
+    posService
+      .getFinanceOverview()
+      .then((data) => setQuickStats(data))
+      .catch((err) => console.error("Failed to load initial quick stats", err));
   }, []);
 
   // Handle messages scroll
@@ -495,7 +551,7 @@ export default function AIChatPage() {
     const textToSend = forcedText || input;
     if (!textToSend.trim()) return;
 
-    setMessages(prev => [...prev, { role: "user", content: textToSend }]);
+    setMessages((prev) => [...prev, { role: "user", content: textToSend }]);
     if (!forcedText) setInput("");
     setLoading(true);
 
@@ -503,7 +559,7 @@ export default function AIChatPage() {
       const response = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: [...messages, { role: "user", content: textToSend }] })
+        body: JSON.stringify({ messages: [...messages, { role: "user", content: textToSend }] }),
       });
 
       if (!response.ok) {
@@ -511,14 +567,15 @@ export default function AIChatPage() {
       }
 
       const data = await response.json();
-      
+
       const assistantMessage = {
         role: "assistant",
-        content: data.content || data.reply || "Tôi đã nhận được lệnh nhưng không nhận diện được định dạng phản hồi phù hợp.",
-        actions: data.actions || []
+        content:
+          data.content || data.reply || "Tôi đã nhận được lệnh nhưng không nhận diện được định dạng phản hồi phù hợp.",
+        actions: data.actions || [],
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, assistantMessage]);
 
       // If speak trigger is enabled and TTS exists, play speaking automatically
       if (assistantMessage.content) {
@@ -539,10 +596,13 @@ export default function AIChatPage() {
       }
     } catch (error) {
       console.error(error);
-      setMessages(prev => [...prev, {
-        role: "assistant",
-        content: "❌ Lỗi kết nối máy chủ AI hoặc hệ thống bận. Xin vui lòng kiểm tra lại."
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "❌ Lỗi kết nối máy chủ AI hoặc hệ thống bận. Xin vui lòng kiểm tra lại.",
+        },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -558,7 +618,6 @@ export default function AIChatPage() {
 
   return (
     <div className="flex flex-col gap-6 h-auto lg:h-[calc(100vh-140px)] lg:max-h-[calc(100vh-140px)] lg:min-h-0 animate-in fade-in duration-500">
-      
       {/* PAGE HEADER (SYNCHRONIZED WITH THE ORIGINAL REPOSITORY UI) */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between border-b pb-4">
         <div className="flex flex-col gap-1">
@@ -581,23 +640,30 @@ export default function AIChatPage() {
               >
                 {availableVoices.map((v) => (
                   <option key={v.id} value={v.id} className="text-foreground bg-card font-bold">
-                    {v.name.replace("Microsoft", "").replace("Apple", "").replace("Google", "").replace("TTS", "").trim()}
+                    {v.name
+                      .replace("Microsoft", "")
+                      .replace("Apple", "")
+                      .replace("Google", "")
+                      .replace("TTS", "")
+                      .trim()}
                   </option>
                 ))}
               </select>
             </div>
           )}
 
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             className="h-9 gap-1.5 font-bold shadow-sm"
             onClick={() => {
               if (typeof window !== "undefined") window.speechSynthesis.cancel();
-              setMessages([{
-                role: "assistant",
-                content: "Cuộc hội thoại đã được đặt lại. Tôi đã sẵn sàng thực hiện các lệnh tiếp theo từ bạn."
-              }]);
+              setMessages([
+                {
+                  role: "assistant",
+                  content: "Cuộc hội thoại đã được đặt lại. Tôi đã sẵn sàng thực hiện các lệnh tiếp theo từ bạn.",
+                },
+              ]);
               setSpeakingIdx(null);
             }}
           >
@@ -609,7 +675,6 @@ export default function AIChatPage() {
 
       {/* CORE WORKSPACE GRID CONTAINER */}
       <div className="flex-grow flex flex-col lg:flex-row gap-6 min-h-0">
-        
         {/* LEFT PANEL: Chat Conversation Interface */}
         <div className="flex-1 flex flex-col bg-card rounded-lg border shadow-sm overflow-hidden h-[600px] lg:h-full min-h-0">
           {/* Subtle panel header */}
@@ -618,37 +683,39 @@ export default function AIChatPage() {
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <span className="text-xs font-bold text-muted-foreground">Kênh tương tác trực tuyến</span>
             </div>
-            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 font-bold border-none text-[10px] px-2 py-0.5 rounded">Active</Badge>
+            <Badge
+              variant="outline"
+              className="bg-emerald-500/10 text-emerald-600 font-bold border-none text-[10px] px-2 py-0.5 rounded"
+            >
+              Active
+            </Badge>
           </div>
 
           {/* Chat Messages Log */}
           <div className="flex-1 overflow-y-auto p-4 md:p-6 min-h-0 space-y-4">
             {messages.map((m, idx) => (
-              <div 
-                key={idx} 
-                className={`flex gap-3 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                {m.role !== 'user' && (
+              <div key={idx} className={`flex gap-3 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                {m.role !== "user" && (
                   <div className="w-8 h-8 rounded-md bg-violet-500/10 flex items-center justify-center border border-violet-500/20 flex-shrink-0">
                     <Bot className="w-4 h-4 text-violet-600" />
                   </div>
                 )}
-                <div 
+                <div
                   className={`rounded-lg p-4 max-w-[85%] border group relative transition duration-200 ${
-                    m.role === 'user' 
-                      ? 'bg-violet-600 text-white border-violet-700 rounded-tr-none font-medium' 
-                      : 'bg-muted/40 border-border/80 rounded-tl-none'
+                    m.role === "user"
+                      ? "bg-violet-600 text-white border-violet-700 rounded-tr-none font-medium"
+                      : "bg-muted/40 border-border/80 rounded-tl-none"
                   }`}
                 >
-                  {m.role === 'user' ? (
+                  {m.role === "user" ? (
                     <p className="text-sm whitespace-pre-wrap leading-relaxed">{m.content}</p>
                   ) : (
                     <div>
                       <MarkdownRenderer content={m.content} />
                       <ActionsList actions={m.actions} />
-                      
+
                       {/* Speaker Audio Reading Toggle Trigger */}
-                      <button 
+                      <button
                         onClick={() => toggleSpeech(m.content, idx)}
                         className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition duration-300 p-1 rounded bg-background border border-border hover:bg-muted"
                         title={speakingIdx === idx ? "Dừng đọc" : "Đọc phản hồi AI"}
@@ -662,7 +729,7 @@ export default function AIChatPage() {
                     </div>
                   )}
                 </div>
-                {m.role === 'user' && (
+                {m.role === "user" && (
                   <div className="w-8 h-8 rounded-md bg-violet-600 flex items-center justify-center flex-shrink-0 text-white font-bold text-xs shadow">
                     U
                   </div>
@@ -676,7 +743,9 @@ export default function AIChatPage() {
                 </div>
                 <div className="rounded-lg p-3 bg-muted/20 border border-border/40 rounded-tl-none flex items-center gap-2.5">
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-600" />
-                  <span className="text-xs font-medium animate-pulse text-muted-foreground">AI đang thực thi lệnh và phân tích dữ liệu...</span>
+                  <span className="text-xs font-medium animate-pulse text-muted-foreground">
+                    AI đang thực thi lệnh và phân tích dữ liệu...
+                  </span>
                 </div>
               </div>
             )}
@@ -693,33 +762,29 @@ export default function AIChatPage() {
 
           {/* Quick Trigger Chips Bar */}
           <div className="px-4 py-2 border-t bg-muted/10 flex flex-wrap gap-2 justify-center">
-            <button 
+            <button
               onClick={() => handlePromptClick("thêm sản phẩm Bánh mì thịt giá 25000 tồn kho 50")}
               className="text-[11px] font-bold px-3 py-1 rounded-full border bg-background hover:bg-muted text-muted-foreground transition duration-150 flex items-center gap-1 shadow-sm"
             >
-              <Package className="w-3.5 h-3.5 text-emerald-500" />
-              + Thêm sản phẩm mẫu
+              <Package className="w-3.5 h-3.5 text-emerald-500" />+ Thêm sản phẩm mẫu
             </button>
-            <button 
+            <button
               onClick={() => handlePromptClick("thêm khách hàng Nguyễn Hoàng Nam số 0988223344")}
               className="text-[11px] font-bold px-3 py-1 rounded-full border bg-background hover:bg-muted text-muted-foreground transition duration-150 flex items-center gap-1 shadow-sm"
             >
-              <UserCheck className="w-3.5 h-3.5 text-violet-500" />
-              + Khách hàng mới
+              <UserCheck className="w-3.5 h-3.5 text-violet-500" />+ Khách hàng mới
             </button>
-            <button 
+            <button
               onClick={() => handlePromptClick("thêm chi phí tiền điện 1200000")}
               className="text-[11px] font-bold px-3 py-1 rounded-full border bg-background hover:bg-muted text-muted-foreground transition duration-150 flex items-center gap-1 shadow-sm"
             >
-              <CreditCard className="w-3.5 h-3.5 text-rose-500" />
-              + Thêm chi phí điện
+              <CreditCard className="w-3.5 h-3.5 text-rose-500" />+ Thêm chi phí điện
             </button>
-            <button 
+            <button
               onClick={() => handlePromptClick("thêm nhà cung cấp Công ty ViZ Solutions")}
               className="text-[11px] font-bold px-3 py-1 rounded-full border bg-background hover:bg-muted text-muted-foreground transition duration-150 flex items-center gap-1 shadow-sm"
             >
-              <Building className="w-3.5 h-3.5 text-amber-500" />
-              + Nhà cung cấp mới
+              <Building className="w-3.5 h-3.5 text-amber-500" />+ Nhà cung cấp mới
             </button>
           </div>
 
@@ -731,26 +796,30 @@ export default function AIChatPage() {
               variant="outline"
               onClick={toggleListening}
               className={`w-10 h-10 p-0 rounded-md flex-shrink-0 border transition duration-200 ${
-                isListening 
-                  ? "bg-red-500 hover:bg-red-600 text-white animate-pulse border-red-600 shadow" 
+                isListening
+                  ? "bg-red-500 hover:bg-red-600 text-white animate-pulse border-red-600 shadow"
                   : "hover:bg-muted"
               }`}
               title="Nhập liệu bằng giọng nói (vi-VN)"
             >
-              {isListening ? <MicOff className="w-4 h-4 text-white" /> : <Mic className="w-4 h-4 text-muted-foreground" />}
+              {isListening ? (
+                <MicOff className="w-4 h-4 text-white" />
+              ) : (
+                <Mic className="w-4 h-4 text-muted-foreground" />
+              )}
             </Button>
 
-            <Input 
-              placeholder="Nhập yêu cầu: 'thêm sản phẩm X giá Y tồn kho Z', 'thêm chi phí A Z'..." 
+            <Input
+              placeholder="Nhập yêu cầu: 'thêm sản phẩm X giá Y tồn kho Z', 'thêm chi phí A Z'..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
               disabled={loading}
               className="h-10 rounded-md flex-grow font-semibold text-xs border focus-visible:ring-violet-600 px-3.5"
             />
 
-            <Button 
-              onClick={() => handleSend()} 
+            <Button
+              onClick={() => handleSend()}
               disabled={loading || !input.trim()}
               className="h-10 px-4 rounded-md shadow bg-violet-600 hover:bg-violet-700 text-white gap-2 font-bold flex-shrink-0"
             >
@@ -762,7 +831,6 @@ export default function AIChatPage() {
 
         {/* RIGHT PANEL: Live Finance Stats & Instruction widgets */}
         <div className="w-full lg:w-[320px] flex flex-col gap-4 overflow-y-auto pr-1 lg:h-full lg:max-h-full min-h-0">
-          
           {/* Instant Financial Overview Grid Card */}
           <Card className="border shadow-sm rounded-lg overflow-hidden bg-card">
             <CardHeader className="pb-3 border-b bg-muted/30">
@@ -770,24 +838,42 @@ export default function AIChatPage() {
                 <Sparkles className="w-4 h-4 text-violet-500" />
                 Dữ liệu tài chính tức thời
               </CardTitle>
-              <CardDescription className="text-[10px] font-medium text-muted-foreground">Tự động cập nhật khi AI nhập liệu</CardDescription>
+              <CardDescription className="text-[10px] font-medium text-muted-foreground">
+                Tự động cập nhật khi AI nhập liệu
+              </CardDescription>
             </CardHeader>
             <CardContent className="pt-4 space-y-4 text-xs font-semibold">
               <div className="border-b pb-2 last:border-0 last:pb-0">
-                <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Tổng doanh thu</span>
-                <p className="text-xl font-black text-primary mt-0.5">{formatCurrency(quickStats?.totalRevenue || 0)}</p>
+                <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                  Tổng doanh thu
+                </span>
+                <p className="text-xl font-black text-primary mt-0.5">
+                  {formatCurrency(quickStats?.totalRevenue || 0)}
+                </p>
               </div>
               <div className="border-b pb-2 last:border-0 last:pb-0">
-                <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Giá vốn hàng bán (COGS)</span>
-                <p className="text-sm font-bold text-muted-foreground mt-0.5">-{formatCurrency(quickStats?.totalCOGS || 0)}</p>
+                <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                  Giá vốn hàng bán (COGS)
+                </span>
+                <p className="text-sm font-bold text-muted-foreground mt-0.5">
+                  -{formatCurrency(quickStats?.totalCOGS || 0)}
+                </p>
               </div>
               <div className="border-b pb-2 last:border-0 last:pb-0">
-                <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Chi phí vận hành</span>
-                <p className="text-sm font-bold text-destructive mt-0.5">-{formatCurrency(quickStats?.totalExpenses || 0)}</p>
+                <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                  Chi phí vận hành
+                </span>
+                <p className="text-sm font-bold text-destructive mt-0.5">
+                  -{formatCurrency(quickStats?.totalExpenses || 0)}
+                </p>
               </div>
               <div className="pt-2">
-                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase font-bold tracking-wider block">Lợi nhuận ròng thực tế</span>
-                <p className="text-xl font-black text-emerald-600 dark:text-emerald-500 mt-0.5">{formatCurrency(quickStats?.netProfit || 0)}</p>
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase font-bold tracking-wider block">
+                  Lợi nhuận ròng thực tế
+                </span>
+                <p className="text-xl font-black text-emerald-600 dark:text-emerald-500 mt-0.5">
+                  {formatCurrency(quickStats?.netProfit || 0)}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -807,7 +893,11 @@ export default function AIChatPage() {
               </div>
               <div className="p-2.5 bg-muted/40 rounded border border-border/40">
                 <p className="font-bold text-foreground mb-0.5">2. Nói khẩu lệnh rõ ràng</p>
-                <p>Nói: <code className="text-violet-600 font-bold">"thêm sản phẩm trà đào cam sả giá 30000 tồn kho 80"</code>.</p>
+                <p>
+                  Nói:{" "}
+                  <code className="text-violet-600 font-bold">"thêm sản phẩm trà đào cam sả giá 30000 tồn kho 80"</code>
+                  .
+                </p>
               </div>
               <div className="p-2.5 bg-muted/40 rounded border border-border/40">
                 <p className="font-bold text-foreground mb-0.5">3. Bấm Gửi để thực thi</p>
@@ -827,17 +917,25 @@ export default function AIChatPage() {
             <CardContent className="space-y-3 pt-4 text-[11px] leading-relaxed font-semibold text-muted-foreground">
               <p>Apple cung cấp các giọng đọc Siri tiếng Việt cao cấp cực kỳ mượt mà cho macOS:</p>
               <div className="p-2.5 bg-muted/30 rounded border border-border/30 space-y-1 text-[10px]">
-                <p><span className="text-violet-600 font-bold">1:</span> Mở <strong className="text-foreground">Cài đặt hệ thống (System Settings)</strong> trên Mac.</p>
-                <p><span className="text-violet-600 font-bold">2:</span> Chọn <strong className="text-foreground">Trợ năng (Accessibility)</strong> → <strong className="text-foreground">Nội dung được nói</strong>.</p>
-                <p><span className="text-violet-600 font-bold">3:</span> Chọn Giọng nói → <strong className="text-foreground">Quản lý giọng nói... (Manage Voices...)</strong> → Tải tiếng Việt Siri Premium.</p>
+                <p>
+                  <span className="text-violet-600 font-bold">1:</span> Mở{" "}
+                  <strong className="text-foreground">Cài đặt hệ thống (System Settings)</strong> trên Mac.
+                </p>
+                <p>
+                  <span className="text-violet-600 font-bold">2:</span> Chọn{" "}
+                  <strong className="text-foreground">Trợ năng (Accessibility)</strong> →{" "}
+                  <strong className="text-foreground">Nội dung được nói</strong>.
+                </p>
+                <p>
+                  <span className="text-violet-600 font-bold">3:</span> Chọn Giọng nói →{" "}
+                  <strong className="text-foreground">Quản lý giọng nói... (Manage Voices...)</strong> → Tải tiếng Việt
+                  Siri Premium.
+                </p>
               </div>
             </CardContent>
           </Card>
-
         </div>
-
       </div>
-
     </div>
   );
 }

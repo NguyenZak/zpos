@@ -16,7 +16,7 @@ export interface AISEOResult {
 export async function generateAISEOMetadata(
   sourceTitle: string,
   category: string,
-  customKeywords: string = ""
+  customKeywords: string = "",
 ): Promise<AISEOResult> {
   // Simulate network latency of AI models
   await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -28,7 +28,8 @@ export async function generateAISEOMetadata(
   if (!cleanTitle) {
     return {
       title: "ZPOS — Hệ điều hành bán lẻ thế hệ mới",
-      description: "Giải pháp quản lý bán lẻ, kho hàng, thanh toán POS đồng bộ và bảo mật tuyệt đối cho mọi mô hình kinh doanh.",
+      description:
+        "Giải pháp quản lý bán lẻ, kho hàng, thanh toán POS đồng bộ và bảo mật tuyệt đối cho mọi mô hình kinh doanh.",
       slug: "",
       keywords: "phan mem ban hang, pos, quan ly kho, zpos",
       score: 65,
@@ -60,9 +61,7 @@ export async function generateAISEOMetadata(
     metaDescription = metaDescription.slice(0, 157) + "...";
   }
 
-  const finalKeywords = customKeywords 
-    ? `${customKeywords.trim().toLowerCase()}, ${defaultKeywords}` 
-    : defaultKeywords;
+  const finalKeywords = customKeywords ? `${customKeywords.trim().toLowerCase()}, ${defaultKeywords}` : defaultKeywords;
 
   // Advanced SEO scoring heuristics
   let score = 75;
@@ -73,7 +72,9 @@ export async function generateAISEOMetadata(
     suggestions.push("⚠️ Tiêu đề quá ngắn (dưới 10 ký tự). Hãy viết thêm từ khóa chính để hấp dẫn người đọc.");
   } else if (cleanTitle.length > 60) {
     score -= 10;
-    suggestions.push("⚠️ Tiêu đề quá dài (trên 60 ký tự). Có thể bị cắt bớt hiển thị trên trang kết quả tìm kiếm Google.");
+    suggestions.push(
+      "⚠️ Tiêu đề quá dài (trên 60 ký tự). Có thể bị cắt bớt hiển thị trên trang kết quả tìm kiếm Google.",
+    );
   } else {
     score += 10;
     suggestions.push("✅ Chiều dài tiêu đề hoàn hảo (10 - 60 ký tự).");
@@ -81,7 +82,9 @@ export async function generateAISEOMetadata(
 
   if (metaDescription.length < 100) {
     score -= 10;
-    suggestions.push("⚠️ Mô tả Meta quá ngắn. Nên viết từ 110 - 150 ký tự để truyền tải đủ nội dung hấp dẫn khách hàng nhấp chuột.");
+    suggestions.push(
+      "⚠️ Mô tả Meta quá ngắn. Nên viết từ 110 - 150 ký tự để truyền tải đủ nội dung hấp dẫn khách hàng nhấp chuột.",
+    );
   } else {
     score += 10;
     suggestions.push("✅ Chiều dài mô tả Meta đạt chuẩn hiển thị công cụ tìm kiếm.");

@@ -5,7 +5,7 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 export const createClient = () => {
   const isDev = process.env.NODE_ENV === "development";
-  let mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'localhost:3000';
+  let mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || "localhost:3000";
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname;
     if (hostname.includes("zpos.click")) {
@@ -25,13 +25,7 @@ export const createClient = () => {
     }
   }
 
-  return createBrowserClient(
-    supabaseUrl!,
-    supabaseKey!,
-    {
-      cookieOptions: isDev 
-        ? { path: "/" }
-        : { domain: cookieDomain, path: "/" },
-    }
-  );
+  return createBrowserClient(supabaseUrl!, supabaseKey!, {
+    cookieOptions: isDev ? { path: "/" } : { domain: cookieDomain, path: "/" },
+  });
 };

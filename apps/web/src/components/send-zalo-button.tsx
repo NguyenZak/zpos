@@ -14,11 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import {
-  zaloService,
-  normalizeVNPhone,
-  type ZaloTriggerEvent,
-} from "@/services/zalo.service";
+import { zaloService, normalizeVNPhone, type ZaloTriggerEvent } from "@/services/zalo.service";
 
 interface Props {
   /** What event to send — drives template selection */
@@ -103,13 +99,7 @@ export function SendZaloButton({
 
   return (
     <>
-      <Button
-        variant={variant}
-        size={size}
-        onClick={handleClick}
-        disabled={sending}
-        className="gap-2"
-      >
+      <Button variant={variant} size={size} onClick={handleClick} disabled={sending} className="gap-2">
         {sending ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : status === "ok" ? (
@@ -127,9 +117,7 @@ export function SendZaloButton({
               <MessageCircle className="h-5 w-5 text-sky-500" />
               Gửi thông báo qua Zalo
             </DialogTitle>
-            <DialogDescription>
-              Tin nhắn ZNS sẽ được gửi tới số Zalo của khách theo mẫu đã duyệt.
-            </DialogDescription>
+            <DialogDescription>Tin nhắn ZNS sẽ được gửi tới số Zalo của khách theo mẫu đã duyệt.</DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-3">
@@ -150,24 +138,17 @@ export function SendZaloButton({
             </div>
 
             <div className="rounded-md border bg-muted/30 p-3 text-xs space-y-1">
-              <p className="font-bold uppercase tracking-wider text-muted-foreground">
-                Mẫu áp dụng
-              </p>
+              <p className="font-bold uppercase tracking-wider text-muted-foreground">Mẫu áp dụng</p>
               <p>
                 Sự kiện: <span className="font-mono font-bold">{event}</span>
               </p>
-              <p className="text-muted-foreground">
-                Hệ thống sẽ dùng mẫu ZNS đã cấu hình cho sự kiện này.
-              </p>
+              <p className="text-muted-foreground">Hệ thống sẽ dùng mẫu ZNS đã cấu hình cho sự kiện này.</p>
             </div>
 
             {status === "err" && (
               <div className="flex items-start gap-2 text-xs text-red-600">
                 <AlertCircle className="h-4 w-4 mt-0.5" />
-                <p>
-                  Gửi gần nhất thất bại — kiểm tra access_token và mẫu trong Cài
-                  đặt → Zalo OA.
-                </p>
+                <p>Gửi gần nhất thất bại — kiểm tra access_token và mẫu trong Cài đặt → Zalo OA.</p>
               </div>
             )}
 
@@ -175,11 +156,7 @@ export function SendZaloButton({
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Huỷ
               </Button>
-              <Button
-                type="submit"
-                disabled={sending}
-                className="bg-sky-500 hover:bg-sky-600 text-white"
-              >
+              <Button type="submit" disabled={sending} className="bg-sky-500 hover:bg-sky-600 text-white">
                 {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Gửi
               </Button>

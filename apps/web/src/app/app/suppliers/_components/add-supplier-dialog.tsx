@@ -2,14 +2,14 @@
 
 import React, { useState } from "react";
 import { Plus, Loader2, Truck, Building2 } from "lucide-react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,25 +20,25 @@ import { posService } from "@/services/pos.service";
 export function AddSupplierDialog({ onShowSuccess }: { onShowSuccess?: () => void }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: "",
     contact_name: "",
     phone: "",
     email: "",
-    address: ""
+    address: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       await posService.createSupplier({
         organization_id: "00000000-0000-0000-0000-000000000000", // Placeholder
-        ...formData
+        ...formData,
       });
-      
+
       toast.success("Đã thêm nhà cung cấp thành công!");
       setOpen(false);
       setFormData({ name: "", contact_name: "", phone: "", email: "", address: "" });
@@ -69,16 +69,14 @@ export function AddSupplierDialog({ onShowSuccess }: { onShowSuccess?: () => voi
               <Building2 className="w-5 h-5" />
               Nhà cung cấp mới
             </DialogTitle>
-            <DialogDescription>
-              Quản lý đối tác cung ứng hàng hóa cho chuỗi cửa hàng của bạn.
-            </DialogDescription>
+            <DialogDescription>Quản lý đối tác cung ứng hàng hóa cho chuỗi cửa hàng của bạn.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="name">Tên công ty / Nhà cung cấp</Label>
-              <Input 
-                id="name" 
-                placeholder="Ví dụ: Công ty TNHH Apple Việt Nam" 
+              <Input
+                id="name"
+                placeholder="Ví dụ: Công ty TNHH Apple Việt Nam"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
@@ -86,9 +84,9 @@ export function AddSupplierDialog({ onShowSuccess }: { onShowSuccess?: () => voi
             </div>
             <div className="grid gap-2">
               <Label htmlFor="contact_name">Người liên hệ</Label>
-              <Input 
-                id="contact_name" 
-                placeholder="Họ tên người đại diện" 
+              <Input
+                id="contact_name"
+                placeholder="Họ tên người đại diện"
                 value={formData.contact_name}
                 onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
               />
@@ -96,9 +94,9 @@ export function AddSupplierDialog({ onShowSuccess }: { onShowSuccess?: () => voi
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="phone">Số điện thoại</Label>
-                <Input 
-                  id="phone" 
-                  placeholder="09xx xxx xxx" 
+                <Input
+                  id="phone"
+                  placeholder="09xx xxx xxx"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   required
@@ -106,10 +104,10 @@ export function AddSupplierDialog({ onShowSuccess }: { onShowSuccess?: () => voi
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
+                <Input
+                  id="email"
                   type="email"
-                  placeholder="contact@supplier.com" 
+                  placeholder="contact@supplier.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
@@ -117,9 +115,9 @@ export function AddSupplierDialog({ onShowSuccess }: { onShowSuccess?: () => voi
             </div>
             <div className="grid gap-2">
               <Label htmlFor="address">Địa chỉ trụ sở</Label>
-              <Input 
-                id="address" 
-                placeholder="Địa chỉ giao dịch" 
+              <Input
+                id="address"
+                placeholder="Địa chỉ giao dịch"
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               />

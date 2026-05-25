@@ -25,6 +25,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { ProductBarcodeField } from "./product-barcode-field";
 import { BarcodeTypeSelector } from "./barcode-type-selector";
+import { RichTextEditor } from "@/components/rich-text-editor";
 import { type AttributeDef, buildVariantKey, VariantBuilder, type VariantRow } from "./variant-builder";
 
 const generateSlug = (str: string) => {
@@ -44,7 +45,6 @@ interface EditProductDialogProps {
   onSuccess: () => void;
   mode?: "edit" | "copy";
 }
-
 
 function deriveAttributesFromVariants(rawVariants: any[]): AttributeDef[] {
   const map = new Map<string, Set<string>>();
@@ -153,8 +153,10 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess, mode
       const raw = Array.isArray(product.variants) ? product.variants : [];
       setHasVariants(raw.length > 0);
       setAttributes(deriveAttributesFromVariants(raw));
-      setVariants(mapVariantRows(raw).map(v => mode === "copy" ? { ...v, sku: "", barcode: "", id: undefined } : v));
-      
+      setVariants(
+        mapVariantRows(raw).map((v) => (mode === "copy" ? { ...v, sku: "", barcode: "", id: undefined } : v)),
+      );
+
       if (mode === "copy" && raw.length === 0) {
         generateSKU();
       }
@@ -413,7 +415,7 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess, mode
   const variantCostPrices = variants.map((v) => parseFloat(v.cost_price) || 0).filter((p) => p > 0);
   const minVariantCostPrice = variantCostPrices.length > 0 ? Math.min(...variantCostPrices) : 0;
   const maxVariantCostPrice = variantCostPrices.length > 0 ? Math.max(...variantCostPrices) : 0;
-  
+
   const fmt = new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 });
   const fmtCompact = (n: number) =>
     n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}tr` : n >= 1_000 ? `${Math.round(n / 1_000)}k` : `${n}`;
@@ -430,7 +432,9 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess, mode
               <span>{mode === "copy" ? "Sao chép sản phẩm" : "Chỉnh sửa sản phẩm"}</span>
             </DialogTitle>
             <DialogDescription className="max-w-[34rem] text-xs leading-relaxed sm:text-sm">
-              {mode === "copy" ? "Tạo mới một sản phẩm dựa trên thông tin đã có." : "Cập nhật thông tin bán hàng, tồn kho và mã vạch cho sản phẩm."}
+              {mode === "copy"
+                ? "Tạo mới một sản phẩm dựa trên thông tin đã có."
+                : "Cập nhật thông tin bán hàng, tồn kho và mã vạch cho sản phẩm."}
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto bg-muted/10">
@@ -503,7 +507,11 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess, mode
                             onClick={handleAiFindImage}
                             disabled={aiFindingImage || !formData.name.trim()}
                           >
-                            {aiFindingImage ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                            {aiFindingImage ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Sparkles className="w-3.5 h-3.5" />
+                            )}
                             AI Tự Tìm Ảnh
                           </Button>
                         </div>
@@ -524,19 +532,19 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess, mode
                           const oldName = formData.name || "";
                           const oldAutoSlug = generateSlug(oldName);
                           const currentSlug = formData.online_slug || "";
-                          
+
                           const shouldUpdateSlug = currentSlug === "" || currentSlug === oldAutoSlug;
-                          
-                          setFormData({ 
-                            ...formData, 
+
+                          setFormData({
+                            ...formData,
                             name: newName,
-                            ...(shouldUpdateSlug ? { online_slug: generateSlug(newName) } : {})
+                            ...(shouldUpdateSlug ? { online_slug: generateSlug(newName) } : {}),
                           });
                         }}
                         required
                       />
                     </div>
-                    
+
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="grid gap-3">
                         <Label htmlFor="category" className="text-sm font-semibold text-foreground">
@@ -637,7 +645,9 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess, mode
                             <SelectValue placeholder="Chọn nhà cung cấp (Tuỳ chọn)" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="none" className="text-muted-foreground italic">Không có / Bỏ qua</SelectItem>
+                            <SelectItem value="none" className="text-muted-foreground italic">
+                              Không có / Bỏ qua
+                            </SelectItem>
                             {suppliers.map((sup) => (
                               <SelectItem key={sup.id} value={sup.id}>
                                 {sup.name}
@@ -702,7 +712,7 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess, mode
                           />
                         </div>
                       </div>
-                      
+
                       <div className="grid gap-4 sm:grid-cols-3">
                         <div className="grid gap-3">
                           <Label htmlFor="price" className="text-sm font-semibold text-foreground">
@@ -728,7 +738,9 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess, mode
                             placeholder="20,000,000"
                             className="h-10 rounded-xl"
                             value={formatCurrencyValue(formData.cost_price)}
-                            onChange={(e) => setFormData({ ...formData, cost_price: parseCurrencyValue(e.target.value) })}
+                            onChange={(e) =>
+                              setFormData({ ...formData, cost_price: parseCurrencyValue(e.target.value) })
+                            }
                           />
                         </div>
                         <div className="grid gap-3">
@@ -762,9 +774,9 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess, mode
                         <Label htmlFor="has-variants" className="text-sm font-semibold cursor-pointer">
                           Sản phẩm có biến thể
                         </Label>
-                        <Switch 
-                          id="has-variants" 
-                          checked={hasVariants} 
+                        <Switch
+                          id="has-variants"
+                          checked={hasVariants}
                           onCheckedChange={(v) => {
                             setHasVariants(v);
                             if (v && attributes.length === 0) {
@@ -788,12 +800,14 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess, mode
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Storefront Section */}
                   <div className="space-y-6 rounded-2xl border bg-background p-5 shadow-sm sm:p-6 border-indigo-500/20">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div>
-                        <h3 className="text-base font-semibold text-indigo-600 dark:text-indigo-400">Storefront (Bán Online)</h3>
+                        <h3 className="text-base font-semibold text-indigo-600 dark:text-indigo-400">
+                          Storefront (Bán Online)
+                        </h3>
                         <p className="text-sm text-muted-foreground mt-1">
                           Đồng bộ thiết lập hiển thị lên website bán hàng của bạn
                         </p>
@@ -802,9 +816,9 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess, mode
                         <Label htmlFor="is-published-online" className="text-sm font-semibold cursor-pointer">
                           Hiển thị trên web
                         </Label>
-                        <Switch 
-                          id="is-published-online" 
-                          checked={formData.is_published_online} 
+                        <Switch
+                          id="is-published-online"
+                          checked={formData.is_published_online}
                           onCheckedChange={(v) => setFormData({ ...formData, is_published_online: v })}
                         />
                       </div>
@@ -820,7 +834,9 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess, mode
                               placeholder="Mặc định lấy giá POS"
                               className="h-10 rounded-xl border-indigo-100 dark:border-indigo-900 focus-visible:ring-indigo-500"
                               value={formatCurrencyValue(formData.online_price)}
-                              onChange={(e) => setFormData({ ...formData, online_price: parseCurrencyValue(e.target.value) })}
+                              onChange={(e) =>
+                                setFormData({ ...formData, online_price: parseCurrencyValue(e.target.value) })
+                              }
                             />
                           </div>
                           <div className="grid gap-3">
@@ -834,12 +850,13 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess, mode
                           </div>
                         </div>
                         <div className="grid gap-3">
-                          <Label className="text-sm font-semibold text-foreground">Mô tả chi tiết sản phẩm (Hiển thị ở cuối trang)</Label>
-                          <textarea
-                            placeholder="Nhập mô tả sản phẩm chi tiết hiển thị ở cuối trang trên web..."
-                            className="flex min-h-[120px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                          <Label className="text-sm font-semibold text-foreground">
+                            Mô tả chi tiết sản phẩm (Hiển thị ở cuối trang)
+                          </Label>
+                          <RichTextEditor
                             value={formData.online_description || ""}
-                            onChange={(e) => setFormData({ ...formData, online_description: e.target.value })}
+                            onChange={(value) => setFormData({ ...formData, online_description: value })}
+                            placeholder="Nhập mô tả sản phẩm chi tiết hiển thị ở cuối trang trên web..."
                           />
                         </div>
                       </div>
@@ -851,7 +868,7 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess, mode
                 <div className="lg:col-span-4">
                   <div className="sticky top-0 space-y-6 rounded-2xl border bg-background p-5 shadow-sm sm:p-6">
                     <h3 className="text-base font-semibold border-b pb-4">Tóm tắt sản phẩm</h3>
-                    
+
                     <div className="flex items-start gap-4">
                       <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-muted/50">
                         {formData.image ? (
@@ -861,9 +878,7 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess, mode
                         )}
                       </div>
                       <div className="flex-1 space-y-1 overflow-hidden">
-                        <p className="truncate font-semibold text-foreground">
-                          {formData.name || "Tên sản phẩm..."}
-                        </p>
+                        <p className="truncate font-semibold text-foreground">{formData.name || "Tên sản phẩm..."}</p>
                         <p className="truncate text-sm text-muted-foreground">
                           {categories.find((c) => c.id === formData.category_id)?.name || "Chưa chọn danh mục"}
                         </p>
@@ -875,7 +890,7 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess, mode
                         <span className="text-muted-foreground">Loại sản phẩm</span>
                         <span className="font-medium">{hasVariants ? "Nhiều biến thể" : "Sản phẩm đơn"}</span>
                       </div>
-                      
+
                       {!hasVariants ? (
                         <>
                           <div className="flex items-center justify-between">
@@ -936,11 +951,10 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess, mode
                     </div>
                   </div>
                 </div>
-
               </div>
             </div>
           </div>
-          
+
           <DialogFooter className="sticky bottom-0 z-10 mt-0 rounded-none border-t bg-background/95 px-5 py-4 backdrop-blur sm:px-6">
             <Button
               type="button"
@@ -958,7 +972,7 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess, mode
               disabled={loading || uploadingImage}
             >
               {(loading || uploadingImage) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {uploadingImage ? "Đang tải ảnh..." : (mode === "copy" ? "Thêm mới" : "Lưu thay đổi")}
+              {uploadingImage ? "Đang tải ảnh..." : mode === "copy" ? "Thêm mới" : "Lưu thay đổi"}
             </Button>
           </DialogFooter>
         </form>

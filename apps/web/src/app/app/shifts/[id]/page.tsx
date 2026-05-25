@@ -7,13 +7,26 @@ import { ArrowLeft, CheckCircle2, Lock, Printer, RefreshCw, X, Plus, Minus, Rece
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { shiftService, type Shift, type ShiftTransaction, type ShiftTransactionType, type PaymentMethod } from "@/services/shift.service";
+import {
+  shiftService,
+  type Shift,
+  type ShiftTransaction,
+  type ShiftTransactionType,
+  type PaymentMethod,
+} from "@/services/shift.service";
 import { usePermissions } from "@/hooks/use-permissions";
 import { ShiftSummaryCard } from "../_components/shift-summary-card";
 import { ShiftOrdersTable } from "../_components/shift-orders-table";
@@ -82,7 +95,8 @@ export default function ShiftDetailPage() {
       return;
     }
     if (!cashFlowOpen) return;
-    const type: ShiftTransactionType = cashFlowOpen === "in" ? "cash_in" : cashFlowOpen === "out" ? "cash_out" : "expense";
+    const type: ShiftTransactionType =
+      cashFlowOpen === "in" ? "cash_in" : cashFlowOpen === "out" ? "cash_out" : "expense";
     try {
       await shiftService.addTransaction({
         shift_id: shift.id,
@@ -130,11 +144,13 @@ export default function ShiftDetailPage() {
   return (
     <div className="flex flex-col gap-6">
       <ShiftZReport shift={shift} transactions={txs} />
-      
+
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between print:hidden">
         <div className="flex items-start gap-3">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/shifts"><ArrowLeft className="size-4" /></Link>
+            <Link href="/shifts">
+              <ArrowLeft className="size-4" />
+            </Link>
           </Button>
           <div>
             <h1 className="text-2xl tracking-tight">Chi tiết ca #{shift.id.slice(0, 8)}</h1>
@@ -145,16 +161,28 @@ export default function ShiftDetailPage() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={load}><RefreshCw className="size-4" /> Làm mới</Button>
-          {canExport && <Button variant="outline" onClick={handlePrint}><Printer className="size-4" /> In/PDF</Button>}
+          <Button variant="outline" onClick={load}>
+            <RefreshCw className="size-4" /> Làm mới
+          </Button>
+          {canExport && (
+            <Button variant="outline" onClick={handlePrint}>
+              <Printer className="size-4" /> In/PDF
+            </Button>
+          )}
           {shift.status === "open" && canClose && (
-            <Button onClick={() => setCloseOpen(true)}><Receipt className="size-4" /> Đóng ca</Button>
+            <Button onClick={() => setCloseOpen(true)}>
+              <Receipt className="size-4" /> Đóng ca
+            </Button>
           )}
           {shift.status === "closed" && canReview && (
-            <Button onClick={handleReview}><ShieldCheck className="size-4" /> Duyệt ca</Button>
+            <Button onClick={handleReview}>
+              <ShieldCheck className="size-4" /> Duyệt ca
+            </Button>
           )}
           {shift.status === "open" && canAdjust && (
-            <Button variant="destructive" onClick={handleCancel}><X className="size-4" /> Huỷ ca</Button>
+            <Button variant="destructive" onClick={handleCancel}>
+              <X className="size-4" /> Huỷ ca
+            </Button>
           )}
         </div>
       </div>
@@ -168,9 +196,36 @@ export default function ShiftDetailPage() {
             <CardDescription>Ghi nhận tiền nhập/rút quỹ hoặc chi phí phát sinh trong ca.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => { setCashFlowOpen("in"); setCashAmount(0); setCashNote(""); }}><Plus className="size-4" /> Nhập quỹ</Button>
-            <Button variant="outline" onClick={() => { setCashFlowOpen("out"); setCashAmount(0); setCashNote(""); }}><Minus className="size-4" /> Rút quỹ</Button>
-            <Button variant="outline" onClick={() => { setCashFlowOpen("expense"); setCashAmount(0); setCashNote(""); }}><Receipt className="size-4" /> Chi phí tại quầy</Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCashFlowOpen("in");
+                setCashAmount(0);
+                setCashNote("");
+              }}
+            >
+              <Plus className="size-4" /> Nhập quỹ
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCashFlowOpen("out");
+                setCashAmount(0);
+                setCashNote("");
+              }}
+            >
+              <Minus className="size-4" /> Rút quỹ
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCashFlowOpen("expense");
+                setCashAmount(0);
+                setCashNote("");
+              }}
+            >
+              <Receipt className="size-4" /> Chi phí tại quầy
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -181,10 +236,18 @@ export default function ShiftDetailPage() {
           <TabsTrigger value="transactions">Sổ giao dịch ({txs.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="orders" className="pt-3">
-          <Card><CardContent className="p-0"><ShiftOrdersTable orders={orders} /></CardContent></Card>
+          <Card>
+            <CardContent className="p-0">
+              <ShiftOrdersTable orders={orders} />
+            </CardContent>
+          </Card>
         </TabsContent>
         <TabsContent value="transactions" className="pt-3">
-          <Card><CardContent className="p-0"><ShiftTransactionsTable transactions={txs} /></CardContent></Card>
+          <Card>
+            <CardContent className="p-0">
+              <ShiftTransactionsTable transactions={txs} />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 
@@ -226,7 +289,9 @@ export default function ShiftDetailPage() {
             <div className="space-y-1">
               <Label>Phương thức</Label>
               <Select value={cashMethod} onValueChange={(v) => setCashMethod(v as PaymentMethod)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="cash">Tiền mặt</SelectItem>
                   <SelectItem value="bank_transfer">Chuyển khoản</SelectItem>
@@ -242,8 +307,12 @@ export default function ShiftDetailPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCashFlowOpen(null)}>Huỷ</Button>
-            <Button onClick={submitCashFlow}><CheckCircle2 className="size-4" /> Lưu</Button>
+            <Button variant="outline" onClick={() => setCashFlowOpen(null)}>
+              Huỷ
+            </Button>
+            <Button onClick={submitCashFlow}>
+              <CheckCircle2 className="size-4" /> Lưu
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

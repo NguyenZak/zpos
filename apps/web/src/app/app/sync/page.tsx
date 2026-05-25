@@ -16,23 +16,10 @@ import {
   PackageCheck,
   Users,
 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -50,16 +37,10 @@ import {
   clearSyncedOrders,
   type PendingOrderRecord,
 } from "@/lib/offline/offline-db";
-import {
-  flushOfflineQueue,
-  refreshCachedCatalog,
-} from "@/lib/offline/sync";
+import { flushOfflineQueue, refreshCachedCatalog } from "@/lib/offline/sync";
 import { getCachedProducts, getCachedCustomers } from "@/lib/offline/offline-db";
 
-const STATUS_META: Record<
-  PendingOrderRecord["status"],
-  { label: string; className: string; icon: React.ReactNode }
-> = {
+const STATUS_META: Record<PendingOrderRecord["status"], { label: string; className: string; icon: React.ReactNode }> = {
   queued: {
     label: "Chờ đồng bộ",
     className: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30",
@@ -107,11 +88,7 @@ export default function SyncPage() {
   const load = React.useCallback(async () => {
     setLoading(true);
     try {
-      const [list, prods, custs] = await Promise.all([
-        listPendingOrders(),
-        getCachedProducts(),
-        getCachedCustomers(),
-      ]);
+      const [list, prods, custs] = await Promise.all([listPendingOrders(), getCachedProducts(), getCachedCustomers()]);
       setRows(list);
       setProductsCached(prods.length);
       setCustomersCached(custs.length);
@@ -170,9 +147,7 @@ export default function SyncPage() {
     setRefreshingCatalog(true);
     try {
       const res = await refreshCachedCatalog();
-      toast.success(
-        `Đã cache ${res.products} sản phẩm + ${res.customers} khách hàng`,
-      );
+      toast.success(`Đã cache ${res.products} sản phẩm + ${res.customers} khách hàng`);
       load();
     } finally {
       setRefreshingCatalog(false);
@@ -198,8 +173,8 @@ export default function SyncPage() {
             Đồng bộ offline
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Theo dõi các đơn được bán khi mất mạng & tình trạng đồng bộ với
-            server. Catalog và khách hàng được cache để POS chạy được offline.
+            Theo dõi các đơn được bán khi mất mạng & tình trạng đồng bộ với server. Catalog và khách hàng được cache để
+            POS chạy được offline.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -215,11 +190,7 @@ export default function SyncPage() {
             </Badge>
           )}
           <Button variant="outline" onClick={load} disabled={loading}>
-            {loading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="mr-2 h-4 w-4" />
-            )}
+            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
             Làm mới
           </Button>
           <Button
@@ -227,11 +198,7 @@ export default function SyncPage() {
             disabled={syncing || !online || stats.queued + stats.failed === 0}
             className="bg-violet-600 hover:bg-violet-700 text-white"
           >
-            {syncing ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <CloudUpload className="mr-2 h-4 w-4" />
-            )}
+            {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CloudUpload className="mr-2 h-4 w-4" />}
             Đồng bộ ngay
           </Button>
         </div>
@@ -255,9 +222,7 @@ export default function SyncPage() {
             <CardDescription>Tổng tiền chưa đồng bộ</CardDescription>
             <CardTitle className="text-2xl">{formatVND(stats.totalAmount)}</CardTitle>
           </CardHeader>
-          <CardContent className="text-xs text-amber-600 font-bold">
-            Chưa ghi nhận trên server
-          </CardContent>
+          <CardContent className="text-xs text-amber-600 font-bold">Chưa ghi nhận trên server</CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
@@ -267,9 +232,7 @@ export default function SyncPage() {
             </CardDescription>
             <CardTitle className="text-2xl">{productsCached}</CardTitle>
           </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">
-            Dùng khi mất mạng
-          </CardContent>
+          <CardContent className="text-xs text-muted-foreground">Dùng khi mất mạng</CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
@@ -279,9 +242,7 @@ export default function SyncPage() {
             </CardDescription>
             <CardTitle className="text-2xl">{customersCached}</CardTitle>
           </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">
-            Dùng khi mất mạng
-          </CardContent>
+          <CardContent className="text-xs text-muted-foreground">Dùng khi mất mạng</CardContent>
         </Card>
       </div>
 
@@ -292,15 +253,11 @@ export default function SyncPage() {
             <div>
               <CardTitle className="text-base">Catalog cache</CardTitle>
               <CardDescription>
-                Cache sản phẩm + khách hàng vào IndexedDB để POS bán được khi
-                mất mạng. Nên làm mới mỗi sáng trước khi mở quán.
+                Cache sản phẩm + khách hàng vào IndexedDB để POS bán được khi mất mạng. Nên làm mới mỗi sáng trước khi
+                mở quán.
               </CardDescription>
             </div>
-            <Button
-              variant="outline"
-              onClick={handleRefreshCatalog}
-              disabled={refreshingCatalog || !online}
-            >
+            <Button variant="outline" onClick={handleRefreshCatalog} disabled={refreshingCatalog || !online}>
               {refreshingCatalog ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
@@ -319,9 +276,7 @@ export default function SyncPage() {
             <div>
               <CardTitle className="text-base">Hàng đợi đơn offline</CardTitle>
               <CardDescription>
-                {rows.length === 0
-                  ? "Không có đơn nào đang chờ đồng bộ."
-                  : `${rows.length} đơn trong hàng đợi.`}
+                {rows.length === 0 ? "Không có đơn nào đang chờ đồng bộ." : `${rows.length} đơn trong hàng đợi.`}
               </CardDescription>
             </div>
             {stats.synced > 0 && (
@@ -341,9 +296,7 @@ export default function SyncPage() {
             <div className="text-center py-16">
               <CloudOff className="mx-auto h-10 w-10 text-muted-foreground/40 mb-2" />
               <p className="font-bold">Không có đơn nào trong hàng đợi</p>
-              <p className="text-sm text-muted-foreground">
-                Mọi đơn đã được đồng bộ với server.
-              </p>
+              <p className="text-sm text-muted-foreground">Mọi đơn đã được đồng bộ với server.</p>
             </div>
           ) : (
             <Table>
@@ -364,31 +317,22 @@ export default function SyncPage() {
                   const meta = STATUS_META[r.status] || STATUS_META.failed;
                   return (
                     <TableRow key={r.id}>
-                      <TableCell className="font-mono text-xs">
-                        {formatTime(r.created_at)}
-                      </TableCell>
+                      <TableCell className="font-mono text-xs">{formatTime(r.created_at)}</TableCell>
                       <TableCell className="font-mono text-xs">
                         <div>{r.payload?.order_number || r.id.slice(0, 8)}</div>
                         <div className="text-muted-foreground">{r.id.slice(0, 8)}…</div>
                       </TableCell>
-                      <TableCell className="text-xs">
-                        {r.items?.length || 0} sản phẩm
-                      </TableCell>
+                      <TableCell className="text-xs">{r.items?.length || 0} sản phẩm</TableCell>
                       <TableCell className="text-right font-bold">
                         {formatVND(Number(r.payload?.total_amount || 0))}
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={`gap-1 font-bold ${meta.className}`}
-                        >
+                        <Badge variant="outline" className={`gap-1 font-bold ${meta.className}`}>
                           {meta.icon}
                           {meta.label}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-mono text-xs">
-                        {r.attempts || 0}
-                      </TableCell>
+                      <TableCell className="font-mono text-xs">{r.attempts || 0}</TableCell>
                       <TableCell className="text-xs text-red-600 max-w-[200px] truncate" title={r.last_error || ""}>
                         {r.last_error || "—"}
                       </TableCell>
@@ -427,41 +371,30 @@ export default function SyncPage() {
 
       {/* Help */}
       <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 text-xs space-y-1.5 leading-relaxed">
-        <p className="font-bold text-violet-700 dark:text-violet-400">
-          💡 Cách Offline POS hoạt động
+        <p className="font-bold text-violet-700 dark:text-violet-400">💡 Cách Offline POS hoạt động</p>
+        <p>
+          1. Mỗi sáng (hoặc khi catalog thay đổi nhiều), bấm <b>Làm mới catalog</b> — sản phẩm + khách hàng được lưu vào
+          trình duyệt.
+        </p>
+        <p>2. Khi mất mạng, POS tiếp tục bán bình thường — đơn được đưa vào hàng đợi local.</p>
+        <p>
+          3. Khi có mạng lại, hệ thống <b>tự đồng bộ</b>. Bạn cũng có thể đồng bộ tay tại đây.
         </p>
         <p>
-          1. Mỗi sáng (hoặc khi catalog thay đổi nhiều), bấm <b>Làm mới catalog</b>
-          {" "}— sản phẩm + khách hàng được lưu vào trình duyệt.
-        </p>
-        <p>
-          2. Khi mất mạng, POS tiếp tục bán bình thường — đơn được đưa vào hàng
-          đợi local.
-        </p>
-        <p>
-          3. Khi có mạng lại, hệ thống <b>tự đồng bộ</b>. Bạn cũng có thể đồng bộ
-          tay tại đây.
-        </p>
-        <p>
-          4. PWA đã được cài đặt: bấm "Cài ZPOS" trên trình duyệt để dùng như
-          ứng dụng riêng (Chrome / Edge / Safari iOS).
+          4. PWA đã được cài đặt: bấm "Cài ZPOS" trên trình duyệt để dùng như ứng dụng riêng (Chrome / Edge / Safari
+          iOS).
         </p>
       </div>
 
       {/* Discard confirm */}
-      <Dialog
-        open={!!discardTarget}
-        onOpenChange={(o) => !o && setDiscardTarget(null)}
-      >
+      <Dialog open={!!discardTarget} onOpenChange={(o) => !o && setDiscardTarget(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Bỏ đơn khỏi hàng đợi?</DialogTitle>
             <DialogDescription>
-              Đơn{" "}
-              <b>{discardTarget?.payload?.order_number || discardTarget?.id.slice(0, 8)}</b>{" "}
-              ({formatVND(Number(discardTarget?.payload?.total_amount || 0))}) sẽ
-              bị xoá khỏi hàng đợi local và <b>không bao giờ</b> được ghi lên
-              server. Chỉ dùng khi đơn đó là sai/test.
+              Đơn <b>{discardTarget?.payload?.order_number || discardTarget?.id.slice(0, 8)}</b> (
+              {formatVND(Number(discardTarget?.payload?.total_amount || 0))}) sẽ bị xoá khỏi hàng đợi local và{" "}
+              <b>không bao giờ</b> được ghi lên server. Chỉ dùng khi đơn đó là sai/test.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

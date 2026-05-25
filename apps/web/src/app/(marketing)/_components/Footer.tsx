@@ -78,9 +78,7 @@ export function Footer() {
               </div>
               <span className="font-semibold text-lg text-[#090114]">ZPOS</span>
             </Link>
-            <p className="text-sm text-gray-500 mb-6 leading-relaxed font-light">
-              {t("footer.desc")}
-            </p>
+            <p className="text-sm text-gray-500 mb-6 leading-relaxed font-light">{t("footer.desc")}</p>
             <div className="flex items-center gap-4 text-gray-400">
               <Link href="#" className="hover:text-[#0036FF] transition-colors">
                 <TwitterIcon />
@@ -100,7 +98,10 @@ export function Footer() {
               <ul className="space-y-3">
                 {section.links.map((link, i) => (
                   <li key={i}>
-                    <Link href={link.href} className="text-sm text-gray-500 hover:text-[#0036FF] transition-colors font-light">
+                    <Link
+                      href={link.href}
+                      className="text-sm text-gray-500 hover:text-[#0036FF] transition-colors font-light"
+                    >
                       {link.name}
                     </Link>
                   </li>
@@ -111,10 +112,14 @@ export function Footer() {
         </div>
 
         <div className="pt-8 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-gray-500 font-light">© {new Date().getFullYear()} ZPOS, Inc. All rights reserved.</p>
+          <p className="text-sm text-gray-500 font-light">
+            © {new Date().getFullYear()} ZPOS, Inc. All rights reserved.
+          </p>
           <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-full px-3 py-1">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[11px] text-gray-500 font-medium font-mono">{language === "vi" ? "Tất cả hệ thống hoạt động ổn định" : "All systems operational"}</span>
+            <span className="text-[11px] text-gray-500 font-medium font-mono">
+              {language === "vi" ? "Tất cả hệ thống hoạt động ổn định" : "All systems operational"}
+            </span>
           </div>
         </div>
       </div>

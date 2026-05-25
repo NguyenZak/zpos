@@ -114,7 +114,7 @@ export const telegramService = {
     await this.sendMessage(msg, "sales");
   },
 
-  async notifyCancelledOrder(orderId: string, action: 'HỦY' | 'XÓA') {
+  async notifyCancelledOrder(orderId: string, action: "HỦY" | "XÓA") {
     if (!this.isNotificationEnabled("cancel")) return;
 
     const msg = `🚨 <b>CẢNH BÁO BẢO MẬT</b>\n\nĐơn hàng <b>${orderId}</b> vừa bị <b>${action}</b> khỏi hệ thống!\n\n<i>Lưu ý: Việc hủy/xóa đơn hàng có thể ảnh hưởng đến doanh thu và tồn kho. Hãy kiểm tra lại thao tác này.</i>`;
@@ -153,7 +153,10 @@ export const telegramService = {
     await this.sendMessage(msg, "finance");
   },
 
-  async notifyStaleProducts(items: Array<{ name: string; stock: number; daysWithoutSale: number; lastSoldLabel: string }>, days: number) {
+  async notifyStaleProducts(
+    items: Array<{ name: string; stock: number; daysWithoutSale: number; lastSoldLabel: string }>,
+    days: number,
+  ) {
     if (!this.isNotificationEnabled("stale_products")) return;
     if (items.length === 0) return;
 
@@ -164,5 +167,5 @@ export const telegramService = {
     const moreText = items.length > 20 ? `\n\n... và ${items.length - 20} mặt hàng khác.` : "";
     const msg = `🕒 <b>MẶT HÀNG LÂU CHƯA BÁN</b>\n\nCác mặt hàng còn tồn nhưng đã từ <b>${days} ngày</b> chưa bán được:\n\n${list}${moreText}\n\n<i>Gợi ý: kiểm tra trưng bày, khuyến mãi hoặc kế hoạch nhập hàng.</i>`;
     await this.sendMessage(msg, "inventory");
-  }
+  },
 };

@@ -15,14 +15,7 @@ import {
   Sparkles,
   Search,
 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -37,11 +30,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import {
-  einvoiceService,
-  type TaxSettings,
-  type EInvoiceConfig,
-} from "@/services/einvoice.service";
+import { einvoiceService, type TaxSettings, type EInvoiceConfig } from "@/services/einvoice.service";
 
 type EInvoiceProvider = EInvoiceConfig["provider"];
 
@@ -105,10 +94,7 @@ export function EInvoiceManager() {
   async function load() {
     setLoading(true);
     try {
-      const [t, list] = await Promise.all([
-        einvoiceService.getTaxSettings(),
-        einvoiceService.listConfigs(),
-      ]);
+      const [t, list] = await Promise.all([einvoiceService.getTaxSettings(), einvoiceService.listConfigs()]);
       if (t) setTax((prev) => ({ ...prev, ...t }));
       setConfigs(list);
     } finally {
@@ -228,8 +214,8 @@ export function EInvoiceManager() {
             Thông tin pháp lý dùng trên hoá đơn
           </CardTitle>
           <CardDescription>
-            Tên doanh nghiệp, MST, địa chỉ này sẽ xuất hiện trên mọi hoá đơn điện
-            tử phát hành. Đảm bảo trùng khớp giấy phép kinh doanh.
+            Tên doanh nghiệp, MST, địa chỉ này sẽ xuất hiện trên mọi hoá đơn điện tử phát hành. Đảm bảo trùng khớp giấy
+            phép kinh doanh.
           </CardDescription>
         </CardHeader>
 
@@ -249,9 +235,7 @@ export function EInvoiceManager() {
                     <Input
                       id="tax-name"
                       value={tax.company_name}
-                      onChange={(e) =>
-                        setTax((t) => ({ ...t, company_name: e.target.value }))
-                      }
+                      onChange={(e) => setTax((t) => ({ ...t, company_name: e.target.value }))}
                       placeholder="CÔNG TY TNHH ABC"
                       className="font-bold uppercase"
                     />
@@ -264,9 +248,7 @@ export function EInvoiceManager() {
                       <Input
                         id="tax-code"
                         value={tax.tax_code}
-                        onChange={(e) =>
-                          setTax((t) => ({ ...t, tax_code: e.target.value }))
-                        }
+                        onChange={(e) => setTax((t) => ({ ...t, tax_code: e.target.value }))}
                         onBlur={() => {
                           if (tax.tax_code && tax.tax_code.length >= 10 && !tax.company_name) {
                             handleFetchTaxInfo(tax.tax_code);
@@ -300,9 +282,7 @@ export function EInvoiceManager() {
                   <Input
                     id="tax-addr"
                     value={tax.legal_address || ""}
-                    onChange={(e) =>
-                      setTax((t) => ({ ...t, legal_address: e.target.value }))
-                    }
+                    onChange={(e) => setTax((t) => ({ ...t, legal_address: e.target.value }))}
                     placeholder="Số nhà, đường, phường..."
                   />
                 </div>
@@ -312,28 +292,19 @@ export function EInvoiceManager() {
                     <Label className="font-bold">Quận / Huyện</Label>
                     <Input
                       value={tax.district || ""}
-                      onChange={(e) =>
-                        setTax((t) => ({ ...t, district: e.target.value }))
-                      }
+                      onChange={(e) => setTax((t) => ({ ...t, district: e.target.value }))}
                     />
                   </div>
                   <div className="grid gap-1.5">
                     <Label className="font-bold">Tỉnh / Thành phố</Label>
                     <Input
                       value={tax.province || ""}
-                      onChange={(e) =>
-                        setTax((t) => ({ ...t, province: e.target.value }))
-                      }
+                      onChange={(e) => setTax((t) => ({ ...t, province: e.target.value }))}
                     />
                   </div>
                   <div className="grid gap-1.5">
                     <Label className="font-bold">Số điện thoại</Label>
-                    <Input
-                      value={tax.phone || ""}
-                      onChange={(e) =>
-                        setTax((t) => ({ ...t, phone: e.target.value }))
-                      }
-                    />
+                    <Input value={tax.phone || ""} onChange={(e) => setTax((t) => ({ ...t, phone: e.target.value }))} />
                   </div>
                 </div>
 
@@ -343,9 +314,7 @@ export function EInvoiceManager() {
                     <Input
                       type="email"
                       value={tax.email || ""}
-                      onChange={(e) =>
-                        setTax((t) => ({ ...t, email: e.target.value }))
-                      }
+                      onChange={(e) => setTax((t) => ({ ...t, email: e.target.value }))}
                       placeholder="ketoan@congty.vn"
                     />
                   </div>
@@ -369,18 +338,14 @@ export function EInvoiceManager() {
                     <Label className="font-bold">Số TK ngân hàng</Label>
                     <Input
                       value={tax.bank_account || ""}
-                      onChange={(e) =>
-                        setTax((t) => ({ ...t, bank_account: e.target.value }))
-                      }
+                      onChange={(e) => setTax((t) => ({ ...t, bank_account: e.target.value }))}
                     />
                   </div>
                   <div className="grid gap-1.5">
                     <Label className="font-bold">Tên ngân hàng</Label>
                     <Input
                       value={tax.bank_name || ""}
-                      onChange={(e) =>
-                        setTax((t) => ({ ...t, bank_name: e.target.value }))
-                      }
+                      onChange={(e) => setTax((t) => ({ ...t, bank_name: e.target.value }))}
                     />
                   </div>
                   <div className="grid gap-1.5">
@@ -426,14 +391,10 @@ export function EInvoiceManager() {
                 Nhà cung cấp Hoá đơn điện tử
               </CardTitle>
               <CardDescription className="mt-1">
-                Cấu hình kết nối với VNPT / Viettel / MISA hoặc dùng chế độ Thủ
-                công / Demo để chạy thử.
+                Cấu hình kết nối với VNPT / Viettel / MISA hoặc dùng chế độ Thủ công / Demo để chạy thử.
               </CardDescription>
             </div>
-            <Button
-              onClick={openCreate}
-              className="bg-violet-600 hover:bg-violet-700 text-white"
-            >
+            <Button onClick={openCreate} className="bg-violet-600 hover:bg-violet-700 text-white">
               <Plus className="mr-2 h-4 w-4" />
               Thêm cấu hình
             </Button>
@@ -446,8 +407,7 @@ export function EInvoiceManager() {
               <FileText className="mx-auto h-10 w-10 text-muted-foreground/40 mb-2" />
               <p className="font-bold">Chưa có nhà cung cấp HĐĐT</p>
               <p className="text-sm text-muted-foreground mb-4">
-                Thêm cấu hình đầu tiên — có thể chọn chế độ "Demo" để chạy thử
-                ngay.
+                Thêm cấu hình đầu tiên — có thể chọn chế độ "Demo" để chạy thử ngay.
               </p>
               <Button onClick={openCreate} variant="outline">
                 <Plus className="mr-2 h-4 w-4" /> Thêm cấu hình
@@ -458,16 +418,11 @@ export function EInvoiceManager() {
               {configs.map((c) => {
                 const meta = PROVIDER_OPTIONS.find((p) => p.value === c.provider);
                 return (
-                  <div
-                    key={c.id}
-                    className="rounded-xl border bg-card p-4 space-y-2 transition-all hover:shadow-md"
-                  >
+                  <div key={c.id} className="rounded-xl border bg-card p-4 space-y-2 transition-all hover:shadow-md">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-bold text-foreground">
-                            {meta?.label || c.provider}
-                          </p>
+                          <p className="font-bold text-foreground">{meta?.label || c.provider}</p>
                           {c.is_default && (
                             <Badge className="bg-yellow-500/15 text-yellow-700 hover:bg-yellow-500/15 border-yellow-500/30">
                               <Star className="h-3 w-3 mr-1 fill-current" />
@@ -482,27 +437,19 @@ export function EInvoiceManager() {
                             </Badge>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {meta?.hint}
-                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">{meta?.hint}</p>
                         <div className="grid grid-cols-2 gap-1 mt-2 text-xs">
                           <div>
                             <span className="text-muted-foreground">Ký hiệu:</span>{" "}
-                            <span className="font-mono font-bold">
-                              {c.invoice_series || "—"}
-                            </span>
+                            <span className="font-mono font-bold">{c.invoice_series || "—"}</span>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Mẫu:</span>{" "}
-                            <span className="font-mono font-bold">
-                              {c.invoice_template_code || "—"}
-                            </span>
+                            <span className="font-mono font-bold">{c.invoice_template_code || "—"}</span>
                           </div>
                           <div className="col-span-2">
                             <span className="text-muted-foreground">Số HĐ kế tiếp:</span>{" "}
-                            <span className="font-mono font-bold">
-                              {(c.current_invoice_no || 0) + 1}
-                            </span>
+                            <span className="font-mono font-bold">{(c.current_invoice_no || 0) + 1}</span>
                           </div>
                         </div>
                       </div>
@@ -512,25 +459,17 @@ export function EInvoiceManager() {
                         {c.auto_issue_on_payment ? (
                           <>
                             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                            <span className="text-emerald-700 dark:text-emerald-400">
-                              Tự động phát hành
-                            </span>
+                            <span className="text-emerald-700 dark:text-emerald-400">Tự động phát hành</span>
                           </>
                         ) : (
                           <>
                             <AlertCircle className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="text-muted-foreground">
-                              Phát hành thủ công
-                            </span>
+                            <span className="text-muted-foreground">Phát hành thủ công</span>
                           </>
                         )}
                       </div>
                       <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openEdit(c)}
-                        >
+                        <Button size="sm" variant="outline" onClick={() => openEdit(c)}>
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
                         <Button
@@ -555,12 +494,9 @@ export function EInvoiceManager() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>
-              {form.id ? "Cập nhật cấu hình HĐĐT" : "Thêm cấu hình HĐĐT"}
-            </DialogTitle>
+            <DialogTitle>{form.id ? "Cập nhật cấu hình HĐĐT" : "Thêm cấu hình HĐĐT"}</DialogTitle>
             <DialogDescription>
-              Chọn nhà cung cấp, dán thông tin xác thực và mẫu hoá đơn được cơ
-              quan thuế chấp nhận.
+              Chọn nhà cung cấp, dán thông tin xác thực và mẫu hoá đơn được cơ quan thuế chấp nhận.
             </DialogDescription>
           </DialogHeader>
 
@@ -593,9 +529,7 @@ export function EInvoiceManager() {
                 <Label className="font-bold">Ký hiệu hoá đơn</Label>
                 <Input
                   value={form.invoice_series || ""}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, invoice_series: e.target.value }))
-                  }
+                  onChange={(e) => setForm((f) => ({ ...f, invoice_series: e.target.value }))}
                   placeholder="K24TYY"
                   className="font-mono font-bold uppercase"
                 />
@@ -622,9 +556,7 @@ export function EInvoiceManager() {
                   <Label className="font-bold">URL API</Label>
                   <Input
                     value={form.api_base_url || ""}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, api_base_url: e.target.value }))
-                    }
+                    onChange={(e) => setForm((f) => ({ ...f, api_base_url: e.target.value }))}
                     placeholder="https://example.einvoice.vn/api"
                     className="font-mono text-xs"
                   />
@@ -635,9 +567,7 @@ export function EInvoiceManager() {
                     <Label className="font-bold">Tài khoản API</Label>
                     <Input
                       value={form.api_username || ""}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, api_username: e.target.value }))
-                      }
+                      onChange={(e) => setForm((f) => ({ ...f, api_username: e.target.value }))}
                     />
                   </div>
                   <div className="grid gap-1.5">
@@ -645,9 +575,7 @@ export function EInvoiceManager() {
                     <Input
                       type="password"
                       value={form.api_password || ""}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, api_password: e.target.value }))
-                      }
+                      onChange={(e) => setForm((f) => ({ ...f, api_password: e.target.value }))}
                     />
                   </div>
                 </div>
@@ -656,9 +584,7 @@ export function EInvoiceManager() {
                   <Label className="font-bold">Số serial chứng thư số (CTS)</Label>
                   <Input
                     value={form.cert_serial || ""}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, cert_serial: e.target.value }))
-                    }
+                    onChange={(e) => setForm((f) => ({ ...f, cert_serial: e.target.value }))}
                     placeholder="54xxxx..."
                     className="font-mono text-xs"
                   />
@@ -670,46 +596,30 @@ export function EInvoiceManager() {
               <label className="flex items-center justify-between gap-3 p-3 rounded-md border bg-muted/30 cursor-pointer">
                 <div>
                   <p className="font-bold text-sm">Tự động phát hành sau thanh toán</p>
-                  <p className="text-xs text-muted-foreground">
-                    Khi đơn chuyển sang "Đã thanh toán"
-                  </p>
+                  <p className="text-xs text-muted-foreground">Khi đơn chuyển sang "Đã thanh toán"</p>
                 </div>
                 <Switch
                   checked={!!form.auto_issue_on_payment}
-                  onCheckedChange={(v) =>
-                    setForm((f) => ({ ...f, auto_issue_on_payment: v }))
-                  }
+                  onCheckedChange={(v) => setForm((f) => ({ ...f, auto_issue_on_payment: v }))}
                 />
               </label>
               <label className="flex items-center justify-between gap-3 p-3 rounded-md border bg-muted/30 cursor-pointer">
                 <div>
                   <p className="font-bold text-sm">Đặt làm cấu hình mặc định</p>
-                  <p className="text-xs text-muted-foreground">
-                    Dùng khi phát hành từ POS
-                  </p>
+                  <p className="text-xs text-muted-foreground">Dùng khi phát hành từ POS</p>
                 </div>
                 <Switch
                   checked={!!form.is_default}
-                  onCheckedChange={(v) =>
-                    setForm((f) => ({ ...f, is_default: v }))
-                  }
+                  onCheckedChange={(v) => setForm((f) => ({ ...f, is_default: v }))}
                 />
               </label>
             </div>
 
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setDialogOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                 Huỷ
               </Button>
-              <Button
-                type="submit"
-                disabled={savingConfig}
-                className="bg-violet-600 hover:bg-violet-700 text-white"
-              >
+              <Button type="submit" disabled={savingConfig} className="bg-violet-600 hover:bg-violet-700 text-white">
                 {savingConfig && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {form.id ? "Lưu" : "Thêm"}
               </Button>
@@ -719,25 +629,17 @@ export function EInvoiceManager() {
       </Dialog>
 
       {/* Delete confirmation */}
-      <Dialog
-        open={!!confirmDeleteId}
-        onOpenChange={(o) => !o && setConfirmDeleteId(null)}
-      >
+      <Dialog open={!!confirmDeleteId} onOpenChange={(o) => !o && setConfirmDeleteId(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Xoá cấu hình HĐĐT?</DialogTitle>
-            <DialogDescription>
-              Các hoá đơn đã phát hành sẽ vẫn được giữ lại trong lịch sử.
-            </DialogDescription>
+            <DialogDescription>Các hoá đơn đã phát hành sẽ vẫn được giữ lại trong lịch sử.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmDeleteId(null)}>
               Huỷ
             </Button>
-            <Button
-              variant="destructive"
-              onClick={() => confirmDeleteId && handleDelete(confirmDeleteId)}
-            >
+            <Button variant="destructive" onClick={() => confirmDeleteId && handleDelete(confirmDeleteId)}>
               Xác nhận xoá
             </Button>
           </DialogFooter>

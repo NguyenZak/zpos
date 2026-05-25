@@ -1,4 +1,4 @@
-import Script from 'next/script';
+import Script from "next/script";
 import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
 import { Toaster } from "@/components/ui/sonner";
@@ -24,7 +24,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   const { theme_mode, theme_preset, content_layout, navbar_style, sidebar_variant, sidebar_collapsible, font } =
     PREFERENCE_DEFAULTS;
-    
+
   return (
     <html
       lang="en"
@@ -88,7 +88,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
                   root.style.fontSize = scale;
                 } catch (e) {}
               })();
-            `
+            `,
           }}
         />
       </head>

@@ -10,14 +10,14 @@ export async function POST(req: Request) {
     if (!order_id || !provider) {
       return NextResponse.json(
         { success: false, error: "Thiếu thông tin Đơn hàng hoặc Đơn vị vận chuyển" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Sinh mã vận đơn giả lập theo định dạng của từng hãng
     let trackingCode = "";
     const rand = Math.floor(100000000 + Math.random() * 900000000);
-    
+
     switch (provider.toUpperCase()) {
       case "GHN":
         trackingCode = `GHN${rand}`;
@@ -57,18 +57,15 @@ export async function POST(req: Request) {
       shipping_fee: shipping_fee || 25000,
       cod_amount: cod_amount || 0,
       estimated_delivery_time: estimatedDelivery.toISOString(),
-      label_url: `https://zpos.vn/shipping/labels/${trackingCode}`
+      label_url: `https://zpos.vn/shipping/labels/${trackingCode}`,
     };
 
     return NextResponse.json({
       success: true,
       data: shippingOrder,
-      message: `Đã đẩy đơn hàng sang ${provider} thành công!`
+      message: `Đã đẩy đơn hàng sang ${provider} thành công!`,
     });
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

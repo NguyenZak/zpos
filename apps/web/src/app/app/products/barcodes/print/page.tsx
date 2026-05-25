@@ -1,31 +1,31 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import React, { useState, useEffect, useRef } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { posService } from "@/services/pos.service";
 import { Loader2, Printer, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { BarcodeLabelPreview } from "../../_components/barcode-label-preview";
-import { useReactToPrint } from 'react-to-print';
+import { useReactToPrint } from "react-to-print";
 import { BarcodeBulkPrintTable } from "../../_components/barcode-bulk-print-table";
 
 export default function BulkPrintBarcodesPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const idsParam = searchParams.get('ids');
-  
+  const idsParam = searchParams.get("ids");
+
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // quantity state per product ID
   const [quantities, setQuantities] = useState<Record<string, number>>({});
-  
+
   const componentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (idsParam) {
-      loadProducts(idsParam.split(','));
+      loadProducts(idsParam.split(","));
     } else {
       setLoading(false);
     }
@@ -34,10 +34,10 @@ export default function BulkPrintBarcodesPage() {
   const loadProducts = async (ids: string[]) => {
     setLoading(true);
     try {
-      // In a real scenario we could fetch just these IDs. 
+      // In a real scenario we could fetch just these IDs.
       // For now we fetch all and filter to keep it simple, or write a new posService method
       const data = await posService.getProducts();
-      
+
       const allItems: any[] = [];
       data.forEach((p: any) => {
         const variants = Array.isArray(p.variants) ? p.variants : [];
@@ -47,10 +47,10 @@ export default function BulkPrintBarcodesPage() {
               id: v.id,
               product_id: p.id,
               name: `${p.name} - ${v.name}`,
-              sku: v.sku || '',
-              barcode: v.barcode || '',
-              barcode_type: v.barcode_type || 'CODE128',
-              price: v.price || p.price
+              sku: v.sku || "",
+              barcode: v.barcode || "",
+              barcode_type: v.barcode_type || "CODE128",
+              price: v.price || p.price,
             });
           });
         } else {
@@ -58,17 +58,17 @@ export default function BulkPrintBarcodesPage() {
             id: p.id,
             product_id: p.id,
             name: p.name,
-            sku: p.sku || '',
-            barcode: p.barcode || '',
-            barcode_type: p.barcode_type || 'CODE128',
-            price: p.price
+            sku: p.sku || "",
+            barcode: p.barcode || "",
+            barcode_type: p.barcode_type || "CODE128",
+            price: p.price,
           });
         }
       });
 
       const filtered = allItems.filter((item: any) => ids.includes(item.id) && item.barcode);
       setProducts(filtered);
-      
+
       const initialQtys: Record<string, number> = {};
       filtered.forEach((item: any) => {
         initialQtys[item.id] = 1;
@@ -98,7 +98,7 @@ export default function BulkPrintBarcodesPage() {
 
   const handlePrint = () => {
     if (products.length === 0) {
-      toast.error('Không có sản phẩm nào để in');
+      toast.error("Không có sản phẩm nào để in");
       return;
     }
     print();
@@ -124,18 +124,20 @@ export default function BulkPrintBarcodesPage() {
         </div>
       ) : products.length === 0 ? (
         <div className="text-center p-12 border rounded-xl bg-card">
-          <p className="text-muted-foreground">Không có sản phẩm hợp lệ nào được chọn (chỉ sản phẩm đã có mã vạch mới in được).</p>
+          <p className="text-muted-foreground">
+            Không có sản phẩm hợp lệ nào được chọn (chỉ sản phẩm đã có mã vạch mới in được).
+          </p>
         </div>
       ) : (
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 rounded-md border bg-card p-4">
-            <BarcodeBulkPrintTable 
+            <BarcodeBulkPrintTable
               products={products}
               quantities={quantities}
-              onChangeQuantity={(id, q) => setQuantities(prev => ({ ...prev, [id]: q }))}
+              onChangeQuantity={(id, q) => setQuantities((prev) => ({ ...prev, [id]: q }))}
             />
           </div>
-          
+
           <div className="rounded-md border bg-card p-4 flex flex-col gap-4">
             <h3 className="font-semibold text-lg">Tổng kết</h3>
             <div className="flex justify-between items-center py-2 border-b">
@@ -146,7 +148,7 @@ export default function BulkPrintBarcodesPage() {
               <span className="text-muted-foreground">Tổng số tem in</span>
               <span className="font-bold text-xl text-primary">{totalLabels}</span>
             </div>
-            
+
             <Button className="w-full mt-4" size="lg" onClick={handlePrint} disabled={totalLabels === 0}>
               <Printer className="w-5 h-5 mr-2" />
               Tiến hành in
@@ -156,9 +158,9 @@ export default function BulkPrintBarcodesPage() {
       )}
 
       {/* Hidden printing area */}
-      <div style={{ display: 'none' }}>
+      <div style={{ display: "none" }}>
         <div ref={componentRef} className="print-container">
-          {products.map(product => {
+          {products.map((product) => {
             const qty = quantities[product.id] || 0;
             return Array.from({ length: qty }).map((_, index) => (
               <BarcodeLabelPreview

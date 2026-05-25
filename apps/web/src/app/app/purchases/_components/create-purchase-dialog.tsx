@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import { Plus, Loader2, Store, Package, Trash2 } from "lucide-react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,11 +24,11 @@ export function CreatePurchaseDialog({ onShowSuccess }: { onShowSuccess?: () => 
   const [loading, setLoading] = useState(false);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
-  
+
   const [formData, setFormData] = useState({
     supplier_id: "",
     purchase_number: `PN-${Date.now().toString().slice(-6)}`,
-    status: "completed"
+    status: "completed",
   });
 
   const [items, setItems] = useState<any[]>([]);
@@ -37,10 +37,7 @@ export function CreatePurchaseDialog({ onShowSuccess }: { onShowSuccess?: () => 
     if (open) {
       const fetchData = async () => {
         try {
-          const [sData, pData] = await Promise.all([
-            posService.getSuppliers(),
-            posService.getProducts()
-          ]);
+          const [sData, pData] = await Promise.all([posService.getSuppliers(), posService.getProducts()]);
           setSuppliers(sData);
           setProducts(pData);
         } catch (e) {
@@ -52,17 +49,20 @@ export function CreatePurchaseDialog({ onShowSuccess }: { onShowSuccess?: () => 
   }, [open]);
 
   const addItem = (productId: string) => {
-    const product = products.find(p => p.id === productId);
+    const product = products.find((p) => p.id === productId);
     if (!product) return;
-    
+
     const qty = product.stock || 1;
-    const cost = product.cost_price ?? (product.price * 0.7);
-    setItems([...items, {
-      id: product.id,
-      name: product.name,
-      quantity: qty,
-      cost: cost
-    }]);
+    const cost = product.cost_price ?? product.price * 0.7;
+    setItems([
+      ...items,
+      {
+        id: product.id,
+        name: product.name,
+        quantity: qty,
+        cost: cost,
+      },
+    ]);
   };
 
   const updateItem = (index: number, field: string, value: any) => {
@@ -75,7 +75,7 @@ export function CreatePurchaseDialog({ onShowSuccess }: { onShowSuccess?: () => 
     setItems(items.filter((_, i) => i !== index));
   };
 
-  const totalCost = items.reduce((acc, item) => acc + (item.cost * item.quantity), 0);
+  const totalCost = items.reduce((acc, item) => acc + item.cost * item.quantity, 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,13 +90,16 @@ export function CreatePurchaseDialog({ onShowSuccess }: { onShowSuccess?: () => 
 
     setLoading(true);
     try {
-      await posService.createPurchaseOrder({
-        organization_id: "00000000-0000-0000-0000-000000000000",
-        branch_id: "00000000-0000-0000-0000-000000000000",
-        ...formData,
-        total_amount: totalCost
-      }, items);
-      
+      await posService.createPurchaseOrder(
+        {
+          organization_id: "00000000-0000-0000-0000-000000000000",
+          branch_id: "00000000-0000-0000-0000-000000000000",
+          ...formData,
+          total_amount: totalCost,
+        },
+        items,
+      );
+
       toast.success("Đã nhập hàng thành công!");
       setOpen(false);
       setItems([]);
@@ -124,9 +127,7 @@ export function CreatePurchaseDialog({ onShowSuccess }: { onShowSuccess?: () => 
               <Store className="w-5 h-5" />
               Nhập hàng vào kho
             </DialogTitle>
-            <DialogDescription>
-              Tạo phiếu nhập hàng để cập nhật số lượng tồn kho.
-            </DialogDescription>
+            <DialogDescription>Tạo phiếu nhập hàng để cập nhật số lượng tồn kho.</DialogDescription>
           </DialogHeader>
 
           <div className="flex-1 overflow-hidden flex flex-col p-6 gap-4">
@@ -138,8 +139,10 @@ export function CreatePurchaseDialog({ onShowSuccess }: { onShowSuccess?: () => 
                     <SelectValue placeholder="Chọn nhà cung cấp" />
                   </SelectTrigger>
                   <SelectContent>
-                    {suppliers.map(s => (
-                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    {suppliers.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -157,8 +160,10 @@ export function CreatePurchaseDialog({ onShowSuccess }: { onShowSuccess?: () => 
                   <SelectValue placeholder="Tìm sản phẩm cần nhập..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {products.map(p => (
-                    <SelectItem key={p.id} value={p.id}>{p.name} (SKU: {p.sku})</SelectItem>
+                  {products.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name} (SKU: {p.sku})
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -178,26 +183,26 @@ export function CreatePurchaseDialog({ onShowSuccess }: { onShowSuccess?: () => 
                     </div>
                     <div className="w-20">
                       <Label className="text-[10px] uppercase font-bold text-muted-foreground">SL</Label>
-                      <Input 
-                        type="number" 
-                        value={item.quantity} 
-                        onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value))}
+                      <Input
+                        type="number"
+                        value={item.quantity}
+                        onChange={(e) => updateItem(index, "quantity", parseInt(e.target.value))}
                         className="h-8 text-sm"
                       />
                     </div>
                     <div className="w-28">
                       <Label className="text-[10px] uppercase font-bold text-muted-foreground">Giá nhập</Label>
-                      <Input 
-                        type="number" 
-                        value={item.cost} 
-                        onChange={(e) => updateItem(index, 'cost', parseInt(e.target.value))}
+                      <Input
+                        type="number"
+                        value={item.cost}
+                        onChange={(e) => updateItem(index, "cost", parseInt(e.target.value))}
                         className="h-8 text-sm"
                       />
                     </div>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
                       onClick={() => removeItem(index)}
                       className="text-destructive hover:bg-destructive/10 h-8 w-8"
                     >
@@ -213,7 +218,7 @@ export function CreatePurchaseDialog({ onShowSuccess }: { onShowSuccess?: () => 
             <div>
               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Tổng tiền nhập</p>
               <p className="text-xl font-bold">
-                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalCost)}
+                {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(totalCost)}
               </p>
             </div>
             <div className="flex gap-2">
