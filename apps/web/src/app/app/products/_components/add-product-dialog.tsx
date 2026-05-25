@@ -42,6 +42,10 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
     supplier_id: "",
     image: "",
     barcode_type: "CODE128",
+    is_published_online: false,
+    online_price: "",
+    online_slug: "",
+    online_description: "",
   });
 
   const [barcodeValid, setBarcodeValid] = useState(true);
@@ -259,7 +263,16 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
         ? variants.reduce((sum, v) => sum + (parseInt(v.stock, 10) || 0), 0)
         : parseInt(formData.stock, 10);
 
+      const storefrontData = {
+        is_published_online: formData.is_published_online,
+        online_price: formData.online_price ? parseFloat(formData.online_price.toString()) : basePrice,
+        online_slug: formData.online_slug || null,
+        online_description: formData.online_description || null,
+        online_images: finalImageUrl ? [finalImageUrl] : [],
+      };
+
       await posService.createProduct({
+        ...storefrontData,
         name: formData.name,
         sku: hasVariants ? null : formData.sku,
         barcode: hasVariants ? null : formData.barcode,
@@ -284,6 +297,10 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
         category_id: "",
         supplier_id: "",
         image: "",
+        is_published_online: false,
+        online_price: "",
+        online_slug: "",
+        online_description: "",
       });
       setHasVariants(false);
       setAttributes([]);
@@ -642,6 +659,63 @@ export function AddProductDialog({ onShowSuccess }: { onShowSuccess?: () => void
                           parentName={formData.name}
                           skuPrefix={formData.sku}
                         />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Storefront Section */}
+                  <div className="space-y-6 rounded-2xl border bg-background p-5 shadow-sm sm:p-6 border-indigo-500/20">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <h3 className="text-base font-semibold text-indigo-600 dark:text-indigo-400">Storefront (Bán Online)</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Đồng bộ thiết lập hiển thị lên website bán hàng của bạn
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor="is-published-online" className="text-sm font-semibold cursor-pointer">
+                          Hiển thị trên web
+                        </Label>
+                        <Switch 
+                          id="is-published-online" 
+                          checked={formData.is_published_online} 
+                          onCheckedChange={(v) => setFormData({ ...formData, is_published_online: v })}
+                        />
+                      </div>
+                    </div>
+
+                    {formData.is_published_online && (
+                      <div className="grid gap-4 pt-4 border-t animate-in slide-in-from-top-2 fade-in">
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div className="grid gap-3">
+                            <Label className="text-sm font-semibold text-foreground">Giá bán online (₫)</Label>
+                            <Input
+                              type="text"
+                              placeholder="Mặc định lấy giá POS"
+                              className="h-10 rounded-xl border-indigo-100 dark:border-indigo-900 focus-visible:ring-indigo-500"
+                              value={formatCurrencyValue(formData.online_price)}
+                              onChange={(e) => setFormData({ ...formData, online_price: parseCurrencyValue(e.target.value) })}
+                            />
+                          </div>
+                          <div className="grid gap-3">
+                            <Label className="text-sm font-semibold text-foreground">URL Đường dẫn (Slug)</Label>
+                            <Input
+                              placeholder="vi-du-iphone-15-pro-max"
+                              className="h-10 rounded-xl"
+                              value={formData.online_slug || ""}
+                              onChange={(e) => setFormData({ ...formData, online_slug: e.target.value })}
+                            />
+                          </div>
+                        </div>
+                        <div className="grid gap-3">
+                          <Label className="text-sm font-semibold text-foreground">Mô tả chi tiết sản phẩm (Hiển thị ở cuối trang)</Label>
+                          <textarea
+                            placeholder="Nhập mô tả sản phẩm chi tiết hiển thị ở cuối trang trên web..."
+                            className="flex min-h-[120px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                            value={formData.online_description || ""}
+                            onChange={(e) => setFormData({ ...formData, online_description: e.target.value })}
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
