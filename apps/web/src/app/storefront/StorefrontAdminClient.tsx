@@ -167,9 +167,26 @@ export function StorefrontAdminClient({
   const supabase = createClient();
 
   // Calculate storefront domain dynamically
-  const baseDomain = process.env.NEXT_PUBLIC_STOREFRONT_DOMAIN || "zshop.click";
-  const isDev = typeof window !== "undefined" && window.location.hostname === "localhost";
-  const defaultDomain = isDev ? `${org.slug}.localhost:3001` : `${org.slug}.${baseDomain}`;
+  const [defaultDomain, setDefaultDomain] = useState("");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const isDev = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    let domain = "";
+    if (isDev) {
+      const port = window.location.port ? `:${window.location.port}` : "";
+      domain = `${org.slug}-shop.localhost${port}`;
+    } else {
+      // Extract main domain from current hostname (e.g. console.zpos.click -> zpos.click)
+      const parts = window.location.hostname.split(".");
+      let mainDomain = "zpos.click";
+      if (parts.length >= 2) {
+        mainDomain = parts.slice(-2).join(".");
+      }
+      domain = `${org.slug}-shop.${mainDomain}`;
+    }
+    setDefaultDomain(domain);
+  }, [org.slug]);
 
   // Load all initial databases
   useEffect(() => {

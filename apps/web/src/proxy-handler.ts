@@ -78,12 +78,34 @@ export async function proxy(request: NextRequest) {
 
   // ─── STOREFRONT ROUTING (public, no auth) ─────────────────────────────
   // Phải check TRƯỚC khi chạy auth flow của admin app.
-  // Match nếu: hostname là *.zshop.click (subdomain mặc định)
-  //         hoặc hostname là custom domain đã verified.
-  const isStorefrontHost = hostname.endsWith(`.${storefrontDomain}`) || (!hostname.endsWith(mainDomain) && !isLocal); // có thể là custom domain
+  // Match nếu: 
+  //   - hostname kết thúc bằng `-shop.${mainDomain}` (Giải pháp 2: kphone-shop.zpos.click)
+  //   - hostname là *.zshop.click (subdomain mặc định cũ/nếu được cấu hình)
+  //   - hoặc hostname là custom domain đã verified.
+  const isShopSubdomain = hostname.endsWith(`-shop.${mainDomain}`);
+  const isStorefrontHost =
+    isShopSubdomain ||
+    hostname.endsWith(`.${storefrontDomain}`) ||
+    (!hostname.endsWith(mainDomain) && !isLocal); // có thể là custom domain
 
   if (isStorefrontHost) {
-    const storefrontTenant = await resolveStorefrontHost(hostname, storefrontDomain);
+    let storefrontTenant: { tenantSlug: string; tenantId: string; isCustomDomain: boolean } | null = null;
+
+    if (isShopSubdomain) {
+      const slug = hostname.replace(`-shop.${mainDomain}`, "");
+      if (slug && slug !== "www") {
+        const tenant = await getTenantBySlug(slug);
+        if (tenant?.tenantId && tenant.storefrontEnabled) {
+          storefrontTenant = {
+            tenantSlug: tenant.tenantSlug,
+            tenantId: tenant.tenantId,
+            isCustomDomain: false,
+          };
+        }
+      }
+    } else {
+      storefrontTenant = await resolveStorefrontHost(hostname, storefrontDomain);
+    }
 
     if (storefrontTenant) {
       const targetPath = url.pathname.startsWith("/storefront") ? url.pathname : `/storefront${url.pathname}`;
@@ -98,10 +120,8 @@ export async function proxy(request: NextRequest) {
       return storefrontResponse;
     }
 
-    // Custom domain trỏ về nhưng tenant chưa active → 404 friendly
-    if (!hostname.endsWith(mainDomain)) {
-      return NextResponse.rewrite(new URL("/storefront/not-found", request.url));
-    }
+    // Custom domain hoặc -shop subdomain trỏ về nhưng tenant chưa active/không tìm thấy → 404 friendly
+    return NextResponse.rewrite(new URL("/storefront/not-found", request.url));
   }
   // ──────────────────────────────────────────────────────────────────────
 
